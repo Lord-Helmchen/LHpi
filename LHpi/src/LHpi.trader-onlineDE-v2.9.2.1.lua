@@ -74,13 +74,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --SAVETABLE = true
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.8"
+libver = "2.9"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
-dataver = "1"
---- must always be equal to the script's filename !
+dataver = "2"
+--- sitescript revision number
+-- @field [parent=#global] string scriptver
+scriptver = "1"
+--- should always be equal to the script's filename !
 -- @field [parent=#global] #string scriptname
-scriptname = "LHpi.trader-onlineDE-v" .. libver .. "." .. dataver .. ".1.lua" 
+scriptname = "LHpi.trader-onlineDE-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
 
 --- @field [parent=#global] #table LHpi		LHpi library table
 LHpi = {}
@@ -914,7 +917,7 @@ EXPECTTOKENS = true,
 [140] = { pset={ [3]=306-1 }, failed= { [3]=1 }, namereplaced=6 },
 [139] = { namereplaced=2 },
 [110] = { pset={ 286 }, namereplaced=1 },
-[100] = { pset={ 255 } },
+[100] = { pset={ 253 } },
 -- Expansions
 [802] = { namereplaced=5, pset={ [3]=176-11 }, failed= { [3]=10 } }, -- -10 is tokens
 [800] = { namereplaced=8 },
@@ -934,8 +937,8 @@ EXPECTTOKENS = true,
 [730] = { namereplaced=5 },
 [710] = { namereplaced=4 },
 [700] = { namereplaced=3 },
-[690] = { dropped=982, namereplaced=5 },
-[680] = { dropped=382, namereplaced=5 },
+[690] = { dropped=981, namereplaced=5 },
+[680] = { dropped=380, namereplaced=5 },
 [670] = { namereplaced=4 },
 [660] = { namereplaced=4 },
 [650] = { namereplaced=4 },
@@ -971,7 +974,7 @@ EXPECTTOKENS = true,
 [785] = { namereplaced=3, foiltweaked=2 },
 [772] = { namereplaced=1, foiltweaked=0 },
 [757] = { foiltweaked=2 },
-[600] = { pset={ 141-1 }, failed={ 1 }, namereplaced=8 },--"Ach! Hans, Run"
+[600] = { pset={ 141-1 }, failed={ 1 }, namereplaced=8, foiltweaked=1 },--"Ach! Hans, Run"
 [320] = { namereplaced=6 },
 [310] = { namereplaced=2 },
 [260] = { pset={ [3]=228-6 }, namereplaced=4 },--no "DG" Variant in GER

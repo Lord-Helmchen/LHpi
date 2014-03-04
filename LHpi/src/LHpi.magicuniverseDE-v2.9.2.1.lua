@@ -79,13 +79,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --SAVETABLE = true
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.8"
+libver = "2.9"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
-dataver = "1"
---- must always be equal to the script's filename !
+--- sitescript revision number
+-- @field [parent=#global] string scriptver
+scriptver = "1"
+--- should always be equal to the script's filename !
 -- @field [parent=#global] #string scriptname
-scriptname = "LHpi.magicuniverseDE-v" .. libver .. "." .. dataver .. ".1.lua"
+scriptname = "LHpi.magicuniverseDE-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
 --- savepath for OFFLINE (read) and SAVEHTML (write). must point to an existing directory relative to MA's root.
 -- set by LHpi lib unless specified here.
 -- @field [parent=#global] #string savepath

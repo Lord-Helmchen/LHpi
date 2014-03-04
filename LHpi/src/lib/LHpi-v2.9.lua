@@ -38,6 +38,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 		totalcount,setcountdiffers		local in DoImport
 						MainImportCycle returns #table totalcount, #table setcountdiffers
 	misc. small improvements to code and/or comments
+	fixed loading of data file from deprecated "Prices" location
+	fixed SAVETABLE folder writable check
 ]]
 
 
@@ -100,17 +102,6 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 	if not site.frucs then site.frucs = {} end
 	if DEBUG and ((not site.regex) or site.regex == "" ) then error("undefined site.regex!") end
 	if not site.regex then site.regex = "" end
-
-	if DEBUG and ((not dataver) or site.dataver == "" ) then error("undefined dataver!") end
-	if not dataver then dataver = "1" end
-	
-	---	LHpi static set data
-	--@field [parent=#LHpi] #table Data
-	LHpi.Data = LHpi.LoadData(dataver)
-	-- read user supplied parameters and modify site.sets table
-	local supImportfoil,supImportlangs, supImportsets = LHpi.ProcessUserParams( importfoil , importlangs , importsets )
-	
-	-- set sensible defaults or throw error on missing sitescript fields or functions
 	if not scriptname then
 	--- should always be equal to the sitescript filename !
 	-- @field [parent=#global] #string scriptname
@@ -121,21 +112,30 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 			scriptname = "LHpi.SITESCRIPT_NAME_NOT_SET-v" .. LHpi.version .. ".lua"
 		end
 	end -- if
+
+	if DEBUG and ((not dataver) or site.dataver == "" ) then error("undefined dataver!") end
+	if not dataver then dataver = "1" end
+	---	LHpi static set data
+	--@field [parent=#LHpi] #table Data
+	LHpi.Data = LHpi.LoadData(dataver)
+	-- read user supplied parameters and modify site.sets table
+	local supImportfoil,supImportlangs, supImportsets = LHpi.ProcessUserParams( importfoil , importlangs , importsets )
+	-- set sensible defaults or throw error on missing sitescript fields or functions
 	if not savepath then
-	--- savepath for OFFLINE (read) and SAVEHTML (write). must point to an existing directory relative to MA's root.
+	--- savepath for OFFLINE (read) and SAVEHTML,SAVETABLE (write). must point to an existing directory relative to MA's root.
 	-- @field [parent=#global] #string savepath
-		savepath = "Prices\\" .. string.gsub( scriptname , "%-v[%d%.]+%.lua$" , "" ) .. "\\"
+		savepath = "Prices\\" .. string.gsub( scriptname , "%-?v?[%d%.]*%.lua$" , "" ) .. "\\"
 	end -- if
-	if SAVEHTML or SAVECSV then
+	if SAVEHTML or SAVETABLE then
 		ma.PutFile(savepath .. "testfolderwritable" , "true", 0 )
 		local folderwritable = ma.GetFile( savepath .. "testfolderwritable" )
 		if not folderwritable then
 			SAVEHTML = false
-			SAVECSV = false
-			LHpi.Log( "failed to write file to savepath " .. savepath .. ". Disabling SAVEHTML and SAVECSV" )
+			SAVETABLE = false
+			LHpi.Log( "failed to write file to savepath " .. savepath .. ". Disabling SAVEHTML and SAVETABLE" )
 			if DEBUG then
 				error( "failed to write file to savepath " .. savepath .. "!" )
-				--print( "failed to write file to savepath " .. savepath .. ". Disabling SAVEHTML and SAVECSV" )
+				--print( "failed to write file to savepath " .. savepath .. ". Disabling SAVEHTML and SAVETABLE" )
 			end
 		end -- if not folderwritable
 	end -- if SAVEHTML
@@ -468,9 +468,9 @@ function LHpi.LoadData( version )
 				error("LHpi.Data found in deprecated location. Please move it to Prices\\lib subdirectory!")
 			end
 			LHpi.Log("LHpi.Data found in deprecated location.")
-			if not LHpidata then
+			if not LHpiData then
 				LHpi.Log( "Using file in old location as fallback.")
-				LHpidata = oldLHpiData
+				LHpiData = oldLHpiData
 			end
 		end
 		if not LHpiData then
@@ -508,7 +508,6 @@ end--function LHpi.LoadData
  ]]
 function LHpi.ProcessUserParams( importfoil , importlangs , importsets )
 	ma.SetProgress( "Initializing", 0 )
-	
 	-- identify user defined sets to import
 	local setlist = {}
 	for sid,cSet in pairs( site.sets ) do
@@ -1374,7 +1373,7 @@ end -- function LHpi.SetPrice(setid, name, card)
  @param #string path	path to save csv into, must end in "\\"
 ]]
 function LHpi.SaveCSV( setid , tbl , path )
-	local setname=LHpi.Data.sets[setid].name
+	local setname = LHpi.Data.sets[setid].name
 	local filename = path .. setid .. "-" .. setname .. ".csv"
 	LHpi.Log( "Saving table to file: \"" .. filename .. "\"" )
 	ma.PutFile( filename, "cardname\tcardprice\tsetname\tcardlanguage\tcardversion\tfoil|nonfoil\tcardnotes" , 0 )
@@ -1508,7 +1507,7 @@ end -- function LHpi.Toutf8
 function LHpi.Log( str , l , f , a )
 	local loglevel = l or 0
 	local apnd = a or 1
-	local logfile = "Prices\\LHpi.Log" -- fallback if global # string scriptname is missing
+	local logfile = "Prices\\LHpi.Log" -- fallback if global #string scriptname is missing
 	if scriptname then
 		logfile = "Prices\\" .. string.gsub( scriptname , "lua$" , "log" )
 	end

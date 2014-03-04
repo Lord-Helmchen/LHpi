@@ -74,13 +74,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --SAVETABLE = true
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.8"
+libver = "2.9"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
-dataver = "1"
---- must always be equal to the script's filename !
+dataver = "2"
+--- sitescript revision number
+-- @field [parent=#global] string scriptver
+scriptver = "1"
+--- should always be equal to the script's filename !
 -- @field [parent=#global] #string scriptname
-scriptname = "LHpi.mtgmintcard-v" .. libver .. "." .. dataver .. ".1.lua"
+scriptname = "LHpi.mtgmintcard-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
 
 --- @field [parent=#global] #table LHpi		LHpi library table
 LHpi = {}
@@ -638,7 +641,7 @@ EXPECTTOKENS = true,
 [767] = { pset={ [9]=248 }, failed={[9]=5}, namereplaced=6 },-- fail SZH tokens
 [765] = { pset={ [9]=145 } },-- no SZH tokens
 [756] = { pset={ [9]=145 } },-- no SZH tokens
-[762] = { pset={ [9]=249 }, dropped=1 },-- no SZH tokens
+[762] = { pset={ [9]=249 } },-- no SZH tokens
 [758] = { pset={ [9]=145 }, failed={[9]=4} },-- fail SZH tokens
 [756] = { pset={ [9]=145 } },-- no SZH tokens
 [754] = { pset={ [9]=249 }, failed={[9]=9}, namereplaced=1 },-- fail SZH tokens

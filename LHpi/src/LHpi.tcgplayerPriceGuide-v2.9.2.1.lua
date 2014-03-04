@@ -85,13 +85,16 @@ copyprice = nil
 --SAVETABLE = true
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.8"
+libver = "2.9"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
-dataver = "1"
---- must always be equal to the script's filename !
+dataver = "2"
+--- sitescript revision number
+-- @field [parent=#global] string scriptver
+scriptver = "1"
+--- should always be equal to the script's filename !
 -- @field [parent=#global] #string scriptname
-scriptname = "LHpi.tcgplayerPriceGuide-v" .. libver .. "." .. dataver .. ".1.lua"
+scriptname = "LHpi.tcgplayerPriceGuide-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
 
 --- @field [parent=#global] #table LHpi		LHpi library table
 LHpi = {}
@@ -772,10 +775,10 @@ site.namereplace = {
 ["Aerathi Berserker"]					= "Ærathi Berserker"
 },
 [130] = { --Antiquities
-["Mishra's Factory (2)"]				= "Mishra's Factory (Summer)",
-["Mishra's Factory (3)"]				= "Mishra's Factory (Autumn)",
+--["Mishra's Factory (2)"]				= "Mishra's Factory (Summer)",
+--["Mishra's Factory (3)"]				= "Mishra's Factory (Autumn)",
 ["Mishra's Factory (Fall)"]				= "Mishra's Factory (Autumn)",
-["Mishra's Factory (4)"]				= "Mishra's Factory (Winter)",
+--["Mishra's Factory (4)"]				= "Mishra's Factory (Winter)",
 ["Strip Mine (No Horizon)"]				= "Strip Mine (1)",
 ["Strip Mine (Uneven Horizon)"]			= "Strip Mine (2)",
 ["Strip Mine (Tower)"]					= "Strip Mine (3)",
@@ -1014,7 +1017,7 @@ EXPECTTOKENS = true,
 [190] = { namereplaced=5 },
 [150] = { namereplaced=1 },
 [120] = { namereplaced=3 },
-[130] = { namereplaced=20, dropped=1 },
+[130] = { namereplaced=17, dropped=1 },
 -- special sets
 [799] = { foiltweaked=2, pset={ 83-16-2 } },-- -16 basic lands, -2 (of 4) nonbasic lands 
 [796] = { namereplaced=3 },
@@ -1024,7 +1027,7 @@ EXPECTTOKENS = true,
 [757] = { foiltweaked=2},
 [600] = { pset={141-1}, failed={1}, namereplaced=4, foiltweaked=1 },--"Ach! Hans, Run"
 [440] = { foiltweaked=2},
-[380] = { pset={182-2}, failed={2}, namereplaced=12-2 },--Pang Tong and Kongming fail due to "-Problems
+[380] = { pset={180-2}, failed={2}, namereplaced=12-2 },--Pang Tong and Kongming fail due to "-Problems
 [320] = { namereplaced=3 },
 [260] = { namereplaced=7 },
 [200] = { namereplaced=12 },
