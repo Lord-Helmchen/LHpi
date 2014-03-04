@@ -27,8 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-use LHpi-v2.1
-let LHpi lib set savepath
+updated expected counts for German Nemesis
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -67,7 +66,7 @@ SAVELOG = true
 SAVETABLE = false
 --- must always be equal to the scripts filename !
 -- @field [parent=#global] #string scriptname	
-scriptname = "LHpi.magicuniverseDE-v2.1.lua" 
+scriptname = "LHpi.magicuniverseDE-v2.2.lua" 
 --[[FIXME the dynamic approach myname does not work, ma.GetFile returns nil for its own log :(
 do
 	--local _s,_e,myname = string.find( ma.GetFile("Magic Album.log"), "Starting Lua script .-([^\\]+%.lua)$" )
@@ -687,6 +686,9 @@ site.namereplace = {
 [430] = { -- Invasion
 ["Æther Rift"]							= "AEther Rift"
 },
+[410] = { -- Nemesis
+["Æther Barrier"]						= "AEther Barrier"
+},
 [370] = { -- Urza's Saga
 ["Æther Sting"]							= "AEther Sting"
 },
@@ -896,7 +898,7 @@ EXPECTTOKENS = true,
 [470] = { namereplaced=1 },
 [430] = { pset={ 350-20, [3]=350-20 }, namereplaced=1 },
 [420] = { pset={ [3]=0 }, failed={ [3]=143 } },
-[410] = { pset={ [3]=0 }, failed={ [3]=143 } },
+[410] = { namereplaced=1 },
 [400] = { pset={ 350-20, [3]=0 },	failed={ [3]=330 } },
 [370] = { namereplaced=1},
 [330] = { namereplaced=1},

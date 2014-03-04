@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-initial release
+updated expected counts for German Nemesis and others
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -66,7 +66,7 @@ SAVELOG = true
 SAVETABLE = false
 --- must always be equal to the scripts filename !
 -- @field [parent=#global] #string scriptname	
-scriptname = "LHpi.trader-onlineDE-v2.1.lua" 
+scriptname = "LHpi.trader-onlineDE-v2.2.lua" 
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
@@ -236,7 +236,9 @@ function site.BCDpluginName ( name , setid )
 		LHpi.Log( "site.BCDpluginName got " .. name .. " from set " .. setid , 2 )
 	end
 	if setid == 640 then
-		name = string.gsub ( name , "^GebirgeNr" , "Gebirge Nr" )
+		name = string.gsub( name , "^GebirgeNr" , "Gebirge Nr" )
+	elseif setid == 410 then
+		name = string.gsub( name, "Raths Kante (nur englisch)" , "%0 (DROP)" )
 	end
 	if setid == 150 or setid == 160 then
 		-- check Legends and The Dark for "ital." suffix
@@ -606,6 +608,10 @@ site.namereplace = {
 [530] = { -- Legions
 ["Brüllender Blutsiedler"]				= "Brüllender Blutsieder",
 },
+[410] = { -- Portal Second Age
+["Rhox (112)a"]							= "Rhox",
+["Aufstrebender Envincar"]				= "Aufstrebender Evincar",
+},
 [290] = { -- Stronghold
 ["Engel des Krieges"]					= "Engel des Kriegers",
 },
@@ -732,7 +738,7 @@ EXPECTTOKENS = true,
 [140] = { namereplaced=7 },
 [139] = { namereplaced=2 },
 [110] = { pset={ 291 }, namereplaced=1 },
-[100] = { pset={ 252 } },
+[100] = { pset={ 251 } },
 -- Expansions
 [793] = { namereplaced=1 },
 [786] = { namereplaced=8 },
@@ -744,7 +750,7 @@ EXPECTTOKENS = true,
 [751] = { namereplaced=10 },
 [730] = { namereplaced=4 },
 [710] = { namereplaced=2 },
-[690] = { dropped=967, namereplaced=6 },
+[690] = { dropped=966, namereplaced=6 },
 [680] = { dropped=362, namereplaced=1 },
 [670] = { namereplaced=2 },
 [654] = { namereplaced=3 },
@@ -753,9 +759,9 @@ EXPECTTOKENS = true,
 [610] = { namereplaced=19 },
 [590] = { namereplaced=32 },
 [580] = { namereplaced=4 },
-[530] = { namereplaced=5 },
+[530] = { namereplaced=2 },
 [420] = { pset={ [3]=0 }, failed={ [3]=143 } },
-[410] = { pset={ [3]=0 }, failed={ [3]=143+2 } },
+[410] = { failed={ [3]=1 }, namereplaced = 3 },
 [400] = { pset={ [3]=0 }, failed={ [3]=335 } },
 [290] = { namereplaced=1 },
 [270] = { namereplaced=2 },
