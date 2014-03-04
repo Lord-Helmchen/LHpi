@@ -32,18 +32,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -- options unique to this site
 --- for magicuniverse.de, parse 10% lower Stammkunden-Preis instead of default price (the one sent to the Warenkorb)
 -- @field #boolean STAMMKUNDE
---local STAMMKUNDE = true
+local STAMMKUNDE = true
 
 -- options that control the amount of feedback/logging done by the script
 
 --- @field [parent=#global] #boolean VERBOSE 			default false
---VERBOSE = true
+VERBOSE = true
 --- @field [parent=#global] #boolean LOGDROPS 			default false
---LOGDROPS = true
+LOGDROPS = true
 --- @field [parent=#global] #boolean LOGNAMEREPLACE 	default false
---LOGNAMEREPLACE = true
+LOGNAMEREPLACE = true
 --- @field [parent=#global] #boolean LOGFOILTWEAK	 	default false
---LOGFOILTWEAK = true
+LOGFOILTWEAK = true
 
 -- options that control the script's behaviour.
 
@@ -55,7 +55,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 --- also complain if drop,namereplace or foiltweak count differs; default false
 -- @field [parent=#global] #boolean STRICTCHECKEXPECTED
---STRICTCHECKEXPECTED = true
+STRICTCHECKEXPECTED = true
 ---	log everything and exit on error; default false
 -- @field [parent=#global] #boolean DEBUG
 --DEBUG = true
@@ -67,10 +67,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --DEBUGVARIANTS = true
 ---	read source data from #string.savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
---OFFLINE = true
+OFFLINE = true
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
---SAVEHTML = true
+SAVEHTML = true
 --- log to seperate logfile instead of Magic Album.log;	default true
 -- @field [parent=#global] #boolean SAVELOG
 --SAVELOG = false

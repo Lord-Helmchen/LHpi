@@ -32,13 +32,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -- options that control the amount of feedback/logging done by the script
 
 --- @field [parent=#global] #boolean VERBOSE 			default false
---VERBOSE = true
+VERBOSE = true
 --- @field [parent=#global] #boolean LOGDROPS 			default false
---LOGDROPS = true
+LOGDROPS = true
 --- @field [parent=#global] #boolean LOGNAMEREPLACE 	default false
---LOGNAMEREPLACE = true
+LOGNAMEREPLACE = true
 --- @field [parent=#global] #boolean LOGFOILTWEAK	 	default false
---LOGFOILTWEAK = true
+LOGFOILTWEAK = true
 
 -- options that control the script's behaviour.
 
