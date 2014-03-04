@@ -1,51 +1,72 @@
-﻿--*- coding: utf-8 -*- 
---[[ Price import script for Magic Album 
+--*- coding: utf-8 -*-
+--[[- Price import script for Magic Album
 to import card pricing from www.magicuniverse.de.
 
-inspired by and loosely based on "MTG Mint Card.lua" by Goblin Hero, Stromglad1
-and "Import Prices.lua" by woogerboy21;
-who generously granted permission to "do as I like" with their code.
-everything else Copyright (C) 2012 by Christian Harms
-If you want to contact me about the script, try its release thread in 
-http://www.slightlymagic.net/forum/viewforum.php?f=32
+Inspired by and loosely based on "MTG Mint Card.lua" by Goblin Hero, Stromglad1 and "Import Prices.lua" by woogerboy21;
+who generously granted permission to "do as I like" with their code;
+everything else Copyright (C) 2012 by Christian Harms.
+If you want to contact me about the script, try its release thread in http://www.slightlymagic.net/forum/viewforum.php?f=32
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+@module magicuniverseDE.lua
+@author Christian Harms
+@copyright 2012-2013 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
+@release This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-It felt like overkill to add 35KB of license text to a 95KB script file,
-so unless anyone complains, I'll leave it at the referral to the gnu site.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
- -- control the amount of feedback/logging done by the script
-VERBOSE = false -- default should be false
-LOGDROPS = false -- default should be false
-LOGNAMEREPLACE = false -- default should be false
- -- don't change anything below this line unless you know what you're doing :-)
-CHECKEXPECTED = true -- default should be true
-DEBUG = false -- default should be false
-DEBUGVARIANTS = false -- default should be false
-OFFLINE = false -- default should be false
-SAVEHTML = false -- default should be false
-SAVELOG = true -- log to seperate logfile instead of Magic Album.log, default should be true
---[[ does not work, GetFile returns nil for its own log :(
-local _s,_e,myname = string.find( ma.GetFile("\\Magic Album.log"), "Starting Lua script .-([^\\]+%.lua)$" )
---]]
+
+--[[- feedback options.
+ control the amount of feedback/logging done by the script
+ @type option
+ @field [parent=#global] #boolean VERBOSE			default false
+ @field [parent=#global] #boolean LOGDROPS 			default false
+ @field [parent=#global] #boolean LOGNAMEREPLACE 	default false
+]]
+VERBOSE = false
+LOGDROPS = false
+LOGNAMEREPLACE = false
+--[[-
+ control options.
+ control the script's behaviour.
+ Don't change anything below this line unless you know what you're doing :-)
+ @type option
+ @field #boolean CHECKEXPECTED	compare card count with expected numbers; default true
+ @field #boolean DEBUG			log all and exit on error; default false
+ @field #boolean DEBUGVARIANTS	DEBUG inside variant loops; default false
+ @field #boolean OFFLINE		read source data from #string.savepath instead of site url; default false
+ @field #boolean SAVEHTML		save a local copy of each source html to #string.savepath; default false
+ @field #boolean SAVELOG		log to seperate logfile instead of Magic Album.log;	default true
+ @field #boolean SAVETABLE		save price table to file before importing to MA;	default false
+]]
+CHECKEXPECTED = true
+DEBUG = false
+DEBUGVARIANTS = false
+OFFLINE = false
+SAVEHTML = false
+SAVELOG = true
+-- TODO write a seperate function that loops through the table and uses incremental putFile instead of 
+SAVETABLE = false -- needs incremental putFile to be remotely readable :)
+
+--- @field [parent=#global] #string scriptname	
+--FIXME does not work, GetFile returns nil for its own log :(
+--local _s,_e,myname = string.find( ma.GetFile("Magic Album.log"), "Starting Lua script .-([^\\]+%.lua)$" )
 if myname then
 	scriptname = myname
 else -- use hardcoded scriptname as fallback
-	scriptname = "magicuniverseDEv1.5.lua" -- should always be equal to the scripts filename !
+	scriptname = "magicuniverseDEv1.6.lua" -- should always be equal to the scripts filename !
 end
 savepath = "Prices\\" .. string.gsub(scriptname, "v%d+%.%d+%.lua$","") .. "\\" -- for OFFLINE (read) and SAVEHTML (write). must point to an existing directory relative to MA's root.
--- TODO
-SAVETABLE = false -- needs incremental putFile to be remotely readable :)
+
+-- global configuration ends here; site-specific configuration externalized to .lconf
 
 --[[ TODO
 patch to accept entries with a condition description if no other entry with better condition is in the table:
@@ -56,59 +77,56 @@ patch to accept entries with a condition description if no other entry with bett
 
 get scriptname from ma-log by gmatching "Starting Lua script C:\Spiele\Magic - The Gathering\Magic Album\Prices\(magicuniverseDEv1.3).lua$"
 
-DONE	test runtime difference between verbose and silent
-	DONE	minimal 2:17
-	DONE	maximal 8:28
-	
-DONE	handle foil as just another fruc as much as possible
-	DONE	just read importfoil and modify avsets[*].fruc accordingly, then all fruc-loops will do the right thing
-
-DONE	check for incremental PutFile and change llog to use it
-
-
 prepare for more languages
 	DONE	totals
 	importprice - might need a switch to support site with one page per language
-				needs to loop through languages
+	needs to loop through languages
 	to save bandwith: build table of urls first, then have loop through it to call parsehtml
 	DONE	change expected to match new format of totalcount
-	test with legends(150) italian 
+	test with legends(150) italian
 	do another set of gmatch for (französisch) et al if consistently named
 	DONE	change nameE,nameG to names { [1],[3]
-	make price a table as well
+	make price a (sub-)table as well
 
-	
+
 externalize all hardcoded website-specific configuration into global variables:
 	DONE	url (and filename)
 	DONE	parsehtml regex string
-	DONE	site and set specific patches moved to .config [not: will have to be block-commented or iffed by a global variable]
-	DONE	add (potentially empty) funtion call to buildCardData and externalize to config
+	DONE	site and set specific patches moved to .lconf [not: will have to be block-commented or iffed by a global variable]
+	DONE	add (potentially empty) funtion call to buildCardData and externalize to .lconf
 	seperate avsets{} into site-specific (like url and fruc{} ) and valid-for-all-sites data (like id and cards{})
-	
-DONE	externalize part of the pattern matching to .config to allow for sites with differently ordered value fields
 
 for kicks and giggles, have SAVETABLE generate a csv usable by woogerboys importprices :-)
-]]--
 
--- global configuration ends here; site-specific configuration externalized to .config
+CHANGELOG
+renamed .config to .lconf to ease syntax highlighting
+got rid of utf-8 BOM
+changed some comments to luadoc-like
+added Gatecrash to avsets and expectedcounts (shop does not yet provide foil)
+]]
 
 --TODO condprio = { [0] = "NONE", } -- table to sort condition description. lower indexed will overwrite when building the cardsetTable
 
-function ImportPrice(importfoil, importlangs, importsets) -- "main" function
- --[[ parameters (are passed from MA) :
-importfoil	:	"Y"|"N"|"O"		Update Regular and Foil|Update Regular|Update Foil
-importlangs	:	array of languages script should import, represented as pairs {languageid, languagename}
-				(see "Database\Languages.txt" file).
-				only {1, "English"} and {3, German} are supported by this script yet.
-importsets	:	array of sets script should import, represented as pairs {setid, setname}
-				(see "Database\Sets.txt" file). 
-]]--
+--[[-
+ "main" function.
+ called by Magic Album to import prices. Parameters are passed from MA.
+ 
+ @function [parent=#global] ImportPrice
+ @param #string importfoil	"Y"|"N"|"O"		Update Regular and Foil|Update Regular|Update Foil
+ @param #table importlangs	array of languages script should import, represented as pairs {languageid, languagename} 
+	(see "Database\Languages.txt").
+	only {1, "English"} and {3, German} are supported by this script yet. (and more or less ignored anyway)
+ @param #table importsets	array of sets script should import, represented as pairs {setid, setname}
+	(see "Database\Sets.txt").
+]]
+function ImportPrice(importfoil, importlangs, importsets)
 	if SAVELOG then
 		ma.Log( "Check " .. scriptname .. ".log for detailed information" )
-		llog("\239\187\191Script started" ,0,0) -- add unicode BOM - still saved as ANSI :-/
+		--llog("\239\187\191Script started" ,0,0) -- add unicode BOM - still saved as ANSI :-/
+		llog("Script started" ,0,0)
 	end
 	do -- load site specific configuration and functions from external file
-		local configfile = "Prices\\" .. string.gsub(scriptname, ".lua$", ".config")
+		local configfile = "Prices\\" .. string.gsub(scriptname, ".lua$", ".lconf")
 		local config = ma.GetFile( configfile )
 		if not config then
 			error ("configuration " .. configfile .. " not found")
@@ -123,7 +141,7 @@ importsets	:	array of sets script should import, represented as pairs {setid, se
 		end	-- if not config else
 	end -- do loadconfig
 	collectgarbage () -- we now have the global tables, no need to keep copies inside config and execconfig() in memory
-	
+
 	-- identify user defined types of foiling to import
 	if string.lower(importfoil) == "y" then
 		llog("Importing Non-Foil (+) Foil Card Prices")
@@ -138,7 +156,7 @@ importsets	:	array of sets script should import, represented as pairs {setid, se
 		llog("Importing Non-Foil Only Card Prices")
 		for sid,_ in pairs(avsets) do
 			avsets[sid].fruc[1] = false
-		end --for sid		
+		end --for sid
 	end -- if importfoil
 	-- identify user defined sets to import
 	for _,sname in pairs(importsets) do
@@ -190,10 +208,10 @@ importsets	:	array of sets script should import, represented as pairs {setid, se
 					persetnum = persetnum + 1
 				end
 			end -- for f,fruc
-		totalhtmlnum = totalhtmlnum + persetnum
+			totalhtmlnum = totalhtmlnum + persetnum
 		end -- if importsets[rec.id]
 	end -- for _,rec
-	
+
 	-- Main import cycle
 	curhtmlnum = 0
 	progress = 0
@@ -206,19 +224,19 @@ importsets	:	array of sets script should import, represented as pairs {setid, se
 			persetcount = { pset= {0,nil,0}, failed={0,nil,0}, dropped=0, namereplace=0 }
 			cardsetTable = {} -- clear cardsetTable
 			-- build cardsetTable containing all prices to be imported
---[[
---			if importlangs [1] or importlangs[3] then -- ger or eng wanted
---	"if" unnedded, unsupported importlangs have been caught already
--- TODO instead, loop through importlangs/suplangs for sites that have different langs on seperate pages
--- then avsets.set.german will need to be made a lang table
--- for now, just pass on importlangs
---]]
-				for f,fruc in pairs(cSet.fruc) do
-					if fruc then
-						parsehtml(cSet, importsets[cSet.id], f , importlangs)
-					end
-				end -- for f,fruc
---			end
+			--[[
+			--			if importlangs [1] or importlangs[3] then -- ger or eng wanted
+			--	"if" unnedded, unsupported importlangs have been caught already
+			-- TODO instead, loop through importlangs/suplangs for sites that have different langs on seperate pages
+			-- then avsets.set.german will need to be made a lang table
+			-- for now, just pass on importlangs
+			--]]
+			for f,fruc in pairs(cSet.fruc) do
+				if fruc then
+					parsehtml(cSet, importsets[cSet.id], f , importlangs)
+				end
+			end -- for f,fruc
+			--			end if importlangs
 			-- build cardsetTable from htmls finished
 			if VERBOSE then
 				llog( "cardsetTable for set " .. importsets[cSet.id] .. "(id " .. cSet.id .. ") build with " .. tlength(cardsetTable) .. " rows. set supposedly contains " .. cSet.cards.reg .. " cards and " .. cSet.cards.tok .. " tokens." ,1)
@@ -231,7 +249,7 @@ importsets	:	array of sets script should import, represented as pairs {setid, se
 			-- Set the price
 			local pmesg = "Importing " .. importsets[cSet.id] .. " from table"
 			if VERBOSE then
-				llog( pmesg .. "  " .. progress ,1)	
+				llog( pmesg .. "  " .. progress ,1)
 			end -- if VERBOSE
 			ma.SetProgress( pmesg, progress )
 			for cName,cCard in pairs(cardsetTable) do
@@ -251,7 +269,7 @@ importsets	:	array of sets script should import, represented as pairs {setid, se
 				statmsg = statmsg .. " imported."
 			end
 			llog ( statmsg )
-			if DEBUG then 
+			if DEBUG then
 				llog( "persetstats " .. deeptostring(persetcount) ,2)
 			end
 			if CHECKEXPECTED then
@@ -309,7 +327,17 @@ importsets	:	array of sets script should import, represented as pairs {setid, se
 	ma.Log("End of Lua script " .. scriptname )
 end -- function ImportPrice
 
-function setPrice(setid, langid, name, card) 
+--[[-
+ calls MA to set card price.
+ 
+ @function [parent=#global] setPrice
+ @param	#number setid	(see "Database\Sets.txt")
+ @param	#number langid	(see "Database\Languages.txt")
+ @param #string name	card name Ma will try to match to Oracle Name, then localized Name
+ @param #table  card	card data from cardsetTable
+ @return #number MA.SetPrice retval (summed over variant loop)
+]]
+function setPrice(setid, langid, name, card)
 	local retval
 	if card.variant and DEBUGVARIANTS then DEBUG = true end
 	if DEBUG then
@@ -345,7 +373,7 @@ function setPrice(setid, langid, name, card)
 			llog( "setPrice\t name \"" .. name .. "\" version \"" .. deeptostring(card.variant) .. "\" set to " .. deeptostring(card.regprice) .. "/" .. deeptostring(card.foilprice).. " non/foil " .. tostring(retval) .. " times for laguage " .. suplangs[langid].abbr ,2)
 		end
 	end
---llog(deeptostring(persetcount.pset))	
+	--llog(deeptostring(persetcount.pset))
 	if VERBOSE or DEBUG then
 		local expected
 		if not card.variant then
@@ -363,12 +391,18 @@ function setPrice(setid, langid, name, card)
 	return retval
 end -- function setPrice
 
-function parsehtml(set, setname, fruc , importlangs) -- downloads and parses one html file.
- --[[ parameters 
-    set: set record from avsets
-setname: set name, needed only for progressbar
-   fruc: 1|2|3|4|5 for foil|rare|uncommon|common|purple rarity to look up
+--[[-
+ fill cardsetTable from one source html file.
+ download and parse one source file
+ 
+ @function [parent=#global] parsehtml
+ @param #table set		set record from avsets
+ @param #string setname	needed only for progressbar
+ @param #number fruc	1|2|3|4|5 for foil|rare|uncommon|common|purple rarity
+ @param #table importlangs	passed on from ImportPrice (until I change language handling)
+ @return #number 1 if sourceTable is empty, 0 if all ok;  never read anyway
 ]]
+function parsehtml(set, setname, fruc , importlangs)
 	curhtmlnum = curhtmlnum + 1
 	progress = 100*curhtmlnum/totalhtmlnum
 	local pmesg = "Parsing " .. frucnames[fruc] .. " " .. setname
@@ -379,12 +413,12 @@ setname: set name, needed only for progressbar
 	ma.SetProgress(pmesg, progress)
 	local sourceTable = getSourceData ( set.id , fruc , importlangs)
 	if not sourceTable then
-		llog("No cards found, skipping to next source" .. ( OFFLINE and "file" ) or " url" ,1)
+		llog("No cards found, skipping to next source" ,1)
 		if DEBUG then
 			error ("empty sourceTable for " .. setname .. " - " .. frucnames[fruc])
 		end
 		return 1 -- retval never read, but return is a quick way out of the function
-	end	
+	end
 	for _,row in pairs(sourceTable) do
 		local newcard = buildCardData ( row.names, row.price, set.id, fruc, set.german , importlangs)
 		if newcard.drop then
@@ -395,6 +429,7 @@ setname: set name, needed only for progressbar
 		else -- not newcard.drop
 			-- now feed new data into cardsetTable
 			local retval,mergedrow,oldrow,newrow = fillCardsetTable ( newcard )
+			--TODO change checks and log in a way that fillCardsetTable needs not return three cardrows
 			if retval == 0 or retval == "new" or retval == "keep equal" or retval == "notzero/zero" or retval == "zero/notzero" then
 				if DEBUG then
 					llog("fillCardsetTable returned \"".. retval .. "\" on \"" .. newcard.name .. "\"" ,2)
@@ -419,19 +454,23 @@ setname: set name, needed only for progressbar
 	return 0
 end -- function parsehtml
 
-function getSourceData (setid , fruc , importlangs) -- Construct URL/filename from set and rarity and return a table with all entried found therein
- --[[ parameters :
-		setid	to allow avsets[setid].url
-		fruc
-	returns
-		sourceTable
+--[[-
+  construct url/filename and build sourceTable.
+  Construct URL/filename from set and rarity and return a table with all entries found therein
+ 
+  @function [parent=#global] getSourceData
+  @param #number setid	to allow avsets[setid].url (see "Database\Sets.txt")
+  @param #number fruc	1|2|3|4|5 for foil|rare|uncommon|common|purple rarity
+  @param #table importlangs		passed on through parsehtml from ImportPrice (until I change language handling)
+  @return #table { #table names, #table price }
 ]]
+function getSourceData (setid , fruc , importlangs) -- 
 	local htmldata = nil -- declare here for right scope
 	if not OFFLINE then -- get htmldata from online source
 		local url = "http://" .. sitedomain .. sitefile .. sitesetprefix .. avsets[setid].url .. sitefrucprefix .. frucnames[fruc] .. sitesuffix
 		if DEBUG then
-				llog( "url is \"" .. url .. "\"" ,2)
-			end
+			llog( "url is \"" .. url .. "\"" ,2)
+		end
 		llog( "Parsing " .. url )
 		htmldata = ma.GetUrl(url)
 		if not htmldata then
@@ -450,7 +489,7 @@ function getSourceData (setid , fruc , importlangs) -- Construct URL/filename fr
 			return nil
 		end
 	end -- if offline -- get htmldata
-	
+
 	local sourceTable = {}
 	if SAVEHTML then
 		local filename = savepath .. string.gsub(sitefile, "%?", "_") .. sitesetprefix .. avsets[setid].url .. sitefrucprefix .. frucnames[fruc] ..sitesuffix .. ".html"
@@ -496,26 +535,31 @@ function getSourceData (setid , fruc , importlangs) -- Construct URL/filename fr
 	end
 end -- function getSourceData
 
+--[[-
+ construct cardData.
+ constructs cardData for one card entry found in htmldata
+ 
+ @function [parent=#global] buildCardData
+ @param #table names	{ langid = name } as parsed from htmldata
+ @param #table price	{ langid = price } as parsed from htmldata
+ @param #number setid	(see "Database\Sets.txt")
+ @param #number fruc	1|2|3|4|5 for foil|rare|uncommon|common|purple rarity
+ @param #string setgerman	"Y"|"N"|"O"; from avsets.set.german (until I change language handling)
+ @param #table importlangs	passed on through parsehtml from ImportPrice (until I change language handling)
+ @return #table { 	name		: card name to be matched against MAs Oracle Name or localized Name
+					names{}		: if DEBUG keeps names from sourcedata
+					drop		: true if data was marked as to-be-dropped and further processing was skipped
+					variant		: table of variant names, nil if single-versioned card
+					regprice	: nonfoil price, table if variant
+					foilprice	: foil price, table if variant
+				}
+ ]]
 function buildCardData ( names, price, setid, fruc, setgerman , importlangs ) -- constructs cardData for one card entry found in htmldata
- --[[ parameters:
-		names{}, price :	card data as parsed from htmldata
-		setid
-		fruc
-		setgerman
-	returns:	single tablerow 
-	{	name		: card name to be matched against MAs Oracle Name or localized Name
-		names{}		: if DEBUG keeps names from sourcedata]
-		drop		: true if data was marked as to-be-dropped and further processing was skipped
-		variant		: table of variant names, nil if single-versioned card
-		regprice	: nonfoil price, table if variant
-		foilprice	: foil price, table if variant
-	}
-]]
 	local card = {}
 	if DEBUG then --keep all (localized) unprocessed names
 		card.names = names
 	end -- DEBUG
---TODO loop through all importlangs ?
+	--TODO loop through all importlangs ? then use the first one that's not nil ?
 	if setgerman ~="O" then
 		card.name = names[1]
 	else -- setgerman == "O"
@@ -533,7 +577,7 @@ function buildCardData ( names, price, setid, fruc, setgerman , importlangs ) --
 		end
 		return card
 	end --if
-	
+
 	--experimental: let the card's sourcedata determine language to import (if importlangs[langid])
 	card.lang = {}
 	for lid,_ in pairs(importlangs) do
@@ -541,14 +585,14 @@ function buildCardData ( names, price, setid, fruc, setgerman , importlangs ) --
 			card.lang[lid] = suplangs[lid].abbr
 		end
 	end
-	
+
 	if fruc == 1 then -- remove "(foil)" if foil url
 		card.name = string.gsub(card.name, " *%([fF][oO][iI][lL]%)", "")
 		card.foil = true
 	else
 		card.foil = false
 	end
-	
+
 	card.name = string.gsub(card.name, " // ","|")
 	card.name = string.gsub(card.name, "Æ", "AE")
 	card.name = string.gsub(card.name, "â", "a")
@@ -559,7 +603,7 @@ function buildCardData ( names, price, setid, fruc, setgerman , importlangs ) --
 
 	if string.find(card.name, "Emblem: ") then -- Emblem prefix to suffix
 		card.name = string.gsub(card.name, "Emblem: ([^\"]+)" , "%1 Emblem")
-	end	
+	end
 	card.name = string.gsub(card.name, "%(Nr%.%s+(%d+)%)", "(%1)")
 	card.name = string.gsub(card.name, "%s+", " ")
 	card.name = string.gsub(card.name, "%s+$", "")
@@ -578,12 +622,12 @@ function buildCardData ( names, price, setid, fruc, setgerman , importlangs ) --
 		card.name = string.gsub(card.name, "%(Art%)", "")
 		card.name = string.gsub(card.name, "%(Gld%)", "")
 	end
-	card.name = string.gsub(card.name, "^%s*(.-)%s*$", "%1") --remove any leftover spaces from start and end of string			
+	card.name = string.gsub(card.name, "^%s*(.-)%s*$", "%1") --remove any leftover spaces from start and end of string
 
 	--[[ do site-specific card data manipulation
-		for magicuniverse, this is
-		 seperate "(alpha)" and beta from beta-urls
-		 set Legends "(ital.)" suffixed to lang[] and DROP
+	for magicuniverse, this is
+	seperate "(alpha)" and beta from beta-urls
+	set Legends "(ital.)" suffixed to lang[] and DROP
 	]]
 	card = siteCardDataManipulation ( card , setid )
 
@@ -598,17 +642,17 @@ function buildCardData ( names, price, setid, fruc, setgerman , importlangs ) --
 	end
 	-- drop unwanted sourcedata before further processing
 	if     string.find(card.name, "%(DROP[ %a]*%)")
-		or string.find(card.name, "%([mM]int%)$")
-		or string.find(card.name, "%(near [mM]int%)$")
-		or string.find(card.name, "%([eE]xce[l]+ent%)$")
-		or string.find(card.name, "%(light played%)$")
-		or string.find(card.name, "%([lL][pP]%)$")
-		or string.find(card.name, "%(light played/played%)")
-		or string.find(card.name, "%([lL][pP]/[pP]%)$")
-		or string.find(card.name, "%(played%)$")
-		or string.find(card.name, "%([pP]%)$")
-		or string.find(card.name, "%(knick%)$")
-		or string.find(card.name, "%(geknickt%)$")
+	or string.find(card.name, "%([mM]int%)$")
+	or string.find(card.name, "%(near [mM]int%)$")
+	or string.find(card.name, "%([eE]xce[l]+ent%)$")
+	or string.find(card.name, "%(light played%)$")
+	or string.find(card.name, "%([lL][pP]%)$")
+	or string.find(card.name, "%(light played/played%)")
+	or string.find(card.name, "%([lL][pP]/[pP]%)$")
+	or string.find(card.name, "%(played%)$")
+	or string.find(card.name, "%([pP]%)$")
+	or string.find(card.name, "%(knick%)$")
+	or string.find(card.name, "%(geknickt%)$")
 	then
 		card.drop = true
 		if DEBUG then
@@ -617,8 +661,8 @@ function buildCardData ( names, price, setid, fruc, setgerman , importlangs ) --
 		return card
 	end -- if entry to be dropped
 
---TODO	card.condition = "NONE"
-	
+	--TODO	card.condition = "NONE"
+
 	-- define price according to card.foil and card.variant
 	if card.variant then
 		if DEBUG then
@@ -655,17 +699,17 @@ function buildCardData ( names, price, setid, fruc, setgerman , importlangs ) --
 	return card
 end -- function buildCardData
 
-function fillCardsetTable ( card ) --[[ do duplicate checking and add card to cardsetTable
-cardsetTable will hold all prices to be imported, one row per card.
-moved to seperate function to allow early return on unwanted duplicates	]]
- --[[ parameters
-		card 	: single tablerow from buildCardData
-	returns
-		retval
-		oldCardrow
-		newCardrow
-		mergedCardrow
+--[[-
+ add card to cardsetTable.
+ do duplicate checking and add card to cardsetTable.
+ cardsetTable will hold all prices to be imported, one row per card.
+ moved to seperate function to allow early return on unwanted duplicates.
+ 
+ @function [parent=#global] fillCardsetTable
+ @param #table card		single tablerow from buildCardData
+ @return #string, #table, #table, #table	compare result, oldCardrow, newCardrow, mergedCardrow
 ]]
+function fillCardsetTable ( card )
 	if DEBUG then
 		llog("fCT\t fill with " .. deeptostring(card) ,2)
 	end
@@ -687,8 +731,8 @@ moved to seperate function to allow early return on unwanted duplicates	]]
 					llog (" varnr " .. varnr ,2)
 				end
 				if 		newCardrow.variant[varnr] == oldCardrow.variant[varnr]
-					or	newCardrow.variant[varnr] and not oldCardrow.variant[varnr]
-					or	oldCardrow.variant[varnr] and not newCardrow.variant[varnr]
+				or	newCardrow.variant[varnr] and not oldCardrow.variant[varnr]
+				or	oldCardrow.variant[varnr] and not newCardrow.variant[varnr]
 				then
 					mergedCardrow.variant[varnr] = oldCardrow.variant[varnr] or newCardrow.variant[varnr]
 					if DEBUG then
@@ -714,8 +758,8 @@ moved to seperate function to allow early return on unwanted duplicates	]]
 					llog ("fCT\t varnr " .. varnr ,2)
 				end
 				if 		newCardrow.regprice[varname] == oldCardrow.regprice[varname]
-					or	newCardrow.regprice[varname] and not oldCardrow.regprice[varname]
-					or	oldCardrow.regprice[varname] and not newCardrow.regprice[varname]
+				or	newCardrow.regprice[varname] and not oldCardrow.regprice[varname]
+				or	oldCardrow.regprice[varname] and not newCardrow.regprice[varname]
 				then
 					mergedCardrow.regprice[varname] = oldCardrow.regprice[varname] or newCardrow.regprice[varname]
 					if DEBUG then
@@ -736,8 +780,8 @@ moved to seperate function to allow early return on unwanted duplicates	]]
 					retval = "conflict regprices"
 				end -- if newCardrow.regprice[varname] == oldCardrow.regprice[varname]
 				if 		newCardrow.foilprice[varname] == oldCardrow.foilprice[varname]
-					or	newCardrow.foilprice[varname] and not oldCardrow.foilprice[varname]
-					or	oldCardrow.foilprice[varname] and not newCardrow.foilprice[varname]
+				or	newCardrow.foilprice[varname] and not oldCardrow.foilprice[varname]
+				or	oldCardrow.foilprice[varname] and not newCardrow.foilprice[varname]
 				then
 					mergedCardrow.foilprice[varname] = oldCardrow.foilprice[varname] or newCardrow.foilprice[varname]
 					if DEBUG then
@@ -760,8 +804,8 @@ moved to seperate function to allow early return on unwanted duplicates	]]
 			end -- for varnr,varname
 		else -- not variant
 			if 		newCardrow.regprice == oldCardrow.regprice
-				or	newCardrow.regprice and not oldCardrow.regprice
-				or	oldCardrow.regprice and not newCardrow.regprice
+			or	newCardrow.regprice and not oldCardrow.regprice
+			or	oldCardrow.regprice and not newCardrow.regprice
 			then
 				mergedCardrow.regprice = oldCardrow.regprice or newCardrow.regprice
 				if DEBUG then
@@ -782,8 +826,8 @@ moved to seperate function to allow early return on unwanted duplicates	]]
 				retval = "conflict regprice"
 			end -- if newCardrow.regprice == oldCardrow.regprice
 			if 		newCardrow.foilprice == oldCardrow.foilprice
-				or	newCardrow.foilprice and not oldCardrow.foilprice
-				or	oldCardrow.foilprice and not newCardrow.foilprice
+			or	newCardrow.foilprice and not oldCardrow.foilprice
+			or	oldCardrow.foilprice and not newCardrow.foilprice
 			then
 				mergedCardrow.foilprice = oldCardrow.foilprice or newCardrow.foilprice
 				if DEBUG then
@@ -817,14 +861,22 @@ moved to seperate function to allow early return on unwanted duplicates	]]
 	return retval, mergedCardrow,oldCardrow,newCardrow
 end -- function fillCardsetTable
 
+--[[-
+ function to sanitize ANSI encoded strings.
+ Note that this would not be necessary if the script was saved ANSI encoded instead of utf-8,
+ but then again it would not send utf-8 strings to MA :)
+ Only replaces previously encountered special characters;
+ see https://en.wikipedia.org/wiki/Windows-1252#Codepage_layout if you need to add more.
 
+@function [parent=#global] ansi2utf
+@param #string str	string with ansi encoded non-ascii characters
+returns #string with utf8 encoded non-ascii characters
+]]
 function ansi2utf ( str )
- --[[ function to sanitize ANSI encoded strings.
-Note that this would not be necessary if the script was saved ANSI encoded instead of utf-8,
-but then again it would not send utf-8 strings to ma :)
-Only replaces previously encountered special characters;
-see https://en.wikipedia.org/wiki/Windows-1252#Codepage_layout if you need to add more.
-]]--
+--[[
+	just keeping this sniplett here in case I need it again
+	str = string.gsub(str, "^\239\187\191", "") -- remove unicode BOM (0xEF, 0xBB, 0xBF)
+]]
 	if "string" == type (str) then
 		str = string.gsub(str, "\198", "Æ")
 		str = string.gsub(str, "\226", "â")
@@ -844,10 +896,20 @@ see https://en.wikipedia.org/wiki/Windows-1252#Codepage_layout if you need to ad
 		return str
 	end
 end -- function ansi2utf
+
+--[[-
+ flexible logging.
+ mode 1 for VERBOSE.
+ mode 2 for DEBUG.
+ else log.
+ add other modes as needed
+
+ @function [parent=#global] llog
+ @param #string str		log text
+ @param #number m 		(optional) mode, default is normal logging
+ @param #number a		(optional) 0 to overwrite, default is append
+]]
 function llog ( str, m , a)
- --[[ mode 1 for VERBOSE.
-	 mode 2 for DEBUG.
-	 else log. add other modes as needed ]]
 	local mode = m or 0
 	local apnd = a or 1
 	local logfile = "Prices\\" .. string.gsub(scriptname, "lua$","log")
@@ -864,6 +926,13 @@ function llog ( str, m , a)
 		ma.Log(str)
 	end
 end
+--[[-
+ get table length
+ 
+ @function [parent=#global] tlength
+ @param #table tbl
+ @return #number
+]]
 function tlength ( tbl )
 	if type ( tbl) == "table" then
 		local result = 0
@@ -875,6 +944,13 @@ function tlength ( tbl )
 		return nil
 	end
 end
+--[[-
+ recursively get string representation
+ 
+ @function [parent=#global] deeptostring
+ @param tbl
+ @return #string 
+]]
 function deeptostring (tbl)
 	if type(tbl) == 'table' then
 		local s = '{ '

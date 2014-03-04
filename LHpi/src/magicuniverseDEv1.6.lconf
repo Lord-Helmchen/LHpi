@@ -1,15 +1,21 @@
-﻿--*- coding: utf-8 -*- 
---[[ site configuraion for magicuniverseDEv1.3.lua
-
+--*- coding: utf-8 -*- 
+--[[-
+site configuration for magicuniverseDEv1.6.lua
+@module magicuniverseDE.lconf
+@author Christian Harms
+@copyright 2012-2013 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
+@release This program is free software: you can redistribute it and/or modify
 ]]
-
-STAMMKUNDE = false -- for magicuniverse.de, parse 10% lower Stammkunden-Preis instead of default price (the one sent to the Warenkorb)
+--FIXME luadoc this file
+local STAMMKUNDE = false -- for magicuniverse.de, parse 10% lower Stammkunden-Preis instead of default price (the one sent to the Warenkorb)
 
 sitedomain = "www.magicuniverse.de/html/"
 sitefile = "magic.php?startrow=1"
 sitesetprefix = "&edition="
 sitefrucprefix = "&rarity="
 sitesuffix = ""
+--TODO generalize to loop through langs for different urls
+--sitelangurls = { [1] = "", [3] = "" }
 
 siteRegex = '<tr>\n<td align="center">\n%b<>%b<>\n%b<>%b<>%b<>\n%b<>%b<>\n(.-)\n%b<>\n</td>\n</tr>'
 
@@ -40,7 +46,7 @@ function siteCardDataManipulation ( card , setid )
 		if string.find( card.name, "%([aA]lpha%)" ) then
 			card.name = string.gsub( card.name, "%s*%([aA]lpha%)", "" )
 		else -- not "(alpha")
-			card.name = card.name .. "(DROP notalpha)" -- change card.name to prevent import
+			card.name = card.name .. "(DROP not alpha)" -- change card.name to prevent import
 		end
 	elseif setid == 100 then -- importing Beta
 		if string.find( card.name, "%([aA]lpha%)" ) then
@@ -86,7 +92,7 @@ avsets = { -- table that describes sets available for price import
           id:	numerical database set id (can be found in "Database\Sets.txt" file)
  	   cards:	table of expected cardcounts used for sanity checking the import.
 				must be hardcoded here until ma.getcardcount(setid, cardtype[all|regular|token|basicland] is possile :)
-   cards.reg:	numer of expected regular cards
+   cards.reg:	number of expected regular cards
    cards.tok:	number of expected tokens
         fruc:	table of available rarity urls to be parsed
 	 fruc[1]:	boolean, does foil url exist?
@@ -95,6 +101,7 @@ avsets = { -- table that describes sets available for price import
 	 fruc[4]:	boolean, does commons url exist?
 	 fruc[5]:	TimeSpiral Timeshifted
 				looks like i can manually request a Foil url, which includes both Time Spiral AND Timeshifted
+--TODO change to langs {} to loop through
 	  german:	"N" - no german cards, "Y" - german cards, "O" - only german card
 		 url:	price url infix
  --]]
@@ -116,6 +123,7 @@ avsets = { -- table that describes sets available for price import
  -- Alpha in Beta with "([Aa]lpha)" suffix
 [90] ={id =  90, cards = { reg = 395, tok = 0 },	german="N", fruc = { false,true,true,true }, url = "Beta"}, 
  -- Expansions
+[793]={id = 793, cards = { reg = 249, tok = 8 }, 	german="Y", fruc = { true,true,true,true }, url = "Gatecrash"},
 [791]={id = 791, cards = { reg = 274, tok = 12 }, 	german="Y", fruc = { true,true,true,true }, url = "Return%20to%20Ravnica"},
 [782]={id = 782, cards = { reg = 264, tok = 12 },	german="Y", fruc = { true,true,true,true }, url = "Innistrad"}, 
 [784]={id = 784, cards = { reg = 158, tok = 3 },	german="Y", fruc = { true,true,true,true }, url = "Dark%20Ascension"}, 
@@ -217,6 +225,9 @@ namereplace = { -- tables that defines a replacement list for card names
 },
 [90] = { -- Alpha
 ["Time Walk (alpha, near mint)"]		= "Time Walk (alpha)(near mint)"
+},
+[793] = { -- Gatecrash
+["AEtherize"]							= "Ætherize"
 },
 [782] = { -- Innistrad
 ["Bloodline Keeper"] 					= "Bloodline Keeper|Lord of Lineage",
@@ -1116,12 +1127,13 @@ expectedcount = { -- pENGset,pGERset,pGERfailed,pENGfailed,dropped,namereplace
 [630] = { pset={ 339, nil, 332 }, failed={ 0, nil, 7 }, dropped=0, namereplace=0 },-- ok
 [550] = { pset={ 338, nil, 336 }, failed={ 0, nil, 2 }, dropped=0, namereplace=0 },-- ok
 [460] = { pset={ 220, nil, 220 }, failed={ 0, nil, 0 }, dropped=0, namereplace=0 },--ok
-[180] = { pset={ 242, nil, 242 }, failed={ 0, nil, 0 }, dropped=0, namereplace=0 },-- ok
+[180] = { pset={ 242, nil, 242 }, failed={ 1, nil, 1 }, dropped=0, namereplace=0 },-- ok
 [140] = { pset={ 306, nil, 47 }, failed={ 7, nil, 4 }, dropped=194, namereplace=3 },-- ok
 [139] = { pset={ 0, nil, 306 }, failed={ 0, nil, 0 }, dropped=9, namereplace=19 },-- ok
 [110] = { pset={ 278, nil, 0 }, failed={ 13, nil, 0 }, dropped=94, namereplace=1 },-- ok
 [100] = { pset={ 168, nil, 0 }, failed={ 19, nil, 0 }, dropped=340, namereplace=1 },--ok
 [90]  = { pset={ 234, nil, 0 }, failed={ 1, nil, 0 }, dropped=292, namereplace=0 },-- ok
+[793] = { pset={ 257, nil, 249 }, failed={ 0, nil, 0 }, dropped = 0, namereplace=1 },
 [791] = { pset={ 286, nil, 274 }, failed={ 0, nil, 12 }, dropped = 0, namereplace=0 },
 [782] = { pset={ 277, nil, 264 }, failed={ 0, nil, 10 }, dropped=0, namereplace=41 },--ok
 [784] = { pset={ 162, nil, 158 }, failed={ 0, nil, 4 }, dropped=0, namereplace=27 },--ok
