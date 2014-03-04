@@ -27,8 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-use LHpi-v2.1
-let LHpi lib set savepath
+Updated for MA 1.5.2.264b
+use LHpi-v2.2
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -65,13 +65,13 @@ SAVELOG = true
 --- save price table to file before importing to MA;	default false
 -- @field [parent=#global] #boolean SAVETABLE
 SAVETABLE = false
---- must always be equal to the scripts filename !
--- @field [parent=#global] #string scriptname	
-scriptname = "LHpi.mtgmintcard-v2.1.lua" 
-
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.1"
+libver = "2.2"
+--- must always be equal to the scripts filename !
+-- @field [parent=#global] #string scriptname	
+scriptname = "LHpi.mtgmintcard-v" .. libver .. ".1.lua" 
+
 --- @field [parent=#global] #table LHpi		LHpi library table
 LHpi = {}
 
@@ -287,6 +287,7 @@ site.sets = {
 [100]={id = 100,	lang = { true , 	[9]=false }, 	fruc = { false,true }, 	url = "Beta"},
 [90] ={id =  90,	lang = { true , 	[9]=false }, 	fruc = { false,true }, 	url = "Alpha"}, 
  -- Expansions
+[795]={id = 795,	lang = { true , 	[9]=true }, 	fruc = { true, true }, 	url = "Dragon's+Maze"},
 [793]={id = 793,	lang = { true , 	[9]=true }, 	fruc = { true, true }, 	url = "Gatecrash"},
 [791]={id = 791, 	lang = { true , 	[9]=true }, 	fruc = { true ,true }, 	url = "Return+to+Ravnica"},
 [786]={id = 786,	lang = { true , 	[9]=true }, 	fruc = { true ,true }, 	url = "Avacyn+Restored"},
@@ -376,6 +377,10 @@ site.namereplace = {
 [140] = { -- Revised Edition
 ["El-Hajjâj"]							= "El-Hajjaj",
 },
+[795] = { -- Dragon's Maze
+["Ætherling (Aetherling)"]				= "Ætherling",
+["Breaking | Entering"]					= "Breaking|Entering"
+},
 [793] = { -- Gatecrash
 ["AEtherize"]							= "Ætherize",
 },
@@ -463,6 +468,9 @@ site.namereplace = {
 [270] = { -- Weatherlight
 ["Bosium Strip"]						= "Bösium Strip"
 },
+[220] = { -- Alliances
+["Lim-Dul's High Guard"]				= "Lim-Dûl's High Guard"
+},
 [190] = { -- Ice Age
 ["Lim-Dul's Cohort"] 					= "Lim-Dûl’s Cohort",
 ["Marton Stromgald"] 					= "Márton Stromgald",
@@ -528,12 +536,13 @@ site.expected = {
 [550] = { pset={ 357-27, [9]=0 } },
 [460] = { pset={ 350-20, [9]=0 }, failed={ [9]=125 }, dropped=3, namereplaced=1 },
 [360] = { pset={ 350-20 }, dropped=20 },
-[250] = { pset={ 449-20 }, dropped=53, namereplaced=1 },
+[250] = { pset={ 449-20 }, dropped=52, namereplaced=1 },
 [180] = { pset={ 378-15, [9]=0 }, dropped=96, namereplaced=1 },
-[140] = { pset={ 306-15, [9]=0 }, dropped=42, namereplaced=1 },
+[140] = { pset={ 306-15, [9]=0 }, dropped=41, namereplaced=1 },
 [110] = { dropped=4 },
 [100] = { pset={ 302-19 } },
 -- Expansions
+[795] = { namereplaced=7 },
 [793] = { pset={ [9]=249-1 }, failed={ [9]=1 }, namereplaced=4 },
 [786] = { pset={ [9]=244+1 }, namereplaced=2 },-- why +1?
 [784] = { namereplaced=5 },
@@ -542,7 +551,6 @@ site.expected = {
 [775] = { namereplaced=3 },
 [773] = { namereplaced=2 },
 [762] = { pset={ 269-20,[9]=269-20 }, dropped=1 },
-[754] = { dropped=1 },
 [751] = { pset={ [9]=301-20 } },
 [730] = { pset={ 301-1, [9]=301-1 }, dropped=2 },
 [710] = { dropped=2, namereplaced=2 },
@@ -563,26 +571,26 @@ site.expected = {
 [530] = { pset={ [9]=0 }, failed={ [9]=96 }, dropped=2 },
 [520] = { pset={ [9]=0 }, dropped=9 },
 [510] = { pset={ [9]=0 }, failed={ [9]=143 }, 	dropped=17 },
-[500] = { pset={ [9]=0 }, failed={ [9]=40 }, 	dropped=9 },
+[500] = { pset={ [9]=0 }, failed={ [9]=40 }, 	dropped=8 },
 [480] = { pset={ 350-20, [9]=0 }, failed={ [9]=166 }, 	dropped=36 },
 [470] = { pset={ [9]=0 }, dropped=4, namereplaced=1 },
 [450] = { pset={ 146-3, [9]=0 }, dropped=24 },
 [430] = { pset={ 350-20, [9]=0 }, failed={ [9]=144 }, 	dropped=104 },
 [420] = { pset={ 143-60, [9]=0 }, dropped=8 },
 [410] = { pset={ 143-1, [9]=0 }, dropped=13 },
-[400] = { pset={ 350-20, [9]=0 }, dropped=16 },
-[370] = { pset={ [9]=0 }, dropped=16 },
+[400] = { pset={ 350-20, [9]=0 }, dropped=15 },
+[370] = { pset={ [9]=0 }, dropped=15 },
 [350] = { pset={ [9]=0 }, dropped=11 },
 [330] = { pset={ 350-20, [9]=0 }, dropped=38, namereplaced=1 },
-[300] = { pset={ [9]=0 }, dropped=13 },
-[290] = { pset={ [9]=0 }, dropped=29 },
-[280] = { pset={ 350-20, [9]=0 }, dropped=66 },
+[300] = { pset={ [9]=0 }, dropped=12 },
+[290] = { pset={ [9]=0 }, dropped=28 },
+[280] = { pset={ 350-20, [9]=0 }, dropped=64 },
 [270] = { pset={ [9]=0 }, dropped=9, namereplaced=1 },
-[240] = { pset={ [9]=0 }, dropped=13 },
-[230] = { pset={ 350-21, [9]=0 }, dropped=83 },
-[220] = { pset={ [9]=0 }, dropped=12 },
+[240] = { pset={ [9]=0 }, dropped=12 },
+[230] = { pset={ 350-21, [9]=0 }, dropped=80 },
+[220] = { pset={ [9]=0 }, dropped=12, namereplaced=1 },
 [210] = { pset={ [9]=0 }, dropped=7 },
-[190] = { pset={ 383-15, [9]=0 }, dropped=94, namereplaced=5 },
+[190] = { pset={ 383-15, [9]=0 }, dropped=92, namereplaced=5 },
 [170] = { dropped=20 },
 [160] = { dropped=9 },
 [150] = { dropped=23 },

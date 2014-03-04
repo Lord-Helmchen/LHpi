@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-use LHpi-v2.1
+use LHpi-v2.2
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -34,7 +34,7 @@ VERBOSE = true
 --- @field [parent=#global] #boolean LOGDROPS 			default false
 LOGDROPS = true
 --- @field [parent=#global] #boolean LOGNAMEREPLACE 	default false
-LOGNAMEREPLACE = false
+LOGNAMEREPLACE = true
 
 -- options that control the script's behaviour.
 --- compare card count with expected numbers; default true
@@ -62,17 +62,17 @@ SAVELOG = true
 --- save price table to file before importing to MA;	default false
 -- @field [parent=#global] #boolean SAVETABLE
 SAVETABLE = false
+--- revision of the LHpi library to use
+-- @field [parent=#global] #string libver
+libver = "2.2"
 --- must always be equal to the scripts filename !
 -- @field [parent=#global] #string scriptname
-scriptname = "LHpi.sitescriptTemplate-v2.1.lua" 
+scriptname = "LHpi.sitescriptTemplate-v".. libver .. ".1.lua" 
 --- savepath for OFFLINE (read) and SAVEHTML (write). must point to an existing directory relative to MA's root.
 -- set by LHpi lib unless specified here.
 -- @field [parent=#global] #string savepath
 --savepath = "Prices\\" .. string.gsub( scriptname , "%-v%d+%.%d+%.lua$" , "" ) .. "\\"
 
---- revision of the LHpi library to use
--- @field [parent=#global] #string libver
-libver = "2.1"
 --- @field [parent=#global] #table LHpi		LHpi library table
 LHpi = {}
 

@@ -24,12 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-use LHpi-v2.1
-let LHpi lib set savepath
-Note that cards with multiple versions are averaged in some sets and set to "variant 1"'s price in others, as the source list does not clearly identify the version.
-Even when it does, it is unclear if the entry without version suffix is meant to be all unspecified or version 1 only.
-As I wanted to keep this sitescript as basic as possible, I decided against guessing a real variant table and just added expected failcounts.
-supports all core and expansions up to gatecrash, also 3 portal sets and both "Un-sets"
+Updated for MA 1.5.2.264b
+use LHpi-v2.2
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -66,13 +62,13 @@ SAVELOG = true
 --- save price table to file before importing to MA;	default false
 -- @field [parent=#global] #boolean SAVETABLE
 SAVETABLE = false
---- must always be equal to the scripts filename !
--- @field [parent=#global] #string scriptname	
-scriptname = "LHpi.tcgplayerPriceGuide-v2.1.lua" 
-
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.1"
+libver = "2.2"
+--- must always be equal to the scripts filename !
+-- @field [parent=#global] #string scriptname	
+scriptname = "LHpi.tcgplayerPriceGuide-v" .. libver .. ".1.lua" 
+
 --- @field [parent=#global] #table LHpi		LHpi library table
 LHpi = {}
 
@@ -248,6 +244,7 @@ site.sets = {
 [100]={ id = 100 , fruc = { true , false} , lang = { true }, url = "Beta%20Edition"},
 [90] ={ id =  90 , fruc = { true , false} , lang = { true }, url = "Alpha%20Edition"},
 -- Expansions
+[795]={ id = 795 , fruc = { true , true } , lang = { true }, url = "Dragon's%20Maze"},
 [793]={ id = 793 , fruc = { true , true } , lang = { true }, url = "Gatecrash"},
 [791]={ id = 791 , fruc = { true , true } , lang = { true }, url = "Return%20to%20Ravnica"},
 [786]={ id = 786 , fruc = { true , true } , lang = { true }, url = "Avacyn%20Restored"},
@@ -372,6 +369,9 @@ site.namereplace = {
 [140] = { -- Revised
 ["El-Hajjâj"]							= "El-Hajjaj",
 },
+[795] = { -- Dragon's Maze
+["AEtherling"]							= "Ætherling",
+},
 [793] = { -- Gatecrash
 ["Aetherize"]							= "Ætherize",
 },
@@ -454,6 +454,9 @@ site.namereplace = {
 },
 [270] = { -- Weatherlight
 ["Bosium Strip"]						= "Bösium Strip"
+},
+[220] = { -- Alliances
+["Lim-Dul's High Guard"]				= "Lim-Dûl's High Guard"
 },
 [190] = { -- Ice Age
 ["Lim-Dul's Cohort"] 					= "Lim-Dûl’s Cohort",
@@ -544,6 +547,7 @@ site.expected = {
 [100] = { failed={ 10 } },
 [90]  = { failed={ 10 } },
 -- Expansions
+[795] = { namereplaced=1 },
 [793] = { namereplaced=1 },
 [784] = { namereplaced=14 },
 [782] = { pset={ 264+1 }, namereplaced=21 },
@@ -559,6 +563,7 @@ site.expected = {
 [590] = { namereplaced=10 },
 [450] = { pset={ 146-3 } },
 [250] = { namereplaced=1 },
+[220] = { namereplaced=1 },
 [210] = { failed={ 25 } },
 [190] = { namereplaced=5 },
 [170] = { failed={ 85 } },
