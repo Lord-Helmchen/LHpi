@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>LHpi</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>org.eclipse.dltk.core.scriptbuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+	<natures>
+		<nature>org.eclipse.koneki.ldt.nature</nature>
+	</natures>
+	<linkedResources>
+		<link>
+			<name>Prices</name>
+			<type>2</type>
+			<location>D:/Magic - The Gathering/Magic Album/Prices</location>
+		</link>
+	</linkedResources>
+	<filteredResources>
+		<filter>
+			<id>1393928146206</id>
+			<name>Prices</name>
+			<type>6</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-*.csv</arguments>
+			</matcher>
+		</filter>
+	</filteredResources>
+</projectDescription>
