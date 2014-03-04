@@ -4,12 +4,12 @@ to test LHpi within an IDE and without needing Magic Album
 
 Inspired by and loosely based on "MTG Mint Card.lua" by Goblin Hero, Stromglad1 and "Import Prices.lua" by woogerboy21;
 who generously granted permission to "do as I like" with their code;
-everything else Copyright (C) 2012-2013 by Christian Harms.
+everything else Copyright (C) 2012-2014 by Christian Harms.
 If you want to contact me about the script, try its release thread in http://www.slightlymagic.net/forum/viewforum.php?f=32
 
 @module dummyMA
 @author Christian Harms
-@copyright 2012-2013 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
+@copyright 2012-2014 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
 @release This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -24,7 +24,27 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
---- @module ma
+--[[ CHANGES
+fixed compatibility with lua 5.1 (only worked with 5.2 before)
+]]
+
+--[[- "main" function called by Magic Album; just display error and return.
+ Called by Magic Album to import prices. Parameters are passed from MA.
+ We don't want to call the dummy from within MA.
+ @function [parent=#global] ImportPrice
+ @param #string importfoil	"Y"|"N"|"O"
+ @param #table importlangs	{ #number = #string }
+ @param #table importsets	{ #number = #string }
+]]
+function ImportPrice(importfoil, importlangs, importsets)
+	ma.Log( "Called dummyMa from MA. Raising error to inform user via dialog box." )
+	error ("dummyMA.lua is not an import script. Do not attempt to use it from within MA!")
+end -- function ImportPrice
+
+--[[-
+Simulate MA's API functions
+@module ma
+]]
 ma = {}
 if not io then
 	io = {}
@@ -35,12 +55,7 @@ if not io then
 	io.write = function ()  end
 end
 
-function ImportPrice(importfoil, importlangs, importsets)
-	ma.Log( "Called dummyMa from MA. Raising error to inform user via dialog box." )
-	error ("dummyMA.lua is not an import script. Do not attempt to use it from within MA!")
-end -- function ImportPrice
-
---- GetURL
+--- GetURL.
 -- Returns downloaded web page or nil if there was an error (page not found, network problems, etc.)
 -- dummy: just prints request to stdout
 -- 
@@ -50,10 +65,17 @@ end -- function ImportPrice
 -- @return nil on error
 function ma.GetUrl(url)
 	print("dummy.GetUrl called for " .. url)
+	local host,file = string.match(url, "http://([^/]+)/(.+)" )
+--	try {
+--		require "luasocket"
+--		local c = assert(socket.connect(host, 80))
+--		c:send("GET " .. file .. " HTTP/1.0\r\n\r\n")
+--		c:close()
+--	}
 	return nil
 end
 
---- GetFile
+--- GetFile.
 -- Returns loaded file or nil if there was an error (file not found, out of memory, etc.).
 -- For security reasons only files from the Magic Album folder can be loaded.
 -- filepath is relative to the Magic Album folder. I.e. if you call
@@ -79,7 +101,7 @@ function ma.GetFile(filepath)
 	return file
 end
 
---- PutFile
+--- PutFile.
 -- Saves data to the file. For security reasons the file is placed inside the Magic Album folder.
 -- "filepath" is relative to the Magic Album folder (see GetFile description).
 -- If "append" parameter is missing or 0 - file will be overwritten.
@@ -106,7 +128,7 @@ function ma.PutFile(filepath, data, append)
     io.output(temp)				-- restore previous current file
 end
 
---- Log
+--- Log.
 -- Adds debug message to Magic Album log file.
 -- dummy: just prints to stdout instead.
 -- 
@@ -116,7 +138,7 @@ function ma.Log(message)
 	print("ma.Log\t" .. tostring(message) )
 end
 
---- SetPrice
+--- SetPrice.
 -- Set the price of the certain card.
 -- setid is the numeric ID of the set. You can find all available IDs in "Database\Sets.txt" file.
 -- langid is the numeric ID of the language. You can find all available IDs in "Database\Languages.txt" file.
@@ -124,7 +146,7 @@ end
 -- cardversion is the version of the card as it is shown in Magic Album. If set to "*" all versions of the card will be processed.
 -- regprice and foilprice are the numerical values. Pass zero if you do not know or do not want to set the value.
 -- this function returns the number of modified cards.
--- dummy: just prints request to stdout
+-- dummy: just prints request to stdout and return 1
 -- 
 -- Examples:
 -- Set the price of foil M11 English Celestial Purge to $4.25
@@ -158,7 +180,7 @@ function ma.SetPrice(setid, langid, cardname, cardversion, regprice, foilprice)
 	return 1 -- just always assume one price was set successfully
 end
 
---- SetProgress
+--- SetProgress.
 -- Sets progress bar text and position. Position is a numeric value in range 0..100. 
 -- dummy: just prints request to stdout
 -- 
@@ -169,19 +191,38 @@ function ma.SetProgress(text, position)
 	print("ma.SetProgress\t " .. position .. " %\t: \"" .. text .. "\"")
 end
 
-function loadlibonly()
-	local libver="2.1"
+---@module dummy
+dummy={}
+
+--[[- loads LHpi library for testing.
+@function [parent=#dummy] loadlibonly
+@param libver	library version to be loaded
+@return nil, but scriptname is loaded and executed
+]]
+function dummy.loadlibonly(libver)
+	--local libver="2.7"
 	do -- load LHpi library from external file
-		local libfile = "Prices\\LHpi-v" .. libver .. ".lua"
-		local LHpilib = ma.GetFile( libfile )
+		local libname = "Prices\\lib\\LHpi-v" .. libver .. ".lua"
+		local LHpilib = ma.GetFile( libname )
 		if not LHpilib then
-			error( "LHpi library " .. libfile .. " not found." )
+			error( "LHpi library " .. libname .. " not found." )
 		else -- execute LHpilib to make LHpi.* available
 			LHpilib = string.gsub( LHpilib , "^\239\187\191" , "" ) -- remove unicode BOM (0xEF, 0xBB, 0xBF) for files tainted by it :)
-			if VERBOSE then
-				ma.Log( "LHpi library " .. libfile .. " loaded and ready for execution." )
+			if _VERSION == "Lua 5.1" then
+				-- not only do we need to change the way the library is loaded,
+				-- but also how the data file is loaded from within the library
+				LHpilib = string.gsub(LHpilib, 'errormsg = load','errormsg=loadstring' )
 			end
-			local execlib,errormsg = load( LHpilib , "=(load) LHpi library" )
+			if VERBOSE then
+				ma.Log( "LHpi library " .. libname .. " loaded and ready for execution." )
+			end
+			local execlib,errormsg=nil
+			if _VERSION == "Lua 5.1" then
+				-- we need to change the way the library is loaded
+				execlib,errormsg = loadstring( LHpilib , "=(loadstring) LHpi library" )
+			else
+				execlib,errormsg = load( LHpilib , "=(load) LHpi library" )
+			end
 			if not execlib then
 				error( errormsg )
 			end
@@ -192,7 +233,54 @@ function loadlibonly()
 	LHpi.Log( "LHpi lib is ready to use." )
 end -- function
 
-local function mergetables (teins,tzwei,tdrei,tvier)
+--[[- load and execute sitescript.
+You can then call the sitescript's ImportPrice, as ma would do.
+@function [parent=#dummy] loadscript
+@param #string scriptname
+@return nil, but scriptname is loaded and executed
+]]
+function dummy.loadscript(scriptname)
+	do
+		local scriptfile = ma.GetFile( scriptname )
+		if not scriptfile then
+			error( "script " .. scriptname .. " not found." )
+		else
+			scriptfile = string.gsub( scriptfile , "^\239\187\191" , "" ) -- remove unicode BOM (0xEF, 0xBB, 0xBF) for files tainted by it :)
+			if _VERSION == "Lua 5.1" then
+				-- not only do we need to change the way the sitescript is loaded,
+				-- but also how the library is loaded from within the sitescript
+				scriptfile = string.gsub(scriptfile, 'local execlib,errormsg = load','local execlib,errormsg=loadstring')
+				--but we even need to go one level deeper: change how the library loads the data file
+				scriptfile = string.gsub( scriptfile,
+										'local execlib,errormsg=loadstring',
+										'LHpilib = string.gsub(LHpilib, "errormsg = load","errormsg=loadstring") local execlib,errormsg=loadstring'
+										 )
+			end
+			local execscript,errormsg=nil
+			if _VERSION == "Lua 5.1" then
+				-- we need to change the way the script is loaded
+				execscript,errormsg = loadstring( scriptfile , "=(loadstring)" .. scriptname )
+			else
+				execscript,errormsg = load( scriptfile , "=(load)" .. scriptname )
+			end
+			if not execscript then
+				error( errormsg )
+			end
+			execscript()
+		end--if scriptfile	
+	end--do
+	collectgarbage()
+end--function
+
+--[[- merge up to four tables.
+@function [parent=#dummy] mergetables
+@param #table teins
+@param #table twei
+@param #table tdrei
+@param #table tvier
+@return #table
+]]
+function dummy.mergetables (teins,tzwei,tdrei,tvier)
 	for k,v in pairs(tzwei) do 
 		teins[k] = v
 	end
@@ -209,6 +297,7 @@ local function mergetables (teins,tzwei,tdrei,tvier)
 	return teins
 end -- function
 
+--- @field #table alllangs
 local alllangs = {
  [1]  = "English";
  [2]  = "Russian";
@@ -228,6 +317,7 @@ local alllangs = {
  [16] = "Ancient Greek";
 }
 
+--- @field #table promosets
 local promosets = {
  [50] = "Full Box Promotion";
  [45] = "Magic Premiere Shop";
@@ -259,7 +349,14 @@ local promosets = {
  [4]  = "Ultra Rare Cards";
  [2]  = "DCI Legend Membership";
 }
+
+--- @field #table specialsets
 local specialsets = {
+ [801] = "Commander 2013 Edition";
+ [799] = "Duel Decks: Heroes vs. Monsters";
+ [798] = "From the Vault: Twenty";
+ [796] = "Modern Masters";
+ [794] = "Duel Decks: Sorin vs. Tibalt";
  [792] = "Commander's Arsenal";
  [790] = "Duel Decks: Izzet vs. Golgari";
  [789] = "From the Vault: Realms";
@@ -302,7 +399,11 @@ local specialsets = {
  [200] = "Chronicles";
  [70]  = "Vanguard";
 }
+--- @field #table expansionsets
 local expansionsets = {
+ [802] = "Born of the Gods";
+ [800] = "Theros";
+ [795] = "Dragon's Maze";
  [793] = "Gatecrash";
  [791] = "Return to Ravnica";
  [786] = "Avacyn Restored";
@@ -365,7 +466,9 @@ local expansionsets = {
  [130] = "Antiquities";
  [120] = "Arabian Nights";
 }
+--- @field #table coresets
 local coresets = {
+ [797] = "Magic 2014";
  [788] = "Magic 2013";
  [779] = "Magic 2012";
  [770] = "Magic 2011";
@@ -384,36 +487,44 @@ local coresets = {
  [90]  = "Alpha";
 }
 
-local function main()
-	print("dummy says: Hello lua!")
-	--loadlibonly()
-	--dofile("Prices\\Import Prices.lua")
-	dofile("Prices\\LHpi.magicuniverseDE-v2.1.lua")
-	--dofile("Prices\\LHpi.mtgmintcard-v2.1.lua")
-	--dofile("Prices\\LHpi.tcgplayerPriceGuide-v2.1.lua")
-	--dofile("Prices\\LHpi.trader-onlineDE-v2.1.lua")
+--[[- run as lua application  from your ide.
+
+@function [parent=#global] main
+]]
+function main()
+	print("dummy says: Hello " .. _VERSION .. "!")
+	--dummy.loadlibonly(2.7)
+	--LHpi.LoadData(1)
+	--dummy.loadscript("Prices\\LHpi.magicuniverseDE-v2.6.1.lua")
+	--dummy.loadscript("Prices\\LHpi.sitescriptTemplate-v2.7.1.1.lua")
+	--dummy.loadscript("Prices\\Import Prices.lua")
+	--dummy.loadscript("Prices\\LHpi.magicuniverseDE-v2.6.1.lua")	
+	--dummy.loadscript("Prices\\LHpi.trader-onlineDE-v2.6.1.lua")
+	dummy.loadscript("Prices\\LHpi.tcgplayerPriceGuide-v2.7.1.1.lua")
+	--dummy.loadscript("..\\Prices\\LHpi.mtgmintcard-v2.6.1.lua")
 	-- force debug enviroment options
 	VERBOSE = true
 	LOGDROPS = true
 	LOGNAMEREPLACE = true
+	LOGFOILTWEAK = true
 	CHECKEXPECTED = true
 	DEBUG = true
-	DEBUGSKIPFOUND = false
+	DEBUGSKIPFOUND = true
 	DEBUGVARIANTS = false
 	OFFLINE = true
 	SAVEHTML = false
-	SAVETABLE=true
+	SAVETABLE=false
 	print("dummy says: sitescript dofile'd")
 	local fakeimportfoil = "Y"
 	local fakeimportlangs = { [1] = "English" }
 	--local fakeimportlangs = { [3] = "German" }
-	local fakeimportlangs = { [1] = "English", [3]  = "German" , [5] = "Italian" ,[9] = "Simplified Chinese"}
+	--local fakeimportlangs = { [1] = "English", [3]  = "German" , [5] = "Italian" ,[9] = "Simplified Chinese"}
 	--local fakeimportlangs = alllangs
-	--local fakeimportsets = { [788] = "Magic 2013"; }
+	local fakeimportsets = { [600] = "DEBUG"; }
 	--local fakeimportsets = { [784]="Dark Ascension";[782]="Innistrad";[786]="Avacyn Restored";}
 	--local fakeimportsets = coresets
-	local fakeimportsets = mergetables ( coresets, expansionsets)
-	--local fakeimportsets = mergetables ( coresets, expansionsets, specialsets, promosets )
+	--local fakeimportsets = dummy.mergetables ( coresets, expansionsets)
+	--local fakeimportsets = dummy.mergetables ( coresets, expansionsets, specialsets, promosets )
 	ImportPrice( fakeimportfoil, fakeimportlangs, fakeimportsets )
 	--print(LHpi.Tostring( "this is a string." ))
 	print("dummy says: Goodbye lua!")
