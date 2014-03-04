@@ -27,7 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-updated expected counts for German Nemesis and others
+Updated for MA 1.5.2.264b
+use LHpi-v2.2
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -64,13 +65,13 @@ SAVELOG = true
 --- save price table to file before importing to MA;	default false
 -- @field [parent=#global] #boolean SAVETABLE
 SAVETABLE = false
---- must always be equal to the scripts filename !
--- @field [parent=#global] #string scriptname	
-scriptname = "LHpi.trader-onlineDE-v2.2.lua" 
-
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.1"
+libver = "2.2"
+--- must always be equal to the scripts filename !
+-- @field [parent=#global] #string scriptname	
+scriptname = "LHpi.trader-onlineDE-v" .. libver .. ".1.lua" 
+
 --- @field [parent=#global] #table LHpi		LHpi library table
 LHpi = {}
 
@@ -330,6 +331,7 @@ site.sets = {
 [100]={id = 100,	lang = { true , 	[3]=false }, 	fruc = { false,true }, 	url = "B%20"},
 [90] = nil, -- Alpha 
  -- Expansions
+[795]={id = 795,	lang = { true , 	[3]=true }, 	fruc = { true, true }, 	url = "DGM"},
 [793]={id = 793,	lang = { true , 	[3]=true }, 	fruc = { true, true }, 	url = "GTC"},
 [791]={id = 791, 	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "RTR"},
 [786]={id = 786,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "AVR"},
@@ -465,6 +467,10 @@ site.namereplace = {
 ["Will-O-The-Wisp"] 					= "Will-O’-The-Wisp" 
 },
 -- Expansions
+[795] = { -- Dragon's Maze
+["Aetherling"]							= "Ætherling",
+["Bewaffnet|Gefährlich"]				= "Bewaffnet|Gefärhlich",
+},
 [793] = { -- Gatecrash
 ["Aetherize"]							= "Ætherize",
 },
@@ -608,9 +614,16 @@ site.namereplace = {
 [530] = { -- Legions
 ["Brüllender Blutsiedler"]				= "Brüllender Blutsieder",
 },
+[420] = { -- Prophecy
+["Alexi, Westwindzauberin"]				= "Alexi Westwindzauberin",
+},
 [410] = { -- Portal Second Age
 ["Rhox (112)a"]							= "Rhox",
 ["Aufstrebender Envincar"]				= "Aufstrebender Evincar",
+},
+[400] = { -- Mercadian Masques
+["Älteste des Dunkelwaldes"]			= "Älteste des Dunkelwalds",
+["Cateranische Entführer"]				= "Cateranischer Entführer"
 },
 [290] = { -- Stronghold
 ["Engel des Krieges"]					= "Engel des Kriegers",
@@ -625,6 +638,8 @@ site.namereplace = {
 ["Lim-Duls Gruft"]						= "Lim-Dûls Gruft",
 ["Ahnen aus dem Yavimaya"]				= "Ahnen aus Yavimaya",
 ["Lim-Duls Paladin"]					= "Lim-Dûls Paladin",
+["Lim-Dul's High Guard"]				= "Lim-Dûl's High Guard",
+
 },
 [190] = { -- Ice Age
 ["Lim-Dul's Hex"]						= "Lim-Dûl's Hex",
@@ -740,6 +755,7 @@ EXPECTTOKENS = true,
 [110] = { pset={ 291 }, namereplaced=1 },
 [100] = { pset={ 251 } },
 -- Expansions
+[795] = { pset={ 157-1, [3]=157-1 }, namereplaced=2 }, -- -1 is elemental token
 [793] = { namereplaced=1 },
 [786] = { namereplaced=8 },
 [784] = { pset={ 161+1 }, failed={ [3]=1 }, namereplaced=7 }, --+1 is Checklist
@@ -760,12 +776,12 @@ EXPECTTOKENS = true,
 [590] = { namereplaced=32 },
 [580] = { namereplaced=4 },
 [530] = { namereplaced=2 },
-[420] = { pset={ [3]=0 }, failed={ [3]=143 } },
+[420] = { namereplaced=1 },
 [410] = { failed={ [3]=1 }, namereplaced = 3 },
-[400] = { pset={ [3]=0 }, failed={ [3]=335 } },
+[400] = { namereplaced=3 },
 [290] = { namereplaced=1 },
 [270] = { namereplaced=2 },
-[220] = { namereplaced=5 },
+[220] = { namereplaced=6 },
 [190] = { namereplaced=4 },
 [160] = { namereplaced=1 }, -- in ita
 [150] = { pset={ [5]=0 }, failed={ [5]=310 } },

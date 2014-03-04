@@ -27,7 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-updated expected counts for German Nemesis
+Updated for MA 1.5.2.264b
+use LHpi-v2.2
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -64,23 +65,23 @@ SAVELOG = true
 --- save price table to file before importing to MA;	default false
 -- @field [parent=#global] #boolean SAVETABLE
 SAVETABLE = false
+--- revision of the LHpi library to use
+-- @field [parent=#global] #string libver
+libver = "2.2"
 --- must always be equal to the scripts filename !
 -- @field [parent=#global] #string scriptname	
-scriptname = "LHpi.magicuniverseDE-v2.2.lua" 
+scriptname = "LHpi.magicuniverseDE-v" .. libver .. ".1.lua" 
 --[[FIXME the dynamic approach myname does not work, ma.GetFile returns nil for its own log :(
 do
 	--local _s,_e,myname = string.find( ma.GetFile("Magic Album.log"), "Starting Lua script .-([^\\]+%.lua)$" )
 	if myname then
 		scriptname = myname
 	else -- use hardcoded scriptname as fallback
-		scriptname = "LHpi.magicuniverseDE-v2.0.lua" -- should always be equal to the scripts filename !
+		scriptname = "LHpi.magicuniverseDE-v" .. libver .. ".1.lua" -- should always be equal to the scripts filename !
 	end
 end
 --]]
 
---- revision of the LHpi library to use
--- @field [parent=#global] #string libver
-libver = "2.1"
 --- @field [parent=#global] #table LHpi		LHpi library table
 LHpi = {}
 
@@ -244,7 +245,6 @@ function site.BCDpluginName ( name , setid )
 	-- probably need this to correct "die beliebtesten X der letzen Tage" entries 
 	--card.name = string.gsub( card.name , "?" , "'")
 	
-	
 	-- seperate "(alpha)" and beta from beta-urls
 	if setid == 90 then -- importing Alpha
 		if string.find( name , "%([aA]lpha%)" ) then
@@ -259,7 +259,6 @@ function site.BCDpluginName ( name , setid )
 			name = string.gsub( name , "%s*%(beta%)" , "" ) -- catch needlessly suffixed rawdata
 			name = string.gsub( name , "%(beta, " , "(") -- remove beta infix from condition descriptor
 		end 
-
 	end -- if setid
 	
 	-- mark condition modifier suffixed cards to be dropped
@@ -379,6 +378,7 @@ site.sets = {
  -- Alpha in Beta with "([Aa]lpha)" suffix
 [90] ={id =  90, lang = { true , [3]=false }, fruc = { false,true ,true ,true  }, url = "Beta"}, 
  -- Expansions
+[795]={id = 795, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Dragons%20Maze"},
 [793]={id = 793, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Gatecrash"},
 [791]={id = 791, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Return%20to%20Ravnica"},
 [786]={id = 786, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Avacyn%20Restored"},
@@ -701,6 +701,11 @@ site.namereplace = {
 [270] = { -- Weatherlight
 ["Æther Flash"]							= "AEther Flash"
 },
+[220] = { -- Alliances
+["Lim-Dul's Vault"]						= "Lim-Dûl's Vault",
+["Lim-Dul's Paladin"]					= "Lim-Dûl's Paladin",
+["Lim-Dul's High Guard"]				= "Lim-Dûl's High Guard",
+},
 [210] = { -- Homelands
 ["Æther Storm"]							= "AEther Storm"
 },
@@ -865,6 +870,7 @@ EXPECTTOKENS = true,
 [100] = { pset={ 302-134 },	failed={ 7 }, dropped=352, namereplaced=1 },
 [90]  = { pset={ 295-61 }, dropped=293,},
 -- Expansions
+[795] = { pset={ 157-1, [3]=157-1 } }, -- -1 is elemental token
 [793] = { namereplaced=1 },
 [786] = { namereplaced=5 },
 [784] = { pset={ 161+1 }, failed={ [3]=1 }, namereplaced=27 },-- +1/fail is checklist
@@ -897,9 +903,8 @@ EXPECTTOKENS = true,
 [480] = { pset={ 350-20, [3]=350-20 }, dropped=1, namereplaced=1 },
 [470] = { namereplaced=1 },
 [430] = { pset={ 350-20, [3]=350-20 }, namereplaced=1 },
-[420] = { pset={ [3]=0 }, failed={ [3]=143 } },
 [410] = { namereplaced=1 },
-[400] = { pset={ 350-20, [3]=0 },	failed={ [3]=330 } },
+[400] = { pset={ 350-20, [3]=350-20 } },
 [370] = { namereplaced=1},
 [330] = { namereplaced=1},
 [300] = { namereplaced=1},
@@ -907,6 +912,7 @@ EXPECTTOKENS = true,
 [280] = { pset={ 350-20,	[3]=350-20 } },
 [270] = { namereplaced=1 },
 [230] = { pset={ 350-20, [3]=350-20 } },
+[220] = { namereplaced=3 },
 [210] = { namereplaced=1 },
 [190] = { pset={ 383-20, [3]=383-20 }, dropped=1 },
 [160] = { dropped=9 },
