@@ -27,8 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-Updated for MA 1.5.2.264b
-use LHpi-v2.2
+updated dropcounts
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -70,7 +69,7 @@ SAVETABLE = false
 libver = "2.2"
 --- must always be equal to the scripts filename !
 -- @field [parent=#global] #string scriptname	
-scriptname = "LHpi.mtgmintcard-v" .. libver .. ".1.lua" 
+scriptname = "LHpi.mtgmintcard-v" .. libver .. ".2.lua" 
 
 --- @field [parent=#global] #table LHpi		LHpi library table
 LHpi = {}
@@ -531,7 +530,7 @@ site.expected = {
 [779] = { pset={ [9]=249+1 } },--why +1?
 [770] = { dropped=1 },
 [759] = { pset={ [9]=249-20 }, dropped=8, namereplaced=4 },
-[720] = { pset={ [9]=383-20, [9]=383-20 }, dropped=4, namereplaced=2 },
+[720] = { pset={ [9]=383-20, [9]=383-20 }, dropped=3, namereplaced=2 },
 [630] = { pset={ 359-31, [9]=0 } },
 [550] = { pset={ 357-27, [9]=0 } },
 [460] = { pset={ 350-20, [9]=0 }, failed={ [9]=125 }, dropped=3, namereplaced=1 },
@@ -539,7 +538,7 @@ site.expected = {
 [250] = { pset={ 449-20 }, dropped=52, namereplaced=1 },
 [180] = { pset={ 378-15, [9]=0 }, dropped=96, namereplaced=1 },
 [140] = { pset={ 306-15, [9]=0 }, dropped=41, namereplaced=1 },
-[110] = { dropped=4 },
+[110] = { dropped=3 },
 [100] = { pset={ 302-19 } },
 -- Expansions
 [795] = { namereplaced=7 },
