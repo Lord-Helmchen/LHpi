@@ -4,14 +4,20 @@ local LOGDROPS = false
 -- don't change these unless you know what you're doing :-)
 local OFFLINE = true
 local SAVEHTML = false
-local savepath = "Prices\\offline\\" -- for OFFLINE (read) and SAVEHTML (write)
+local savepath = "Prices\\offline\\" -- for OFFLINE (read) and SAVEHTML (write). must point to an existing directory relative to MA's root.
 local DEBUG = false
 local DEBUGVARIANTS = false
 local DEBUGTABLE = false
-local DEBUGTOKENS = false
 -- TODO
 local SAVEtable = false -- needs incremental putFile
 local SAVElog = false -- needs incremental putFile
+
+--[[ TODO
+put all htmldata into a sourceTable and discard htmldata
+then for pairs through the sourcetable
+externalize parsing and tablebuildiing into 2 functions
+tablebuild function can then be retruned from early on unwanted duplicates
+]]--
 
 avsets = { -- table that describes sets available for price import
 --[[ fields:
@@ -111,9 +117,9 @@ avsets = { -- table that describes sets available for price import
 {id = 160, cards = { reg = 119, tok = 0 },	german="N", fruc = { "N",true,true,true }, url = "The_Dark"}
 } -- end table avsets
 
-namereplace = { -- tables that defines a replacement list for card names
+namereplace = { -- tables that define a replacement list for card names
 [788] = { -- M2013
-["Liliana o. t. Dark Realms Emblem"]	= "Liliana of the Dark Realms Emblem",
+["Liliana o. t. Dark Realms Emblem"]	= "Liliana of the Dark Realms Emblem"
 },
 [720] = { -- 10th Rare 
 ["Kjelloran Royal Guard"]				= "Kjeldoran Royal Guard"
@@ -143,13 +149,13 @@ namereplace = { -- tables that defines a replacement list for card names
 ["Granitgargoyle"] 						= "Granit Gargoyle",
 ["Inselfisch Jaskonius"] 				= "Inselfisch Jasconius",
 ["Irrlichter"] 							= "Irrlicht",
-["Hypnotiserendes Gespenst"] 			= "Hypnotisierendes Gespenst",
+["Hypnotiserendes Gespenst"] 			= "Hypnotisierendes Gespenst"
 },
 [110] = { -- Unlimited
 ["Will-o-The-Wisp"] 					= "Will-o’-the-Wisp"
 },
 [100] = { -- Beta (shares urls with Alpha, which will be set at end of table)
-["Time Walk (alpha, near mint)"]			= "Time Walk (alpha)(near mint)"
+["Time Walk (alpha, near mint)"]		= "Time Walk (alpha)(near mint)"
 },
 [782] = { -- Innistrad
 ["Bloodline Keeper"] 					= "Bloodline Keeper|Lord of Lineage",
@@ -219,7 +225,7 @@ namereplace = { -- tables that defines a replacement list for card names
 ["Flame Fusilade"]						= "Flame Fusillade",
 ["Sabretooth Alley Cat"] 				= "Sabertooth Alley Cat",
 ["Torpid Morloch"]						= "Torpid Moloch",
-["Ordunn Commando"] 					= "Ordruun Commando",
+["Ordunn Commando"] 					= "Ordruun Commando"
 },
 [590] = { -- Champions of Kamigawa
 ["Student of Elements"]					= "Student of Elements|Tobita, Master of Winds",
@@ -231,24 +237,24 @@ namereplace = { -- tables that defines a replacement list for card names
 ["Jushi Apprentice"]					= "Jushi Apprentice|Tomoya the Revealer",
 ["Orochi Eggwatcher"]					= "Orochi Eggwatcher|Shidako, Broodmistress",
 ["Nezumi Graverobber"]					= "Nezumi Graverobber|Nighteyes the Desecrator",
-["Akki Lavarunner"]						= "Akki Lavarunner|Tok-Tok, Volcano Born",
+["Akki Lavarunner"]						= "Akki Lavarunner|Tok-Tok, Volcano Born"
 },
 [610] = { -- Betrayers of Kamigawa
-["Hired Muscle"] 						 = "Hired Muscle|Scarmaker",
-["Cunning Bandit"] 						 = "Cunning Bandit|Azamuki, Treachery Incarnate",
-["Callow Jushi"] 						 = "Callow Jushi|Jaraku the Interloper",
-["Faithful Squire"] 					 = "Faithful Squire|Kaiso, Memory of Loyalty",
-["Budoka Pupil"] 						 = "Budoka Pupil|Ichiga, Who Topples Oaks",
+["Hired Muscle"] 						= "Hired Muscle|Scarmaker",
+["Cunning Bandit"] 						= "Cunning Bandit|Azamuki, Treachery Incarnate",
+["Callow Jushi"] 						= "Callow Jushi|Jaraku the Interloper",
+["Faithful Squire"] 					= "Faithful Squire|Kaiso, Memory of Loyalty",
+["Budoka Pupil"] 						= "Budoka Pupil|Ichiga, Who Topples Oaks"
 },
 [620] = { -- Saviors of Kamigawa
-["Sasaya, Orochi Ascendant"] 			 = "Sasaya, Orochi Ascendant|Sasaya’s Essence",
-["Rune-Tail, Kitsune Ascendant"] 		 = "Rune-Tail, Kitsune Ascendant|Rune-Tail’s Essence",
-["Homura, Human Ascendant"] 			 = "Homura, Human Ascendant|Homura’s Essence",
-["Kuon, Ogre Ascendant"] 				 = "Kuon, Ogre Ascendant|Kuon’s Essence",
-["Erayo, Soratami Ascendant"] 			 = "Erayo, Soratami Ascendant|Erayo’s Essence",
+["Sasaya, Orochi Ascendant"] 			= "Sasaya, Orochi Ascendant|Sasaya’s Essence",
+["Rune-Tail, Kitsune Ascendant"] 		= "Rune-Tail, Kitsune Ascendant|Rune-Tail’s Essence",
+["Homura, Human Ascendant"] 			= "Homura, Human Ascendant|Homura’s Essence",
+["Kuon, Ogre Ascendant"] 				= "Kuon, Ogre Ascendant|Kuon’s Essence",
+["Erayo, Soratami Ascendant"] 			= "Erayo, Soratami Ascendant|Erayo’s Essence"
 },
 [560] = { -- Mirrodin
-["Goblin Warwagon"]						= "Goblin War Wagon",
+["Goblin Warwagon"]						= "Goblin War Wagon"
 },
 [500] = { -- Torment
 ["Chainers Edict"]						= "Chainer's Edict",
@@ -258,8 +264,8 @@ namereplace = { -- tables that defines a replacement list for card names
 ["Bösium Strip"]						= "Bosium Strip"
 },
 [120] = { -- Arabian Nights
-["Ifh-Bíff Efreet"] 					= "Ifh-Biff Efreet",
-},
+["Ifh-Bíff Efreet"] 					= "Ifh-Biff Efreet"
+}
 } -- end table namereplace
 
 variants = { -- tables of cards that need to set variant
@@ -830,27 +836,27 @@ variants = { -- tables of cards that need to set variant
 ["Forest (305)"]							= { "Forest"	, { false, false, 3    , false } },
 ["Forest (306)"]							= { "Forest"	, { false, false, false, 4     } },
 ["Brothers Yamazaki"]						= { "Brothers Yamazaki"	, { "a"  , false } },
-["Brothers Yamazaki (b)"]					= { "Brothers Yamazaki"	, { false, "b"   } },
+["Brothers Yamazaki (b)"]					= { "Brothers Yamazaki"	, { false, "b"   } }
 },
 [330] = { -- Urza's Saga
 ["Plains"] 									= { "Plains"	, { 1    , 2    , 3    , 4     } },
 ["Island"] 									= { "Island" 	, { 1    , 2    , 3    , 4     } },
 ["Swamp"] 									= { "Swamp"		, { 1    , 2    , 3    , 4     } },
 ["Mountain"] 								= { "Mountain"	, { 1    , 2    , 3    , 4     } },
-["Forest"] 									= { "Forest" 	, { 1    , 2    , 3    , 4     } },
+["Forest"] 									= { "Forest" 	, { 1    , 2    , 3    , 4     } }
 },
 [210] = { -- Homelands
 ["Mesa Falcon"] 				 			= { "Mesa Falcon"			, { 1    , 2     } },
 ["Abbey Matron"] 				 			= { "Abbey Matron"			, { 1    , 2     } },
 ["Dwarven Trader"] 				 			= { "Dwarven Trader"		, { 1    , 2     } },
 ["Reef Pirates"] 				 			= { "Reef Pirates"			, { 1    , 2     } },
-["Willow Faerie"] 				 			= { "Willow Faerie"		, { 1    , 2     } },
+["Willow Faerie"] 				 			= { "Willow Faerie"			, { 1    , 2     } },
 ["Shrink"] 						 			= { "Shrink"				, { 1    , 2     } },
 ["Sengir Bats"] 				 			= { "Sengir Bats"			, { 1    , 2     } },
 ["Hungry Mist"] 				 			= { "Hungry Mist"			, { 1    , 2     } },
 ["Folk of An-Havva"] 			 			= { "Folk of An-Havva"		, { 1    , 2     } },
-["Cemetery Gate"] 				 			= { "Cemetery Gate"		, { 1    , 2     } },
-["Aysen Bureaucrats"] 			 			= { "Aysen Bureaucrats"	, { 1    , 2     } },
+["Cemetery Gate"] 				 			= { "Cemetery Gate"			, { 1    , 2     } },
+["Aysen Bureaucrats"] 			 			= { "Aysen Bureaucrats"		, { 1    , 2     } },
 ["Torture"] 					 			= { "Torture"				, { 1    , 2     } },
 ["Anaba Bodyguard"] 			 			= { "Anaba Bodyguard"		, { 1    , 2     } },
 ["Anaba Shaman"] 				 			= { "Anaba Shaman"			, { 1    , 2     } },
@@ -862,9 +868,9 @@ variants = { -- tables of cards that need to set variant
 ["Labyrinth Minotaur"] 			 			= { "Labyrinth Minotaur"	, { 1    , 2     } },
 ["Giant Albatross"] 			 			= { "Giant Albatross"		, { 1    , 2     } },
 ["Samite Alchemist"] 			 			= { "Samite Alchemist"		, { 1    , 2     } },
-["Dark Maze"] 					 			= { "Dark Maze"			, { 1    , 2     } },
-["Dry Spell"] 					 			= { "Dry Spell"			, { 1    , 2     } },
-["Trade Caravan"] 				 			= { "Trade Caravan"		, { 1    , 2     } },
+["Dark Maze"] 					 			= { "Dark Maze"				, { 1    , 2     } },
+["Dry Spell"] 					 			= { "Dry Spell"				, { 1    , 2     } },
+["Trade Caravan"] 				 			= { "Trade Caravan"			, { 1    , 2     } }
 },
 [170] = { -- Fallen Empires
 ["Armor Thrull"] 							= { "Armor Thrull"					, { 1    , 2    , 3    , 4     } },
@@ -901,7 +907,7 @@ variants = { -- tables of cards that need to set variant
 ["Thorn Thallid"] 							= { "Thorn Thallid"					, { 1    , 2    , 3    , 4     } },
 ["Tidal Flats"] 							= { "Tidal Flats"					, { 1    , 2    , 3     } },
 ["Vodalian Soldiers"] 						= { "Vodalian Soldiers"				, { 1    , 2    , 3    , 4     } },
-["Vodalian Mage"] 							= { "Vodalian Mage"					, { 1    , 2    , 3     } },
+["Vodalian Mage"] 							= { "Vodalian Mage"					, { 1    , 2    , 3     } }
 },
 [130] = { -- Antiquities
 ["Mishra's Factory (Spring - Version 1)"] 	= { "Mishra's Factory"		, { 1    , false, false, false } },
@@ -923,7 +929,7 @@ variants = { -- tables of cards that need to set variant
 ["Urza's Tower (Vers.1)"] 					= { "Urza's Tower"			, { 1    , false, false, false } },
 ["Urza's Tower (Vers.2)"] 					= { "Urza's Tower"			, { false, 2    , false, false } },
 ["Urza's Tower (Vers.3)"] 					= { "Urza's Tower"			, { false, false, 3    , false } },
-["Urza's Tower (Vers.4)"] 					= { "Urza's Tower"			, { false, false, false, 4     } },
+["Urza's Tower (Vers.4)"] 					= { "Urza's Tower"			, { false, false, false, 4     } }
 },
 [220] = { -- Alliances
 ["Gorilla Chieftain"] 						= { "Gorilla Chieftain"		, { 1    , 2     } },
@@ -980,7 +986,7 @@ variants = { -- tables of cards that need to set variant
 ["False Demise"] 							= { "False Demise"			, { 1    , 2     } },
 ["Awesome Presence"] 						= { "Awesome Presence"		, { 1    , 2     } },
 ["Royal Herbalist"] 						= { "Royal Herbalist"		, { 1    , 2     } },
-["Kjeldoran Escort"] 						= { "Kjeldoran Escort"		, { 1    , 2     } },
+["Kjeldoran Escort"] 						= { "Kjeldoran Escort"		, { 1    , 2     } }
 },
 [120] = { -- Arabian Nights
 ["Army of Allah"] 							= { "Army of Allah"			, { 1    , false } },
@@ -1009,12 +1015,12 @@ variants = { -- tables of cards that need to set variant
 ["War Elephant"] 							= { "War Elephant"			, { 1    , false } },
 ["War Elephant (Vers. b)"]		 			= { "War Elephant"			, { false, 2     } },
 ["Wyluli Wolf"] 							= { "Wyluli Wolf"			, { 1    , false } },
-["Wyluli Wolf (Vers. b)"] 					= { "Wyluli Wolf"			, { false, 2     } },
-},
+["Wyluli Wolf (Vers. b)"] 					= { "Wyluli Wolf"			, { false, 2     } }
+}
 } -- end table variants
 variants[90] = variants [100] -- Alpha (shares url with Beta)
 
-if VERBOSE or DEBUG then -- table with expected results 
+if VERBOSE or DEBUG then -- table with expected results as of today
 expectedtotals = {
 [788] = {260,249,11,0,0},-- ok
 [779] = {256,249,7,0,0},-- ok
@@ -1104,6 +1110,8 @@ suplangs = { -- table of (supported) languages
 
 frucnames = { "Foil" , "Rare" , "Uncommon" , "Common" , "Purple" }
 
+condprio = { [0] = "NONE", } -- table to sort condition description. lower indexed will overwrite when building the cardsetTable
+
 function ImportPrice(importfoil, importlangs, importsets) -- "main" function
 --[[ parameters:
 importfoil	:	"Y"|"N"|"O"		Update Regular and Foil|Update Regular|Update Foil
@@ -1126,7 +1134,6 @@ importsets	:	array of sets script should import, represented as pairs {setid, se
 			else
 				allsets = allsets .. "," .. sname
 			end
---			totalsetcount = totalsetcount + 1
 		end
 		ma.Log("Importing Sets: [" .. allsets .. "]")
 		-- identify user defined languages to import
@@ -1156,6 +1163,7 @@ importsets	:	array of sets script should import, represented as pairs {setid, se
 	end -- for
 	-- Main import cycle
 	curhtmlnum = 0
+	progress = 0
 	for _, cSet in ipairs(avsets) do
 			
 		if importsets[cSet.id] then
@@ -1191,6 +1199,7 @@ importsets	:	array of sets script should import, represented as pairs {setid, se
 --			end
 			if DEBUGTABLE then logreallybigtable(cardsetTable, "cardsetTable") end
 			-- Set the price
+			ma.SetProgress( "Importing " .. importsets[cSet.id] .. " from table", progress )
 			for cName,cCard in pairs(cardsetTable) do
 				if DEBUG then ma.Log( "DEBUG ImportPrice\t cName is " .. cName .. " and table cCard is " .. table.tostring(cCard) ) end
 				if importlangs[1] and cSet.german ~= "O" then --set ENG prices
@@ -1260,17 +1269,13 @@ function setPrice(set, langid, name, card)
 			ma.Log( "variant is " .. table.tostring(card.variant) .. " regprice is " .. table.tostring(card.regprice) .. " foilprice is " .. table.tostring(card.foilprice) )
 		end
 		if not card.regprice then card.regprice = {} end
-		if not card.foilprice then card.foilprice = {} end	
---		for varnr, varbool in pairs(card.variant) do
+		if not card.foilprice then card.foilprice = {} end
 		for varnr, varname in pairs(card.variant) do
 			if DEBUG then
---				ma.Log("DEBUG\tvarnr is " .. varnr .. " varbool is " .. tostring(varbool) )
 				ma.Log("DEBUG\tvarnr is " .. varnr .. " varname is " .. tostring(varname) )
 			end
---			if varbool then
 			if varname then
---				retval = (retval or 0) + ma.SetPrice(set.id, langid, name, varnr, card.regprice[varnr] or 0, card.foilprice[varnr] or 0 )
-				retval = (retval or 0) + ma.SetPrice(set.id, langid, name, varname, card.regprice[varnr] or 0, card.foilprice[varnr] or 0 )
+				retval = (retval or 0) + ma.SetPrice(set.id, langid, name, varname, card.regprice[varname] or 0, card.foilprice[varname] or 0 )
 			end -- if
 		end -- for
 	end -- if
@@ -1319,27 +1324,20 @@ setname: set name, needed only for progressbar
    fruc: 1|2|3|4|5 for foil|rare|uncommon|common|purple rarity to look up
  importlangs passed on from ImportPrices (?? why is this necessary ? shouldn't importlangs from the calling function still be accessible?)
 --]]
-	do -- update progressbar (does update, but not display pmesg !?
-		curhtmlnum = curhtmlnum + 1
-		local pmesg = "Parsing "
-		if fruc == 1 then pmesg = pmesg .. "FOIL " end
-		if fruc == 2 then pmesg = pmesg .. "RARE " end
-		if fruc == 3 then pmesg = pmesg .. "UNCOMMON " end
-		if fruc == 4 then pmesg = pmesg .. "COMMON " end
-		if fruc == 5 then pmesg = pmesg .. "PURPLE " end
-		pmesg = pmesg .. setname
-		ma.SetProgress(pmesg, 100*curhtmlnum/totalhtmlnum)
-		if DEBUG then
-			pmesg = pmesg .. " (id " .. set.id .. ")"
-			ma.Log( "DEBUG parsehtml\tpmesg is \"" .. pmesg .. "\"" )
-		end
-	end -- do update progressbar
+	curhtmlnum = curhtmlnum + 1
+	progress = 100*curhtmlnum/totalhtmlnum
+	local pmesg = "Parsing " .. frucnames[fruc]
+	pmesg = pmesg .. setname
+	if DEBUG then
+		pmesg = pmesg .. " (id " .. set.id .. ")"
+		ma.Log( "DEBUG parsehtml\tpmesg is \"" .. pmesg .. "\"" )
+	end
+	ma.SetProgress(pmesg, progress)
 	
 	-- Construct URL/filename from set and rarity and open the source data
 	local htmldata = nil
 	if not OFFLINE then
 		url = "http://www.magicuniverse.de/html/magic.php?startrow=1&edition=" .. set.url .. "&rarity=" .. frucnames[fruc]
-
 		if DEBUG then
 			ma.Log( "DEBUG\turl is \"" .. url .. "\"" )
 		end
@@ -1352,13 +1350,7 @@ setname: set name, needed only for progressbar
 		end
 		ma.Log( "Parsing " .. file )
 		htmldata = ma.GetFile(file)
-
 	end
-
-
-
-
-
 	if htmldata then
 		if SAVEHTML then
 			local filename = savepath .. "magic.phpstartrow=1&edition=" .. set.url .. "&rarity=" .. frucnames[fruc] .. ".html"
@@ -1408,18 +1400,11 @@ setname: set name, needed only for progressbar
 			end
 			
 			if string.find(cName, "[tT][oO][kK][eE][nN] %- ") then -- Token prefix and color suffix
-				if DEBUGTOKENS then
-					DEBUG = true
-					ma.Log( "DEBUGTOKENS\tchanged \"" .. cName .. "\"" )
-				end
 				cName = string.gsub(cName, "[tT][oO][kK][eE][nN] %- ([^\"]+)", "%1")
 				cName = string.gsub(cName, "%([WUBRG]%)", "")
 				cName = string.gsub(cName, "%([WUBRG]/[WUBRG]%)", "")
 				cName = string.gsub(cName, "%(Art%)", "")
 				cName = string.gsub(cName, "%(Gld%)", "")
-				if DEBUGTOKENS then
-					ma.Log( "DEBUGTOKENS\t\tto \"" .. cName .. "\"" )
-				end
 			end
 
 			cName = string.gsub(cName, "^%s*(.-)%s*$", "%1") --remove leftover spaces from start and end of string			
@@ -1455,6 +1440,8 @@ setname: set name, needed only for progressbar
 				end
 			end
 			
+			local cCondition = "NONE"
+			
 			-- fill cardsetTable table
 			if cName then
 				local dropcName = false
@@ -1486,22 +1473,62 @@ setname: set name, needed only for progressbar
 						ma.Log( "DEBUGTABLE\tcardsetTable length before: " .. table.length(cardsetTable) )
 						ma.Log( "DEBUGTABLE\tcardsetTable[" .. cName .. "] before is " .. table.tostring(cardsetTable[cName]) )
 					end
-					if not cardsetTable[cName] then cardsetTable[cName] = {} end
+
+					local duplicate = false
+	
+					if not cardsetTable[cName] then
+						cardsetTable[cName] = {} -- create new empty tablerow
+					end
+					--[[ old nonacting duplicate detection
+					else -- duplicate detection
+						if cFoil then
+							if cardsetTable[cName].foilprice then
+								if cVariant then
+									for varnr,varname in ipairs(cVariant) do
+										if cardsetTable[cName].foilprice[varname] then
+											ma.Log ( " cardsetTable[" .. cName .. "].foilprice[" .. varname .. "] exists" )
+											duplicate = true
+										end -- if
+									end -- for
+								elseif cardsetTable[cName].foilprice ~= "0" then
+									if DEBUG then ma.Log( " cardsetTable[" .. cName .. "].foilprice ~= \"0\" " ) end
+									duplicate = true
+								end -- if cVariant
+							end -- if cardsetTable[cName].foilprice
+						else -- not cFoil
+							if cardsetTable[cName].regprice then
+								if cVariant then
+									for varnr,varname in ipairs(cVariant) do
+										if cardsetTable[cName].regprice[varname] then
+											ma.Log ( " cardsetTable[" .. cName .. "].regprice[" .. varname .. "] exists" )
+											duplicate = true
+										end -- if
+									end -- for
+								elseif cardsetTable[cName].regprice ~= "0" then
+									if DEBUG then ma.Log( " cardsetTable[" .. cName .. "].regprice ~= \"0\" " ) end
+									duplicate = true
+								end -- if cVariant
+							end -- if cardsetTable[cName].regprice
+						end -- if cFoil
+						if duplicate then
+							ma.Log ( "DUPLICATE " .. cName .. " already present in cardsetTable")
+							ma.Log ( "new\t: cFoil " .. tostring(cFoil) .. " cPrice " .. cPrice .. " cVariant " .. table.tostring(cVariant) )
+							ma.Log ( "old\t:" .. table.tostring(cardsetTable[cName]) )
+						end
+					end
+					--]]
+					
 					if VERBOSE or DEBUGTABLE then -- keep cNameE, cNameG
 						cardsetTable[cName].nameE = cNameE
 						cardsetTable[cName].nameG = cNameG
 					end
 					
-
-					
 					-- TODO patch to accept entries with a condition description if no other entry with better condition is in the table
-					--local cCondition = "NONE"
+					--
 					--if then
 					--
 					--end
 					--cardsetTable[cName].condition = cCondition
-					
-					-- TODO warn if row already exists. this will need another for-loop construction for variants
 					
 					if cFoil then -- entable foil or nonfoil price
 						if cVariant then
@@ -1510,38 +1537,54 @@ setname: set name, needed only for progressbar
 							end
 							if not cardsetTable[cName].variant then cardsetTable[cName].variant = {} end
 							if not cardsetTable[cName].foilprice then cardsetTable[cName].foilprice = {} end
-							for varnr,varbool in ipairs(cVariant) do
+							for varnr,varname in ipairs(cVariant) do
 								if DEBUGTABLE or (DEBUGVARIANTS and DEBUG) then
-									ma.Log( "DEBUGTABLE\tvarnr is " .. varnr .. " varbool is " .. tostring(varbool) )
+									ma.Log( "DEBUGTABLE\tvarnr is " .. varnr .. " varname is " .. tostring(varname) )
 								end
-								if varbool then
+								if varname then
+									if cardsetTable[cName].foilprice[varname] then
+										ma.Log ( "Duplicate cardsetTable[" .. cName .. "].foilprice[" .. varname .. "] exists" )
+										duplicate = true
+									end -- if cardsetTable[cName].regprice[varname]
 									persetcount.foilfound = persetcount.foilfound + 1
-									cardsetTable[cName].variant[varnr] = varbool
-									cardsetTable[cName].foilprice[varnr] = cPrice
-								end -- if
-							end -- for
-						else
+									cardsetTable[cName].variant[varnr] = varname
+									cardsetTable[cName].foilprice[varname] = cPrice
+								end -- if varname
+							end -- for varname,varnr
+						else -- not cVariant
+							if cardsetTable[cName].foilprice then
+								if DEBUG then ma.Log( "Duplicate cardsetTable[" .. cName .. "].foilprice exists" ) end
+								duplicate = true
+							end
 							persetcount.foilfound = persetcount.foilfound + 1
 							cardsetTable[cName].foilprice = cPrice
 						end -- if cVariant
-					else
+					else -- not cFoil
 						if cVariant then
 							if DEBUGTABLE or (DEBUGVARIANTS and DEBUG) then
 								ma.Log( "DEBUGTABLE\t" .. table.tostring(cVariant) )
 							end
 							if not cardsetTable[cName].variant then cardsetTable[cName].variant = {} end
 							if not cardsetTable[cName].regprice then cardsetTable[cName].regprice = {} end
-							for varnr,varbool in ipairs(cVariant) do
+							for varnr,varname in ipairs(cVariant) do
 								if DEBUGTABLE or (DEBUGVARIANTS and DEBUG) then
-									ma.Log( "DEBUGTABLE\tvarnr is " .. varnr .. " varbool is " .. tostring(varbool) )
+									ma.Log( "DEBUGTABLE\tvarnr is " .. varnr .. " varname is " .. tostring(varname) )
 								end
-								if varbool then
+								if varname then
+									if cardsetTable[cName].regprice[varname] then
+										ma.Log ( "Duplicate cardsetTable[" .. cName .. "].regprice[" .. varname .. "] exists" )
+										duplicate = true
+									end -- if
 									persetcount.nonfoilfound = persetcount.nonfoilfound + 1
-									cardsetTable[cName].variant[varnr] = varbool
-									cardsetTable[cName].regprice[varnr] = cPrice
-								end -- if
-							end -- for
+									cardsetTable[cName].variant[varnr] = varname
+									cardsetTable[cName].regprice[varname] = cPrice
+								end -- if varname
+							end -- for varnr,varname
 						else
+							if cardsetTable[cName].regprice then
+								if DEBUG then ma.Log( "Duplicate cardsetTable[" .. cName .. "].regprice" ) end
+								duplicate = true
+							end
 							persetcount.nonfoilfound = persetcount.nonfoilfound + 1
 							cardsetTable[cName].regprice=cPrice
 						end --if cVariant
@@ -1549,12 +1592,13 @@ setname: set name, needed only for progressbar
 					if DEBUGTABLE or (DEBUGVARIANTS and DEBUG) then
 						ma.Log( "DEBUGTABLE\tcardsetTable[" .. cName .. "] after is " .. table.tostring(cardsetTable[cName]) )
 					end
-				else
+
+				else -- dropcName
 					if DEBUG or LOGDROPS then
 						ma.Log("DROPped cName \"" .. cName .. "\".")
 					end
 				end
-			else
+			else -- not cName
 				if VERBOSE then
 					ma.Log( "! empty cName for cNameE \"" .. table.val_to_str(cNameE) .. "\" cNameG \"" .. table.val_to_str(cNameG) )
 				end
@@ -1569,8 +1613,7 @@ setname: set name, needed only for progressbar
 end -- function parsehtml
 
 function ansi2utf ( str )
---[[
-function to sanitize ANSI encoded strings.
+--[[ function to sanitize ANSI encoded strings.
 Note that this would not be necessary if the script was saved ANSI encoded instead of utf-8,
 but then again it would not send utf-8 strings to ma :)
 only replaces encountered special characters.
@@ -1593,8 +1636,6 @@ See https://en.wikipedia.org/wiki/Windows-1252#Codepage_layout if you need to ad
 		str = string.gsub(str, "\223", "ß")
 		str = string.gsub(str, "\146", "´")
 		return str
---	else
---		return nil
 	end
 end -- function ansi2utf
 
@@ -1606,9 +1647,10 @@ function table.val_to_str ( v )
 			return "'" .. v .. "'"
 		end
 		return '"' .. string.gsub(v,'"', '\\"' ) .. '"'
+	elseif "string" == type( v ) then
+		return table.tostring( v )
 	else
-		return "table" == type( v ) and table.tostring( v ) or
-			tostring( v )
+		return tostring( v )
 	end
 end
 function table.key_to_str ( k )
@@ -1646,7 +1688,7 @@ function table.length ( tbl )
 		return nil
 	end
 end
-function logreallybigtable ( tbl , str) -- table.tostring crashes ma, probably too deep recursion
+function logreallybigtable ( tbl , str) -- table.tostring crashes ma; too deep recursion?
 	name = str or "no name"
 	c=0
 	ma.Log("BIGTABLE " .. name .." has " .. table.length(tbl) .. " entries:")
