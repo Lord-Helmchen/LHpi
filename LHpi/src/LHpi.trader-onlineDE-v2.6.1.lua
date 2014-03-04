@@ -6,12 +6,12 @@ to import card pricing from www.trader-online.de.
 
 Inspired by and loosely based on "MTG Mint Card.lua" by Goblin Hero, Stromglad1 and "Import Prices.lua" by woogerboy21;
 who generously granted permission to "do as I like" with their code;
-everything else Copyright (C) 2012-2013 by Christian Harms.
+everything else Copyright (C) 2012-2014 by Christian Harms.
 If you want to contact me about the script, try its release thread in http://www.slightlymagic.net/forum/viewforum.php?f=32
 
 @module LHpi_magicuniverseDE
 @author Christian Harms
-@copyright 2012-2013 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
+@copyright 2012-2014 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
 @release This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -27,16 +27,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-fixed THS
+use LHpi-v2.6 (BNG)
+added BNG and all available special sets
 ]]
 
 -- options that control the amount of feedback/logging done by the script
 --- @field [parent=#global] #boolean VERBOSE 			default false
-VERBOSE = true
+VERBOSE = false
 --- @field [parent=#global] #boolean LOGDROPS 			default false
-LOGDROPS = true
+LOGDROPS = false
 --- @field [parent=#global] #boolean LOGNAMEREPLACE 	default false
-LOGNAMEREPLACE = true
+LOGNAMEREPLACE = false
+--- @field [parent=#global] #boolean LOGFOILTWEAK	 	default false
+LOGFOILTWEAK = false
 
 -- options that control the script's behaviour.
 --- compare card count with expected numbers; default true
@@ -57,7 +60,7 @@ DEBUGVARIANTS = false
 OFFLINE = false
 --- save a local copy of each source html to #string.savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
-SAVEHTML = true
+SAVEHTML = false
 --- log to seperate logfile instead of Magic Album.log;	default true
 -- @field [parent=#global] #boolean SAVELOG
 SAVELOG = true
@@ -66,7 +69,7 @@ SAVELOG = true
 SAVETABLE = false
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.5"
+libver = "2.6"
 --- must always be equal to the scripts filename !
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.trader-onlineDE-v" .. libver .. ".1.lua" 
@@ -171,12 +174,33 @@ function site.BuildUrl( setid,langid,frucid,offline )
 	else
 		container[url] = {}
 	end -- if offline 
-	
 	if frucid == 1 then -- mark url as foil-only
 		container[url].foilonly = true
 	else
 		-- url without foil marker
 	end -- if foil-only url
+
+	if setid == 772 or setid == 757 then --special case for Duel Decks
+		container = {}
+		local url1=url
+		local url2=url
+		url1 = string.gsub( url1 , "ELSTEZ" , "ELS" )
+		url1 = string.gsub( url1 , "DvD" , "DvD-W" )
+		url2 = string.gsub( url2 , "ELSTEZ" , "TEZ" )
+		url2 = string.gsub( url2 , "DvD" , "DvD-B" )
+		if offline then
+			container[url1] = { isfile = true}
+			container[url2] = { isfile = true}
+		else
+			container[url1] = {}			
+			container[url2] = {}			
+		end
+		if frucid == 1 then
+			container[url1].foilonly = true
+			container[url2].foilonly = true
+		end
+	end--if setid
+	
 	return container
 end -- function site.BuildUrl
 
@@ -246,7 +270,10 @@ function site.BCDpluginPre ( card , setid )
 	if DEBUG then
 		LHpi.Log( "site.BCDpluginPre got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
 	end
-
+	
+	--card.name = string.gsub( card.name , "\226\128\156" , '"')
+	--card.name = string.gsub( card.name , "Ae" , "Æ" )
+	
 	if setid == 690 then -- Timeshifted
 		if not (card.pluginData.fruc == "T") then
 			card.name = card.name .. "(DROP Time Spiral)"
@@ -309,95 +336,102 @@ site.frucs = { "Foil" , "Serie" }
 --- @field [parent=#site] #table sets ]]
 --- @field [parent=#site] #table sets
 site.sets = {
-[797]={id = 797,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "M14"}, 
-[788]={id = 788,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "M13"}, 
-[779]={id = 779,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "M12"}, 
-[770]={id = 770,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "M11"}, 
-[759]={id = 759,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "M10"}, 
-[720]={id = 720,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "10th"}, 
-[630]={id = 630,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "9th"}, 
-[550]={id = 550,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "8th"}, 
-[460]={id = 460,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "7th"}, 
-[360]={id = 360,	lang = { true , 	[3]=true }, 	fruc = { false,true }, 	url = "6th"},
-[250]={id = 250,	lang = { true , 	[3]=true }, 	fruc = { false,true }, 	url = "5th"},
-[180]={id = 180,	lang = { true , 	[3]=true }, 	fruc = { false,true }, 	url = "4th"}, 
-[140]={id = 140,	lang = { true , 	[3]=true }, 	fruc = { false,true }, 	url = "RV"},
-[139]={id = 139,	lang = { false, 	[3]=true  },	fruc = { false,true },	url = "DL"}, -- deutsch limitiert
-[110]={id = 110,	lang = { true , 	[3]=false }, 	fruc = { false,true }, 	url = "UN"},  
-[100]={id = 100,	lang = { true , 	[3]=false }, 	fruc = { false,true }, 	url = "B%20"},
+[797]={id = 797, lang = { true , [3]=true }, fruc = { true ,true }, url = "M14"}, 
+[788]={id = 788, lang = { true , [3]=true }, fruc = { true ,true }, url = "M13"}, 
+[779]={id = 779, lang = { true , [3]=true }, fruc = { true ,true }, url = "M12"}, 
+[770]={id = 770, lang = { true , [3]=true }, fruc = { true ,true }, url = "M11"}, 
+[759]={id = 759, lang = { true , [3]=true }, fruc = { true ,true }, url = "M10"}, 
+[720]={id = 720, lang = { true , [3]=true }, fruc = { true ,true }, url = "10th"}, 
+[630]={id = 630, lang = { true , [3]=true }, fruc = { true ,true }, url = "9th"}, 
+[550]={id = 550, lang = { true , [3]=true }, fruc = { true ,true }, url = "8th"}, 
+[460]={id = 460, lang = { true , [3]=true }, fruc = { true ,true }, url = "7th"}, 
+[360]={id = 360, lang = { true , [3]=true }, fruc = { false,true }, url = "6th"},
+[250]={id = 250, lang = { true , [3]=true }, fruc = { false,true }, url = "5th"},
+[180]={id = 180, lang = { true , [3]=true }, fruc = { false,true }, url = "4th"}, 
+[141]=nil,--Summer Magic
+[140]={id = 140, lang = { true , [3]=true }, fruc = { false,true }, url = "RV"},
+[139]={id = 139, lang = { false, [3]=true }, fruc = { false,true }, url = "DL"}, -- deutsch limitiert
+[110]={id = 110, lang = { true , [3]=false}, fruc = { false,true }, url = "UN"},  
+[100]={id = 100, lang = { true , [3]=false}, fruc = { false,true }, url = "B%20"},
 [90] = nil, -- Alpha 
  -- Expansions
-[800]={id = 800,	lang = { true , 	[3]=true }, 	fruc = { true, true }, 	url = "THS"},
-[795]={id = 795,	lang = { true , 	[3]=true }, 	fruc = { true, true }, 	url = "DGM"},
-[793]={id = 793,	lang = { true , 	[3]=true }, 	fruc = { true, true }, 	url = "GTC"},
-[791]={id = 791, 	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "RTR"},
-[786]={id = 786,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "AVR"},
-[784]={id = 784,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "DKA"}, 
-[776]={id = 776,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "NPH"},
-[782]={id = 782,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "INN"}, 
-[775]={id = 775,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "MBS"},
-[773]={id = 773,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "SOM"},
-[767]={id = 767,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "ROE"},
-[765]={id = 765,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "WWK"},
-[762]={id = 762,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "ZEN"},
-[758]={id = 758,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "ARB"},
-[756]={id = 756,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "CON"},
-[754]={id = 754,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "Alara"},
-[752]={id = 752,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "EVE"},
-[751]={id = 751,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "SHM"},
-[750]={id = 750,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "MOR"},
-[730]={id = 730,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "LOR"},
-[710]={id = 710,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "FS"},
-[700]={id = 700,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "PLC"},
-[690]={id = 690,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "TS"},
-[680]={id = 680,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "TS"},
-[670]={id = 670,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "CS"},
-[660]={id = 660,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "DIS"},
-[650]={id = 650,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "GP"},
-[640]={id = 640,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "RAV"},
-[620]={id = 620,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "SK"},
-[610]={id = 610,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "BK"},
-[590]={id = 590,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "CK"},
-[580]={id = 580,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "FD"},
-[570]={id = 570,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "DS"},
-[560]={id = 560,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "MD"},
-[540]={id = 540,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "SC"},
-[530]={id = 530,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "LE"},
-[520]={id = 520,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "Onslaught"},
-[510]={id = 510,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "JD"},
-[500]={id = 500,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "TO"},
-[480]={id = 480,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "OD"},
-[470]={id = 470,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "AP"},
-[450]={id = 450,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "PL%20"},
-[430]={id = 430,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "Invasion"},
-[420]={id = 420,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "PR"},
-[410]={id = 410,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "NE"},
-[400]={id = 400,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "MM"},
-[370]={id = 370,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "UD"},
-[350]={id = 350,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "UL"},
-[330]={id = 330,	lang = { true , 	[3]=true }, 	fruc = { false,true }, 	url = "US"},
-[300]={id = 300,	lang = { true , 	[3]=true }, 	fruc = { false,true }, 	url = "EX"},
-[290]={id = 290,	lang = { true , 	[3]=true }, 	fruc = { false,true }, 	url = "SH"},
-[280]={id = 280,	lang = { true , 	[3]=true }, 	fruc = { false,true }, 	url = "TP"},
-[270]={id = 270,	lang = { true , 	[3]=true }, 	fruc = { false,true }, 	url = "WL"},
-[240]={id = 240,	lang = { true , 	[3]=true }, 	fruc = { false,true }, 	url = "VI"},
-[230]={id = 230,	lang = { true , 	[3]=true }, 	fruc = { false,true }, 	url = "MI"},
-[220]={id = 220,	lang = { true , 	[3]=true }, 	fruc = { false,true }, 	url = "Alliances"},
-[210]={id = 210,	lang = { true , 	[3]=true }, 	fruc = { false,true }, 	url = "HL"},
-[190]={id = 190,	lang = { true , 	[3]=true }, 	fruc = { false,true }, 	url = "IA"},
-[170]={id = 170,	lang = { true , 	[3]=false }, 	fruc = { false,true }, 	url = "FE"},
-[160]={id = 160,	lang = { true , [3]=false,[5]=true }, 	fruc = { false,true }, 	url = "DK%20"},
-[150]={id = 150,	lang = { true , [3]=false,[5]=true }, 	fruc = { false,true }, 	url = "LG%20"},
-[130]={id = 130,	lang = { true , 	[3]=false }, 	fruc = { false,true }, 	url = "AQ"},
-[120]={id = 120,	lang = { true , 	[3]=false }, 	fruc = { false,true }, 	url = "AN"},
+[802]={id = 802, lang = { true , [3]=true }, fruc = { true, true }, url = "BNG"},
+[800]={id = 800, lang = { true , [3]=true }, fruc = { true, true }, url = "THS"},
+[795]={id = 795, lang = { true , [3]=true }, fruc = { true, true }, url = "DGM"},
+[793]={id = 793, lang = { true , [3]=true }, fruc = { true, true }, url = "GTC"},
+[791]={id = 791, lang = { true , [3]=true }, fruc = { true ,true }, url = "RTR"},
+[786]={id = 786, lang = { true , [3]=true }, fruc = { true ,true }, url = "AVR"},
+[784]={id = 784, lang = { true , [3]=true }, fruc = { true ,true }, url = "DKA"}, 
+[776]={id = 776, lang = { true , [3]=true }, fruc = { true ,true }, url = "NPH"},
+[782]={id = 782, lang = { true , [3]=true }, fruc = { true ,true }, url = "INN"}, 
+[775]={id = 775, lang = { true , [3]=true }, fruc = { true ,true }, url = "MBS"},
+[773]={id = 773, lang = { true , [3]=true }, fruc = { true ,true }, url = "SOM"},
+[767]={id = 767, lang = { true , [3]=true }, fruc = { true ,true }, url = "ROE"},
+[765]={id = 765, lang = { true , [3]=true }, fruc = { true ,true }, url = "WWK"},
+[762]={id = 762, lang = { true , [3]=true }, fruc = { true ,true }, url = "ZEN"},
+[758]={id = 758, lang = { true , [3]=true }, fruc = { true ,true }, url = "ARB"},
+[756]={id = 756, lang = { true , [3]=true }, fruc = { true ,true }, url = "CON"},
+[754]={id = 754, lang = { true , [3]=true }, fruc = { true ,true }, url = "Alara"},
+[752]={id = 752, lang = { true , [3]=true }, fruc = { true ,true }, url = "EVE"},
+[751]={id = 751, lang = { true , [3]=true }, fruc = { true ,true }, url = "SHM"},
+[750]={id = 750, lang = { true , [3]=true }, fruc = { true ,true }, url = "MOR"},
+[730]={id = 730, lang = { true , [3]=true }, fruc = { true ,true }, url = "LOR"},
+[710]={id = 710, lang = { true , [3]=true }, fruc = { true ,true }, url = "FS"},
+[700]={id = 700, lang = { true , [3]=true }, fruc = { true ,true }, url = "PLC"},
+[690]={id = 690, lang = { true , [3]=true }, fruc = { true ,true }, url = "TS"},
+[680]={id = 680, lang = { true , [3]=true }, fruc = { true ,true }, url = "TS"},
+[670]={id = 670, lang = { true , [3]=true }, fruc = { true ,true }, url = "CS"},
+[660]={id = 660, lang = { true , [3]=true }, fruc = { true ,true }, url = "DIS"},
+[650]={id = 650, lang = { true , [3]=true }, fruc = { true ,true }, url = "GP"},
+[640]={id = 640, lang = { true , [3]=true }, fruc = { true ,true }, url = "RAV"},
+[620]={id = 620, lang = { true , [3]=true }, fruc = { true ,true }, url = "SK"},
+[610]={id = 610, lang = { true , [3]=true }, fruc = { true ,true }, url = "BK"},
+[590]={id = 590, lang = { true , [3]=true }, fruc = { true ,true }, url = "CK"},
+[580]={id = 580, lang = { true , [3]=true }, fruc = { true ,true }, url = "FD"},
+[570]={id = 570, lang = { true , [3]=true }, fruc = { true ,true }, url = "DS"},
+[560]={id = 560, lang = { true , [3]=true }, fruc = { true ,true }, url = "MD"},
+[540]={id = 540, lang = { true , [3]=true }, fruc = { true ,true }, url = "SC"},
+[530]={id = 530, lang = { true , [3]=true }, fruc = { true ,true }, url = "LE"},
+[520]={id = 520, lang = { true , [3]=true }, fruc = { true ,true }, url = "Onslaught"},
+[510]={id = 510, lang = { true , [3]=true }, fruc = { true ,true }, url = "JD"},
+[500]={id = 500, lang = { true , [3]=true }, fruc = { true ,true }, url = "TO"},
+[480]={id = 480, lang = { true , [3]=true }, fruc = { true ,true }, url = "OD"},
+[470]={id = 470, lang = { true , [3]=true }, fruc = { true ,true }, url = "AP"},
+[450]={id = 450, lang = { true , [3]=true }, fruc = { true ,true }, url = "PL%20"},
+[430]={id = 430, lang = { true , [3]=true }, fruc = { true ,true }, url = "Invasion"},
+[420]={id = 420, lang = { true , [3]=true }, fruc = { true ,true }, url = "PR"},
+[410]={id = 410, lang = { true , [3]=true }, fruc = { true ,true }, url = "NE"},
+[400]={id = 400, lang = { true , [3]=true }, fruc = { true ,true }, url = "MM"},
+[370]={id = 370, lang = { true , [3]=true }, fruc = { true ,true }, url = "UD"},
+[350]={id = 350, lang = { true , [3]=true }, fruc = { true ,true }, url = "UL"},
+[330]={id = 330, lang = { true , [3]=true }, fruc = { false,true }, url = "US"},
+[300]={id = 300, lang = { true , [3]=true }, fruc = { false,true }, url = "EX"},
+[290]={id = 290, lang = { true , [3]=true }, fruc = { false,true }, url = "SH"},
+[280]={id = 280, lang = { true , [3]=true }, fruc = { false,true }, url = "TP"},
+[270]={id = 270, lang = { true , [3]=true }, fruc = { false,true }, url = "WL"},
+[240]={id = 240, lang = { true , [3]=true }, fruc = { false,true }, url = "VI"},
+[230]={id = 230, lang = { true , [3]=true }, fruc = { false,true }, url = "MI"},
+[220]={id = 220, lang = { true , [3]=true }, fruc = { false,true }, url = "Alliances"},
+[210]={id = 210, lang = { true , [3]=true }, fruc = { false,true }, url = "HL"},
+[190]={id = 190, lang = { true , [3]=true }, fruc = { false,true }, url = "IA"},
+[170]={id = 170, lang = { true , [3]=false}, fruc = { false,true }, url = "FE"},
+[160]={id = 160, lang = { true , [3]=false,[5]=true }, fruc = { false,true }, url = "DK%20"},
+[150]={id = 150, lang = { true , [3]=false,[5]=true }, fruc = { false,true }, url = "LG%20"},
+[130]={id = 130, lang = { true , [3]=false }, fruc = { false,true }, url = "AQ"},
+[120]={id = 120, lang = { true , [3]=false }, fruc = { false,true }, url = "AN"},
 -- special sets
-[796]={id = 796,	lang = { true,		[3]=false },	fruc = { true, true },	url = "MMA"}, -- Modern Masters
-[600]={id = 600,	lang = { true ,		[3]=false },	fruc = { true ,true } ,	url = "UH"}, -- Unhinged
-[320]={id = 320,	lang = { true ,		[3]=false },	fruc = { false,true } ,	url = "UG"}, -- Unglued
-[310]={id = 310,	lang = { true ,		[3]=true  },	fruc = { false,true } ,	url = "PT2"}, -- Portal Second Age
-[260]={id = 260,	lang = { true ,		[3]=true  },	fruc = { false,true } ,	url = "PT1"}, -- Portal
-[201]={id = 201,	lang = { false ,	[3]=true  },	fruc = { false,true } ,	url = "REN"}, -- Renaissance 
-[200]={id = 200,	lang = { true ,		[3]=false },	fruc = { false,true } ,	url = "CH"}, -- Chronicles
+[796]={id = 796, lang = { true , [3]=false}, fruc = { true ,true }, url = "MMA"}, -- Modern Masters
+[794]={id = 794, lang = { true , [3]=false}, fruc = { false,true }, url = "SVT"},--Duel Decks: Sorin vs. Tibalt
+[790]={id = 790, lang = { true , [3]=false}, fruc = { false,true }, url = "IZZ"},--Duel Decks: Izzet vs. Golgari
+[785]={id = 785, lang = { true , [3]=false}, fruc = { false,true }, url = "VEN"},--Duel Decks: Venser vs. Koth
+[772]={id = 772, lang = { false, [3]=true }, fruc = { false,true }, url = "ELSTEZ"},--Duel Decks: Elspeth vs. Tezzeret
+[757]={id = 757, lang = { true , [3]=false}, fruc = { false,true }, url = "DvD"},--Duel Decks: Divine vs. Demonic
+[600]={id = 600, lang = { true , [3]=false}, fruc = { true ,true }, url = "UH"}, -- Unhinged
+[320]={id = 320, lang = { true , [3]=false}, fruc = { false,true }, url = "UG"}, -- Unglued
+[310]={id = 310, lang = { true , [3]=true }, fruc = { false,true }, url = "PT2"}, -- Portal Second Age
+[260]={id = 260, lang = { true , [3]=true }, fruc = { false,true }, url = "PT1"}, -- Portal
+[201]={id = 201, lang = { false, [3]=true }, fruc = { false,true }, url = "REN"}, -- Renaissance 
+[200]={id = 200, lang = { true , [3]=false}, fruc = { false,true }, url = "CH"}, -- Chronicles
 } -- end table site.sets
 
 --[[- card name replacement tables.
@@ -407,9 +441,10 @@ site.sets = {
 --- @field [parent=#site] #table namereplace
 site.namereplace = {
 [797] = { -- M2014
-["Jaces Gedankenforscher"]				= "Jaces Gedankensucher",
-["Token - Elemental (R)"]				= "Elemental",
-["Token - Elementarwesen (R)"]			= "Elementarwesen"
+["Token - Elemental (7) (R)"]				= "Elemental (7)",
+["Token - Elemental (8) (R)"]				= "Elemental (8)",
+["Token - Elementarwesen (7) (R)"]			= "Elementarwesen (7)",
+["Token - Elementarwesen (8) (R)"]			= "Elementarwesen (8)",
 },
 [779] = { -- M2012
 ["Aether Adept"]						= "Æther Adept",
@@ -418,8 +453,8 @@ site.namereplace = {
 ["Aether Adept"]						= "Æther Adept",
 ["Zyklop -Gladiator"]					= "Zyklop-Gladiator",
 ["Token - Schlammwesen (G)"]			= "Ooze",
-["Token - Ooze (1/1) (G)"]				= "Ooze (6)",
-["Token - Ooze (2/2) (G)"]				= "Ooze (5)",
+["Token - Ooze (1) (G)"]				= "Ooze (6)",
+["Token - Ooze (2) (G)"]				= "Ooze (5)",
 },
 [720] = { -- 10th
 ["Elite-Infantrie der Goblins"] 		= "Elite-Infanterie der Goblins",
@@ -478,11 +513,15 @@ site.namereplace = {
 ["Will-O-The-Wisp"] 					= "Will-O’-The-Wisp" 
 },
 -- Expansions
+[802] = { --Born of the Gods
+["Brimaz' Vorhut"]						= "Vanguard of Brimaz",
+--["Brimaz' Vorhut"]						= "Brimaz’ Vorhut",
+["Token - Bird (W)"]					= "Bird (1)",
+["Token - Bird (U)"]					= "Bird (4)",
+},
 [800] = { -- Theros
---["Mogis' Plünderer"]					= "Mogis' Plünderer",
-["Mogis' Plünderer"]					= "Mogis's Marauder",
-["Zentauren der Pheres-Herde"]			= "Zentauren der Pheresherde",
-["Token - Emlem Elspeth, Sun's Champion (A)"]	= "Elspeth, Sun’s Champion Emblem",
+["Mogis' Plünderer"]					= "Mogis’ Plünderer",
+--["Mogis' Plünderer"]					= "Mogis's Marauder",
 ["Token - Soldier (R)"]					= "Soldier (7)",
 ["Token - Soldier (2) (W)"]				= "Soldier (2)",
 ["Token - Soldier (3) (W)"]				= "Soldier (3)",
@@ -513,7 +552,6 @@ site.namereplace = {
 ["Checklisten-Karte Dunkles Erwachen"]	= "Checklist",
 ["Séance)"]								= "Séance",
 ["Séance (Seance)"]						= "Séance",
-["Elbrus, die bindende Klinge|Withengar der Entfesselte (Elbrus, the Binding Blade|Withengar Unbou"] = "Elbrus, die bindende Klinge|Withengar der Entfesselte"
 },
 [782] = { -- Innistrad
 ["Ludevic's Test Subject|Ludevic's Abomniation"] = "Ludevic's Test Subject|Ludevic's Abomination",
@@ -742,12 +780,21 @@ site.namereplace = {
 ["Aether Spellbomb"]					= "Æther Spellbomb",
 ["Aethersnipe"]							= "Æthersnipe",
 },
+[785] = { -- DD:Venser vs. Koth
+["Aether Membrane"]						= "Æther Membrane",
+["Venser, the Sojourner (Alternate)"]	= "Venser, the Sojourner",
+["Koth of the Hammer (Alternate)"]		= "Koth of the Hammer",
+},
+[772] = { -- DD:Elspeth vs. Tezzeret
+["Argivische Wiederherstellung (Argivische Restauration)"]	= "Argivische Wiederherstellung",
+},
 [600] = { -- Unhinged
 ["First Come First Served"]				= "First Come, First Served",
 ["Our Market Research Shows ..."]		= "Our Market Research Shows That Players Like Really Long Card Names So We Made this Card to Have the Absolute Longest Card Name Ever Elemental",
 ["Erase"]								= "Erase (Not the Urza’s Legacy One)",
 ["Who|What/When|Where/Why"]				= "Who|What|When|Where|Why",
 ["Yet Another Aether Vortex"]			= "Yet Another Æther Vortex",
+--TODO['"Ach! Hans, Run!"']
 },
 [320] = { -- Unglued
 ["B.F.M. (Big Furry Monster) links"]	= "B.F.M. (left)",
@@ -790,6 +837,8 @@ site.namereplace = {
 --- @field [parent=#site] #table variants ]]
 --- @field [parent=#site] #table variants
 site.variants = {
+[450] = { --Planeshift
+},
 [130] = { -- Antiquities
 ["Mishra's Factory"] 			= { "Mishra's Factory"		, { 1    , 2    , 3    , 4     } },
 ["Mishra's Factory, Frühling"] 	= { "Mishra's Factory"		, { 1    , false, false, false } },
@@ -813,19 +862,24 @@ site.variants = {
 --- @field [parent=#site] #table foiltweak ]]
 --- @field [parent=#site] #table foiltweak
 site.foiltweak = {
+--[772]={
+--not needed, card have "(Foil)" suffix
+--["Elspeth, fahrende Ritterin"]	= { foil = true},
+--["Tezzeret der Sucher "]		= { foil = true},
+--	},
 } -- end table site.foiltweak
 
 if CHECKEXPECTED then
 --[[- table of expected results.
 -- as of script release
--- { #number = #table { #table pset = #table { #number = #number, ... }, #table failed = #table { #number = #number, ... }, dropped = #number , namereplaced = #number }
+-- { #number = #table { #table pset = #table { #number = #number, ... }, #table failed = #table { #number = #number, ... }, dropped = #number , namereplaced = #number , foiltweaked = #number }
 -- 
 --- @field [parent=#site] #table expected ]]
 --- @field [parent=#site] #table expected
 site.expected = {
 EXPECTTOKENS = true,
 -- Core sets
-[797] = { pset={ [3]=262-13 }, failed= { [3]=12 }, namereplaced=5 }, -- -13 is tokens
+[797] = { namereplaced=4 },
 [779] = { namereplaced=2 },
 [770] = { namereplaced=8 },
 [720] = { pset={ [3]=383-1+6 }, failed={ [3]=1 }, namereplaced=3 },
@@ -838,13 +892,14 @@ EXPECTTOKENS = true,
 [140] = { pset={ [3]=306-1 }, failed= { [3]=1 }, namereplaced=6 },
 [139] = { namereplaced=2 },
 [110] = { pset={ 286 }, namereplaced=1 },
-[100] = { pset={ 251 } },
+[100] = { pset={ 255 } },
 -- Expansions
-[800] = { pset={ [3]=260-11 }, failed= { [3]=9 }, namereplaced=9 }, -- -11 is tokens
+[802] = { namereplaced=3, pset={ [3]=176-11 }, failed= { [3]=10 } }, -- -10 is tokens
+[800] = { namereplaced=8 },
 [795] = { pset={ [3]=157-1 }, failed= { [3]=1 }, namereplaced=1 }, -- -1 is token
 [793] = { namereplaced=1 },
 [786] = { namereplaced=8 },
-[784] = { pset={ 161+1 }, failed={ [3]=1 }, namereplaced=6 }, --+1 is Checklist
+[784] = { pset={ 161+1 }, failed={ [3]=1 }, namereplaced=7 }, --+1 is Checklist
 [782] = { pset={ 276+1 }, failed={ [3]=1 }, namereplaced=9 }, -- +1/fail is Checklist
 [776] = { namereplaced=2 },
 [773] = { failed={ 1, [3]=1 }, namereplaced=6 }, -- fail is Poison Counter
@@ -857,14 +912,14 @@ EXPECTTOKENS = true,
 [730] = { namereplaced=5 },
 [710] = { namereplaced=4 },
 [700] = { namereplaced=3 },
-[690] = { dropped=971, namereplaced=5 },
-[680] = { dropped=372, namereplaced=5 },
+[690] = { dropped=983, namereplaced=5 },
+[680] = { dropped=383, namereplaced=5 },
 [670] = { namereplaced=4 },
 [660] = { namereplaced=4 },
 [650] = { namereplaced=4 },
 [654] = { namereplaced=3 },
 [650] = { namereplaced=3 },
-[620] = { namereplaced=17 },
+[620] = { namereplaced=16 },
 [610] = { namereplaced=19 },
 [590] = { namereplaced=33 },
 [580] = { namereplaced=6 },
@@ -874,6 +929,7 @@ EXPECTTOKENS = true,
 [520] = { namereplaced=1 },
 [480] = { namereplaced=2 },
 [470] = { namereplaced=1 },
+[450] = { pset={ 146-3, [3]=146-3 } },-- 3 alt art versions missing
 [430] = { namereplaced=1 },
 [410] = { failed= { [3]=1 }, namereplaced = 5 },
 [370] = { namereplaced=2 },
@@ -888,10 +944,15 @@ EXPECTTOKENS = true,
 [120] = { namereplaced=3 },
 -- special sets
 [796] = { namereplaced=5 },
+[794] = { foiltweaked=2 },
+[790] = { foiltweaked=2 },
+[785] = { namereplaced=3, foiltweaked=2 },
+[772] = { namereplaced=1, foiltweaked=0 },
+[757] = { foiltweaked=2 },
 [600] = { namereplaced=8 },
 [320] = { namereplaced=6 },
 [310] = { namereplaced=2 },
-[260] = { pset={ [3]=222 }, namereplaced=4 },
+[260] = { pset={ [3]=228-6 }, namereplaced=4 },--no "DG" Variant in GER
 [200] = { namereplaced=2 },
 }
 end

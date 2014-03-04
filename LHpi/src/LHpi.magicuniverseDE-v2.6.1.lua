@@ -6,12 +6,12 @@ to import card pricing from www.magicuniverse.de.
 
 Inspired by and loosely based on "MTG Mint Card.lua" by Goblin Hero, Stromglad1 and "Import Prices.lua" by woogerboy21;
 who generously granted permission to "do as I like" with their code;
-everything else Copyright (C) 2012-2013 by Christian Harms.
+everything else Copyright (C) 2012-2014 by Christian Harms.
 If you want to contact me about the script, try its release thread in http://www.slightlymagic.net/forum/viewforum.php?f=32
 
 @module LHpi_magicuniverseDE
 @author Christian Harms
-@copyright 2012-2013 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
+@copyright 2012-2014 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
 @release This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-fixed THS
+use LHpi-v2.6 (BNG)
 ]]
 
 -- options unique to this site
@@ -40,6 +40,8 @@ VERBOSE = false
 LOGDROPS = false
 --- @field [parent=#global] #boolean LOGNAMEREPLACE 	default false
 LOGNAMEREPLACE = false
+--- @field [parent=#global] #boolean LOGFOILTWEAK	 	default false
+LOGFOILTWEAK = false
 
 -- options that control the script's behaviour.
 --- compare card count with expected numbers; default true
@@ -69,7 +71,7 @@ SAVELOG = true
 SAVETABLE = false
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.5"
+libver = "2.6"
 --- must always be equal to the scripts filename !
 -- @field [parent=#global] #string scriptname	
 scriptname = "LHpi.magicuniverseDE-v" .. libver .. ".1.lua" 
@@ -344,7 +346,7 @@ site.frucs = { "Foil" , "Rare" , "Uncommon" , "Common" , "Purple" }
 
 -- table to sort condition description. lower indexed should overwrite when building the cardsetTable
 -- nothing implemented yet
---TODO site.condprio = { [0] = "NONE", }
+--site.condprio = { [0] = "NONE", }
 
 --[[- table of available sets
 -- { #number = #table { #number id, #table lang = #table { #boolean, ... } , #table fruc = # table { #boolean, ... }, #string url } }
@@ -363,88 +365,89 @@ site.frucs = { "Foil" , "Rare" , "Uncommon" , "Common" , "Purple" }
 --- @field [parent=#site] #table sets
 site.sets = {
 -- Core sets
-[797]={id = 797, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "M2014"}, 
-[788]={id = 788, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "M2013"}, 
-[779]={id = 779, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "M2012"}, 
-[770]={id = 770, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "M2011"}, 
-[759]={id = 759, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "M2010"}, 
-[720]={id = 720, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "10th_Edition"}, 
-[630]={id = 630, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "9th_Edition"}, 
-[550]={id = 550, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "8th_Edition"}, 
-[460]={id = 460, lang = { true , [3]=true  }, fruc = { false,true ,true ,false }, url = "7th_Edition"}, 
-[180]={id = 180, lang = { true , [3]=true  }, fruc = { false,true ,true ,false }, url = "4th_Edition"}, 
-[140]={id = 140, lang = { true , [3]=true  }, fruc = { false,true ,true ,true  }, url = "Revised"}, 
+[797]={id = 797, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "M2014"}, 
+[788]={id = 788, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "M2013"}, 
+[779]={id = 779, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "M2012"}, 
+[770]={id = 770, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "M2011"}, 
+[759]={id = 759, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "M2010"}, 
+[720]={id = 720, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "10th_Edition"}, 
+[630]={id = 630, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "9th_Edition"}, 
+[550]={id = 550, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "8th_Edition"}, 
+[460]={id = 460, lang = { true , [3]=true }, fruc = { false,true ,true ,false}, url = "7th_Edition"}, 
+[180]={id = 180, lang = { true , [3]=true }, fruc = { false,true ,true ,false}, url = "4th_Edition"}, 
+[140]={id = 140, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Revised"}, 
  -- Revised Limited : url only provides cNameG
-[139]={id = 139, lang = { false, [3]=true  }, fruc = { false,true ,true ,true  }, url = "deutsch_limitiert"}, 
-[110]={id = 110, lang = { true , [3]=false }, fruc = { false,true ,true ,true  }, url = "Unlimited"}, 
-[100]={id = 100, lang = { true , [3]=false }, fruc = { false,true ,true ,true  }, url = "Beta"}, 
+[139]={id = 139, lang = { false, [3]=true }, fruc = { false,true ,true ,true }, url = "deutsch_limitiert"}, 
+[110]={id = 110, lang = { true , [3]=false}, fruc = { false,true ,true ,true }, url = "Unlimited"}, 
+[100]={id = 100, lang = { true , [3]=false}, fruc = { false,true ,true ,true }, url = "Beta"}, 
  -- Alpha in Beta with "([Aa]lpha)" suffix
-[90] ={id =  90, lang = { true , [3]=false }, fruc = { false,true ,true ,true  }, url = "Beta"}, 
+[90] ={id =  90, lang = { true , [3]=false}, fruc = { false,true ,true ,true }, url = "Beta"}, 
  -- Expansions
-[800]={id = 800, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Theros"},
-[795]={id = 795, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Dragons%20Maze"},
-[793]={id = 793, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Gatecrash"},
-[791]={id = 791, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Return%20to%20Ravnica"},
-[786]={id = 786, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Avacyn%20Restored"},
-[784]={id = 784, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Dark%20Ascension"}, 
-[782]={id = 782, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Innistrad"}, 
-[776]={id = 776, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "New%20Phyrexia"},
-[775]={id = 775, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Mirrodin%20Besieged"},
-[773]={id = 773, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Scars%20of%20Mirrodin"},
-[767]={id = 767, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Rise%20of%20the%20Eldrazi"},
-[765]={id = 765, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Worldwake"},
-[762]={id = 762, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Zendikar"},
-[758]={id = 758, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Alara%20Reborn"},
-[756]={id = 756, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Conflux"},
-[754]={id = 754, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Shards%20of%20Alara"},
-[752]={id = 752, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Eventide"},
-[751]={id = 751, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Shadowmoor"},
-[750]={id = 750, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Morningtide"},
-[730]={id = 730, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Lorwyn"},
-[710]={id = 710, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Future_Sight"},
-[700]={id = 700, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Planar_Chaos"},
+[802]={id = 802, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Born%20of%20the%20Gods"},
+[800]={id = 800, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Theros"},
+[795]={id = 795, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Dragons%20Maze"},
+[793]={id = 793, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Gatecrash"},
+[791]={id = 791, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Return%20to%20Ravnica"},
+[786]={id = 786, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Avacyn%20Restored"},
+[784]={id = 784, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Dark%20Ascension"}, 
+[782]={id = 782, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Innistrad"}, 
+[776]={id = 776, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "New%20Phyrexia"},
+[775]={id = 775, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Mirrodin%20Besieged"},
+[773]={id = 773, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Scars%20of%20Mirrodin"},
+[767]={id = 767, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Rise%20of%20the%20Eldrazi"},
+[765]={id = 765, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Worldwake"},
+[762]={id = 762, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Zendikar"},
+[758]={id = 758, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Alara%20Reborn"},
+[756]={id = 756, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Conflux"},
+[754]={id = 754, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Shards%20of%20Alara"},
+[752]={id = 752, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Eventide"},
+[751]={id = 751, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Shadowmoor"},
+[750]={id = 750, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Morningtide"},
+[730]={id = 730, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Lorwyn"},
+[710]={id = 710, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Future_Sight"},
+[700]={id = 700, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Planar_Chaos"},
  -- for Timeshifted and Timespiral, lots of expected fails due to shared foil url
-[690]={id = 690, lang = { true , [3]=true  }, fruc = { true ,false,false,false,true  }, url = "Time_Spiral"}, -- Timeshifted
-[680]={id = 680, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Time_Spiral"},
-[670]={id = 670, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Coldsnap"},
-[660]={id = 660, lang = { true , [3]=true  }, fruc = { false,true ,true ,true  }, url = "Dissension"},
-[650]={id = 650, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Guildpact"},
-[640]={id = 640, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Ravnica"},
-[620]={id = 620, lang = { true , [3]=true  }, fruc = { false,true ,true ,true  }, url = "Saviors_of_Kamigawa"},
-[610]={id = 610, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Betrayers_of_Kamigawa"},
-[590]={id = 590, lang = { true , [3]=true  }, fruc = { false,true ,true ,true  }, url = "Champions_of_Kamigawa"},
-[580]={id = 580, lang = { true , [3]=true  }, fruc = { false,true ,true ,true  }, url = "5th_Dawn"},
-[570]={id = 570, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Darksteel"},
-[560]={id = 560, lang = { true , [3]=true  }, fruc = { false,true ,true ,true  }, url = "Mirrodin"},
-[540]={id = 540, lang = { true , [3]=true  }, fruc = { false,true ,true ,true  }, url = "Scourge"},
-[530]={id = 530, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Legions"},
-[520]={id = 520, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Onslaught"},
-[510]={id = 510, lang = { true , [3]=true  }, fruc = { false,true ,true ,true  }, url = "Judgment"},
-[500]={id = 500, lang = { true , [3]=true  }, fruc = { false,true ,true ,true  }, url = "Torment"},
-[480]={id = 480, lang = { true , [3]=true  }, fruc = { false,true ,true ,true  }, url = "Odyssey"},
-[470]={id = 470, lang = { true , [3]=true  }, fruc = { false,true ,true ,true  }, url = "Apocalypse"},
-[450]={id = 450, lang = { true , [3]=true  }, fruc = { false,true ,true ,true  }, url = "Planeshift"},
-[430]={id = 430, lang = { true , [3]=true  }, fruc = { false,true ,true ,true  }, url = "Invasion"},
-[420]={id = 420, lang = { true , [3]=true  }, fruc = { false,true ,true ,true  }, url = "Prophecy"},
-[410]={id = 410, lang = { true , [3]=true  }, fruc = { false,true ,true ,true  }, url = "Nemesis"},
-[400]={id = 400, lang = { true , [3]=true  }, fruc = { false,true ,true ,true  }, url = "Merkadische_Masken"},
-[370]={id = 370, lang = { true , [3]=true  }, fruc = { false,true ,true ,true  }, url = "Urzas_Destiny"},
-[350]={id = 350, lang = { true , [3]=true  }, fruc = { false,true ,true ,true  }, url = "Urzas_Legacy"},
-[330]={id = 330, lang = { true , [3]=true  }, fruc = { false,true ,true ,true  }, url = "Urzas_Saga"},
-[300]={id = 300, lang = { true , [3]=true  }, fruc = { false,true ,true ,true  }, url = "Exodus"},
-[290]={id = 290, lang = { true , [3]=true  }, fruc = { false,true ,true ,true  }, url = "Stronghold"},
-[280]={id = 280, lang = { true , [3]=true  }, fruc = { false,true ,true ,true  }, url = "Tempest"},
-[270]={id = 270, lang = { true , [3]=true  }, fruc = { false,true ,true ,true  }, url = "Weatherlight"},
-[240]={id = 240, lang = { true , [3]=true  }, fruc = { false,true ,true ,true  }, url = "Vision"},
-[230]={id = 230, lang = { true , [3]=true  }, fruc = { false,true ,true ,true  }, url = "Mirage"},
-[220]={id = 220, lang = { true , [3]=true  }, fruc = { false,true ,true ,true  }, url = "Alliances"},
-[210]={id = 210, lang = { true , [3]=true  }, fruc = { false,true ,true ,true  }, url = "Homelands"},
-[190]={id = 190, lang = { true , [3]=true  }, fruc = { false,true ,true ,true  }, url = "Ice_Age"},
-[170]={id = 170, lang = { true , [3]=false }, fruc = { false,true ,true ,true  }, url = "Fallen_Empires"},
-[160]={id = 160, lang = { true , [3]=false }, fruc = { false,true ,true ,true  }, url = "The_Dark"},
-[150]={id = 150, lang = { true , [3]=false , [5]=true }, fruc = { false,true ,true ,true  }, url = "Legends"},
-[130]={id = 130, lang = { true , [3]=false }, fruc = { false,true ,true ,true  }, url = "Antiquities"},
-[120]={id = 120, lang = { true , [3]=false }, fruc = { false,true ,true ,true  }, url = "Arabian_Nights"},
+[690]={id = 690, lang = { true , [3]=true }, fruc = { true ,false,false,false,true }, url = "Time_Spiral"}, -- Timeshifted
+[680]={id = 680, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Time_Spiral"},
+[670]={id = 670, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Coldsnap"},
+[660]={id = 660, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Dissension"},
+[650]={id = 650, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Guildpact"},
+[640]={id = 640, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Ravnica"},
+[620]={id = 620, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Saviors_of_Kamigawa"},
+[610]={id = 610, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Betrayers_of_Kamigawa"},
+[590]={id = 590, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Champions_of_Kamigawa"},
+[580]={id = 580, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "5th_Dawn"},
+[570]={id = 570, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Darksteel"},
+[560]={id = 560, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Mirrodin"},
+[540]={id = 540, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Scourge"},
+[530]={id = 530, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Legions"},
+[520]={id = 520, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Onslaught"},
+[510]={id = 510, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Judgment"},
+[500]={id = 500, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Torment"},
+[480]={id = 480, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Odyssey"},
+[470]={id = 470, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Apocalypse"},
+[450]={id = 450, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Planeshift"},
+[430]={id = 430, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Invasion"},
+[420]={id = 420, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Prophecy"},
+[410]={id = 410, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Nemesis"},
+[400]={id = 400, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Merkadische_Masken"},
+[370]={id = 370, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Urzas_Destiny"},
+[350]={id = 350, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Urzas_Legacy"},
+[330]={id = 330, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Urzas_Saga"},
+[300]={id = 300, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Exodus"},
+[290]={id = 290, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Stronghold"},
+[280]={id = 280, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Tempest"},
+[270]={id = 270, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Weatherlight"},
+[240]={id = 240, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Vision"},
+[230]={id = 230, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Mirage"},
+[220]={id = 220, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Alliances"},
+[210]={id = 210, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Homelands"},
+[190]={id = 190, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Ice_Age"},
+[170]={id = 170, lang = { true , [3]=false}, fruc = { false,true ,true ,true }, url = "Fallen_Empires"},
+[160]={id = 160, lang = { true , [3]=false}, fruc = { false,true ,true ,true }, url = "The_Dark"},
+[150]={id = 150, lang = { true , [3]=false, [5]=true }, fruc = { false,true ,true ,true }, url = "Legends"},
+[130]={id = 130, lang = { true , [3]=false}, fruc = { false,true ,true ,true }, url = "Antiquities"},
+[120]={id = 120, lang = { true , [3]=false}, fruc = { false,true ,true ,true }, url = "Arabian_Nights"},
 -- special and promo sets: sorting out the single page seems more trouble than it's worth
 } -- end table site.sets
 
@@ -463,8 +466,8 @@ site.namereplace = {
 ["Emblem: Liliana o. t. Dark Realms"]	= "Emblem: Liliana of the Dark Realms"
 },
 [770] = { --M2011
-["Token - Ooze (G) - (2/2)"]			= "Ooze (5)",
-["Token - Ooze (G) - (1/1)"]			= "Ooze (6)",
+["Token - Ooze (G) - (2)"]			= "Ooze (5)",
+["Token - Ooze (G) - (1)"]			= "Ooze (6)",
 },
 [140] = { -- Revised
 ["Serendib Efreet (Fehldruck)"] 		= "Serendib Efreet",
@@ -501,6 +504,17 @@ site.namereplace = {
 },
 [90] = { -- Alpha
 ["Time Walk (alpha, near mint)"]		= "Time Walk (alpha)(near mint)"
+},
+[802] = { -- Born of the Gods
+["Unravel the Æther"] 					= "Unravel the AEther",
+["Token - Bird (W)"]					= "Bird (1)",
+["Token - Bird (U)"]					= "Bird (4)",
+},
+[800] = { -- Theros
+["Token - Soldier (R)"]					= "Soldier (3)",
+["Token - Soldier (2) (W)"]				= "Soldier (2)",
+["Token - Soldier (3) (W)"]				= "Soldier (7)",
+["Emblem - Elspeth, Suns Champion"]		= "Emblem - Elspeth, Sun's Champion",
 },
 [793] = { -- Gatecrash
 ["Emblem: Domrirade"] 					= "Emblem: Domri Rade"
@@ -716,6 +730,8 @@ site.variants = {
 ["Forest - Vollbild (248)"]					= { "Forest"	, { false, false, 3    , false } },
 ["Forest - Vollbild (249)"]					= { "Forest"	, { false, false, false, 4     } }
 },
+[450] = { --Planeshift
+},
 [130] = { -- Antiquities
 ["Mishra's Factory (Spring - Version 1)"] 	= { "Mishra's Factory"		, { 1    , false, false, false } },
 ["Mishra's Factory (Summer - Version 2)"] 	= { "Mishra's Factory"		, { false, 2    , false, false } },
@@ -781,14 +797,14 @@ site.foiltweak = {
 if CHECKEXPECTED then
 --[[- table of expected results.
 -- as of script release
--- { #number = #table { #table pset = #table { #number = #number, ... }, #table failed = #table { #number = #number, ... },	dropped = #number ,	namereplaced = #number }
+-- { #number = #table { #table pset = #table { #number = #number, ... }, #table failed = #table { #number = #number, ... }, dropped = #number , namereplaced = #number , foiltweaked = #number }
 -- 
 --- @field [parent=#site] #table expected ]]
 --- @field [parent=#site] #table expected
 site.expected = {
 EXPECTTOKENS = true,
 -- Core sets
-[797] = { pset={ [3]=262-13 }, failed={ [3]=12 }, namereplaced=3 }, -- -13 tokens
+[797] = { namereplaced=3 },
 [788] = { namereplaced=1 },
 [770] = { namereplaced=2 },
 [720] = { pset={ [3]=389-1 }, failed={ [3]=1 } },
@@ -802,7 +818,8 @@ EXPECTTOKENS = true,
 [100] = { pset={ 302-134 },	failed={ 7 }, dropped=352, namereplaced=1 },
 [90]  = { pset={ 295-61 }, dropped=293,},
 -- Expansions
-[800] = { pset={ 249, [3]=249 } },-- no tokens yet
+[802] = { namereplaced=4, pset={ [3]=165 } , failed={ [3]=10 } },--no GER tokens 
+[800] = { namereplaced=4 },
 [795] = { pset={ [3]=157-1 }, failed ={ [3]=1} }, -- -1/fail is elemental token
 [793] = { namereplaced=1 },
 [786] = { namereplaced=5 },
@@ -815,25 +832,23 @@ EXPECTTOKENS = true,
 [751] = { namereplaced=4 },
 [750] = { namereplaced=1 },
 [730] = { namereplaced=5 },
-[690] = { failed={ 298,[3]=298 } },
+[690] = { failed={ 301-15,[3]=301-15 } },
 [680] = { failed={ 121,[3]=121 }, namereplaced=2 },
-[670] = { namereplaced=2 },
-[640] = { namereplaced=10 },
+[670] = { namereplaced=1 },
+[640] = { namereplaced=5 },
 [620] = { namereplaced=5 },
-[610] = { namereplaced=10 },
-[590] = { pset={ 307-20,	[3]=307-20 }, namereplaced=11 },
+[610] = { namereplaced=5 },
+[590] = { pset={ 307-20, [3]=307-20 }, namereplaced=11 },
 [570] = { dropped=1 },
 [560] = { pset={ 306-20, [3]=306-20 }, namereplaced=1 },
-[520] = { pset={ 350-20,	[3]=350-20 }, dropped=3 },
+[520] = { pset={ 350-20, [3]=350-20 }, dropped=3 },
 [500] = { namereplaced=2 },
 [480] = { pset={ 350-20, [3]=350-20 }, dropped=1 },
+[450] = { pset={ 146-3, [3]=146-3 } },-- 3 alt art versions missing
 [430] = { pset={ 350-20, [3]=350-20 } },
-[400] = { pset={ 350-20, [3]=350-20 } },
 [290] = { dropped=1 },
-[280] = { pset={ 350-20,	[3]=350-20 } },
-[230] = { pset={ 350-20, [3]=350-20 } },
 [220] = { namereplaced=3 },
-[190] = { pset={ 383-20, [3]=383-20 }, dropped=1 },
+[190] = { pset={ 383-15, [3]=383-15 }, dropped=1 },--3*5 lands
 [160] = { dropped=9 },
 [150] = { pset={ [5]=19 }, dropped=87 },
 [130] = { dropped=54 },
