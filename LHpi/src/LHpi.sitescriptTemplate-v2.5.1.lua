@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-use LHpi-v2.2
+template should match LHpi-v2.5 now
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -39,7 +39,7 @@ LOGNAMEREPLACE = true
 -- options that control the script's behaviour.
 --- compare card count with expected numbers; default true
 -- @field [parent=#global] #boolean CHECKEXPECTED
-CHECKEXPECTED = false
+CHECKEXPECTED = true
 --  Don't change anything below this line unless you know what you're doing :-)
 ---	log everything and exit on error; default false
 -- @field [parent=#global] #boolean DEBUG			log all and exit on error; default false
@@ -55,7 +55,7 @@ DEBUGVARIANTS = false
 OFFLINE = false
 --- save a local copy of each source html to #string.savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
-SAVEHTML = false
+SAVEHTML = true
 --- log to seperate logfile instead of Magic Album.log;	default true
 -- @field [parent=#global] #boolean SAVELOG
 SAVELOG = true
@@ -64,7 +64,7 @@ SAVELOG = true
 SAVETABLE = false
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.2"
+libver = "2.5"
 --- must always be equal to the scripts filename !
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.sitescriptTemplate-v".. libver .. ".1.lua" 
@@ -148,12 +148,12 @@ end -- function ImportPrice
 --	site.suffix = ""
 --	
 --	local container = {}
---	local url = site.file .. site.setprefix .. site.sets[setid].url .. site.langprefix .. site.langs[langid].url .. site.frucprefix .. site.frucs[frucid]
+--	local url = site.domain .. site.file .. site.setprefix .. site.sets[setid].url .. site.langprefix .. site.langs[langid].url .. site.frucprefix .. site.frucs[frucid]
 --	if offline then
---		url = savepath .. string.gsub( url, "%?", "_" )  .. ".html"
+--		string.gsub( url, "%?", "_" )
+--		string.gsub( url, "/", "_" )
 --		container[url] = { isfile = true}
 --	else
---		url = "http://" .. site.domain .. url
 --		container[url] = {}
 --	end -- if offline 
 --	
@@ -188,43 +188,43 @@ end -- function ImportPrice
 --	return newCard
 --end -- function site.ParseHtmlData
 
---[[- special cases card name manipulation
- Ties into LHpi.buildCardData to make changes that are specific to one site and thus don't belong into the library
- 
- @function [parent=#site] BCDpluginName
- @param #string name		the cardname LHpi.buildardData is working on
- @param #number setid
- @returns #string name	modified cardname is passed back for further processing
-]]
---function site.BCDpluginName ( name , setid )
---	if DEBUG then
---		LHpi.Log( "site.BCDpluginName got " .. name .. " from set " .. setid , 2 )
---	end
---
---	-- if you don't want a full namereplace table, these four gsubs will take care of a lot of fails.
---	name = string.gsub( name , "Æ" , "AE")
---	name = string.gsub( name , "â" , "a")
---	name = string.gsub( name , "û" , "u")
---	name = string.gsub( name , "á" , "a")
-
---	return name
---end -- function site.BCDpluginName
-
 --[[- special cases card data manipulation
- Ties into LHpi.buildCardData to make changes that are specific to one site and thus don't belong into the library
- 
- @function [parent=#site] BCDpluginCard
+ Ties into LHpi.buildCardData to make changes that are specific to one site and thus don't belong into the library.
+ This Plugin is called before most of LHpi's BuildCardData proecssing.
+
+ @function [parent=#site] BCDpluginPre
  @param #table card		the card LHpi.BuildCardData is working on
  @param #number setid
  @returns #table card modified card is passed back for further processing
 ]]
---function site.BCDpluginCard( card , setid )
+--function site.BCDpluginPre ( card , setid )
 --	if DEBUG then
---		LHpi.Log( "site.BCDpluginCard got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
+--		LHpi.Log( "site.BCDpluginPre got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
+--	end
+--
+--	-- if you don't want a full namereplace table, gsubs like this might take care of a lot of fails.
+--	card.name = string.gsub( card.name , "AE" , "Æ")
+--	card.name = string.gsub( card.name , "Ae" , "Æ")
+
+--	return card
+--end -- function site.BCDpluginPre
+
+--[[- special cases card data manipulation
+ Ties into LHpi.buildCardData to make changes that are specific to one site and thus don't belong into the library
+ This Plugin is called after LHpi's BuildCardData proecssing (and probably not needed).
+ 
+ @function [parent=#site] BCDpluginPost
+ @param #table card		the card LHpi.BuildCardData is working on
+ @param #number setid
+ @returns #table card modified card is passed back for further processing
+]]
+--function site.BCDpluginPost( card , setid )
+--	if DEBUG then
+--		LHpi.Log( "site.BCDpluginPost got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
 --	end
 --
 --	return card
---end -- function site.BCDpluginCard
+--end -- function site.BCDpluginPost
 
 -------------------------------------------------------------------------------------------------------------
 -- tables

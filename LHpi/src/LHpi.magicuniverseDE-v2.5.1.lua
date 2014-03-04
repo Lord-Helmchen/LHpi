@@ -27,9 +27,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-use LHpi-v2.3 
-preemptively added M14
+preemptively added Theros
+removed lots of Ae -> Æ replacements
+changed BuildUrl to match lib 2.5
 ]]
+
+-- options unique to this site
+local STAMMKUNDE = true -- for magicuniverse.de, parse 10% lower Stammkunden-Preis instead of default price (the one sent to the Warenkorb)
 
 -- options that control the amount of feedback/logging done by the script
 --- @field [parent=#global] #boolean VERBOSE 			default false
@@ -67,7 +71,7 @@ SAVELOG = true
 SAVETABLE = false
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.3"
+libver = "2.5"
 --- must always be equal to the scripts filename !
 -- @field [parent=#global] #string scriptname	
 scriptname = "LHpi.magicuniverseDE-v" .. libver .. ".1.lua" 
@@ -96,8 +100,6 @@ site={}
 site.regex = '<tr>\n<td align="center">\n%b<>%b<>\n%b<>%b<>%b<>\n%b<>%b<>\n(.-)\n%b<>\n</td>\n</tr>'
 site.currency = "€" -- not used yet
 site.encoding = "cp1252"
-
-local STAMMKUNDE = true -- for magicuniverse.de, parse 10% lower Stammkunden-Preis instead of default price (the one sent to the Warenkorb)
 
 --[[- "main" function.
  called by Magic Album to import prices. Parameters are passed from MA.
@@ -155,17 +157,15 @@ function site.BuildUrl( setid,langid,frucid,offline )
 	site.domain = "www.magicuniverse.de/html/"
 	site.file = "magic.php?startrow=1"
 	site.setprefix = "&edition="
---	site.langprefix = ""
 	site.frucprefix = "&rarity="
---	site.suffix = ""
 	
 	local container = {}
-	local url = site.file .. site.setprefix .. site.sets[setid].url .. site.frucprefix .. site.frucs[frucid]
+	local url = site.domain .. site.file .. site.setprefix .. site.sets[setid].url .. site.frucprefix .. site.frucs[frucid]
 	if offline then
-		url = savepath .. string.gsub( url, "%?", "_" )  .. ".html"
+		url = string.gsub( url, "%?", "_" )
+		url = string.gsub( url, "/", "_" )
 		container[url] = { isfile = true}
 	else
-		url = "http://" .. site.domain .. url
 		container[url] = {}
 	end -- if offline 
 	
@@ -229,17 +229,18 @@ function site.ParseHtmlData( foundstring , urldetails )
 	return newCard
 end -- function site.ParseHtmlData
 
---[[- special cases card name manipulation
- Ties into LHpi.buildCardData to make changes that are specific to one site and thus don't belong into the library
- 
- @function [parent=#site] BCDpluginName
- @param #string name		the cardname LHpi.buildardData is working on
+--[[- special cases card data manipulation
+ Ties into LHpi.buildCardData to make changes that are specific to one site and thus don't belong into the library.
+ This Plugin is called before most of LHpi's BuildCardData proecssing.
+
+ @function [parent=#site] BCDpluginPre
+ @param #table card		the card LHpi.BuildCardData is working on
  @param #number setid
- @returns #string name	modified cardname is passed back for further processing
+ @returns #table card modified card is passed back for further processing
 ]]
-function site.BCDpluginName ( name , setid )
+function site.BCDpluginPre ( card , setid )
 	if DEBUG then
-		LHpi.Log( "site.BCDpluginName got " .. name .. " from set " .. setid , 2 )
+		LHpi.Log( "site.BCDpluginPre got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
 	end
 	
 	-- probably need this to correct "die beliebtesten X der letzen Tage" entries 
@@ -247,58 +248,59 @@ function site.BCDpluginName ( name , setid )
 	
 	-- seperate "(alpha)" and beta from beta-urls
 	if setid == 90 then -- importing Alpha
-		if string.find( name , "%([aA]lpha%)" ) then
-			name = string.gsub( name , "%s*%([aA]lpha%)" , "" )
+		if string.find( card.name , "%([aA]lpha%)" ) then
+			card.name = string.gsub( card.name , "%s*%([aA]lpha%)" , "" )
 		else -- not "(alpha")
-			name = name .. "(DROP not alpha)" -- change name to prevent import
+			card.name = card.name .. "(DROP not alpha)" -- change name to prevent import
 		end
 	elseif setid == 100 then -- importing Beta
-		if string.find( name , "%([aA]lpha%)" ) then
-			name = name .. "(DROP not beta)" -- change name to prevent import
+		if string.find( card.name , "%([aA]lpha%)" ) then
+			card.name = card.name .. "(DROP not beta)" -- change name to prevent import
 		else -- not "(alpha")
-			name = string.gsub( name , "%s*%(beta%)" , "" ) -- catch needlessly suffixed rawdata
-			name = string.gsub( name , "%(beta, " , "(") -- remove beta infix from condition descriptor
+			card.name = string.gsub( card.name , "%s*%(beta%)" , "" ) -- catch needlessly suffixed rawdata
+			card.name = string.gsub( card.name , "%(beta, " , "(") -- remove beta infix from condition descriptor
 		end 
 	end -- if setid
 	
 	-- mark condition modifier suffixed cards to be dropped
-	name = string.gsub( name , "%([mM]int%)$" , "%0 (DROP)" )
-	name = string.gsub( name , "%(near [mM]int%)$" , "%0 (DROP)" )
-	name = string.gsub( name , "%([eE]xce[l]+ent%)$" , "%0 (DROP)" )
-	name = string.gsub( name , "%(light played%)$" , "%0 (DROP)" )
-	name = string.gsub( name , "%([lL][pP]%)$" , "%0 (DROP)" )
-	name = string.gsub( name , "%(light played[/%-|][Pp]layed%)" , "%0 (DROP)" )
-	name = string.gsub( name , "%([lL][pP]/[pP]%)$" , "%0 (DROP)" )
-	name = string.gsub( name , "%(played%)$" , "%0 (DROP)" )
-	name = string.gsub( name , "%([pP]%)$" , "%0 (DROP)" )
-	name = string.gsub( name , "%(poor%)$" , "%0 (DROP)" )
-	name = string.gsub( name , "%(knick%)$" , "%0 (DROP)" )
-	name = string.gsub( name , "%(geknickt%)$" , "%0 (DROP)" )
-	name = string.gsub( name , "signed%)$" , "%0 (DROP)" )
-	name = string.gsub( name , "signiert%)$" , "%0 (DROP)" )
-	name = string.gsub( name , "signiert!%)$" , "%0 (DROP)" )
-	name = string.gsub( name , "unterschrieben%)$" , "%0 (DROP)" )
-	name = string.gsub( name , "unterschrieben, excellent%)$" , "%0 (DROP)" )
-	name = string.gsub( name , "%(played[/%-|]light played%)" , "%0 (DROP)" )
-	name = string.gsub( name , "%(played[/|]played%)$" , "%0 (DROP)" )
-	name = string.gsub( name , "light played$" , "%0 (DROP)" )
-	name = string.gsub( name , "%(lp %- played%)" , "%0 (DROP)" )
-	name = string.gsub( name , "%(lp%) %(ia%)$" , "%0 (DROP)" )
+	card.name = string.gsub( card.name , "%([mM]int%)$" , "%0 (DROP)" )
+	card.name = string.gsub( card.name , "%(near [mM]int%)$" , "%0 (DROP)" )
+	card.name = string.gsub(card. name , "%([eE]xce[l]+ent%)$" , "%0 (DROP)" )
+	card.name = string.gsub(card.name , "%(light played%)$" , "%0 (DROP)" )
+	card.name = string.gsub( card.name , "%([lL][pP]%)$" , "%0 (DROP)" )
+	card.name = string.gsub( card.name , "%(light played[/%-|][Pp]layed%)" , "%0 (DROP)" )
+	card.name = string.gsub( card.name , "%([lL][pP]/[pP]%)$" , "%0 (DROP)" )
+	card.name = string.gsub( card.name , "%(played%)$" , "%0 (DROP)" )
+	card.name = string.gsub( card.name , "%([pP]%)$" , "%0 (DROP)" )
+	card.name = string.gsub( card.name , "%(poor%)$" , "%0 (DROP)" )
+	card.name = string.gsub( card.name , "%(knick%)$" , "%0 (DROP)" )
+	card.name = string.gsub( card.name , "%(geknickt%)$" , "%0 (DROP)" )
+	card.name = string.gsub( card.name , "signed%)$" , "%0 (DROP)" )
+	card.name = string.gsub( card.name , "signiert%)$" , "%0 (DROP)" )
+	card.name = string.gsub( card.name , "signiert!%)$" , "%0 (DROP)" )
+	card.name = string.gsub( card.name , "unterschrieben%)$" , "%0 (DROP)" )
+	card.name = string.gsub( card.name , "unterschrieben, excellent%)$" , "%0 (DROP)" )
+	card.name = string.gsub( card.name , "%(played[/%-|]light played%)" , "%0 (DROP)" )
+	card.name = string.gsub( card.name , "%(played[/|]played%)$" , "%0 (DROP)" )
+	card.name = string.gsub( card.name , "light played$" , "%0 (DROP)" )
+	card.name = string.gsub( card.name , "%(lp %- played%)" , "%0 (DROP)" )
+	card.name = string.gsub( card.name , "%(lp%) %(ia%)$" , "%0 (DROP)" )
 
-	return name
-end -- function site.BCDpluginName
+	return card
+end -- function site.BCDpluginPre
 
 --[[- special cases card data manipulation
  Ties into LHpi.buildCardData to make changes that are specific to one site and thus don't belong into the library
+ This Plugin is called after LHpi's BuildCardData proecssing (and probably not needed).
  
- @function [parent=#site] BCDpluginCard
+ @function [parent=#site] BCDpluginPost
  @param #table card		the card LHpi.BuildCardData is working on
  @param #number setid
- @returns #table card 	modified card is passed back for further processing
+ @returns #table card modified card is passed back for further processing
 ]]
-function site.BCDpluginCard( card , setid )
+function site.BCDpluginPost( card , setid )
 	if DEBUG then
-		LHpi.Log( "site.BCDpluginCard got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
+		LHpi.Log( "site.BCDpluginPost got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
 	end
 	
 	-- special case
@@ -322,7 +324,7 @@ function site.BCDpluginCard( card , setid )
 	end -- if setid
 
 	return card
-end -- function site.BCDpluginCard
+end -- function site.BCDpluginPost
 
 -------------------------------------------------------------------------------------------------------------
 -- tables
@@ -381,6 +383,7 @@ site.sets = {
  -- Alpha in Beta with "([Aa]lpha)" suffix
 [90] ={id =  90, lang = { true , [3]=false }, fruc = { false,true ,true ,true  }, url = "Beta"}, 
  -- Expansions
+[800]={id = 800, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Theros"},
 [795]={id = 795, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Dragons%20Maze"},
 [793]={id = 793, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Gatecrash"},
 [791]={id = 791, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "Return%20to%20Ravnica"},
@@ -453,20 +456,17 @@ site.sets = {
 --- @field [parent=#site] #table namereplace ]]
 --- @field [parent=#site] #table namereplace
 site.namereplace = {
+[797] = { -- M2014
+["Token - Elemental (R) (7)"] 			= "Elemental (7)";
+["Token - Elemental (R) (8)"] 			= "Elemental (8)";
+["Emblem: Liliana o. t. Dark Realms"]	= "Emblem: Liliana of the Dark Realms"
+},
 [788] = { -- M2013
 ["Emblem: Liliana o. t. Dark Realms"]	= "Emblem: Liliana of the Dark Realms"
 },
-[779] = { -- M2013
-["Æther Adept"] 						= "AEther Adept",
-},
 [770] = { --M2011
-["Æther Adept"] 						= "AEther Adept",
 ["Token - Ooze (G) - (2/2)"]			= "Ooze (5)",
 ["Token - Ooze (G) - (1/1)"]			= "Ooze (6)",
-},
-[460] = { -- 7th Edition
-["Æther Flash"] 						= "Aether Flash",
-["Tainted Æther"] 						= "Tainted Aether",
 },
 [140] = { -- Revised
 ["Serendib Efreet (Fehldruck)"] 		= "Serendib Efreet",
@@ -558,9 +558,6 @@ site.namereplace = {
 ["Token - Wolf (G)"]					= "Wolf (12)",
 ["Doublesidedcards-Checklist"]			= "Checklist"
 },
-[776] = { -- New Phyrexia
-["Arm with Æther"]						= "Arm with AEther",
-},
 [775] = { -- Mirrodin Besieged
 ["Token - Poisoncounter"]				= "Token - Poison Counter"
 },
@@ -574,56 +571,30 @@ site.namereplace = {
 ["TOKEN - Eldrazi Spawn (Vers. B)"] 	= "Eldrazi Spawn (1b)",
 ["TOKEN - Eldrazi Spawn (Vers. C)"] 	= "Eldrazi Spawn (1c)",
 },
-[765] = { -- Worldwake
-["Æther Tradewinds"]					= "AEther Tradewinds",
-},
 [762] = { -- Zendikar
 ["Token - Meerfolk (U)"] 				= "Token - Merfolk (U)",
-["Æther Figment"]						= "AEther Figment",
-},
-[756] = { -- Conflux
-["Scornful Æther-Lich"]					= "Scornful AEther-Lich",
 },
 [751] = { -- Shadowmoor
-["Æthertow"]							= "AEthertow",
 ["Token - Elf, Warrior (G)"]			= "Elf Warrior (5)",
 ["Token - Elf Warrior (G|W)"]			= "Elf Warrior (12)",
---["Token - Elf, Krieger (G)"]			= "Elf, Krieger (5)",
---["Token - Elf, Krieger (G|W)"]			= "Elf, Krieger (12)",
 ["Token - Elemental (R)"] 				= "Elemental (4)",
 ["Token - Elemental (B|R)"] 			= "Elemental (9)",
---["Token - Elementarwesen (R)"] 			= "Elementarwesen (4)",
---["Token - Elementarwesen (B|R)"] 		= "Elementarwesen (9)",
 },
 [750] = { -- Morningtide
 ["Token - Faery Rogue"]					= "Token - Faerie Rogue"
 },
 [730] = { -- Lorwyn
-["Æthersnipe"]							= "AEthersnipe",
 ["Token - Elf, Warrior (G)"] 			= "Token - Elf Warrior (G)",
 ["Token - Kithkin, Soldier (W)"] 		= "Token - Kithkin Soldier (W)",
 ["Token - Meerfolk Wizard (U)"] 		= "Token - Merfolk Wizard (U)",
 ["Token - Elemental (W)"] 				= "Elemental (2)",
 ["Token - Elemental (G)"]	 			= "Elemental (8)",
 },
-[710] = { -- Future Sight
-["Vedalken Æthermage"]					= "Vedalken AEthermage",
-},
-[700] = { -- Planar Chaos
-["Æther Membrane"]						= "AEther Membrane",
-["Frozen Æther"]						= "Frozen AEther",
-},
 [680] = { -- Time Spiral
-["Æther Web"]							= "AEther Web",
-["Ætherflame Wall"]						= "AEtherflame Wall",
 ["Lim-Dul the Necromancer"]				= "Lim-Dûl the Necromancer"
 },
-[660] = { -- Dissension
-["Azorius Æthermage"]					= "Azorius AEthermage",
-["Æthermage's Touch"]					= "AEthermage's Touch",
-},
-[650] = { -- Guildpact
-["Ætherplasm"]							= "AEtherplasm"
+[670] = { -- Coldsnap
+["Surging Aether"]						= "Surging Æther"
 },
 [640] = { -- Ravnica: City of Guilds
 ["Drooling Groodian"] 					= "Drooling Groodion",
@@ -638,7 +609,6 @@ site.namereplace = {
 ["Homura, Human Ascendant"] 			= "Homura, Human Ascendant|Homura’s Essence",
 ["Kuon, Ogre Ascendant"] 				= "Kuon, Ogre Ascendant|Kuon’s Essence",
 ["Erayo, Soratami Ascendant"] 			= "Erayo, Soratami Ascendant|Erayo’s Essence",
-["Æther Shockwave"]						= "AEther Shockwave"
 },
 [610] = { -- Betrayers of Kamigawa
 ["Hired Muscle"] 						= "Hired Muscle|Scarmaker",
@@ -661,59 +631,17 @@ site.namereplace = {
 ["Brothers Yamazaki"]					= "Brothers Yamazaki (a)",
 --["Brothers Yamazaki (b)"]				= "Brothers Yamazaki (b)",
 },
-[580] = { -- Fifth Dawn
-["Fold into Æther"]						= "Fold into AEther"
-},
-[570] = { -- Darksteel
-["Æther Snap"]							= "AEther Snap",
-["Æther Vial"]							= "AEther Vial",
-},
 [560] = { -- Mirrodin
 ["Goblin Warwagon"]						= "Goblin War Wagon",
-["Æther Spellbomb"]						= "AEther Spellbomb",
-["Gate to the Æther"]					= "Gate to the AEther"
-},
-[520] = { -- Onslaught
-["Æther Charge"]						= "AEther Charge"
 },
 [500] = { -- Torment
 ["Chainers Edict"]						= "Chainer's Edict",
 ["Caphalid Illusionist"]				= "Cephalid Illusionist"
 },
-[480] = { -- Odyssey
-["Æther Burst"]							= "AEther Burst"
-},
-[470] = { -- Apocalypse
-["Æther Mutation"]						= "AEther Mutation"
-},
-[430] = { -- Invasion
-["Æther Rift"]							= "AEther Rift"
-},
-[410] = { -- Nemesis
-["Æther Barrier"]						= "AEther Barrier"
-},
-[370] = { -- Urza's Saga
-["Æther Sting"]							= "AEther Sting"
-},
-[330] = { -- Urza's Saga
-["Tainted Æther"]						= "Tainted AEther"
-},
-[300] = { -- Exodus
-["Æther Tide"]							= "AEther Tide"
-},
-[270] = { -- Weatherlight
-["Æther Flash"]							= "AEther Flash"
-},
 [220] = { -- Alliances
 ["Lim-Dul's Vault"]						= "Lim-Dûl's Vault",
 ["Lim-Dul's Paladin"]					= "Lim-Dûl's Paladin",
 ["Lim-Dul's High Guard"]				= "Lim-Dûl's High Guard",
-},
-[210] = { -- Homelands
-["Æther Storm"]							= "AEther Storm"
-},
-[150] = { -- Legends
-["Ærathi Berserker (ital.)"]			= "AErathi Berserker (ital.)"
 },
 [120] = { -- Arabian Nights
 ["Ring of Ma'rûf"] 						= "Ring of Ma ruf",
@@ -862,13 +790,13 @@ if CHECKEXPECTED then
 site.expected = {
 EXPECTTOKENS = true,
 -- Core sets
+[797] = { pset={ [3]=262-13 }, failed={ [3]=12 }, namereplaced=3 }, -- -13 tokens
 [788] = { namereplaced=1 },
-[779] = { namereplaced=2 },
-[770] = { namereplaced=4 },
+[770] = { namereplaced=2 },
 [720] = { pset={ [3]=389-1 }, failed={ [3]=1 } },
 [630] = { pset={ 359-20, [3]=359-20-7 }, failed={ [3]=7 } },
 [550] = { pset={ 357-19, [3]=357-19-2 }, failed={ [3]=2 } },
-[460] = { pset={ 350-130, [3]=350-130 }, namereplaced=2 }, --no commons
+[460] = { pset={ 350-130, [3]=350-130 } }, --no commons
 [180] = { pset={ 378-136, [3]=378-136 } }, --no commons
 [140] = { pset={ [3]=306-260 }, failed={ 2, [3]=1 }, dropped=199, namereplaced=4 },
 [139] = { dropped=9, namereplaced=19 },
@@ -881,49 +809,35 @@ EXPECTTOKENS = true,
 [786] = { namereplaced=5 },
 [784] = { pset={ 161+1 }, failed={ [3]=1 }, namereplaced=27 },-- +1/fail is checklist
 [782] = { pset={ 276+1 }, failed={ [3]=1}, namereplaced=46 },-- +1/fail is checklist
-[776] = { namereplaced=2 },
 [775] = { failed={ 1, [3]=1 }, namereplaced=1 },-- fail is Poison Counter
 [773] = { failed={ 1, [3]=1 }, namereplaced=3 },-- fail is Poison Counter
 [767] = { namereplaced=3 },
-[765] = { namereplaced=2 },
-[762] = { namereplaced=3 },
-[756] = { namereplaced=2 },
-[751] = { namereplaced=6 },
+[762] = { namereplaced=1 },
+[751] = { namereplaced=4 },
 [750] = { namereplaced=1 },
-[730] = { namereplaced=7 },
-[710] = { namereplaced=2 },
-[700] = { namereplaced=4 },
+[730] = { namereplaced=5 },
 [690] = { failed={ 298,[3]=298 } },
-[680] = { failed={ 121,[3]=121 }, namereplaced=6 },
-[660] = { namereplaced=2 },
-[650] = { namereplaced=2 },
+[680] = { failed={ 121,[3]=121 }, namereplaced=2 },
+[670] = { namereplaced=2 },
 [640] = { namereplaced=10 },
-[620] = { namereplaced=6 },
+[620] = { namereplaced=5 },
 [610] = { namereplaced=10 },
 [590] = { pset={ 307-20,	[3]=307-20 }, namereplaced=11 },
-[580] = { namereplaced=1 },
-[570] = { dropped=1, namereplaced=4 },
-[560] = { pset={ 306-20, [3]=306-20 }, namereplaced=3 },
-[520] = { pset={ 350-20,	[3]=350-20 }, dropped=3, namereplaced=2 },
+[570] = { dropped=1 },
+[560] = { pset={ 306-20, [3]=306-20 }, namereplaced=1 },
+[520] = { pset={ 350-20,	[3]=350-20 }, dropped=3 },
 [500] = { namereplaced=2 },
-[480] = { pset={ 350-20, [3]=350-20 }, dropped=1, namereplaced=1 },
-[470] = { namereplaced=1 },
-[430] = { pset={ 350-20, [3]=350-20 }, namereplaced=1 },
-[410] = { namereplaced=1 },
+[480] = { pset={ 350-20, [3]=350-20 }, dropped=1 },
+[430] = { pset={ 350-20, [3]=350-20 } },
 [400] = { pset={ 350-20, [3]=350-20 } },
-[370] = { namereplaced=1},
-[330] = { namereplaced=1},
-[300] = { namereplaced=1},
 [290] = { dropped=1 },
 [280] = { pset={ 350-20,	[3]=350-20 } },
-[270] = { namereplaced=1 },
 [230] = { pset={ 350-20, [3]=350-20 } },
 [220] = { namereplaced=3 },
-[210] = { namereplaced=1 },
 [190] = { pset={ 383-20, [3]=383-20 }, dropped=1 },
 [160] = { dropped=9 },
-[150] = { pset={ [5]=19 }, dropped=87, namereplaced=1 },
-[130] = { dropped=57 },
+[150] = { pset={ [5]=19 }, dropped=87 },
+[130] = { dropped=54 },
 [120] = { namereplaced=4 },
 }
 end

@@ -27,9 +27,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-use LHpi-v2.3 
-preemptively added M14
-added MMA
+preemptively added Theros
+lots of Ae -> Æ replacements
+use new 2.5 BuildCardDataPlugins for improved token handling
+changed BuildUrl to match lib 2.5
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -68,9 +69,9 @@ SAVELOG = true
 SAVETABLE = false
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.3"
+libver = "2.5"
 --- must always be equal to the scripts filename !
--- @field [parent=#global] #string scriptname	
+-- @field [parent=#global] #string scriptname
 scriptname = "LHpi.trader-onlineDE-v" .. libver .. ".1.lua" 
 
 --- @field [parent=#global] #table LHpi		LHpi library table
@@ -165,12 +166,12 @@ function site.BuildUrl( setid,langid,frucid,offline )
 	elseif langid == 5 then
 		seturl = "i" .. string.gsub( seturl, "%%20", "" )
 	end
-	local url = site.frucfileprefix .. site.file .. site.setprefix .. site.frucs[frucid] .. "-" .. seturl .. site.langs[langid].url
+	local url = site.domain ..  site.frucfileprefix .. site.file .. site.setprefix .. site.frucs[frucid] .. "-" .. seturl .. site.langs[langid].url
 	if offline then
-		url = savepath .. string.gsub( url, "%?", "_" )  .. ".html"
+		url = string.gsub( url, "%?", "_" )
+		url = string.gsub( url, "/", "_" )
 		container[url] = { isfile = true}
 	else
-		url = "http://" .. site.domain .. url
 		container[url] = {}
 	end -- if offline 
 	
@@ -203,9 +204,10 @@ end -- function site.BuildUrl
 function site.ParseHtmlData( foundstring , urldetails )
 	local newCard = { names = {} , price = {} }
 	local _s,_e,name  = string.find( foundstring, '\n%s*<td width="415"><p><div id="st12">([^<]+)</div></p>' )
-	local _s,_e,price = string.find( foundstring, '\n%s*<td width="60".+color="#990000"><b>([%d.,]+)%s*</b>' )
+	local _s,_e,price = string.find( foundstring, '\n%s*<td width="60".+color="#%d-"><b>([%d.,]+)%s*</b>' )
 	local _s,_e,fruc  = string.find( foundstring, '\n%s*<td width="25">%b<>([^<]+) +%b<></td>' )
 	local _s,_e,set   = string.find( foundstring, '\n%s*<td width="50">%b<>([^<]+) +%b<></td>' )
+	local _s,_e,color = string.find( foundstring, '</p>%s*<td width="25">%b<>(.-) %b<></td>' )
 	if name then -- prevent errors on nil, will be dropped later
 		name = string.gsub( name , ", %d+x[%l ]+verf.gbar$" , "" )
 		name = string.gsub( name , " %(%d+ Stk%)$" , "" )
@@ -221,54 +223,33 @@ function site.ParseHtmlData( foundstring , urldetails )
 		price= tonumber( price )
 	end
 	newCard.price[urldetails.langid] = price
-	newCard.pluginData = { fruc=fruc, set=set }
+	newCard.pluginData = { fruc=fruc, set=set, color=color }
 	return newCard
 end -- function site.ParseHtmlData
 
---[[- special cases card name manipulation
- Ties into LHpi.buildCardData to make changes that are specific to one site and thus don't belong into the library
- 
- @function [parent=#site] BCDpluginName
- @param #string name		the cardname LHpi.buildardData is working on
- @param #number setid
- @returns #string name	modified cardname is passed back for further processing
-]]
-function site.BCDpluginName ( name , setid )
-	if DEBUG then
-		LHpi.Log( "site.BCDpluginName got " .. name .. " from set " .. setid , 2 )
-	end
-	if setid == 640 then
-		name = string.gsub( name , "^GebirgeNr" , "Gebirge Nr" )
-	elseif setid == 410 then
-		name = string.gsub( name, "Raths Kante (nur englisch)" , "%0 (DROP)" )
-	end
-	if setid == 150 or setid == 160 then
-		-- check Legends and The Dark for "ital." suffix
-		name = string.gsub( name, ", ital%.$" , "" )
-	end
-
-	name = string.gsub( name , "Spielstein" , "Token" )
-	
-	-- mark condition modifier suffixed cards to be dropped
-	name = string.gsub( name , ", light played$" , "%0 (DROP)" )
-	name = string.gsub( name , ", gespielt$" , "%0 (DROP)" )
-	name = string.gsub( name , " NM%-EX$" , "%0 (DROP)" )
-	
-	return name
-end -- function site.BCDpluginName
 
 --[[- special cases card data manipulation
  Ties into LHpi.buildCardData to make changes that are specific to one site and thus don't belong into the library
  
- @function [parent=#site] BCDpluginCard
+ @function [parent=#site] BCDpluginPre
+ @param #string name		the cardname LHpi.buildardData is working on
+ @param #number setid
+ @returns #string name	modified cardname is passed back for further processing
+]]
+--[[- special cases card data manipulation
+ Ties into LHpi.buildCardData to make changes that are specific to one site and thus don't belong into the library.
+ This Plugin is called before most of LHpi's BuildCardData proecssing.
+
+ @function [parent=#site] BCDpluginPre
  @param #table card		the card LHpi.BuildCardData is working on
  @param #number setid
  @returns #table card modified card is passed back for further processing
 ]]
-function site.BCDpluginCard( card , setid )
+function site.BCDpluginPre ( card , setid )
 	if DEBUG then
-		LHpi.Log( "site.BCDpluginCard got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
+		LHpi.Log( "site.BCDpluginPre got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
 	end
+
 	if setid == 690 then -- Timeshifted
 		if not (card.pluginData.fruc == "T") then
 			card.name = card.name .. "(DROP Time Spiral)"
@@ -281,8 +262,24 @@ function site.BCDpluginCard( card , setid )
 		end
 	end
 
+	card.name = string.gsub( card.name , "Spielstein" , "Token" )
+	if string.find( card.name, "Token" ) and card.pluginData.color then
+		card.name = string.gsub( card.name, "%(Token%)", "" ) .. " (" .. card.pluginData.color .. ")"
+	end
+	if setid == 640 then
+		card.name = string.gsub( card.name , "^GebirgeNr" , "Gebirge Nr" )
+	elseif setid == 150 or setid == 160 then
+		-- remove "ital." suffix from italian Legends and The Dark
+		card.name = string.gsub( card.name, ", ital%.$" , "" )
+	end
+	
+	-- mark condition modifier suffixed cards to be dropped
+	card.name = string.gsub( card.name , ", light played$" , "%0 (DROP)" )
+	card.name = string.gsub( card.name , ", gespielt$" , "%0 (DROP)" )
+	card.name = string.gsub( card.name , " NM%-EX$" , "%0 (DROP)" )
+	print(LHpi.Tostring(card))
 	return card
-end -- function site.BCDpluginCard
+end -- function site.BCDpluginPre
 
 -------------------------------------------------------------------------------------------------------------
 -- tables
@@ -315,6 +312,7 @@ site.frucs = { "Foil" , "Serie" }
 --- @field [parent=#site] #table sets ]]
 --- @field [parent=#site] #table sets
 site.sets = {
+[797]={id = 797,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "M14"}, 
 [788]={id = 788,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "M13"}, 
 [779]={id = 779,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "M12"}, 
 [770]={id = 770,	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "M11"}, 
@@ -332,6 +330,7 @@ site.sets = {
 [100]={id = 100,	lang = { true , 	[3]=false }, 	fruc = { false,true }, 	url = "B%20"},
 [90] = nil, -- Alpha 
  -- Expansions
+[800]={id = 800,	lang = { true , 	[3]=true }, 	fruc = { true, true }, 	url = "THS"},
 [795]={id = 795,	lang = { true , 	[3]=true }, 	fruc = { true, true }, 	url = "DGM"},
 [793]={id = 793,	lang = { true , 	[3]=true }, 	fruc = { true, true }, 	url = "GTC"},
 [791]={id = 791, 	lang = { true , 	[3]=true }, 	fruc = { true ,true }, 	url = "RTR"},
@@ -410,11 +409,20 @@ site.sets = {
 --- @field [parent=#site] #table namereplace ]]
 --- @field [parent=#site] #table namereplace
 site.namereplace = {
+[797] = { -- M2014
+["Jaces Gedankenforscher"]				= "Jaces Gedankensucher", --TODO bugreport wrong name to MA
+["Token - Elemental (R)"]				= "Elemental",
+["Token - Elementarwesen (R)"]			= "Elementarwesen"
+},
+[779] = { -- M2012
+["Aether Adept"]						= "Æther Adept",
+},
 [770] = { -- M11
+["Aether Adept"]						= "Æther Adept",
 ["Zyklop -Gladiator"]					= "Zyklop-Gladiator",
-["Token - Schlammwesen (Token)"]		= "Ooze",
-["Token - Ooze (1/1)"]					= "Ooze (6)",
-["Token - Ooze (2/2)"]					= "Ooze (5)",
+["Token - Schlammwesen (G)"]			= "Ooze",
+["Token - Ooze (1/1) (G)"]				= "Ooze (6)",
+["Token - Ooze (2/2) (G)"]				= "Ooze (5)",
 },
 [720] = { -- 10th
 ["Elite-Infantrie der Goblins"] 		= "Elite-Infanterie der Goblins",
@@ -431,6 +439,8 @@ site.namereplace = {
 ["Staunch Defender"]					= "Staunch Defenders",
 },
 [460] = { -- 7th
+["Tainted Aether"]						= "Tainted Æther",
+["Aether Flash"]						= "Æther Flash",
 ["Baumvolksprößlinge"]					= "Baumvolksprösslinge",
 ["Flußpferdbulle"]						= "Flusspferdbulle",
 ["Ausschluß"]							= "Ausschluss",
@@ -438,12 +448,14 @@ site.namereplace = {
 ["Dornenelementar (273)"]				= "Dornenelementar",
 },
 [360] = { -- 6th
+["Aether Flash"]						= "Æther Flash",
 ["Zwiespaltszepter"]					= "Zwiespaltsszepter",
 ["Hammer von Bogardan (Hammer aus Bogardan)"]	= "Hammer von Bogardan",
 ["Zwang (engl. Coercion)"]				= "Zwang",
 ["Stein der Sanftmut"]					= "Stein des Sanftmuts"
 },
 [250] = { -- 5th
+["Aether Storm"]						= "Æther Storm",
 ["Ghazbanoger"]							= "Ghazbánoger",
 ["Dandan"]								= "Dandân"
 },
@@ -472,16 +484,19 @@ site.namereplace = {
 [795] = { -- Dragon's Maze
 ["Aetherling"]							= "Ætherling",
 ["Token - Elementarwesen (Token)"]		= "Elementarwesen",
---["Bewaffnet|Gefährlich"]				= "Bewaffnet|Gefärhlich",
 },
 [793] = { -- Gatecrash
 ["Aetherize"]							= "Ætherize",
 },
 [786] = { -- Avacyn Restored
-["Token - Human (Token)"]				= "Human",
-["Token - Spirit (Token)"]				= "Spirit",
-["Token - Mensch (Token)"]				= "Mensch",
-["Token - Geist (Token)"]				= "Geist",
+["Token - Human (W)"]				= "Human (2)",
+["Token - Human (R)"]				= "Human (7)",
+["Token - Spirit (W)"]				= "Spirit (3)",
+["Token - Spirit (U)"]				= "Spirit (4)",
+["Token - Mensch (W)"]				= "Mensch (2)",
+["Token - Mensch (R)"]				= "Mensch (7)",
+["Token - Geist (W)"]				= "Geist (3)",
+["Token - Geist (U)"]				= "Geist (4)",
 },
 [784] = { -- Dark Ascension
 ["Mondrenner-Schamanin|Trovolars Zauberjägerin"]	= "Mondrenner-Schamanin|Tovolars Zauberjägerin",
@@ -493,32 +508,37 @@ site.namereplace = {
 },
 [782] = { -- Innistrad
 ["Ludevic's Test Subject|Ludevic's Abomniation"] = "Ludevic's Test Subject|Ludevic's Abomination",
-["Token - Wolf"]						= "Wolf",
-["Token - Zombie"]						= "Zombie",
 ["Checklist Card Innistrad"]			= "Checklist",
 ["Checklisten-Karte Innistrad"]			= "Checklist",
-["Token - Wolf (Token)"]				= "Wolf",
-["Token - Zombie (Token)"]				= "Zombie",
+["Token - Wolf (B)"]					= "Wolf (6)", 
+["Token - Wolf (G)"]					= "Wolf (12)", 
+["Token - Zombie (B)"]					= "Zombie",
+},
+[776] = { -- New Phyrexia
+["Arm with Aether"]						= "Arm with Æther"
 },
 [773] = { -- Scars of Mirrodin
-["Token - Poison Counter"]				= "Poison Counter",
-["Token - Giftmarke (Token)"]			= "Poison Counter",
-["Token - Wurm (Deathtouch)"]			= "Wurm (8)",
-["Token - Wurm (Lifelink)"]				= "Wurm (9)",
-["Token - Wurm (Token|Todesberührung)"]	= "Wurm (8)",
-["Token - Wurm (Token|Lebensverknüpfung)"]= "Wurm (9)",
+["Token - Poison Counter (C)"]				= "Poison Counter",
+["Token - Giftmarke (C)"]					= "Poison Counter",
+["Token - Wurm (Deathtouch) (A)"]			= "Wurm (8)",
+["Token - Wurm (Lifelink) (A)"]				= "Wurm (9)",
+["Token - Wurm (Token|Todesberührung) (A)"]		= "Wurm (8)",
+["Token - Wurm (Token|Lebensverknüpfung) (A)"]	= "Wurm (9)",
 },
 [767] = { -- Rise of the Eldrazi
 ["Swamp (2340)"]						= "Swamp (240)",
-["Token - Eldrazi Spawn"]				= "Eldrazi Spawn",
-["Token - Eldrazi, Ausgeburt (Token)"]	= "Eldrazi, Ausgeburt",
+["Token - Eldrazi Spawn (C)"]			= "Eldrazi Spawn",
+["Token - Eldrazi, Ausgeburt (C)"]		= "Eldrazi, Ausgeburt",
 },
 [765] = { -- Worldwake
+["Aether Tradewinds"]					= "Æther Tradewinds",
 ["Elefant"]								= "Elefant ",
 },
 [762] = { -- Zendikar
-["Meervolk"]							= "Meervolk ",
-["Vampir"]								= "Vampir ",
+["Aether Figment"]						= "Æther Figment",
+},
+[756] = { -- Conflux
+["Scornful Aether-Lich"]				= "Scornful Æther-Lich"
 },
 [754] = { -- Shards of Alara
 ["Macht des Seele (Macht der Seele)"]	= "Macht des Seele",
@@ -526,35 +546,57 @@ site.namereplace = {
 ["Blasenkäpfer"]						= "Blasenkäfer",
 },
 [751] = { -- Shadowmoor
+["Aethertow"]							= "Æthertow",
 ["Mühsam erkämpfter Rum"]				= "Mühsam erkämpfter Ruhm",
-["Token - Elemental"]					= "Elemental",
-["Token - Elf Warrior"]					= "Elf Warrior",
-["Token - Elementarwesen (Token)"]		= "Elementarwesen",
-["Token - Elf, Krieger (Token)"]		= "Elf, Krieger",
+["Token - Elemental (R)"]				= "Elemental (4)",
+["Token - Elemental (H)"]				= "Elemental (9)",
+["Token - Elf Warrior (G)"]				= "Elf Warrior (5)",
+["Token - Elf Warrior (H)"]				= "Elf Warrior (12)",
+["Token - Elementarwesen (R)"]			= "Elementarwesen (4)",
+["Token - Elementarwesen (H)"]			= "Elementarwesen (9)",
+["Token - Elf, Krieger (G)"]			= "Elf, Krieger (5)",
+["Token - Elf, Krieger (H)"]			= "Elf, Krieger (12)",
 },
 [730] = { -- Lorwyn
-["Token - Elementarwesen (Token)"]		= "Elementarwesen",
-["Token - Elemental"]					= "Elemental",
+["Aethersnipe"]							= "Æthersnipe",
+["Token - Elemental (W)"]				= "Elemental (2)",
+["Token - Elemental (G)"]				= "Elemental (8)",
+["Token - Elementarwesen (W)"]			= "Elementarwesen (2)",
+["Token - Elementarwesen (G)"]			= "Elementarwesen (8)",
 },
 [710] = { -- Future Sight
 ["Tarmogoyf, englisch"]					= "Tarmogoyf",
 ["Tarmogoyf, deutsch"]					= "Tarmogoyf",
+["Vedalken Aethermage"]					= "Vedalken Æthermage"
+},
+[700] = { -- Planar Chaos
+["Frozen Aether"]						= "Frozen Æther",
+["Aether Membrane"]						= "Æther Membrane"
 },
 [690] = { -- Timeshifted
 ["Sindbad, der Seefahrer"]				= "Sindbad der Seefahrer",
 ["Dandan"]								= "Dandân"
 },
 [680] = { -- Time Spiral
+["Aether Web"]							= "Æther Web",
+["Aetherflame Wall"]					= "Ætherflame Wall",
 ["Lim-Dul the Necromancer"]				= "Lim-Dûl the Necromancer"
 },
 [670] = { -- Coldsnap
+["Surging Aether"]						= "Surging Æther",
 ["Gaza Zol, Seuchenkönigin"]			= "Garza Zol, Seuchenkönigin",
 ["Nachleuten"]							= "Nachleuchten",
 },
+[660] = { -- Dissension
+["Aethermage's Touch"]					= "Æthermage's Touch",
+["Azorius Aethermage"]					= "Azorius Æthermage"
+},
 [650] = { -- Guildpact
+["Aetherplasm"]							= "Ætherplasm",
 ["Parallelektrische Rückkoppelung"]		= "Parallelektrische Rückkopplung",
 },
 [620] = { -- Saviors of Kamigawa
+["Aether Shockwave"]					= "Æther Shockwave",
 ["Erayo, Soratami Ascendant"] 			= "Erayo, Soratami Ascendant|Erayo’s Essence",
 	["Erayo, Vorfahr der Soratami"] 	= "Erayo, Vorfahr der Soratami|Erayos Substanz",
 ["Homura, Human Ascendant"] 			= "Homura, Human Ascendant|Homura’s Essence",
@@ -611,24 +653,49 @@ site.namereplace = {
 ["Honor-worn Shaku"]					= "Honor-Worn Shaku",
 },
 [580] = { -- Fifth Dawn
+["Fold into Aether"]					= "Fold into Æther",
 ["Virdischer Späher"]					= "Viridischer Späher",
 ["Virdische Sagenbewahrer"]				= "Viridische Sagenbewahrer",
+},
+[570] = { -- Darksteel
+["Aether Snap"]							= "Æther Snap",
+["Aether Vial"]							= "Æther Vial"
+},
+[560] = { -- Mirrodin
+["Gate to the Aether"]					= "Gate to the Æther",
+["Aether Spellbomb"]					= "Æther Spellbomb"
 },
 [530] = { -- Legions
 ["Brüllender Blutsiedler"]				= "Brüllender Blutsieder",
 },
-[420] = { -- Prophecy
---["Alexi, Westwindzauberin"]				= "Alexi Westwindzauberin",
+[520] = { -- Onslaught
+["Aether Charge"]						= "Æther Charge"
 },
-[410] = { -- Portal Second Age
+[480] = { -- Odyssey
+["Aether Burst"]						= "Æther Burst"
+},
+[470] = { -- Apocalypse
+["Aether Mutation"]						= "Æther Mutation"
+},
+[430] = { -- Invasion
+["Aether Rift"]							= "Æther Rift"
+},
+[410] = { -- Nemesis
+["Aether Barrier"]						= "Æther Barrier",
 ["Rhox (112)a"]							= "Rhox",
 ["Aufstrebender Envincar"]				= "Aufstrebender Evincar",
 },
-[400] = { -- Mercadian Masques
---["Älteste des Dunkelwaldes"]			= "Älteste des Dunkelwalds",
---["Cateranische Entführer"]				= "Cateranischer Entführer"
+[370] = { -- Urza's Destiny
+["Aether Sting"]						= "Æther Sting"
+},
+[330] = { -- Urza's Saga
+["Tainted Aether"]						= "Tainted Æther"
+},
+[300] = { -- Exodus
+["Aether Tide"]							= "Æther Tide"
 },
 [270] = { -- Weatherlight
+["Aether Flash"]						= "Æther Flash",
 ["Benalische Infantrie"]				= "Benalische Infanterie",
 ["Reißzahnratte"]						= "Reißzahnratten",
 },
@@ -639,7 +706,9 @@ site.namereplace = {
 ["Ahnen aus dem Yavimaya"]				= "Ahnen aus Yavimaya",
 ["Lim-Duls Paladin"]					= "Lim-Dûls Paladin",
 ["Lim-Dul's High Guard"]				= "Lim-Dûl's High Guard",
-
+},
+[210] = { -- Homelands
+["Aether Storm"]						= "Æther Storm"
 },
 [190] = { -- Ice Age
 ["Lim-Dul's Hex"]						= "Lim-Dûl's Hex",
@@ -650,17 +719,26 @@ site.namereplace = {
 [160] = { -- The Dark
 ["Elves of Deep Shadows"]				= "Elves of Deep Shadow",
 },
+[150] = { -- Legends
+["Aerathi Berserker"]					= "Ærathi Berserker"
+},
 [120] = { -- Arabian Nights
 ["Junun Efreet"]						= "Junún Efreet",
 ["Ifh-Biff Efreet"]						= "Ifh-Bíff Efreet",
 ["Ring of Ma'ruf"]						= "Ring of Ma ruf",
 },
 -- specal sets
+[796] = { -- Modern Masters
+["Aether Vial"]							= "Æther Vial",
+["Aether Spellbomb"]					= "Æther Spellbomb",
+["Aethersnipe"]							= "Æthersnipe",
+},
 [600] = { -- Unhinged
 ["First Come First Served"]				= "First Come, First Served",
 ["Our Market Research Shows ..."]		= "Our Market Research Shows That Players Like Really Long Card Names So We Made this Card to Have the Absolute Longest Card Name Ever Elemental",
 ["Erase"]								= "Erase (Not the Urza’s Legacy One)",
 ["Who|What/When|Where/Why"]				= "Who|What|When|Where|Why",
+["Yet Another Aether Vortex"]			= "Yet Another Æther Vortex",
 },
 [320] = { -- Unglued
 ["B.F.M. (Big Furry Monster) links"]	= "B.F.M. (left)",
@@ -738,48 +816,70 @@ if CHECKEXPECTED then
 site.expected = {
 EXPECTTOKENS = true,
 -- Core sets
-[770] = { namereplaced=6 },
+[797] = { pset={ [3]=262-13 }, failed= { [3]=12 }, namereplaced=5 }, -- -13 is tokens
+[779] = { namereplaced=2 },
+[770] = { namereplaced=8 },
 [720] = { pset={ [3]=383-1+6 }, failed={ [3]=1 }, namereplaced=3 },
 [630] = { pset={ 359-9, [3]=352-2 }, namereplaced=2 },
 [550] = { pset={ 357-7, [3]=355-5 }, namereplaced=7 },
-[460] = { namereplaced=5 },
-[360] = { namereplaced=4 },
-[250] = { namereplaced=3 },
+[460] = { namereplaced=7 },
+[360] = { namereplaced=5 },
+[250] = { namereplaced=4 },
 [180] = { namereplaced=5 },
-[140] = { namereplaced=7 },
+[140] = { pset={ [3]=306-1 }, failed= { [3]=1 }, namereplaced=6 },
 [139] = { namereplaced=2 },
-[110] = { pset={ 291 }, namereplaced=1 },
-[100] = { pset={ 249 } },
+[110] = { pset={ 286 }, namereplaced=1 },
+[100] = { pset={ 252 } },
 -- Expansions
-[795] = { pset={ [3]=157-1 }, failed={ [3]=1 }, namereplaced=2 }, -- -1/fail is token
+[800] = { pset={ [3]=260-11 }, failed= { [3]=11 } }, -- -11 is tokens
+[795] = { pset={ [3]=157-1 }, failed= { [3]=1 }, namereplaced=1 }, -- -1 is token
 [793] = { namereplaced=1 },
 [786] = { namereplaced=8 },
 [784] = { pset={ 161+1 }, failed={ [3]=1 }, namereplaced=6 }, --+1 is Checklist
 [782] = { pset={ 276+1 }, failed={ [3]=1 }, namereplaced=9 }, -- +1/fail is Checklist
+[776] = { namereplaced=2 },
 [773] = { failed={ 1, [3]=1 }, namereplaced=6 }, -- fail is Poison Counter
 [767] = { namereplaced=3 },
+[765] = { namereplaced=2 },
+[762] = { namereplaced=1 },
+[756] = { namereplaced=2 },
 [754] = { namereplaced=4 },
-[751] = { namereplaced=10 },
-[730] = { namereplaced=4 },
-[710] = { namereplaced=2 },
-[690] = { dropped=976, namereplaced=5 },
-[680] = { dropped=372, namereplaced=1 },
-[670] = { namereplaced=2 },
+[751] = { namereplaced=12 },
+[730] = { namereplaced=5 },
+[710] = { namereplaced=4 },
+[700] = { namereplaced=3 },
+[690] = { dropped=971, namereplaced=5 },
+[680] = { dropped=372, namereplaced=5 },
+[670] = { namereplaced=4 },
+[660] = { namereplaced=4 },
+[650] = { namereplaced=4 },
 [654] = { namereplaced=3 },
-[650] = { namereplaced=1 },
-[620] = { namereplaced=15 },
+[650] = { namereplaced=3 },
+[620] = { namereplaced=17 },
 [610] = { namereplaced=19 },
 [590] = { namereplaced=33 },
-[580] = { namereplaced=4 },
+[580] = { namereplaced=6 },
+[570] = { namereplaced=3 },
+[560] = { namereplaced=3 },
 [530] = { namereplaced=2 },
-[410] = { failed={ [3]=1 }, namereplaced = 3 },
-[270] = { namereplaced=2 },
+[520] = { namereplaced=1 },
+[480] = { namereplaced=2 },
+[470] = { namereplaced=1 },
+[430] = { namereplaced=1 },
+[410] = { failed= { [3]=1 }, namereplaced = 5 },
+[370] = { namereplaced=2 },
+[330] = { namereplaced=1 },
+[300] = { namereplaced=1 },
+[270] = { namereplaced=3 },
 [220] = { namereplaced=6 },
+[210] = { namereplaced=1 },
 [190] = { namereplaced=4 },
 [160] = { namereplaced=1 }, -- in ita
+[150] = { namereplaced=2 },
 [120] = { namereplaced=3 },
 -- special sets
-[600] = { namereplaced=7 },
+[796] = { namereplaced=5 },
+[600] = { namereplaced=8 },
 [320] = { namereplaced=6 },
 [310] = { namereplaced=2 },
 [260] = { pset={ [3]=222 }, namereplaced=4 },

@@ -39,10 +39,13 @@ string.format all LOG that contain variables
 ]]
 
 --[[ CHANGES
-added Theros
+changed site.BCDpluginName(name, setid) to site.BCDpluginPre(card, setid) and site.BCDpluginCard(card, setid) to site.BCDpluginPost(card, setid)
+fixes to Token handling
+GetSourceData now actually preserves all data from site.ParseHtmlData
+adjusted handling of multiple pages per set
 ]]
 --- @field [parent=#LHpi] #string version
-LHpi.version = "2.4"
+LHpi.version = "2.5"
 
 --[[- "main" function called by Magic Album; just display error and return.
  Called by Magic Album to import prices. Parameters are passed from MA.
@@ -125,8 +128,6 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 		if not site.variants[sid] then
 			if LHpi.sets[sid] then
 				site.variants[sid] = LHpi.sets[sid].variants
-			--else
-			--	site.variants[sid] = {}
 			end -- if
 		end -- if
 	end -- for
@@ -154,9 +155,6 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 							else
 								site.expected[sid].pset[lid] = LHpi.sets[sid].cardcount.reg
 							end
-							--else
-							--	site.expected[sid].pset[lid] = 0
-							--end
 						else
 							site.expected[sid].pset[lid] = 0	
 						end
@@ -182,16 +180,18 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 			error( errormsg )
 		end	-- function
 	end -- if
-	if not site.BCDpluginName then
-		function site.BCDpluginName ( name , setid )
-			return name
-		end -- function
-	end -- if
-	if not site.BCDpluginCard then
-		function site.BCDpluginCard( card , setid )
-			return card
-		end -- function
-	end -- if
+-- Don't need to define defaults here as long as BuildCardData checks for their existance before calling them.	
+--	if not site.BCDpluginPre then
+--		function site.BCDpluginPre ( card , setid )
+--			return card
+--		end -- function
+--	end -- if
+--	if not site.BCDpluginPost then
+--		function site.BCDpluginPost( card , setid )
+--			card.BCDPluginData = nil
+--			return card
+--		end -- function
+--	end -- if
 	
 	-- build sourceList of urls/files to fetch
 	local sourceList, sourceCount = LHpi.ListSources( supImportfoil , supImportlangs , supImportsets )
@@ -217,7 +217,6 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 		totalcountstring = totalcountstring .. string.format( "%i set, %i failed %s cards\t", totalcount.pset[lid], totalcount.failed[lid], lang )
 	end -- for
 	LHpi.Log( string.format ( "Total counted : " .. totalcountstring .. "; %i dropped and %i namereplaced.", totalcount.dropped, totalcount.namereplaced ) )
-	--LHpi.Log("totalcounted  \t" .. LHpi.Tostring(totalcount) , 1 )
 	if CHECKEXPECTED then
 		local totalexpected = {pset={},failed={},dropped=0,namereplaced=0}
 		for lid,_lang in pairs(supImportlangs) do
@@ -239,7 +238,6 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 			totalexpectedstring = totalexpectedstring .. string.format( "%i set, %i failed %s cards\t", totalexpected.pset[lid], totalexpected.failed[lid], lang )
 		end -- for
 		LHpi.Log( string.format ( "Total expected: " .. totalexpectedstring .. "; %i dropped and %i namereplaced.", totalexpected.dropped, totalexpected.namereplaced ) )
-		--LHpi.Log ( "totalexpected \t" .. LHpi.Tostring(totalexpected) , 1 )
 		LHpi.Log ( "count differs in " .. LHpi.Length(setcountdiffers) .. " sets:" .. LHpi.Tostring(setcountdiffers ), 1 )
 	end -- if CHECKEXPECTED	
 end
@@ -304,9 +302,11 @@ function LHpi.MainImportCycle( sourcelist , totalhtmlnum , importfoil , importla
 			end -- for _,source 
 			-- build cardsetTable from htmls finished
 			if VERBOSE then
-				local msg =  "cardsetTable for set " .. importsets[sid] .. "(id " .. sid .. ") build with " .. LHpi.Length(cardsetTable) .. " rows."
+--				local msg =  "cardsetTable for set " .. importsets[sid] .. "(id " .. sid .. ") build with " .. LHpi.Length(cardsetTable) .. " rows."
+				local msg =  string.format( "cardsetTable for set %s (id %i) build with %i rows.",importsets[sid],sid,LHpi.Length(cardsetTable) )
 				if ( LHpi.sets[sid] and LHpi.sets[sid].cardcount ) then
-					msg = msg ..  " Set supposedly contains " .. ( LHpi.sets[sid].cardcount.reg or "#" ) .. " cards and " .. ( LHpi.sets[sid].cardcount.tok or "#" ).. " tokens."
+--					msg = msg ..  " Set supposedly contains " .. ( LHpi.sets[sid].cardcount.reg or "#" ) .. " cards and " .. ( LHpi.sets[sid].cardcount.tok or "#" ).. " tokens."
+					msg = msg .. string.format( " Set supposedly contains %i cards and %i tokens.", LHpi.sets[sid].cardcount.reg, LHpi.sets[sid].cardcount.tok )
 				else
 					msg = msg .. " Number of cards in set is not known to LHpi."
 				end 
@@ -333,9 +333,10 @@ function LHpi.MainImportCycle( sourcelist , totalhtmlnum , importfoil , importla
 		LHpi.Log ( statmsg )
 		if VERBOSE then
 			if ( LHpi.sets[sid] and LHpi.sets[sid].cardcount ) then
-				LHpi.Log( "[" .. cSet.id .. "] contains \t" .. ( LHpi.sets[sid].cardcount.both or "#" ) .. " cards (\t" .. ( LHpi.sets[sid].cardcount.reg or "#" ) .. " regular,\t " .. ( LHpi.sets[sid].cardcount.tok or "#" ) .. " tokens )" )
+--				LHpi.Log( "[" .. cSet.id .. "] contains \t" .. ( LHpi.sets[sid].cardcount.both or "#" ) .. " cards (\t" .. ( LHpi.sets[sid].cardcount.reg or "#" ) .. " regular,\t " .. ( LHpi.sets[sid].cardcount.tok or "#" ) .. " tokens )" )
+				LHpi.Log( string.format( "[%i] contains %4i cards (%4i regular, %4i tokens )", cSet.id, LHpi.sets[sid].cardcount.both, LHpi.sets[sid].cardcount.reg, LHpi.sets[sid].cardcount.tok ) )
 			else
-				LHpi.Log(  "[" .. cSet.id .. "] contains unknown to LHpi number of cards." )
+				LHpi.Log( string.format( "[%i] contains unknown to LHpi number of cards.", cSet.id ) )
 			end
 		end
 		if DEBUG then
@@ -354,7 +355,8 @@ function LHpi.MainImportCycle( sourcelist , totalhtmlnum , importfoil , importla
 					if ( site.expected[sid].namereplaced or 0 ) ~= persetcount.namereplaced then allgood = false end
 				end
 				if not allgood then
-					LHpi.Log( ":-( persetcount for " .. importsets[sid] .. "(id " .. sid .. ") differs from expected. " , 1 )
+--					LHpi.Log( ":-( persetcount for " .. importsets[sid] .. "(id " .. sid .. ") differs from expected. " , 1 )
+					LHpi.Log( string.format( ":-( persetcount for %s (id %i) differs from expected. ", importsets[sid], sid ) , 1)
 					table.insert( setcountdiffers , sid , importsets[sid] )
 					if VERBOSE then
 						local setcountstring = ""
@@ -378,10 +380,12 @@ function LHpi.MainImportCycle( sourcelist , totalhtmlnum , importfoil , importla
 						--error( "not allgood in set " .. importsets[sid] .. "(" ..  sid .. ")" )
 					end
 				else
-					LHpi.Log( ":-) Prices for set " .. importsets[sid] .. "(id " .. sid .. ") were imported as expected :-)" , 1 )
+--					LHpi.Log( ":-) Prices for set " .. importsets[sid] .. "(id " .. sid .. ") were imported as expected :-)" , 1 )
+					LHpi.Log( string.format( ":-) Prices for set %s (id %i) were imported as expected :-)", importsets[sid], sid ), 1 )
 				end
 			else
-				LHpi.Log( "No expected persetcount for " .. importsets[sid] .. "(id " .. sid .. ") found." , 1 )
+--				LHpi.Log( "No expected persetcount for " .. importsets[sid] .. "(id " .. sid .. ") found." , 1 )
+				LHpi.Log( string.format( "No expected persetcount for %s (id %i) found.", importsets[sid], sid ), 1 )
 			end -- if site.expected[sid] else
 		end -- if CHECKEXPECTED
 		
@@ -499,37 +503,42 @@ function LHpi.ListSources ( importfoil , importlangs , importsets )
 	for sid,cSet in pairs( site.sets ) do
 		if importsets[sid] then
 			urls[sid]={}
-			for lid,_lang in pairs( importlangs ) do
+			for lid,lang in pairs( importlangs ) do
 				if cSet.lang[lid] then
 					for fid,fruc in pairs ( site.frucs ) do
 						if cSet.fruc[fid] then
-							local url,urldetails = next( site.BuildUrl( sid , lid , fid , OFFLINE ) )
-							urldetails.setid=sid
-							urldetails.langid=lid
-							urldetails.frucid=fid
-							if DEBUG then
-								urldetails.lang=site.langs[lid].url
-								urldetails.fruc=site.frucs[fid]
-								LHpi.Log( "site.BuildUrl is \"" .. LHpi.Tostring( url ) .. "\"" , 2 )
-							end
-							urls[sid][url] = urldetails
+							for url,urldetails in next, site.BuildUrl( sid , lid , fid , OFFLINE ) do
+								urldetails.setid=sid
+								urldetails.langid=lid
+								urldetails.frucid=fid
+								if DEBUG then
+									urldetails.lang=site.langs[lid].url
+									urldetails.fruc=site.frucs[fid]
+									LHpi.Log( "site.BuildUrl is " .. LHpi.Tostring( url ) , 2 )
+								end
+								urls[sid][url] = urldetails
+							end -- for
 						elseif DEBUG then
-							LHpi.Log( fruc .. " not available" , 2 )
+--							LHpi.Log( "url for fruc " .. fruc .. " (" .. fid .. ") not available" , 2 )
+							LHpi.Log( string.format( "url for fruc %s (%i) not available", fruc, fid ), 2 )
 						end -- of cSet.fruc[fid]
 					end -- for fid,fruc
 				elseif DEBUG then
-					LHpi.Log( _lang .. " not available" , 2 )
+					LHpi.Log( string.format( "url for lang %s (%i) not available", lang, lid ), 2 )
 				end	-- if cSet.lang[lid]
 			end -- for lid,_lang
 			-- Calculate total number of sources for progress bar
 			urlcount = urlcount + LHpi.Length(urls[sid])
-			if DEBUG then
-				LHpi.Logtable(urls[sid])
-			end
+--			if DEBUG then
+--				LHpi.Logtable(urls[sid])
+--			end
 		elseif DEBUG then
-			LHpi.Log( sid .. " not available" , 2 )
+			LHpi.Log( string.format( "url for %s (%i) not available", importsets[sid], sid ), 2 )
 		end -- if importsets[sid]
 	end -- for sid,cSet
+	if DEBUG then
+		LHpi.Logtable(urls)
+	end
 	return urls, urlcount
 end -- function LHpi.ListSources
 
@@ -546,13 +555,16 @@ function LHpi.GetSourceData( url , details ) --
 	local htmldata = nil -- declare here for right scope
 	LHpi.Log( "Fetching " .. url )
 	if details.isfile then -- get htmldata from local source
-		htmldata = ma.GetFile( url )
+		url = string.gsub(url, "/", "_")
+		url = string.gsub(url, "%?", "_")
+		htmldata = ma.GetFile( savepath .. url )
 		if not htmldata then
-			LHpi.Log( "!! GetFile failed for " .. url )
+			LHpi.Log( "!! GetFile failed for " .. savepath .. url )
 			return nil
 		end
 	else -- get htmldata from online source
-		htmldata = ma.GetUrl( url )
+		htmldata = ma.GetUrl( "http://" .. url )
+		if DEBUG then LHpi.Log("fetched remote file.") end
 		if not htmldata then
 			LHpi.Log( "!! GetUrl failed for " .. url )
 			return nil
@@ -560,9 +572,11 @@ function LHpi.GetSourceData( url , details ) --
 	end -- if details.isfile
 	
 	if SAVEHTML and not OFFLINE then
-		local filename = next( site.BuildUrl( details.setid , details.langid , details.frucid , true ) )
-		LHpi.Log( "Saving source html to file: \"" .. filename .. "\"" )
-		ma.PutFile( filename , htmldata )
+--		local filename = next( site.BuildUrl( details.setid , details.langid , details.frucid , true ) )
+		url = string.gsub(url, "/", "_")
+		url = string.gsub(url, "%?", "_")
+		LHpi.Log( "Saving source html to file: \"" .. savepath .. url .. "\"" )
+		ma.PutFile( savepath .. url , htmldata )
 	end -- if SAVEHTML
 	
 	if VERBOSE then
@@ -587,7 +601,8 @@ function LHpi.GetSourceData( url , details ) --
 			foundData.names[lid] = string.gsub( foundData.names[lid], "^%s*(.-)%s*$", "%1" )
 		end -- for lid,_cName
 		if next( foundData.names ) then
-			table.insert( sourceTable , { names = foundData.names, price = foundData.price , pluginData = foundData.pluginData } )
+--			table.insert( sourceTable , { names = foundData.names, price = foundData.price , pluginData = foundData.pluginData } )
+			table.insert( sourceTable , foundData ) -- actually keep ParseHtmlData-supplied information
 		else -- nothing was found
 			if VERBOSE or DEBUG then
 				LHpi.Log( "foundstring contained no data" , 1 )
@@ -654,7 +669,7 @@ function LHpi.BuildCardData( sourcerow , setid , urlfoil , importlangs )
 	end
 
 	-- set card languages
-	if sourcerow.Lang then -- keep site.ParseHtmlData preset lang 
+	if sourcerow.lang then -- keep site.ParseHtmlData preset lang 
 		card.lang = sourcerow.lang
 	else
 		-- use names{} to determine card languages	
@@ -674,11 +689,11 @@ function LHpi.BuildCardData( sourcerow , setid , urlfoil , importlangs )
 	if sourcerow.drop then -- keep site.ParseHtmlData preset drop
 		card.drop = sourcerow.drop
 	end -- if
-	
-	--[[ do site-specific card data manipulation
+
+	--[[ do site-specific card data manipulation before processing 
 	]]
-	if site.BCDpluginName then
-		card.name = site.BCDpluginName ( card.name , setid )
+	if site.BCDpluginPre then
+		card = site.BCDpluginPre ( card , setid )
 	end
 	
 	-- drop unwanted sourcedata before further processing
@@ -706,15 +721,16 @@ function LHpi.BuildCardData( sourcerow , setid , urlfoil , importlangs )
 	if sourcerow.foil then -- keep site.ParseHtmlData preset foil
 		card.foil = sourcerow.foil
 	else
-	-- removal of foil suffix  must come before variant and namereplace check
-		if urlfoil then -- remove "(foil)" if foil url
-			card.name = string.gsub( card.name , "%( ?[fF][oO][iI][lL]%)" , "" )
-			card.foil = true
+		if urlfoil then
+			card.foil = true -- believe urldata
+		elseif string.find ( card.name, "%( ?[fF][oO][iI][lL]%)" ) then
+			card.foil = true -- check cardname
 		else
-			-- FIXME what about mixed foil/nonfoil htmldata ?
 			card.foil = false
 		end -- if urlfoil
-	end -- if
+	end -- if sourcerow.foil
+	-- removal of foil suffix  must come before variant and namereplace check
+	card.name = string.gsub( card.name , "%( ?[fF][oO][iI][lL]%)" , "" )
 
 	card.name = string.gsub( card.name , "%s+" , " " ) -- reduce multiple spaces
 	card.name = string.gsub( card.name , "^%s*(.-)%s*$" , "%1" ) --remove spaces from start and end of string
@@ -725,7 +741,8 @@ function LHpi.BuildCardData( sourcerow , setid , urlfoil , importlangs )
 
 	if site.namereplace[setid] and site.namereplace[setid][card.name] then
 		if LOGNAMEREPLACE or DEBUG then
-			LHpi.Log( "namereplaced\t" .. card.name .. "\t to " .. site.namereplace[setid][card.name] , 1 )
+--			LHpi.Log( "namereplaced\t" .. card.name .. "\t to " .. site.namereplace[setid][card.name] , 1 )
+			LHpi.Log( string.format( "namereplaced %s to %s" ,card.name, site.namereplace[setid][card.name] ), 1 )
 		end
 		card.name = site.namereplace[setid][card.name]
 		if CHECKEXPECTED then
@@ -766,10 +783,10 @@ function LHpi.BuildCardData( sourcerow , setid , urlfoil , importlangs )
 --		card.name = string.gsub( card.name , " [tT][oO][kK][eE][nN]" , "" )
 		card.name = string.gsub( card.name , "[tT][oO][kK][eE][nN]" , "" )
 		card.name = string.gsub( card.name , "^ %- " , "" )
-		card.name = string.gsub( card.name , "%(%)$" , "" )
-		card.name = string.gsub( card.name , "%([WUBRG][/|]?[WUBRG]?%)" , "" )
+		card.name = string.gsub( card.name , "%([WUBRGCHTAM][/|]?[WUBRG]?%)" , "" )
 		card.name = string.gsub( card.name , "%(Art%)" , "" )
 		card.name = string.gsub( card.name , "%(Gld%)" , "" )
+		card.name = string.gsub( card.name , "%(%)%s*$" , "" )
 		card.name = string.gsub( card.name , "  +" , " " )
 	end
 	if string.find( card.name , "^Emblem" ) then -- Emblem prefix to suffix
@@ -834,11 +851,10 @@ function LHpi.BuildCardData( sourcerow , setid , urlfoil , importlangs )
 	end
 	
 	--[[ do final site-specific card data manipulation
-	for magicuniverse, this is
-	set 140 "Schilftroll (Fehldruck, deutsch)"
-	set Legends "(ital.)" suffixed to lang[] and DROP
 	]]
-	card = site.BCDpluginCard( card , setid )
+	if site.BCDpluginPost then
+		card = site.BCDpluginPost ( card , setid )
+	end
 	
 	card.foil = nil -- remove foilstat; info is retained in [foil|reg]price and it could cause confusion later
 	card.BCDpluginData = nil -- if present at all, should have been used and deleted by site.BCDpluginCard 	
@@ -1742,13 +1758,14 @@ LHpi.sets = {
 ["Forest (248)"]				= { "Forest"	, { false, false, 3    , false } },
 ["Forest (249)"]				= { "Forest"	, { false, false, false, 4     } },
 ["Soldier"]						= { "Soldier"	, { 1    , 2    , 3     } },
-["Soldier (1)"]					= { "Soldier"	, { 1    , false, false } },
-["Soldier (2)"]					= { "Soldier"	, { false, 2    , false } },
-["Soldier (3)"]					= { "Soldier"	, { false, false, 3     } },
+["Soldier (2)"]					= { "Soldier"	, { 1    , false, false } },
+["Soldier (3)"]					= { "Soldier"	, { false, 2    , false } },
+["Soldier (7)"]					= { "Soldier"	, { false, false, 3     } },
 ["Soldat"]						= { "Soldat"	, { 1    , 2    , 3     } },
-["Soldat (1)"]					= { "Soldat"	, { 1    , false, false } },
-["Soldat (2)"]					= { "Soldat"	, { false, 2    , false } },
-["Soldat (3)"]					= { "Soldat"	, { false, false, 3     } },	},
+["Soldat (2)"]					= { "Soldat"	, { 1    , false, false } },
+["Soldat (3)"]					= { "Soldat"	, { false, 2    , false } },
+["Soldat (7)"]					= { "Soldat"	, { false, false, 3     } },
+	},
 },
 [795] = { name="Dragon's Maze",
 	cardcount={ reg = 156, tok =  1 },
@@ -1983,7 +2000,7 @@ LHpi.sets = {
 	variants={}
 },
 [762] = { name="Zendikar",
-	cardcount={ reg = 269-20, tok = 11 },
+	cardcount={ reg = 269-20, tok = 11 }, -- do not count normal-art basic lands
 	variants={
 ["Plains"] 						= { "Plains"	, { 1    , 2    , 3    , 4    } },
 ["Island"] 						= { "Island" 	, { 1    , 2    , 3    , 4     } },
@@ -2132,7 +2149,7 @@ LHpi.sets = {
 ["Elemental (2)"] 				= { "Elemental"		, { 1    , false } },
 ["Elemental (8)"] 				= { "Elemental"		, { false, 2     } },
 ["Elementarwesen"] 				= { "Elementarwesen", { 1    , 2     } },
-["Elementarwesen (1)"] 			= { "Elementarwesen", { 1    , false } },
+["Elementarwesen (2)"] 			= { "Elementarwesen", { 1    , false } },
 ["Elementarwesen (8)"] 			= { "Elementarwesen", { false, 2     } },
 	},
 },

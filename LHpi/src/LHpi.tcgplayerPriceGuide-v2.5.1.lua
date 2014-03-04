@@ -24,8 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-added Theros
-lots of Ae -> Æ replacements
+changed BuildUrl to match lib 2.5
 ]]
 
 --TODO I'm not really happy with variant handling for this site.
@@ -69,7 +68,7 @@ SAVELOG = true
 SAVETABLE = false
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.4"
+libver = "2.5"
 --- must always be equal to the scripts filename !
 -- @field [parent=#global] #string scriptname	
 scriptname = "LHpi.tcgplayerPriceGuide-v" .. libver .. ".1.lua" 
@@ -148,12 +147,12 @@ function site.BuildUrl( setid,langid,frucid,offline )
 	site.setprefix = "?setname="
 	
 	local container = {}
-	local url = site.file .. site.setprefix .. site.sets[setid].url
+	local url = site.domain .. site.file .. site.setprefix .. site.sets[setid].url
 	if offline then
-		url = savepath .. string.gsub( url, "%?", "_" )  .. ".html"
+		url = string.gsub( url, "%?", "_" )
+		url = string.gsub( url, "/", "_" )
 		container[url] = { isfile = true}
 	else
-		url = "http://" .. site.domain .. url
 		container[url] = {}
 	end -- if offline 
 	container[url].foilonly = false -- just to make the point :)
@@ -194,6 +193,23 @@ function site.ParseHtmlData( foundstring , urldetails )
 	local newCard = { names = { [1] = name } , price = { [1] = price } }
 	return newCard
 end -- function site.ParseHtmlData
+
+--[[- special cases card data manipulation
+ Ties into LHpi.buildCardData to make changes that are specific to one site and thus don't belong into the library
+ This Plugin is called after LHpi's BuildCardData proecssing (and probably not needed).
+ 
+ @function [parent=#site] BCDpluginPost
+ @param #table card		the card LHpi.BuildCardData is working on
+ @param #number setid
+ @returns #table card modified card is passed back for further processing
+]]
+--function site.BCDpluginPost( card , setid )
+--	if DEBUG then
+--		LHpi.Log( "site.BCDpluginPost got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
+--	end
+-- TODO: try cloning price data for GER here
+--	return card
+--end -- function site.BCDpluginPost
 
 -------------------------------------------------------------------------------------------------------------
 -- tables
@@ -643,6 +659,7 @@ if CHECKEXPECTED then
 --- @field [parent=#site] #table expected ]]
 --- @field [parent=#site] #table expected
 site.expected = {
+EXPECTTOKENS = false,
 -- Core sets
 [779] = { namereplaced=1 },
 [770] = { failed={ 15 }, namereplaced=1 },
