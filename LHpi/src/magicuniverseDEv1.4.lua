@@ -1,4 +1,5 @@
-﻿--[[ Price import script for Magic Album 
+﻿--*- coding: utf-8 -*- 
+--[[ Price import script for Magic Album 
 to import card pricing from www.magicuniverse.de.
 
 inspired by and loosely based on "MTG Mint Card.lua" by Goblin Hero, Stromglad1
@@ -24,46 +25,74 @@ It felt like overkill to add 35KB of license text to a 95KB script file,
 so unless anyone complains, I'll leave it at the referral to the gnu site.
 ]]
  -- control the amount of feedback/logging done by the script
-VERBOSE = true
+VERBOSE = false
 LOGDROPS = false
- -- don't change these unless you know what you're doing :-)
-OFFLINE = true
-SAVEHTML = false
-scriptname = "magicuniverseDEv1.3.lua" -- should always be equal to the scripts filename !
-savepath = "Prices\\" .. string.gsub(scriptname, "v%d+%.%d+%.lua$","") .. "\\" -- for OFFLINE (read) and SAVEHTML (write). must point to an existing directory relative to MA's root.
+ -- don't change anything below this line unless you know what you're doing :-)
+CHECKEXPECTED = true
 DEBUG = false
 DEBUGVARIANTS = false
+OFFLINE = false
+SAVEHTML = false
+SAVELOG = false -- log to seperate logfile instead of Magic Album.log
+--[[ does not work, GetFile returns nil for its own log :(
+local _s,_e,myname = string.find( ma.GetFile("\\Magic Album.log"), "Starting Lua script .-([^\\]+%.lua)$" )
+--]]
+if myname then
+	scriptname = myname
+else -- use hardcoded scriptname as fallback
+	scriptname = "magicuniverseDEv1.4.lua" -- should always be equal to the scripts filename !
+end
+savepath = "Prices\\" .. string.gsub(scriptname, "v%d+%.%d+%.lua$","") .. "\\" -- for OFFLINE (read) and SAVEHTML (write). must point to an existing directory relative to MA's root.
 -- TODO
 SAVETABLE = false -- needs incremental putFile to be remotely readable :)
-SAVELOG = false -- true needs incremental putFile
+
 
 --[[ TODO
+add return to ravnica :)
+
 patch to accept entries with a condition description if no other entry with better condition is in the table:
-buildCardData will need to add condition to carddata
-global conditions{} to define priorities
-then fillCardsetTable needs a new check before overwriting existing data
-at --TODO below
+	buildCardData will need to add condition to carddata
+	global conditions{} to define priorities
+	then fillCardsetTable needs a new check before overwriting existing data
+!! check conflict handling with Onulet from 140
 
-let card's names lang determine possible importlangs
-at --TODO below and in main() or setprice()
+get scriptname from ma-log by gmatching "Starting Lua script C:\Spiele\Magic - The Gathering\Magic Album\Prices\(magicuniverseDEv1.3).lua$"
 
-check for incremental PutFile and change llog and SAVETABLE to use it
+DONE	test runtime difference between verbose and silent
+	DONE	minimal 2:17
+	DONE	maximal 8:28
+	
+DONE	handle foil as just another fruc as much as possible
+	DONE	just read importfoil and modify avsets[*].fruc accordingly, then all fruc-loops will do the right thing
 
+DONE	check for incremental PutFile and change llog to use it
+
+
+prepare for more languages
+	DONE	totals
+	importprice - might need a switch to support site with one page per language
+				needs to loop through languages
+	to save bandwith: build table of urls first, then have loop throughh it to call parsehtml
+	DONE	change expected to match new format of totalcount
+	test with legends(150) italian 
+	do another set of gmatch for (französisch) et al if consistently named
+	DONE	change nameE,nameG to names { [1],[3]
+	make price a table as well
+
+	
 externalize all hardcoded website-specific configuration into global variables:
-DONE	url (and filename)
-DONE	parsehtml regex string
-site and set specific patches will have to be block-commented or iffed by a global variable
-seperate avsets{} into site-specific (like url and possibly fruc{} ) and valid-for-all-sites data (like id and cards{})
+	DONE	url (and filename)
+	DONE	parsehtml regex string
+	DONE	site and set specific patches moved to .config [not: will have to be block-commented or iffed by a global variable]
+	DONE	add (potentially empty) funtion call to buildCardData and externalize to config
+	seperate avsets{} into site-specific (like url and fruc{} ) and valid-for-all-sites data (like id and cards{})
+	
+DONE	externalize part of the pattern matching to .config to allow for sites with differently ordered value fields
+
+for kicks and giggles, have SAVETABLE generate a csv usable by woogerboys importprices :-)
 ]]--
 
--- global ans site-specific configuration should end here
-suplangs = { -- table of (supported) languages
-	  {full = "english", abbr="ENG", id=1},
-	  nil,
-	  {full = "german", abbr="GER", id=3},
-}
-
-frucnames = { "Foil" , "Rare" , "Uncommon" , "Common" , "Purple" }
+-- global configuration ends here; site-specific configuration externalized to .config
 
 --TODO condprio = { [0] = "NONE", } -- table to sort condition description. lower indexed will overwrite when building the cardsetTable
 
@@ -72,11 +101,15 @@ function ImportPrice(importfoil, importlangs, importsets) -- "main" function
 importfoil	:	"Y"|"N"|"O"		Update Regular and Foil|Update Regular|Update Foil
 importlangs	:	array of languages script should import, represented as pairs {languageid, languagename}
 				(see "Database\Languages.txt" file).
-				only {1, "English"} and {3, German} are supported by this script.
+				only {1, "English"} and {3, German} are supported by this script yet.
 importsets	:	array of sets script should import, represented as pairs {setid, setname}
 				(see "Database\Sets.txt" file). 
 ]]--
-	do -- load site specific configuration from external file
+	if SAVELOG then
+		ma.Log( "Check " .. scriptname .. ".log for detailed information" )
+		llog("Script started" ,0,0)
+	end
+	do -- load site specific configuration and functions from external file
 		local configfile = "Prices\\" .. string.gsub(scriptname, ".lua$", ".config")
 		local config = ma.GetFile( configfile )
 		if not config then
@@ -91,14 +124,24 @@ importsets	:	array of sets script should import, represented as pairs {setid, se
 			execconfig ( )
 		end	-- if not config else
 	end -- do loadconfig
-	collectgarbage () -- we now have the global tables, no need to keep a second copy inside execconfig() in memory
+	collectgarbage () -- we now have the global tables, no need to keep copies inside config and execconfig() in memory
 	
-	totalcount = { pENGset=0, pGERset=0, pENGfailed=0, pGERfailed=0, dropped=0, namereplace=0 }
-	if SAVELOG then llog( "Check " .. scriptname .. ".log for detailed information" ) end
 	-- identify user defined types of foiling to import
-	if string.lower(importfoil) == "y" then llog("Importing Non-Foil (+) Foil Card Prices") end
-	if string.lower(importfoil) == "o" then llog("Importing Foil Only Card Prices") end
-	if string.lower(importfoil) == "n" then llog("Importing Non-Foil Only Card Prices") end
+	if string.lower(importfoil) == "y" then
+		llog("Importing Non-Foil (+) Foil Card Prices")
+	elseif string.lower(importfoil) == "o" then
+		llog("Importing Foil Only Card Prices")
+		for f = 2,tlength(frucnames) do -- disable all non-foil frucs
+			for sid,_ in pairs(avsets) do
+				avsets[sid].fruc[f] = false
+			end --for sid
+		end -- for i
+	elseif string.lower(importfoil) == "n" then -- disable all foil frucs
+		llog("Importing Non-Foil Only Card Prices")
+		for sid,_ in pairs(avsets) do
+			avsets[sid].fruc[1] = false
+		end --for sid		
+	end -- if importfoil
 	-- identify user defined sets to import
 	for _,sname in pairs(importsets) do
 		if not allsets then
@@ -109,131 +152,157 @@ importsets	:	array of sets script should import, represented as pairs {setid, se
 	end
 	llog("Importing Sets: [" .. allsets .. "]")
 	-- identify user defined languages to import
-	for _,lname in pairs(importlangs) do
-		if not alllangs then
-			alllangs = lname
-		else
-			alllangs = alllangs .. "," .. lname
-		end
-	end
-	llog("Importing Languages: [" .. alllangs .. "]")
+	do -- block to free unneeded variables sooner
+		local nosuplangs = true
+		local allangs = nil
+		for lid,lname in pairs(importlangs) do
+			if suplangs[lid] then nosuplangs = false end
+			if not alllangs then
+				alllangs = lname
+			else
+				alllangs = alllangs .. "," .. lname
+			end
+		end -- for lid,lname
+		llog("Importing Languages: [" .. alllangs .. "]")
+		if nosuplangs then
+			local suplanglist = nil
+			for lid,lang in pairs(suplangs) do
+				if lang then
+					if not suplanglist then
+						suplanglist = lang.full
+					else
+						suplanglist = suplanglist .. "," .. lang.full
+					end
+				end
+			end
+			llog("No supported language selected; returning from script now.")
+			error ( "No supported language selected, please select at least one of " .. suplanglist )
+		end -- if nosuplangs
+	end -- do
 	if not VERBOSE then
 		llog("If you want to see more detailed logging, edit Prices\\" .. scriptname .. " and set VERBOSE = true.",0)
 	end
 	-- Calculate total number of html pages to parse (need this for progress bar)
 	totalhtmlnum = 0
-	for _, rec in pairs(avsets) do
-		if importsets[rec.id] then
+	for _, cSet in pairs(avsets) do
+		if importsets[cSet.id] then
 			local persetnum = 0
-			if string.lower(importfoil) ~= "o" then -- import non-foil RUC
-				if rec.fruc[2] then persetnum = persetnum + 1 end
-				if rec.fruc[3] then persetnum = persetnum + 1 end
-				if rec.fruc[4] then persetnum = persetnum + 1 end
-				if rec.fruc[5] then persetnum = persetnum + 1 end
-			end
-			if string.lower(importfoil) ~= "n" and rec.fruc[1] ~= "N" then persetnum = persetnum + 1 end -- import foil
-			if importlangs[1] or importlangs[3] then totalhtmlnum = totalhtmlnum + persetnum end
-		end
-	end -- for
+			for f,fruc in pairs(cSet.fruc) do
+				if fruc then
+					persetnum = persetnum + 1
+				end
+			end -- for f,fruc
+		totalhtmlnum = totalhtmlnum + persetnum
+		end -- if importsets[rec.id]
+	end -- for _,rec
+	
 	-- Main import cycle
 	curhtmlnum = 0
 	progress = 0
+	totalcount = { pset= {0,nil,0}, failed={0,nil,0}, dropped=0, namereplace=0 }
 	for _, cSet in pairs(avsets) do
-			
 		if importsets[cSet.id] then
-			persetcount = { pENGset=0, pGERset=0, pENGfailed=0, pGERfailed=0, dropped=0, namereplace=0 }
+			persetcount = { pset= {0,nil,0}, failed={0,nil,0}, dropped=0, namereplace=0 }
 			cardsetTable = {} -- clear cardsetTable
-
-			-- issue special case messages 
-			if cSet.id == 680 or cSet.id == 690 then -- Time Spiral or Timeshifted
-				if VERBOSE then 
-					llog( "Note: Timeshifted and Time Spiral share one Foils url. Many expected fails are nothing to worry about." ,1)
-				end
-			end
-			if string.lower(importfoil) ~= "o" and cSet.fruc[1] ~= "O" -- non-foil wanted and exists
-				and ( importlangs [1] or importlangs[3] ) -- ger or eng wanted
-				then -- we still need to check if RUC(and P for Timeshifted) exists
-				if cSet.fruc[2] then parsehtml(cSet, importsets[cSet.id], 2 ) end
-				if cSet.fruc[3] then parsehtml(cSet, importsets[cSet.id], 3 ) end
-				if cSet.fruc[4] then parsehtml(cSet, importsets[cSet.id], 4 ) end
-				if cSet.fruc[5] then parsehtml(cSet, importsets[cSet.id], 5 ) end
-			end
-			if string.lower(importfoil) ~= "n" and cSet.fruc[1] ~= "N" -- foil wanted and exists
-				and ( importlangs [1] or importlangs[3] ) -- ger or eng wanted
-				then parsehtml(cSet, importsets[cSet.id], 1, importlangs)
-			end
+			-- build cardsetTable containing all prices to be imported
+--[[
+--			if importlangs [1] or importlangs[3] then -- ger or eng wanted
+--	"if" unnedded, unsupported importlangs have been caught already
+-- TODO instead, loop through importlangs/suplangs for sites that have different langs on seperate pages
+-- then avsets.set.german will need to be made a lang table
+-- for now, just pass on importlangs
+--]]
+				for f,fruc in pairs(cSet.fruc) do
+					if fruc then
+						parsehtml(cSet, importsets[cSet.id], f , importlangs)
+					end
+				end -- for f,fruc
+--			end
 			-- build cardsetTable from htmls finished
 			if VERBOSE then
 				llog( "cardsetTable for set " .. importsets[cSet.id] .. "(id " .. cSet.id .. ") build with " .. tlength(cardsetTable) .. " rows. set supposedly contains " .. cSet.cards.reg .. " cards and " .. cSet.cards.tok .. " tokens." ,1)
 			end
 			if SAVETABLE then
-				local filename = "Prices\\tables\\table-set=" .. importsets[cSet.id] .. ".txt"
+				local filename = savepath .. "table-set=" .. importsets[cSet.id] .. ".txt"
 				llog( "Saving table to file: \"" .. filename .. "\"" )
 				ma.PutFile( filename , deeptostring(cardsetTable) )
 			end
 			-- Set the price
-			ma.SetProgress( "Importing " .. importsets[cSet.id] .. " from table", progress )
+			local pmesg = "Importing " .. importsets[cSet.id] .. " from table"
+			if VERBOSE then
+				llog( pmesg .. "  " .. progress ,1)	
+			end -- if VERBOSE
+			ma.SetProgress( pmesg, progress )
 			for cName,cCard in pairs(cardsetTable) do
 				if DEBUG then llog( "ImportPrice\t cName is " .. cName .. " and table cCard is " .. deeptostring(cCard) ,2) end
-				if importlangs[1] and cSet.german ~= "O" then --set ENG prices
-					retvalENG = setPrice(cSet.id, 1, cName, cCard)
-				end
-				if importlangs[3] and cSet.german ~= "N" then -- set GER prices
-					retvalGER = setPrice(cSet.id, 3, cName, cCard)
+				for lid,_cLang in pairs(importlangs) do
+					if cCard.lang[lid] then
+						setPrice( cSet.id, lid, cName, cCard )
+					end
 				end
 			end -- for cName,cCard in pairs(cardsetTable)
 			local statmsg = "Set " .. importsets[cSet.id]
 			if VERBOSE then
 				statmsg = statmsg .. " contains \t" .. cSet.cards.reg+cSet.cards.tok .. " cards (\t" .. cSet.cards.reg .. " regular,\t " .. cSet.cards.tok .. " tokens )"
-				statmsg = statmsg .. "\n\t successfully set new price for " .. persetcount.pENGset .. " English and " .. persetcount.pGERset .. " German cards. " .. persetcount.pGERfailed .. " German and " .. persetcount.pENGfailed .. " English cards failed; DROPped " .. persetcount.dropped .. "."
+				statmsg = statmsg .. "\n\t successfully set new price for " .. persetcount.pset[1] .. " English and " .. persetcount.pset[3] .. " German cards. " .. persetcount.failed[3] .. " German and " .. persetcount.failed[1] .. " English cards failed; DROPped " .. persetcount.dropped .. "."
 				statmsg = statmsg .. "\nnamereplace table contains " .. (tlength(namereplace[cSet.id]) or "no") .. " names and was triggered " .. persetcount.namereplace .. " times."
 			else
 				statmsg = statmsg .. " imported."
 			end
 			llog ( statmsg )
-			if VERBOSE then
-				local allgood = true
-				if expectedtotals[cSet.id] then
-					if importlangs[1] then
-						if expectedtotals[cSet.id][1] ~= persetcount.pENGset then allgood = false end
-						if expectedtotals[cSet.id][4] ~= persetcount.pENGfailed then allgood = false end
-					end
-					if importlangs[3] then
-						if expectedtotals[cSet.id][2] ~= persetcount.pGERset then allgood = false end
-						if expectedtotals[cSet.id][3] ~= persetcount.pGERfailed then allgood = false end
-					end
-					if expectedtotals[cSet.id][5] ~= persetcount.dropped then allgood = false end
-					if expectedtotals[cSet.id][6] ~= persetcount.namereplace then allgood = false end
+			if DEBUG then 
+				llog( "persetstats " .. deeptostring(persetcount) ,2)
+			end
+			if CHECKEXPECTED then
+				if expectedcount[cSet.id] then
+					local allgood = true
+					for lid,_cLang in pairs(importlangs) do
+						if expectedcount[cSet.id].pset[lid] ~= persetcount.pset[lid] then allgood = false end
+						if expectedcount[cSet.id].failed[lid] ~= persetcount.failed[lid] then allgood = false end
+					end -- for lid,_cLang in importlangs
+					if expectedcount[cSet.id].dropped ~= persetcount.dropped then allgood = false end
+					if expectedcount[cSet.id].namereplace ~= persetcount.namereplace then allgood = false end
 					if not allgood then
-						llog( "!! persetcount for " .. importsets[cSet.id] .. "(id " .. cSet.id .. ") differs from expected: " .. deeptostring(expectedtotals[cSet.id]) ,1)
+						llog( ":-( persetcount for " .. importsets[cSet.id] .. "(id " .. cSet.id .. ") differs from expected. ",1)
+						if VERBOSE then
+							llog( ":-( counted  :\t" .. deeptostring(persetcount) ,1)
+							llog( ":-( expected :\t" .. deeptostring(expectedcount[cSet.id]) ,1)
+						end
 						if DEBUG then
 							error ("notallgood in set " .. importsets[cSet.id] .. "(" ..  cSet.id .. ")")
 						end
 					else
-						llog( ":) Prices for set " .. importsets[cSet.id] .. "(id " .. cSet.id .. ") were imported as expected :-)" ,1)
+						llog( ":-) Prices for set " .. importsets[cSet.id] .. "(id " .. cSet.id .. ") were imported as expected :-)" ,1)
 					end
 				else
 					llog( "No expected persetcount for " .. importsets[cSet.id] .. "(id " .. cSet.id .. ") found." ,1)
-				end
-			end
-			if DEBUG then 
-				llog( "persetstats " .. deeptostring(persetcount) ,2)
-			end
-			for key,count in pairs(persetcount) do
-				totalcount[key] = totalcount[key] + count
-			end -- for
+				end -- if expectedcount[cSet.id] else
+			end -- if CHECKEXPECTED
+			for lid,_ in pairs(suplangs) do
+				totalcount.pset[lid] = totalcount.pset[lid] + persetcount.pset[lid]
+				totalcount.failed[lid] = totalcount.failed[lid] + persetcount.failed[lid]
+			end -- for lid
+			totalcount.dropped = totalcount.dropped + persetcount.dropped
+			totalcount.namereplace = totalcount.namereplace + persetcount.namereplace
 		end -- if importsets[cSet.id]
 	end -- for _, cSet inpairs(avsets)
-	if VERBOSE then
-		llog( "totalcount " .. deeptostring(totalcount) ,2)
-		local totalexpected = {0,0,0,0,0,0}
-		for id,set in pairs(importsets) do
-			for k,_ in ipairs(totalexpected) do
-			totalexpected[k] = totalexpected[k] + ( (expectedtotals[id] and expectedtotals[id][k]) or 0)
-			end -- for k,_
-		end -- for id,set
-		llog ("totalexpected " .. deeptostring(totalexpected) ,2)
-	end -- if VERBOSE
+	if VERBOSE or CHECKEXPECTED then
+		llog( "totalcount \t" .. deeptostring(totalcount) ,1)
+	end
+	if CHECKEXPECTED then
+		local totalexpected = {pset={0,nil,0},failed={0,nil,0},dropped=0,namereplace=0}
+		for sid,set in pairs(importsets) do
+			if expectedcount[sid] then
+				for lid,_ in pairs(suplangs) do
+					totalexpected.pset[lid] = totalexpected.pset[lid] + expectedcount[sid].pset[lid]
+					totalexpected.failed[lid] = totalexpected.failed[lid] + expectedcount[sid].failed[lid]
+				end -- for lid
+				totalexpected.dropped = totalexpected.dropped + expectedcount[sid].dropped
+				totalexpected.namereplace = totalexpected.namereplace + expectedcount[sid].namereplace
+			end -- if expectedcount[sid]
+		end -- for sid,set
+		llog ("totalexpected \t" .. deeptostring(totalexpected) ,1)
+	end -- if CHECKEXPECTED
 	ma.Log("End of Lua script " .. scriptname )
 end -- function ImportPrice
 
@@ -263,24 +332,17 @@ function setPrice(setid, langid, name, card)
 
 	-- count ma.SetPrice retval and log potential problems
 	if retval == 0 or (not retval) then
-		if langid == 1 then
-			persetcount.pENGfailed = persetcount.pENGfailed + 1
-		elseif langid == 3 then
-			persetcount.pGERfailed = persetcount.pGERfailed + 1
-		end
+		persetcount.failed[langid] = persetcount.failed[langid] + 1
 		if DEBUG then
 			llog( "! SetPrice \"" .. name .. "\" for language " .. suplangs[langid].abbr .. " with n/f price " .. deeptostring(card.regprice) .. "/" .. deeptostring(card.foilprice) .. " not ( " .. tostring(retval) .. " times) set" ,2)
 		end
 	else
-		if langid == 1 then
-			persetcount.pENGset = persetcount.pENGset + retval
-		elseif langid == 3 then
-			persetcount.pGERset = persetcount.pGERset + retval
-		end
+		persetcount.pset[langid] = persetcount.pset[langid] + retval
 		if DEBUG then
 			llog( "setPrice\t name \"" .. name .. "\" version \"" .. deeptostring(card.variant) .. "\" set to " .. deeptostring(card.regprice) .. "/" .. deeptostring(card.foilprice).. " non/foil " .. tostring(retval) .. " times for laguage " .. suplangs[langid].abbr ,2)
 		end
 	end
+--llog(deeptostring(persetcount.pset))	
 	if VERBOSE or DEBUG then
 		local expected
 		if not card.variant then
@@ -298,7 +360,7 @@ function setPrice(setid, langid, name, card)
 	return retval
 end -- function setPrice
 
-function parsehtml(set, setname, fruc ) -- downloads and parses one html file.
+function parsehtml(set, setname, fruc , importlangs) -- downloads and parses one html file.
  --[[ parameters 
     set: set record from avsets
 setname: set name, needed only for progressbar
@@ -307,21 +369,21 @@ setname: set name, needed only for progressbar
 	curhtmlnum = curhtmlnum + 1
 	progress = 100*curhtmlnum/totalhtmlnum
 	local pmesg = "Parsing " .. frucnames[fruc] .. " " .. setname
-	if DEBUG then
+	if VERBOSE then
 		pmesg = pmesg .. " (id " .. set.id .. ")"
-		llog( "parsehtml\tpmesg is \"" .. pmesg .. "\"" ,2)
+		llog( pmesg .. "  " .. progress ,1)
 	end
 	ma.SetProgress(pmesg, progress)
-	
-	local sourceTable = getSourceData ( set.id , fruc )
+	local sourceTable = getSourceData ( set.id , fruc , importlangs)
 	if not sourceTable then
+		llog("No cards found, skipping to next source" .. ( OFFLINE and "file" ) or " url" ,1)
 		if DEBUG then
 			error ("empty sourceTable for " .. setname .. " - " .. frucnames[fruc])
 		end
 		return 1 -- retval never read, but return is a quick way out of the function
 	end	
 	for _,row in pairs(sourceTable) do
-		local newcard = buildCardData ( row.nameE, row.nameG, row.price, set.id, fruc, set.german )
+		local newcard = buildCardData ( row.names, row.price, set.id, fruc, set.german , importlangs)
 		if newcard.drop then
 			persetcount.dropped = persetcount.dropped + 1
 			if DEBUG or LOGDROPS then
@@ -354,7 +416,7 @@ setname: set name, needed only for progressbar
 	return 0
 end -- function parsehtml
 
-function getSourceData ( setid , fruc ) -- Construct URL/filename from set and rarity and return a table with all entried found therein
+function getSourceData (setid , fruc , importlangs) -- Construct URL/filename from set and rarity and return a table with all entried found therein
  --[[ parameters :
 		setid	to allow avsets[setid].url
 		fruc
@@ -389,66 +451,103 @@ function getSourceData ( setid , fruc ) -- Construct URL/filename from set and r
 	local sourceTable = {}
 	if SAVEHTML then
 		local filename = savepath .. string.gsub(sitefile, "%?", "_") .. sitesetprefix .. avsets[setid].url .. sitefrucprefix .. frucnames[fruc] ..sitesuffix .. ".html"
---		local filename = savepath .. "magic.phpstartrow=1&edition=" .. avsets[setid].url .. "&rarity=" .. frucnames[fruc] .. ".html"
 		llog( "Saving source html to file: \"" .. filename .. "\"" )
 		ma.PutFile(filename , htmldata)
 	end -- if SAVEHTML
-	for cNameE, cNameG, cPrice in string.gmatch(htmldata, siteRegex) do
+	for foundstring in string.gmatch(htmldata, siteRegex) do
 		if DEBUG then
-			llog( "FOUND in " .. frucnames[fruc] .. " : cNameE: " .. cNameE .. " cNameG: " .. cNameG .. " cPrice: " .. cPrice ,2)
+			llog( "FOUND in " .. frucnames[fruc] .. " : " .. foundstring )
 		end
+		local foundData = siteSortData(foundstring)
 		-- do some initial input sanitizing: "_" to " "; remove spaces from start and end of string
-		cNameE = ansi2utf ( cNameE )
-		cNameE = string.gsub(cNameE, "_", " ")
-		cNameE = string.gsub(cNameE, "^%s*(.-)%s*$", "%1")
-		cNameG = ansi2utf ( cNameG )
-		cNameG = string.gsub(cNameG, "_", " ")
-		cNameG = string.gsub(cNameG, "^%s*(.-)%s*$", "%1")
-		price = string.gsub(cPrice, ",", "%.") -- change decimal comma to decimal point - not needed for this site but left to be on the safe side
-		table.insert (sourceTable, { nameE = cNameE, nameG = cNameG, price = cPrice } )
-	end -- for ... in gmatch(htmldata, ..)
+		for lid,_cLang in pairs(importlangs) do
+			if foundData.names[lid] then
+				foundData.names[lid] = ansi2utf ( foundData.names[lid] )
+				foundData.names[lid] = string.gsub(foundData.names[lid], "_", " ")
+				foundData.names[lid] = string.gsub(foundData.names[lid], "^%s*(.-)%s*$", "%1")
+			end
+		end -- for lid,_cLang
+		if foundData.price then
+			foundData.price = string.gsub(foundData.price, ",", "%.") -- change decimal comma to decimal point - not needed for this site but left to be on the safe side
+		end
+		if tlength(foundData) == 0 then
+			if VERBOSE then
+				llog("foundstring contained no data" ,1)
+			end
+			if DEBUG then
+				error("foundstring contained no data")
+			end
+		else -- something was found
+			table.insert (sourceTable, { names = foundData.names, price = foundData.price } )
+		end
+	end -- for foundstring
 	htmldata = nil 	-- potentially large htmldata now ready for garbage collector
 	collectgarbage ()
 	if DEBUG then
 		logreallybigtable(sourceTable, "sourceTable" , 2)
 	end
-	return sourceTable
+	if table.maxn(sourceTable) == 0 then
+		return nil
+	else
+		return sourceTable
+	end
 end -- function getSourceData
 
-function buildCardData ( nameE, nameG, price, setid, fruc, setgerman ) -- constructs cardData for one card entry found in htmldata
+function buildCardData ( names, price, setid, fruc, setgerman , importlangs ) -- constructs cardData for one card entry found in htmldata
  --[[ parameters:
-		nameE, nameG, price :	card data as parsed from htmldata
+		names{}, price :	card data as parsed from htmldata
 		setid
 		fruc
 		setgerman
 	returns:	single tablerow 
 	{	name		: card name to be matched against MAs Oracle Name or localized Name
-		[nameE,nameG :	if DEBUG keeps names from sourcedata]
-		drop	: true if data was marked as to-be-dropped and further processing was skipped
+		names{}		: if DEBUG keeps names from sourcedata]
+		drop		: true if data was marked as to-be-dropped and further processing was skipped
 		variant		: table of variant names, nil if single-versioned card
 		regprice	: nonfoil price, table if variant
 		foilprice	: foil price, table if variant
 	}
 ]]
 	local card = {}
-	if DEBUG then
-		card.nameE = nameE
-		card.nameG = nameG
+	if DEBUG then --keep all (localized) unprocessed names
+		card.names = names
 	end -- DEBUG
+--TODO loop through all importlangs ?
 	if setgerman ~="O" then
-		card.name = nameE
+		card.name = names[1]
 	else -- setgerman == "O"
-		card.name = nameG
+		card.name = names[3]
 	end
 
-	if not card.name then -- should not be reached, but caught here to prevent errors in string.find below
+	if not card.name then -- should not be reached, but caught here to prevent errors in string.gsub/find below
 		card.drop = true
 		card.name = "DROPPED nil-name"
 		if VERBOSE then
-				llog ( "!! buildCardData\t dropped empty card " .. deeptostring(card) ,1)
+			llog ( "!! buildCardData\t dropped empty card " .. deeptostring(card) ,1)
+		end
+		if DEBUG then
+			error ( "!! buildCardData\t dropped empty card " .. deeptostring(card) )
 		end
 		return card
 	end --if
+	
+	--experimental: let the card's sourcedata determine language to import (if importlangs[langid])
+	card.lang = {}
+	for lid,_ in pairs(importlangs) do
+		if names[lid] and (names[lid] ~= "") then
+			card.lang[lid] = suplangs[lid].abbr
+		end
+	end
+	
+	local cFoil = false
+	if fruc == 1 then -- remove "(foil)" if foil url
+		card.name = string.gsub(card.name, " *%([fF][oO][iI][lL]%)", "")
+		cFoil = true
+	end
+	-- Check for foil status patch
+	for _, rec in ipairs(foiltweak) do
+		if rec.setid == setid and rec.cardname == card.name then cFoil = rec.foil end
+	end	
 	
 	card.name = string.gsub(card.name, " // ","|")
 	card.name = string.gsub(card.name, "Æ", "AE")
@@ -457,9 +556,7 @@ function buildCardData ( nameE, nameG, price, setid, fruc, setgerman ) -- constr
 	card.name = string.gsub(card.name, "á", "a")
 	card.name = string.gsub(card.name, "´", "'")
 	card.name = string.gsub(card.name, "?", "'")
-	if fruc == 1 then -- remove "foil" if foil url
-		card.name = string.gsub(card.name, " *%([fF][oO][iI][lL]%) *", " ")
-	end
+
 	if string.find(card.name, "Emblem: ") then -- Emblem prefix to suffix
 		card.name = string.gsub(card.name, "Emblem: ([^\"]+)" , "%1 Emblem")
 	end	
@@ -482,46 +579,24 @@ function buildCardData ( nameE, nameG, price, setid, fruc, setgerman ) -- constr
 		card.name = string.gsub(card.name, "%(Gld%)", "")
 	end
 	card.name = string.gsub(card.name, "^%s*(.-)%s*$", "%1") --remove any leftover spaces from start and end of string			
+
+	--[[ do site-specific card data manipulation
+		for magicuniverse, this is
+		 seperate "(alpha)" and beta from beta-urls
+		 set Legends "(ital.)" suffixed to lang[] and DROP
+	]]
+	card = siteCardDataManipulation ( card , setid )
+
 	if namereplace[setid] and namereplace[setid][card.name] then
+		if DEBUG then
+			llog("namereplaced\t" .. card.name .. "\t to " .. namereplace[setid][card.name],1)
+		end
 		card.name = namereplace[setid][card.name]
-		if VERBOSE then
+		if CHECKEXPECTED then
 			persetcount.namereplace = persetcount.namereplace + 1
 		end
-		if DEBUG then
-			llog("namereplaced to " .. card.name ,2)
-		end
 	end
-	
-	-- seperate "(alpha)" and beta from beta-urls
-	if setid == 90 then -- importing Alpha
-		if string.find(card.name, "%([aA]lpha%)") then
-			card.name = string.gsub(card.name, "%s*%([aA]lpha%)", "")
-		else -- not "(alpha")
-			card.name = card.name .. "(DROP notalpha)" -- change card.name to prevent import
-		end
-	elseif setid == 100 then -- importing Beta
-		if string.find(card.name, "%([aA]lpha%)") then
-			card.name = card.name .. "(DROP not beta)" 
-		else -- not "(alpha")
-			card.name = string.gsub(card.name, "%s*%(beta%)", "") -- catch needlessly suffixed rawdata
-		end 
-	end -- if 90 elseif 100
 
-	--experimental: let the card's sourcedata determine importlang (if importlangs[langid])
-	card.lang = {}
-	if nameE and (nameE ~= "") then
-		card.lang[1] = "ENG"
-	end
-	if nameG and (nameG ~= "") then
-		card.lang[3] = "GER"
-	end
-	if setid == 150 then -- Legends
-		if string.find(card.name, "%(ital%.?%)") then
-			card.lang[5] = "ITA"
-			card.name = card.name .. "(DROP italian)"
-		end
-	end -- if 150
-	
 	-- drop unwanted sourcedata before further processing
 	if     string.find(card.name, "%(DROP[ %a]*%)")
 		or string.find(card.name, "%([mM]int%)$")
@@ -545,14 +620,7 @@ function buildCardData ( nameE, nameG, price, setid, fruc, setgerman ) -- constr
 
 --TODO	card.condition = "NONE"
 	
-	local cFoil = false
-	if fruc == 1 then cFoil = true end
-	-- Check for foil status patch
-	for _, rec in ipairs(foiltweak) do
-		if rec.setid == setid and rec.cardname == card.name then cFoil = rec.foil end
-	end
-	
-	-- define price according to card.foil and card.variant
+	-- define price according to cFoil and card.variant
 	if card.variant then
 		if DEBUG then
 			llog( "VARIANTS\t" .. deeptostring(card.variant) ,2)
@@ -562,7 +630,7 @@ function buildCardData ( nameE, nameG, price, setid, fruc, setgerman ) -- constr
 		else -- nonfoil
 			if not card.regprice then card.regprice = {} end
 		end
-		for varnr,varname in ipairs(card.variant) do
+		for varnr,varname in pairs(card.variant) do
 			if DEBUG then
 				llog( "VARIANTS\tvarnr is " .. varnr .. " varname is " .. tostring(varname) ,2)
 			end
@@ -747,7 +815,7 @@ moved to seperate function to allow early return on unwanted duplicates	]]
 		retval = "new"
 	end
 	return retval, mergedCardrow,oldCardrow,newCardrow
-end -- enclosed function fillCardsetTable
+end -- function fillCardsetTable
 
 
 function ansi2utf ( str )
@@ -776,12 +844,13 @@ see https://en.wikipedia.org/wiki/Windows-1252#Codepage_layout if you need to ad
 		return str
 	end
 end -- function ansi2utf
-function llog ( str, m )
+function llog ( str, m , a)
  --[[ mode 1 for VERBOSE.
 	 mode 2 for DEBUG.
 	 else log. add other modes as needed ]]
 	local mode = m or 0
-	local logfile = "Prices\\" .. string.gsub(scriptname, ".lua$","") .. ".log"
+	local apnd = a or 1
+	local logfile = "Prices\\" .. string.gsub(scriptname, "lua$","log")
 	if mode == 1 then
 		str = " " .. str
 	elseif mode == 2 then
@@ -789,12 +858,12 @@ function llog ( str, m )
 		logfile = logfile -- change filename for seperate debuglog
 	end
 	if SAVELOG then
-		ma.PutFile ( logfile, str, 1 )
+		str = "\n" .. str
+		ma.PutFile ( logfile, str , apnd)
 	else
 		ma.Log(str)
 	end
 end
-	
 function tlength ( tbl )
 	if type ( tbl) == "table" then
 		local result = 0
