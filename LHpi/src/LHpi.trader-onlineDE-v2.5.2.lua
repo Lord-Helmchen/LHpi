@@ -27,19 +27,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-preemptively added Theros
-lots of Ae -> Æ replacements
-use new 2.5 BuildCardDataPlugins for improved token handling
-changed BuildUrl to match lib 2.5
+fixed THS
 ]]
 
 -- options that control the amount of feedback/logging done by the script
 --- @field [parent=#global] #boolean VERBOSE 			default false
-VERBOSE = false
+VERBOSE = true
 --- @field [parent=#global] #boolean LOGDROPS 			default false
-LOGDROPS = false
+LOGDROPS = true
 --- @field [parent=#global] #boolean LOGNAMEREPLACE 	default false
-LOGNAMEREPLACE = false
+LOGNAMEREPLACE = true
 
 -- options that control the script's behaviour.
 --- compare card count with expected numbers; default true
@@ -60,7 +57,7 @@ DEBUGVARIANTS = false
 OFFLINE = false
 --- save a local copy of each source html to #string.savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
-SAVEHTML = false
+SAVEHTML = true
 --- log to seperate logfile instead of Magic Album.log;	default true
 -- @field [parent=#global] #boolean SAVELOG
 SAVELOG = true
@@ -410,7 +407,7 @@ site.sets = {
 --- @field [parent=#site] #table namereplace
 site.namereplace = {
 [797] = { -- M2014
-["Jaces Gedankenforscher"]				= "Jaces Gedankensucher", --TODO bugreport wrong name to MA
+["Jaces Gedankenforscher"]				= "Jaces Gedankensucher",
 ["Token - Elemental (R)"]				= "Elemental",
 ["Token - Elementarwesen (R)"]			= "Elementarwesen"
 },
@@ -481,6 +478,18 @@ site.namereplace = {
 ["Will-O-The-Wisp"] 					= "Will-O’-The-Wisp" 
 },
 -- Expansions
+[800] = { -- Theros
+--["Mogis' Plünderer"]					= "Mogis' Plünderer",
+["Mogis' Plünderer"]					= "Mogis's Marauder",
+["Zentauren der Pheres-Herde"]			= "Zentauren der Pheresherde",
+["Token - Emlem Elspeth, Sun's Champion (A)"]	= "Elspeth, Sun’s Champion Emblem",
+["Token - Soldier (R)"]					= "Soldier (7)",
+["Token - Soldier (2) (W)"]				= "Soldier (2)",
+["Token - Soldier (3) (W)"]				= "Soldier (3)",
+["Token - Soldat (R)"]					= "Soldat (7)",
+["Token - Soldat (2) (W)"]				= "Soldat (2)",
+["Token - Soldat (3) (W)"]				= "Soldat (3)",
+},
 [795] = { -- Dragon's Maze
 ["Aetherling"]							= "Ætherling",
 ["Token - Elementarwesen (Token)"]		= "Elementarwesen",
@@ -829,9 +838,9 @@ EXPECTTOKENS = true,
 [140] = { pset={ [3]=306-1 }, failed= { [3]=1 }, namereplaced=6 },
 [139] = { namereplaced=2 },
 [110] = { pset={ 286 }, namereplaced=1 },
-[100] = { pset={ 252 } },
+[100] = { pset={ 251 } },
 -- Expansions
-[800] = { pset={ [3]=260-11 }, failed= { [3]=11 } }, -- -11 is tokens
+[800] = { pset={ [3]=260-11 }, failed= { [3]=9 }, namereplaced=9 }, -- -11 is tokens
 [795] = { pset={ [3]=157-1 }, failed= { [3]=1 }, namereplaced=1 }, -- -1 is token
 [793] = { namereplaced=1 },
 [786] = { namereplaced=8 },
