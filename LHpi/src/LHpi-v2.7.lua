@@ -38,6 +38,8 @@ patch to accept entries with a condition description if no other entry with bett
 string.format all LOG that contain variables
 	http://www.troubleshooters.com/codecorn/lua/luastring.htm#_String_Formatting
 
+add a few progressbar updates?
+
 add all special and promo sets (cardcount,variants,foiltweak) to LHpi.sets
 
 no longer silently assume that fruc is {foil,rare,uncommon,common}
@@ -46,7 +48,7 @@ that means ProcessUserParams should not use importfoil,importlangs to nil parts 
 instead, apply [url].foilonly and [url].lang
  then use importfoil,importlangs to 
  a) have ListSources drop unwanted urls to minmize network load
- b) have BuildCardData drop unwanted cards/prices to make sure user wishes are honoured 
+-- b) have BuildCardData drop unwanted cards/prices to make sure user wishes are honoured 
 
 to anticipate sites that return "*CARDNAME*REGPRICE*FOILPRICE* instead of "*CARDNAME*PRICE*FOILSTATUS*"
  have site.ParseHtml return a collection of cards, similar to site.BuildUrl
@@ -56,13 +58,13 @@ Would make updates/versioning cleaner by distinguishing between new set info (da
 ]]
 
 --[[ CHANGES
-added BNG and Commander2013
-started adding missing special and promo sets
-expanded version tables for old expansions
-count foiltweak events
+fix handling of site.ParseHtmlData supplied sourcerow.* data 
+pass supImportfoil,supImportlangs from MainImportCycle to BuildCardData
+improved card dropping in BuildCardData
+if importfoil == "n", drop foilonly urls in ListSources
 ]]
 --- @field [parent=#LHpi] #string version
-LHpi.version = "2.6"
+LHpi.version = "2.7"
 
 --[[- "main" function called by Magic Album; just display error and return.
  Called by Magic Album to import prices. Parameters are passed from MA.
@@ -296,7 +298,7 @@ function LHpi.MainImportCycle( sourcelist , totalhtmlnum , importfoil , importla
 			for sourceurl,urldetails in pairs( sourcelist[sid] ) do
 				curhtmlnum = curhtmlnum + 1
 				progress = 100*curhtmlnum/totalhtmlnum
-				pmesg = "Importing " ..  importsets[sid]
+				pmesg = "Collecting " ..  importsets[sid] .. " into table"
 				if VERBOSE then
 					pmesg = pmesg .. " (id " .. sid .. ")"
 					LHpi.Log( string.format( "%d percent: %q", progress, pmesg) , 1 )
@@ -306,7 +308,7 @@ function LHpi.MainImportCycle( sourcelist , totalhtmlnum , importfoil , importla
 				-- process found data and fill cardsetTable
 				if sourceTable then
 					for _,row in pairs(sourceTable) do
-						local newcard = LHpi.BuildCardData( row , sid , urldetails.foilonly , importlangs)
+						local newcard = LHpi.BuildCardData( row , sid , urldetails.foilonly ,importfoil, importlangs)
 						if newcard.drop then
 							persetcount.dropped = persetcount.dropped + 1
 							if DEBUG or LOGDROPS then
@@ -490,6 +492,7 @@ function LHpi.ProcessUserParams( importfoil , importlangs , importsets )
 	end
 	
 	-- identify user defined types of foiling to import
+	--TODO don't assume fruc[1] is foil and all other frucs are nonfoil
 	local lowerfoil = string.lower( importfoil )
 	if lowerfoil == "n" then
 		LHpi.Log("Importing Non-Foil Only Card Prices")
@@ -504,7 +507,7 @@ function LHpi.ProcessUserParams( importfoil , importlangs , importsets )
 			end --for sid
 		end -- for i
 	else --  lowerfoil == "y" then
-		LHpi.Log("Importing Non-Foil (+) Foil Card Prices")
+		LHpi.Log("Importing Non-Foil and Foil Card Prices")
 	end -- if importfoil
 	
 	if not VERBOSE then
@@ -543,7 +546,13 @@ function LHpi.ListSources ( importfoil , importlangs , importsets )
 									urldetails.fruc=site.frucs[fid]
 									LHpi.Log( "site.BuildUrl is " .. LHpi.Tostring( url ) , 2 )
 								end
-								urls[sid][url] = urldetails
+								if importfoil == "n" and url.foilonly then
+									if DEBUG then
+										LHpi.Log( "unwanted foilonly url dropped" , 2 )
+									end
+								else -- add url to list
+									urls[sid][url] = urldetails
+								end
 							end -- for
 						elseif DEBUG then
 --							LHpi.Log( "url for fruc " .. fruc .. " (" .. fid .. ") not available" , 2 )
@@ -666,7 +675,8 @@ end -- function LHpi.GetSourceData
  @param #table sourcerow	from sourceTable, as parsed from htmldata 
  @param #number setid	(see "Database\Sets.txt")
  @param #boolean urlfoil	optional: true if processing row from a foil-only url
- @param #table importlangs	passed on through parsehtml from ImportPrice (until I change language handling)
+ @param #table importfoil	passed from ImportPrice to drop unwanted cards
+ @param #table importlangs	passed from ImportPrice to drop unwanted cards
  @return #table { 	name		: unique card name used as index in cardsetTable (localized name with lowest langid)
  					lang{}		: card languages
  					names{}		: card names by language (not used, might be removed)
@@ -676,33 +686,33 @@ end -- function LHpi.GetSourceData
 					foilprice{}	: foil prices by language, subtables if variant
 				}
  ]]
-function LHpi.BuildCardData( sourcerow , setid , urlfoil , importlangs )
+function LHpi.BuildCardData( sourcerow , setid , urlfoil , importfoil, importlangs )
 	local card = { names = {} , lang = {} }
  
 	-- set name to identify the card
-	if sourcerow.name then -- keep site.ParseHtmlData preset name 
+	if sourcerow.name~=nil and sourcerow.name~="" then -- keep site.ParseHtmlData preset name 
 		card.name = sourcerow.name
 	else
-	-- set lowest langid name as internal name
+	-- set lowest langid name as internal name (primary key, unique card identifier)
 		for langid = 1,16  do
-			if sourcerow.names[langid] then
+			if sourcerow.names[langid]~=nil and sourcerow.names[langid]~="" then
 				card.name = sourcerow.names[langid]
 				break
 			end -- if
 		end -- for lid,name
 	end --  if sourcerow.name
 
-	if sourcerow.pluginData then -- keep site.ParseHtmlData additional info
+	if sourcerow.pluginData~=nil then -- keep site.ParseHtmlData additional info
 		card.pluginData= sourcerow.pluginData
 	end
 
 	-- set card languages
-	if sourcerow.lang then -- keep site.ParseHtmlData preset lang 
+	if sourcerow.lang~=nil then -- keep site.ParseHtmlData preset lang 
 		card.lang = sourcerow.lang
 	else
-		-- use names{} to determine card languages	
+		-- use names{} and importlangs to determine card languages
 		for lid,_ in pairs( importlangs ) do
-			if sourcerow.names[lid] and (sourcerow.names[lid] ~= "") then
+			if sourcerow.names[lid]~=nil and (sourcerow.names[lid] ~= "") then
 				card.names[lid] = sourcerow.names[lid]
 				card.lang[lid] = site.langs[lid].abbr
 			end
@@ -712,10 +722,12 @@ function LHpi.BuildCardData( sourcerow , setid , urlfoil , importlangs )
 	if not card.name then-- should not be reached, but caught here to prevent errors in string.gsub/find below
 		card.drop = true
 		card.name = "DROPPED nil-name"
+		return card
 	end --if not card.name
 
 	if sourcerow.drop then -- keep site.ParseHtmlData preset drop
 		card.drop = sourcerow.drop
+		return card
 	end -- if
 
 	--[[ do site-specific card data manipulation before processing 
@@ -748,7 +760,7 @@ function LHpi.BuildCardData( sourcerow , setid , urlfoil , importlangs )
 	card.name = string.gsub( card.name , "%[[vV]ersion (%d)%]" , "(%1)" )
 	card.name = string.gsub( card.name , "%((%d+)/%d+%)" , "(%1)" )
 
-	if sourcerow.foil then -- keep site.ParseHtmlData preset foil
+	if sourcerow.foil~=nil then -- keep site.ParseHtmlData preset foil
 		card.foil = sourcerow.foil
 	else
 		if urlfoil then
@@ -794,6 +806,15 @@ function LHpi.BuildCardData( sourcerow , setid , urlfoil , importlangs )
 			persetcount.foiltweaked = persetcount.foiltweaked + 1
 		end
 	end -- if site.foiltweak
+
+	-- drop for foil reasons must happen after foiltweak
+	if importfoil == "n" and card.foil then
+		card.drop = true
+		return card
+	elseif importfoil == o and (not card.foil) then
+		card.drop = true
+		return card		
+	end-- if importfoil == "y" no reason for drop here
 
 	-- replace German Basic Lands' name with English to avoid needing a duplicate variant table. 
 	card.name = string.gsub ( card.name , "^Ebene (%(%d+%))" , "Plains %1" )
@@ -861,43 +882,42 @@ function LHpi.BuildCardData( sourcerow , setid , urlfoil , importlangs )
 	
 	card.regprice={}
 	card.foilprice={}
-	for lid,lang in pairs( card.lang ) do
-		-- define price according to card.foil and card.variant
-		if card.variant then
-			if DEBUG then
-				LHpi.Log( "VARIANTS pricing " .. lang .. " : " .. LHpi.Tostring(card.variant) , 2 )
-			end
-			if card.foil then
-				if not card.foilprice[lid] then card.foilprice[lid] = {} end
-			else -- nonfoil
-				if not card.regprice[lid] then card.regprice[lid] = {} end
-			end
-			for varnr,varname in pairs(card.variant) do
-				if DEBUG then
-					LHpi.Log( "VARIANTS\tvarnr is " .. varnr .. " varname is " .. tostring(varname) , 2 )
-				end
-				if varname then
-					if card.foil then
-						card.foilprice[lid][varname] = sourcerow.price[lid]
-					else -- nonfoil
-						card.regprice[lid][varname] = sourcerow.price[lid]
-					end
-				end -- if varname
-			end -- for varname,varnr
-		else -- not card.variant
-			if card.foil then
-				card.foilprice[lid] = sourcerow.price[lid]
-			else -- nonfoil
-				card.regprice[lid] = sourcerow.price[lid]
-			end
-		end -- define price
-	end -- for lid,_lang
-	if sourcerow.regprice then -- keep site.ParseHtmlData preset regprice
+	if sourcerow.regprice~=nil then -- keep site.ParseHtmlData preset regprice
 		card.regprice = sourcerow.regprice
-	end
-	if sourcerow.foilprice then -- keep site.ParseHtmlData preset foilprice
+	elseif sourcerow.foilprice~=nil then -- keep site.ParseHtmlData preset foilprice
 		card.foilprice = sourcerow.foilprice
-	end
+	else -- define price according to card.foil and card.variant	
+		for lid,lang in pairs( card.lang ) do
+			if card.variant then
+				if DEBUG then
+					LHpi.Log( "VARIANTS pricing " .. lang .. " : " .. LHpi.Tostring(card.variant) , 2 )
+				end
+				if card.foil then
+					if not card.foilprice[lid] then card.foilprice[lid] = {} end
+				else -- nonfoil
+					if not card.regprice[lid] then card.regprice[lid] = {} end
+				end
+				for varnr,varname in pairs(card.variant) do
+					if DEBUG then
+						LHpi.Log( "VARIANTS\tvarnr is " .. varnr .. " varname is " .. tostring(varname) , 2 )
+					end
+					if varname then
+						if card.foil then
+							card.foilprice[lid][varname] = sourcerow.price[lid]
+						else -- nonfoil
+							card.regprice[lid][varname] = sourcerow.price[lid]
+						end
+					end -- if varname
+				end -- for varname,varnr
+			else -- not card.variant
+				if card.foil then
+					card.foilprice[lid] = sourcerow.price[lid]
+				else -- nonfoil
+					card.regprice[lid] = sourcerow.price[lid]
+				end
+			end -- define price
+		end -- for lid,_lang
+	end--if sourcerow reg/foilprice
 	
 	--[[ do final site-specific card data manipulation
 	]]
@@ -906,7 +926,7 @@ function LHpi.BuildCardData( sourcerow , setid , urlfoil , importlangs )
 	end
 	
 	card.foil = nil -- remove foilstat; info is retained in [foil|reg]price and it could cause confusion later
-	card.BCDpluginData = nil -- if present at all, should have been used and deleted by site.BCDpluginCard 	
+	card.BCDpluginData = nil -- if present at all, should have been used and deleted by site.BCDpluginPre|Post 	
 	if DEBUG then
 		LHpi.Log( "LHpi.buildCardData\t will return card " .. LHpi.Tostring(card) , 2 )
 	end -- DEBUG
@@ -1410,7 +1430,7 @@ end -- function LHpi.Logtable
 -- @type LHpi.sets
 -- @field [parent=#LHpi.sets] #table cardcount		number of (English) cards in MA database.
 -- { #number = { reg = #number , tok = #number } , ... }
--- TODO dynamically generate via ma.GetCardCount( setid, langid, cardtype ) when available.
+-- would be nice to dynamically generate via a potential ma.GetCardCount( setid, langid, cardtype ) ...
 -- @field [parent=#LHpi.sets] #boolean foilonly		set contains only foil cards
 -- @field [parent=#LHpi.sets] #table variants		default card variant tables.]]
 -- { #number = #table { #string = #table { #string, #table { #number or #boolean , ... } } , ... } , ...  }
