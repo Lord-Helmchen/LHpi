@@ -25,31 +25,29 @@ It felt like overkill to add 35KB of license text to a 95KB script file,
 so unless anyone complains, I'll leave it at the referral to the gnu site.
 ]]
  -- control the amount of feedback/logging done by the script
-VERBOSE = false
-LOGDROPS = false
+VERBOSE = false -- default should be false
+LOGDROPS = false -- default should be false
+LOGNAMEREPLACE = false -- default should be false
  -- don't change anything below this line unless you know what you're doing :-)
-CHECKEXPECTED = true
-DEBUG = false
-DEBUGVARIANTS = false
-OFFLINE = false
-SAVEHTML = false
-SAVELOG = false -- log to seperate logfile instead of Magic Album.log
+CHECKEXPECTED = true -- default should be true
+DEBUG = false -- default should be false
+DEBUGVARIANTS = false -- default should be false
+OFFLINE = false -- default should be false
+SAVEHTML = false -- default should be false
+SAVELOG = true -- log to seperate logfile instead of Magic Album.log, default should be true
 --[[ does not work, GetFile returns nil for its own log :(
 local _s,_e,myname = string.find( ma.GetFile("\\Magic Album.log"), "Starting Lua script .-([^\\]+%.lua)$" )
 --]]
 if myname then
 	scriptname = myname
 else -- use hardcoded scriptname as fallback
-	scriptname = "magicuniverseDEv1.4.lua" -- should always be equal to the scripts filename !
+	scriptname = "magicuniverseDEv1.5.lua" -- should always be equal to the scripts filename !
 end
 savepath = "Prices\\" .. string.gsub(scriptname, "v%d+%.%d+%.lua$","") .. "\\" -- for OFFLINE (read) and SAVEHTML (write). must point to an existing directory relative to MA's root.
 -- TODO
 SAVETABLE = false -- needs incremental putFile to be remotely readable :)
 
-
 --[[ TODO
-add return to ravnica :)
-
 patch to accept entries with a condition description if no other entry with better condition is in the table:
 	buildCardData will need to add condition to carddata
 	global conditions{} to define priorities
@@ -72,7 +70,7 @@ prepare for more languages
 	DONE	totals
 	importprice - might need a switch to support site with one page per language
 				needs to loop through languages
-	to save bandwith: build table of urls first, then have loop throughh it to call parsehtml
+	to save bandwith: build table of urls first, then have loop through it to call parsehtml
 	DONE	change expected to match new format of totalcount
 	test with legends(150) italian 
 	do another set of gmatch for (französisch) et al if consistently named
@@ -107,7 +105,7 @@ importsets	:	array of sets script should import, represented as pairs {setid, se
 ]]--
 	if SAVELOG then
 		ma.Log( "Check " .. scriptname .. ".log for detailed information" )
-		llog("Script started" ,0,0)
+		llog("\239\187\191Script started" ,0,0) -- add unicode BOM - still saved as ANSI :-/
 	end
 	do -- load site specific configuration and functions from external file
 		local configfile = "Prices\\" .. string.gsub(scriptname, ".lua$", ".config")
@@ -200,6 +198,9 @@ importsets	:	array of sets script should import, represented as pairs {setid, se
 	curhtmlnum = 0
 	progress = 0
 	totalcount = { pset= {0,nil,0}, failed={0,nil,0}, dropped=0, namereplace=0 }
+	if CHECKEXPECTED then
+		setcountdiffers = {}
+	end
 	for _, cSet in pairs(avsets) do
 		if importsets[cSet.id] then
 			persetcount = { pset= {0,nil,0}, failed={0,nil,0}, dropped=0, namereplace=0 }
@@ -264,6 +265,7 @@ importsets	:	array of sets script should import, represented as pairs {setid, se
 					if expectedcount[cSet.id].namereplace ~= persetcount.namereplace then allgood = false end
 					if not allgood then
 						llog( ":-( persetcount for " .. importsets[cSet.id] .. "(id " .. cSet.id .. ") differs from expected. ",1)
+						table.insert(setcountdiffers, cSet.id, importsets[cSet.id])
 						if VERBOSE then
 							llog( ":-( counted  :\t" .. deeptostring(persetcount) ,1)
 							llog( ":-( expected :\t" .. deeptostring(expectedcount[cSet.id]) ,1)
@@ -302,6 +304,7 @@ importsets	:	array of sets script should import, represented as pairs {setid, se
 			end -- if expectedcount[sid]
 		end -- for sid,set
 		llog ("totalexpected \t" .. deeptostring(totalexpected) ,1)
+		llog ("count differs in sets" .. deeptostring(setcountdiffers), 1)
 	end -- if CHECKEXPECTED
 	ma.Log("End of Lua script " .. scriptname )
 end -- function ImportPrice
@@ -371,7 +374,7 @@ setname: set name, needed only for progressbar
 	local pmesg = "Parsing " .. frucnames[fruc] .. " " .. setname
 	if VERBOSE then
 		pmesg = pmesg .. " (id " .. set.id .. ")"
-		llog( pmesg .. "  " .. progress ,1)
+		llog( pmesg .. "  " .. progress .. "%" ,1)
 	end
 	ma.SetProgress(pmesg, progress)
 	local sourceTable = getSourceData ( set.id , fruc , importlangs)
@@ -539,15 +542,12 @@ function buildCardData ( names, price, setid, fruc, setgerman , importlangs ) --
 		end
 	end
 	
-	local cFoil = false
 	if fruc == 1 then -- remove "(foil)" if foil url
 		card.name = string.gsub(card.name, " *%([fF][oO][iI][lL]%)", "")
-		cFoil = true
+		card.foil = true
+	else
+		card.foil = false
 	end
-	-- Check for foil status patch
-	for _, rec in ipairs(foiltweak) do
-		if rec.setid == setid and rec.cardname == card.name then cFoil = rec.foil end
-	end	
 	
 	card.name = string.gsub(card.name, " // ","|")
 	card.name = string.gsub(card.name, "Æ", "AE")
@@ -588,7 +588,7 @@ function buildCardData ( names, price, setid, fruc, setgerman , importlangs ) --
 	card = siteCardDataManipulation ( card , setid )
 
 	if namereplace[setid] and namereplace[setid][card.name] then
-		if DEBUG then
+		if LOGNAMEREPLACE or DEBUG then
 			llog("namereplaced\t" .. card.name .. "\t to " .. namereplace[setid][card.name],1)
 		end
 		card.name = namereplace[setid][card.name]
@@ -596,7 +596,6 @@ function buildCardData ( names, price, setid, fruc, setgerman , importlangs ) --
 			persetcount.namereplace = persetcount.namereplace + 1
 		end
 	end
-
 	-- drop unwanted sourcedata before further processing
 	if     string.find(card.name, "%(DROP[ %a]*%)")
 		or string.find(card.name, "%([mM]int%)$")
@@ -620,12 +619,12 @@ function buildCardData ( names, price, setid, fruc, setgerman , importlangs ) --
 
 --TODO	card.condition = "NONE"
 	
-	-- define price according to cFoil and card.variant
+	-- define price according to card.foil and card.variant
 	if card.variant then
 		if DEBUG then
 			llog( "VARIANTS\t" .. deeptostring(card.variant) ,2)
 		end
-		if cFoil then
+		if card.foil then
 			if not card.foilprice then card.foilprice = {} end
 		else -- nonfoil
 			if not card.regprice then card.regprice = {} end
@@ -635,7 +634,7 @@ function buildCardData ( names, price, setid, fruc, setgerman , importlangs ) --
 				llog( "VARIANTS\tvarnr is " .. varnr .. " varname is " .. tostring(varname) ,2)
 			end
 			if varname then
-				if cFoil then
+				if card.foil then
 					card.foilprice[varname] = price
 				else -- nonfoil
 					card.regprice[varname] = price
@@ -643,7 +642,7 @@ function buildCardData ( names, price, setid, fruc, setgerman , importlangs ) --
 			end -- if varname
 		end -- for varname,varnr
 	else -- not card.variant
-		if cFoil then
+		if card.foil then
 			card.foilprice = price
 		else -- nonfoil
 			card.regprice = price
@@ -652,6 +651,7 @@ function buildCardData ( names, price, setid, fruc, setgerman , importlangs ) --
 	if DEBUG then
 		llog( "buildCardData\t will return card " .. deeptostring(card) ,2)
 	end -- DEBUG
+	card.foil = nil -- remove foilstat; info is retained in [foil|reg]price and it would cause confusion later
 	return card
 end -- function buildCardData
 
