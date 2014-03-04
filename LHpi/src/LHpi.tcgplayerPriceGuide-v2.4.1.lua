@@ -24,9 +24,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-use LHpi-v2.3 
-added M14 and MMA
+added Theros
+lots of Ae -> Æ replacements
 ]]
+
+--TODO I'm not really happy with variant handling for this site.
+
+-- options unique to this site
+local himelo = 3 -- choose column (HIgh/MEdium/LOw) to import from
 
 -- options that control the amount of feedback/logging done by the script
 --- @field [parent=#global] #boolean VERBOSE 			default false
@@ -64,7 +69,7 @@ SAVELOG = true
 SAVETABLE = false
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.3"
+libver = "2.4"
 --- must always be equal to the scripts filename !
 -- @field [parent=#global] #string scriptname	
 scriptname = "LHpi.tcgplayerPriceGuide-v" .. libver .. ".1.lua" 
@@ -77,7 +82,6 @@ LHpi = {}
 -- @type site
 -- 
 -- @field #string regex
-
 site={}
 site.regex = '<TR height=20>(.-)</TR>'
 
@@ -122,8 +126,6 @@ function ImportPrice( importfoil , importlangs , importsets )
 	end -- do load LHpi library
 	collectgarbage() -- we now have LHpi table with all its functions inside, let's clear LHpilib and execlib() from memory
 	LHpi.Log( "LHpi lib is ready to use." )
-	-- choose column to import from
-	himelo = 3 -- not local, read in ParseHtmlData
 	LHpi.Log("Importing " .. site.himelo[himelo] .. " prices. Columns available are " .. LHpi.Tostring(site.himelo) , 1 )
 	LHpi.DoImport (importfoil , importlangs , importsets)
 	ma.Log( "End of Lua script " .. scriptname )
@@ -245,6 +247,7 @@ site.sets = {
 [100]={ id = 100 , fruc = { true , false} , lang = { true }, url = "Beta%20Edition"},
 [90] ={ id =  90 , fruc = { true , false} , lang = { true }, url = "Alpha%20Edition"},
 -- Expansions
+[800]={ id = 800 , fruc = { true , true } , lang = { true }, url = "Theros"},
 [795]={ id = 795 , fruc = { true , true } , lang = { true }, url = "Dragon's%20Maze"},
 [793]={ id = 793 , fruc = { true , true } , lang = { true }, url = "Gatecrash"},
 [791]={ id = 791 , fruc = { true , true } , lang = { true }, url = "Return%20to%20Ravnica"},
@@ -361,7 +364,21 @@ site.sets = {
 --- @field [parent=#site] #table namereplace ]]
 --- @field [parent=#site] #table namereplace
 site.namereplace = {
+[779] = { -- M2012
+["AEther Adept"]						= "Æther Adept",
+},
+[770] = { -- M2011
+["Aether Adept"]						= "Æther Adept",
+},
+[460] = { -- 7th Edition
+["Tainted Aether"]						= "Tainted Æther",
+["Aether Flash"]						= "Æther Flash",
+},
+[360] = { -- 6th Edition
+["Aether Flash"]						= "Æther Flash",
+},
 [250] = { -- 5th Edition
+["Aether Storm"]						= "Æther Storm",
 ["Ghazban Ogre"]						= "Ghazbán Ogre",
 },
 [180] = { -- 4th Edition
@@ -370,6 +387,9 @@ site.namereplace = {
 },
 [140] = { -- Revised
 ["El-Hajjâj"]							= "El-Hajjaj",
+},
+[800] = { -- Theros
+["Purphoros' Emissary"]					= "Purphoros's Emissary",
 },
 [795] = { -- Dragon's Maze
 ["AEtherling"]							= "Ætherling",
@@ -416,19 +436,55 @@ site.namereplace = {
 ["Villagers of Estwald"] 				= "Villagers of Estwald|Howlpack of Estwald",
 ["Double-Sided Card Checklist"]			= "Checklist",
 },
+[776] = { -- New Phyrexia
+["Arm with AEther"]						= "Arm with Æther"
+},
 [773] = { -- Scars of Mirrodin
 -- I have no idea which one they call "A"
 ["Wurm Token (A)"]						= "Wurm",
 ["Wurm Token (B)"]						= "Wurm",
 },
+[765] = { -- Worldwake
+["Aether Tradewinds"]					= "Æther Tradewinds"
+},
+[762] = { -- Zendikar
+["Aether Figment"]						= "Æther Figment"
+},
+[756] = { -- Conflux
+["Scornful AEther-Lich"]				= "Scornful Æther-Lich"
+},
+[751] = { -- Shadowmoor
+["AEthertow"]							= "Æthertow"
+},
+[730] = { -- Lorwyn
+["Aethersnipe"]							= "Æthersnipe"
+},
+[710] = { -- Future Sight
+["Vedalken Aethermage"]					= "Vedalken Æthermage"
+},
+[700] = { -- Planar Chaos
+["Frozen Aether"]						= "Frozen Æther",
+["Aether Membrane"]						= "Æther Membrane"
+},
 [680] = { -- Time Spiral
+["Aether Web"]							= "Æther Web",
+["Aetherflame Wall"]					= "Ætherflame Wall",
 ["Lim-Dul the Necromancer"]				= "Lim-Dûl the Necromancer"
 },
 [670] = { -- Coldsnap
+["Surging Aether"]						= "Surging Æther",
 ["Jotun Owl Keeper"]					= "Jötun Owl Keeper",
 ["Jotun Grunt"]							= "Jötun Grunt"
 },
+[660] = { -- Dissension
+["Aethermage's Touch"]					= "Æthermage's Touch",
+["Azorius Aethermage"]					= "Azorius Æthermage"
+},
+[650] = { -- Guildpact
+["Aetherplasm"]							= "Ætherplasm"
+},
 [620] = { -- Saviors of Kamigawa
+["Aether Shockwave"]					= "Æther Shockwave",
 ["Sasaya, Orochi Ascendant"] 			= "Sasaya, Orochi Ascendant|Sasaya’s Essence",
 ["Rune-Tail, Kitsune Ascendant"] 		= "Rune-Tail, Kitsune Ascendant|Rune-Tail’s Essence",
 ["Homura, Human Ascendant"] 			= "Homura, Human Ascendant|Homura’s Essence",
@@ -454,11 +510,50 @@ site.namereplace = {
 ["Nezumi Graverobber"]					= "Nezumi Graverobber|Nighteyes the Desecrator",
 ["Akki Lavarunner"]						= "Akki Lavarunner|Tok-Tok, Volcano Born",
 },
+[580] = { -- Fifth DAwn
+["Fold into Aether"]					= "Fold into Æther"
+},
+[570] = { -- Darksteel
+["Aether Snap"]							= "Æther Snap",
+["AEther Vial"]							= "Æther Vial"
+},
+[560] = { -- Mirrodin
+["Gate to the Aether"]					= "Gate to the Æther",
+["Aether Spellbomb"]					= "Æther Spellbomb"
+},
+[520] = { -- Onslaught
+["Aether Charge"]						= "Æther Charge"
+},
+[480] = { -- Odyssey
+["Aether Burst"]						= "Æther Burst"
+},
+[470] = { -- Apocalypse
+["Aether Mutation"]						= "Æther Mutation"
+},
+[430] = { -- Invasion
+["Aether Rift"]							= "Æther Rift"
+},
+[410] = { -- Nemesis
+["Aether Barrier"]						= "Æther Barrier"
+},
+[370] = { -- Urza's Destiny
+["Aether Sting"]						= "Æther Sting"
+},
+[330] = { -- Urza's Saga
+["Tainted Aether"]						= "Tainted Æther"
+},
+[300] = { -- Exodus
+["Aether Tide"]							= "Æther Tide"
+},
 [270] = { -- Weatherlight
+["Aether Flash"]						= "Æther Flash",
 ["Bosium Strip"]						= "Bösium Strip"
 },
 [220] = { -- Alliances
 ["Lim-Dul's High Guard"]				= "Lim-Dûl's High Guard"
+},
+[210] = { -- Homelands
+["Aether Storm"]						= "Æther Storm"
 },
 [190] = { -- Ice Age
 ["Lim-Dul's Cohort"] 					= "Lim-Dûl’s Cohort",
@@ -466,6 +561,9 @@ site.namereplace = {
 ["Lim-Dul's Hex"]						= "Lim-Dûl’s Hex",
 ["Legions of Lim-Dul"]					= "Legions of Lim-Dûl",
 ["Oath of Lim-Dul"]						= "Oath of Lim-Dûl",
+},
+[150] = { -- Legends
+["Aerathi Berserker"]					= "Ærathi Berserker"
 },
 [120] = { -- Arabian Nights
 ["Khabál Ghoul"]						= "Khabal Ghoul",
@@ -488,11 +586,17 @@ site.namereplace = {
 ["Wyluli Wolf"] 						= "Wyluli Wolf (1)",
 },
 -- special sets
+[796] = { -- Modern Masters
+["Aether Vial"]							= "Æther Vial",
+["Aether Spellbomb"]					= "Æther Spellbomb",
+["Aethersnipe"]							= "Æthersnipe",
+},
 [600] = { -- Unhinged
 ["Ach! Hans, Run!"]						= '"Ach! Hans, Run!"',
 ["Our Market Research..."]				= "Our Market Research Shows That Players Like Really Long Card Names So We Made this Card to Have the Absolute Longest Card Name Ever Elemental",
 ["Kill Destroy"]						= "Kill! Destroy!",
 ["Who|What/When|Where/Why"]				= "Who|What|When|Where|Why",
+["Yet Another AEther Vortex"]			= "Yet Another Æther Vortex",
 },
 [380] = { -- Portal Three Kingdoms
 ["Pang Tong, “Young Phoenix”"]			= 'Pang Tong, "Young Phoenix"',
@@ -540,43 +644,67 @@ if CHECKEXPECTED then
 --- @field [parent=#site] #table expected
 site.expected = {
 -- Core sets
-[770] = { failed={ 15 } },
-[720] = { pset={ 384-1 }, failed={ 1 } },
-[250] = { namereplaced=1 },
+[779] = { namereplaced=1 },
+[770] = { failed={ 15 }, namereplaced=1 },
+[720] = { pset={ 384-1 } },
+[460] = { namereplaced=2 },
+[360] = { namereplaced=1 },
+[250] = { namereplaced=2 },
 [180] = { namereplaced=2 },
 [140] = { namereplaced=1 },
 [110] = { failed={ 10 } },
 [100] = { failed={ 10 } },
 [90]  = { failed={ 10 } },
 -- Expansions
+[800] = { namereplaced=1 },
 [795] = { namereplaced=1 },
 [793] = { namereplaced=1 },
 [784] = { namereplaced=14 },
 [782] = { pset={ 264+1 }, namereplaced=21 },
-[776] = { pset={ 175+4 } },
+[776] = { pset={ 175+4 }, namereplaced=1 },
 [775] = { pset={ 155+1 }, failed={ 4 } },
 [773] = { pset={ 249+9 }, failed={ 1 }, namereplaced=2 },
 [767] = { failed={ 15 } },
-[762] = { pset={ 269-20 } },
-[680] = { namereplaced=1 },
-[670] = { namereplaced=2 },
-[620] = { namereplaced=5 },
+[765] = { namereplaced=1 },
+[762] = { pset={ 269-20 }, namereplaced=1 },
+[756] = { namereplaced=1 },
+[751] = { namereplaced=1 },
+[730] = { namereplaced=1 },
+[710] = { namereplaced=1 },
+[700] = { namereplaced=2 },
+[680] = { namereplaced=3 },
+[670] = { namereplaced=3 },
+[660] = { namereplaced=2 },
+[650] = { namereplaced=1 },
+[620] = { namereplaced=6 },
 [610] = { namereplaced=5 },
 [590] = { namereplaced=10 },
+[580] = { namereplaced=1 },
+[570] = { namereplaced=2 },
+[560] = { namereplaced=2 },
+[520] = { namereplaced=1 },
+[480] = { namereplaced=1 },
+[470] = { namereplaced=1 },
 [450] = { pset={ 146-3 } },
-[250] = { namereplaced=1 },
+[430] = { namereplaced=1 },
+[410] = { namereplaced=1 },
+[370] = { namereplaced=1 },
+[330] = { namereplaced=1 },
+[300] = { namereplaced=1 },
+[270] = { namereplaced=2 },
 [220] = { namereplaced=1 },
-[210] = { failed={ 25 } },
+[210] = { failed={ 25 }, namereplaced=1 },
 [190] = { namereplaced=5 },
 [170] = { failed={ 85 } },
+[150] = { namereplaced=1 },
 [120] = { namereplaced=18 },
 [130] = { failed={ 16 } },
 -- special sets
-[600] = { namereplaced=4 },
+[796] = { namereplaced=3 },
+[600] = { namereplaced=5 },
 [380] = { namereplaced=11 },
 [310] = { failed= { 10 } },
 [320] = { pset={ 88-1+6}, namereplaced=8 },
-[270] = { namereplaced=1 },
 [260] = { failed= { 22 } },
 [200] = { namereplaced=3 },
 }
