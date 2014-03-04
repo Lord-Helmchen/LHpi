@@ -27,13 +27,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-preemptively added Theros
-removed lots of Ae -> Æ replacements
-changed BuildUrl to match lib 2.5
+fixed THS
 ]]
 
 -- options unique to this site
-local STAMMKUNDE = true -- for magicuniverse.de, parse 10% lower Stammkunden-Preis instead of default price (the one sent to the Warenkorb)
+local STAMMKUNDE = false -- for magicuniverse.de, parse 10% lower Stammkunden-Preis instead of default price (the one sent to the Warenkorb)
 
 -- options that control the amount of feedback/logging done by the script
 --- @field [parent=#global] #boolean VERBOSE 			default false
@@ -692,7 +690,7 @@ site.variants = {
 ["Forest (vers.3)"]							= { "Forest"	, { false, false, 3     } }
 },
 [762] = { -- Zendikar
-["Plains - Vollbild"] 						= { "Plains"	, { 1    , 2    , 3    , 4    } },
+["Plains - Vollbild"] 						= { "Plains"	, { 1    , 2    , 3    , 4     } },
 ["Island - Vollbild"] 						= { "Island" 	, { 1    , 2    , 3    , 4     } },
 ["Swamp - Vollbild"] 						= { "Swamp"		, { 1    , 2    , 3    , 4     } },
 ["Mountain - Vollbild"] 					= { "Mountain"	, { 1    , 2    , 3    , 4     } },
@@ -804,6 +802,7 @@ EXPECTTOKENS = true,
 [100] = { pset={ 302-134 },	failed={ 7 }, dropped=352, namereplaced=1 },
 [90]  = { pset={ 295-61 }, dropped=293,},
 -- Expansions
+[800] = { pset={ 249, [3]=249 } },-- no tokens yet
 [795] = { pset={ [3]=157-1 }, failed ={ [3]=1} }, -- -1/fail is elemental token
 [793] = { namereplaced=1 },
 [786] = { namereplaced=5 },
