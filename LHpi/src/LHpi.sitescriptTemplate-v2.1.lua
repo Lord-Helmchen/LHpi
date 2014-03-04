@@ -24,6 +24,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
+--[[ CHANGES
+use LHpi-v2.1
+]]
+
 -- options that control the amount of feedback/logging done by the script
 --- @field [parent=#global] #boolean VERBOSE 			default false
 VERBOSE = true
@@ -59,15 +63,16 @@ SAVELOG = true
 -- @field [parent=#global] #boolean SAVETABLE
 SAVETABLE = false
 --- must always be equal to the scripts filename !
--- @field [parent=#global] #string scriptname	
-scriptname = "LHpi.sitescriptTemplate-v2.0.lua" 
+-- @field [parent=#global] #string scriptname
+scriptname = "LHpi.sitescriptTemplate-v2.1.lua" 
 --- savepath for OFFLINE (read) and SAVEHTML (write). must point to an existing directory relative to MA's root.
+-- set by LHpi lib unless specified here.
 -- @field [parent=#global] #string savepath
-savepath = "Prices\\" .. string.gsub( scriptname , "%-v%d+%.%d+%.lua$" , "" ) .. "\\"
+--savepath = "Prices\\" .. string.gsub( scriptname , "%-v%d+%.%d+%.lua$" , "" ) .. "\\"
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.0"
+libver = "2.1"
 --- @field [parent=#global] #table LHpi		LHpi library table
 LHpi = {}
 
@@ -131,7 +136,7 @@ end -- function ImportPrice
  @param #number langid
  @param #number frucid
  @param #boolean offline	(optional) use local file instead of url
- @return #table { #string = #table { foilonly = #boolean , offline = #boolean } }
+ @return #table { #string = #table { foilonly = #boolean , isfile = #boolean } }
 
 ]]
 --function site.BuildUrl( setid,langid,frucid,offline )
@@ -175,7 +180,7 @@ end -- function ImportPrice
  
  @function [parent=#site] ParseHtmlData
  @param #string foundstring		one occurence of siteregex from raw html data
- @param #table urldetails	{ foilonly = #boolean , offline = #boolean , setid = #number, langid = #number, frucid = #number }
+ @param #table urldetails	{ foilonly = #boolean , isfile = #boolean , setid = #number, langid = #number, frucid = #number }
  @return #table { names = #table { #number = #string, ... }, price = #table { #number = #string, ... }} 
 ]]
 --function site.ParseHtmlData( foundstring , urldetails )
@@ -196,6 +201,12 @@ end -- function ImportPrice
 --		LHpi.Log( "site.BCDpluginName got " .. name .. " from set " .. setid , 2 )
 --	end
 --
+--	-- if you don't want a full namereplace table, these four gsubs will take care of a lot of fails.
+--	name = string.gsub( name , "Æ" , "AE")
+--	name = string.gsub( name , "â" , "a")
+--	name = string.gsub( name , "û" , "u")
+--	name = string.gsub( name , "á" , "a")
+
 --	return name
 --end -- function site.BCDpluginName
 

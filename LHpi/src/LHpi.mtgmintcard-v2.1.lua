@@ -1,5 +1,5 @@
 --*- coding: utf-8 -*-
---[[- LHpi magicuniverse.de sitescript 
+--[[- LHpi mtgmintcard.com sitescript 
 Price import script for Magic Album
 uses and needs LHpi library
 to import card pricing from www.mtgmintcard.com.
@@ -26,6 +26,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
+--[[ CHANGES
+use LHpi-v2.1
+let LHpi lib set savepath
+]]
+
 -- options that control the amount of feedback/logging done by the script
 --- @field [parent=#global] #boolean VERBOSE 			default false
 VERBOSE = false
@@ -37,7 +42,7 @@ LOGNAMEREPLACE = false
 -- options that control the script's behaviour.
 --- compare card count with expected numbers; default false
 -- @field [parent=#global] #boolean CHECKEXPECTED
-CHECKEXPECTED = false
+CHECKEXPECTED = true
 --  Don't change anything below this line unless you know what you're doing :-)
 ---	log everything and exit on error; default false
 -- @field [parent=#global] #boolean DEBUG			log all and exit on error; default false
@@ -59,17 +64,14 @@ SAVEHTML = false
 SAVELOG = true
 --- save price table to file before importing to MA;	default false
 -- @field [parent=#global] #boolean SAVETABLE
-SAVETABLE = false -- needs incremental putFile to be remotely readable :)
+SAVETABLE = false
 --- must always be equal to the scripts filename !
 -- @field [parent=#global] #string scriptname	
-scriptname = "LHpi.mtgmintcard-v2.0.lua" 
---- savepath for OFFLINE (read) and SAVEHTML (write). must point to an existing directory relative to MA's root.
--- @field [parent=#global] #string savepath
-savepath = "Prices\\" .. string.gsub( scriptname , "%-v%d+%.%d+%.lua$" , "" ) .. "\\"
+scriptname = "LHpi.mtgmintcard-v2.1.lua" 
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.0"
+libver = "2.1"
 --- @field [parent=#global] #table LHpi		LHpi library table
 LHpi = {}
 
@@ -80,10 +82,12 @@ LHpi = {}
 -- @field #string regex
 -- @field #string currency
 -- @field #string encoding
+-- @field #string resultpattern
 site={}
 site.regex = 'class="cardBorderBlack">.-(<a[^>]+>[^<]+<.->[$€][%d.,]+<.->)'
 site.currency = "$" -- not used yet
 site.encoding = "utf-8"
+site.resultregex = "Your query of .+ filtered by .+ returns (%d+) results."
 
 --[[- "main" function.
  called by Magic Album to import prices. Parameters are passed from MA.
@@ -135,7 +139,7 @@ end -- function ImportPrice
  @param #number langid
  @param #number frucid
  @param #boolean offline	(optional) use local file instead of url
- @return #table { #string = #table { foilonly = #boolean , offline = #boolean } }
+ @return #table { #string = #table { foilonly = #boolean , isfile = #boolean } }
 
 ]]
 function site.BuildUrl( setid,langid,frucid,offline )
@@ -156,7 +160,6 @@ function site.BuildUrl( setid,langid,frucid,offline )
 		container[url] = {}
 	end -- if offline 
 	
-	--if string.find( url , "[Ff][Oo][Ii][Ll]" ) then -- mark url as foil-only
 	if frucid == 1 then 
 		container[url].foilonly = true
 	else
@@ -180,7 +183,7 @@ end -- function site.BuildUrl
  
  @function [parent=#site] ParseHtmlData
  @param #string foundstring		one occurence of siteregex from raw html data
- @param #table urldetails	{ foilonly = #boolean , offline = #boolean , setid = #number, langid = #number, 	frucid = #number }
+ @param #table urldetails	{ foilonly = #boolean , isfile = #boolean , setid = #number, langid = #number, 	frucid = #number }
  @return #table { names = #table { #number = #string, ... }, price = #table { #number = #string, ... }} 
 ]]
 function site.ParseHtmlData( foundstring , 	urldetails )
@@ -214,7 +217,7 @@ function site.BCDpluginName ( name , setid )
 	name = string.gsub( name , "\195\131\194\162" , "â" ) -- 0xc3 0x83 0xc2 0xa2
 	name = string.gsub( name , "\195\131\226\128\160" , "Æ" ) -- 0xc3 0x83 0xe2 0x80 0xa0
 	name = string.gsub(name , "%(Chinese Version%)" , "" )
-	name = string.gsub( name , " / " , "|" )
+--@lib	name = string.gsub( name , " / " , "|" )
 
 	return name
 end -- function site.BCDpluginName
@@ -256,11 +259,6 @@ site.frucs = { "Foils" , "Regular" }
 --[[- table of available sets
 -- { #number = #table { #number id, #table lang = #table { #boolean, ... } , #table fruc = # table { #boolean, ... }, #string url } }
 -- #number id		: setid (can be found in "Database\Sets.txt" file)
--- #table cards	: { #number reg, #number tok }
--- 					table of expected cardcounts used for sanity checking the import.
--- 					must be hardcoded here until ma.getcardcount(setid, cardtype[all|regular|token|basicland] is possile :)
--- 		#number cards.reg	: number of expected regular cards
--- 		#number cards.tok	: number of expected tokens
 -- #table fruc		: table of available rarity urls to be parsed
 --		compare with site.frucs
 -- 		#boolean fruc[1]	: does foil url exist?
@@ -365,8 +363,18 @@ site.namereplace = {
 [720] = { -- 10th Edition
 ["Wall of Sword"]						= "Wall of Swords",
 },
+[460] = { -- 7th Edition
+["Tainted Æther"]						= "Tainted Aether"
+},
+[250] = { -- 5th Edition
+--["Dandân"]								= "Dandan",
+["Ghazban Ogre"]						= "Ghazbán Ogre"
+},
 [180] = { -- 4th Edition
 ["Junun Efreet"]						= "Junún Efreet",
+},
+[140] = { -- Revised Edition
+["El-Hajjâj"]							= "El-Hajjaj",
 },
 [793] = { -- Gatecrash
 ["AEtherize"]							= "Ætherize",
@@ -397,6 +405,23 @@ site.namereplace = {
 [690] = { -- Time Spiral Timeshifted
 ["DANDÂN"]								= "Dandân"
 },
+[680] = { -- Time Spiral
+["Lim-Dul the Necromancer"]				= "Lim-Dûl the Necromancer"
+},
+[710] = { -- Future Sight
+["Vedalken Æthermage"]					= "Vedalken Aethermage"
+},
+[700] = { -- Planar Chaos
+["Frozen Æther"]						= "Frozen Aether"
+},
+[670] = { -- Coldsnap
+["Surging Æther"]						= "Surging Aether",
+["Jotun Owl Keeper"]					= "Jötun Owl Keeper",
+["Jotun Grunt"]						= "Jötun Grunt"
+},
+[660] = { -- Dissension
+["Azorius Æthermage"]					= "Azorius Aethermage"
+},
 [620] = { -- Saviors of Kamigawa
 ["Sasaya, Orochi Ascendant"] 			= "Sasaya, Orochi Ascendant|Sasaya’s Essence",
 ["Rune-Tail, Kitsune Ascendant"] 		= "Rune-Tail, Kitsune Ascendant|Rune-Tail’s Essence",
@@ -423,11 +448,34 @@ site.namereplace = {
 ["Nezumi Graverobber"]					= "Nezumi Graverobber|Nighteyes the Desecrator",
 ["Akki Lavarunner"]						= "Akki Lavarunner|Tok-Tok, Volcano Born"
 },
+[580] = { -- Fifth Dawn
+["Fold into Æther"]						= "Fold into Aether"
+},
+[560] = { -- Urza's Saga
+["Gate to the Æther"]					= "Gate to the Aether"
+},
 [470] = { -- Apocalypse
 ["Fire-Ice"] 							= "Fire|Ice",
 },
+[330] = { -- Urza's Saga
+["Tainted Æther"]						= "Tainted Aether"
+},
+[270] = { -- Weatherlight
+["Bosium Strip"]						= "Bösium Strip"
+},
+[190] = { -- Ice Age
+["Lim-Dul's Cohort"] 					= "Lim-Dûl’s Cohort",
+["Marton Stromgald"] 					= "Márton Stromgald",
+["Lim-Dul's Hex"]						= "Lim-Dûl’s Hex",
+["Legions of Lim-Dul"]					= "Legions of Lim-Dûl",
+["Oath of Lim-Dul"]						= "Oath of Lim-Dûl",
+},
 [120] = { -- Arabian Nights
-["Junun Efreet"] 						= "Junún Efreet"
+["Junun Efreet"] 						= "Junún Efreet",
+["El-Hajjâj"]							= "El-Hajjaj",
+["Dandân"]								= "Dandan",
+["Ifh-Biff Efreet"]						= "Ifh-Bíff Efreet",
+["Ring of Ma'ruf"]						= "Ring of Ma ruf",
 }
 } -- end table site.namereplace
 
@@ -472,83 +520,73 @@ if CHECKEXPECTED then
 --- @field [parent=#site] #table expected
 site.expected = {
 -- Core sets
-[788] = { pset={ 249, 	[9]=249 },	failed={ 0, [9]=0 }, 	dropped=0,	namereplaced=0 },
-[779] = { pset={ 249, 	[9]=249+1 },failed={ 0, [9]=0 }, 	dropped=0,	namereplaced=0 },--why +1?
-[770] = { pset={ 249, 	[9]=249 },	failed={ 0, [9]=0 }, 	dropped=1,	namereplaced=0 },
-[759] = { pset={ 249, 	[9]=229 },	failed={ 0, [9]=0 }, 	dropped=8,	namereplaced=4 },
-[720] = { pset={ 383, 	[9]=363 },	failed={ 0, [9]=0 }, 	dropped=4,	namereplaced=2 },
-[630] = { pset={ 359-31,[9]=0 },	failed={ 0, [9]=0 }, 	dropped=0,	namereplaced=0 },
-[550] = { pset={ 357-27,[9]=0 },	failed={ 0, [9]=0 }, 	dropped=0,	namereplaced=0 },
-[460] = { pset={ 350-20,[9]=0 },	failed={ 0, [9]=125 },	dropped=3,	namereplaced=0 },
-[360] = { pset={ 350-20,[9]=0 },	failed={ 0, [9]=0 }, 	dropped=21,	namereplaced=0 },
-[250] = { pset={ 449-20,[9]=0 },	failed={ 0, [9]=0 }, 	dropped=55,	namereplaced=0 },
-[180] = { pset={ 378-15,[9]=0 },	failed={ 0, [9]=0 }, 	dropped=96,	namereplaced=1 },
-[140] = { pset={ 306-15,[9]=0 },	failed={ 0, [9]=0 }, 	dropped=43,	namereplaced=0 },
-[139] = { pset={   0, 	[9]=0 },	failed={ 0, [9]=0 }, 	dropped=0,	namereplaced=0 },
-[110] = { pset={ 302, 	[9]=0 },	failed={ 0, [9]=0 }, 	dropped=4,	namereplaced=0 },
-[100] = { pset={ 302-19,[9]=0 },	failed={ 0, [9]=0 }, 	dropped=0,	namereplaced=0 },
-[90]  = { pset={ 295, 	[9]=0 },	failed={ 0, [9]=0 }, 	dropped=0,	namereplaced=0 },
+[779] = { pset={ [9]=249+1 } },--why +1?
+[770] = { dropped=1 },
+[759] = { pset={ [9]=249-20 }, dropped=8, namereplaced=4 },
+[720] = { pset={ [9]=383-20, [9]=383-20 }, dropped=4, namereplaced=2 },
+[630] = { pset={ 359-31, [9]=0 } },
+[550] = { pset={ 357-27, [9]=0 } },
+[460] = { pset={ 350-20, [9]=0 }, failed={ [9]=125 }, dropped=3, namereplaced=1 },
+[360] = { pset={ 350-20 }, dropped=20 },
+[250] = { pset={ 449-20 }, dropped=53, namereplaced=1 },
+[180] = { pset={ 378-15, [9]=0 }, dropped=96, namereplaced=1 },
+[140] = { pset={ 306-15, [9]=0 }, dropped=42, namereplaced=1 },
+[110] = { dropped=4 },
+[100] = { pset={ 302-19 } },
 -- Expansions
-[793] = { pset={ 249, 	[9]=248 },	failed={ 0, [9]=1 }, 	dropped=0,	namereplaced=4 },
-[791] = { pset={ 274, 	[9]=274 },	failed={ 0, [9]=0 }, 	dropped=0,	namereplaced=0 },
-[786] = { pset={ 244, 	[9]=244+1 },failed={ 0, [9]=0 }, 	dropped=0,	namereplaced=2 },-- why +1?
-[784] = { pset={ 158, 	[9]=158 },	failed={ 0, [9]=0 }, 	dropped=0,	namereplaced=5 },
-[782] = { pset={ 264+1, [9]=264 },	failed={ 0, [9]=0 }, 	dropped=0,	namereplaced=12 },
-[776] = { pset={ 175, 	[9]=175 },	failed={ 0, [9]=0 }, 	dropped=0,	namereplaced=4 },
-[775] = { pset={ 155, 	[9]=155 },	failed={ 0, [9]=0 }, 	dropped=0,	namereplaced=3 },
-[773] = { pset={ 249, 	[9]=249 },	failed={ 0, [9]=0 }, 	dropped=0,	namereplaced=2 },
-[767] = { pset={ 248, 	[9]=248 },	failed={ 0, [9]=0 }, 	dropped=0,	namereplaced=0 },
-[765] = { pset={ 145, 	[9]=145 },	failed={ 0, [9]=0 }, 	dropped=0,	namereplaced=0 },
-[762] = { pset={ 269-20,[9]=249 },	failed={ 0, [9]=0 }, 	dropped=1,	namereplaced=0 },
-[758] = { pset={ 145,	[9]=145 },	failed={ 0, [9]=0 }, 	dropped=0,	namereplaced=0 },
-[756] = { pset={ 145, 	[9]=145 },	failed={ 0, [9]=0 }, 	dropped=0,	namereplaced=0 },
-[754] = { pset={ 249, 	[9]=249 },	failed={ 0, [9]=0 }, 	dropped=1,	namereplaced=0 },
-[752] = { pset={ 180, 	[9]=180 },	failed={ 0, [9]=0 }, 	dropped=0,	namereplaced=0 },
-[751] = { pset={ 301, 	[9]=281 },	failed={ 0, [9]=0 }, 	dropped=0,	namereplaced=0 },
-[750] = { pset={ 150, 	[9]=150 },	failed={ 0, [9]=0 }, 	dropped=0,	namereplaced=0 },
-[730] = { pset={ 301-1, [9]=300 },	failed={ 0, [9]=0 }, 	dropped=2,	namereplaced=0 },
-[710] = { pset={ 180, 	[9]=180 },	failed={ 0, [9]=0 }, 	dropped=2,	namereplaced=0 },
-[700] = { pset={ 165, 	[9]=165 },	failed={ 0, [9]=0 }, 	dropped=1,	namereplaced=0 },
-[690] = { pset={ 121, 	[9]=0 },	failed={ 0, [9]=0 }, 	dropped=1,	namereplaced=2 },
-[680] = { pset={ 301, 	[9]=4 },	failed={ 0, [9]=0 }, 	dropped=2,	namereplaced=0 },
-[670] = { pset={ 155, 	[9]=0 },	failed={ 0, [9]=0 }, 	dropped=0,	namereplaced=0 },
-[660] = { pset={ 180, 	[9]=0 },	failed={ 0, [9]=0 }, 	dropped=2,	namereplaced=0 },
-[650] = { pset={ 165, 	[9]=0 },	failed={ 0, [9]=0 }, 	dropped=0,	namereplaced=0 },
-[640] = { pset={ 306, 	[9]=0 },	failed={ 0, [9]=0 }, 	dropped=2,	namereplaced=0 },
-[620] = { pset={ 165, 	[9]=0 },	failed={ 0, [9]=0 }, 	dropped=1,	namereplaced=6 },
-[610] = { pset={ 165, 	[9]=0 },	failed={ 0, [9]=0 }, 	dropped=2,	namereplaced=10 },
-[590] = { pset={ 307, 	[9]=0 },	failed={ 0, [9]=0 }, 	dropped=0,	namereplaced=20 },
-[580] = { pset={ 165, 	[9]=110 },	failed={ 0, [9]=0 }, 	dropped=2,	namereplaced=0 },
-[570] = { pset={ 165, 	[9]=0 },	failed={ 0, [9]=0 }, 	dropped=2,	namereplaced=0 },
-[560] = { pset={ 306-20,[9]=0 },	failed={ 0, [9]=0 }, 	dropped=4,	namereplaced=0 },
-[540] = { pset={ 143, 	[9]=0 },	failed={ 0, [9]=0 }, 	dropped=3,	namereplaced=0 },
-[530] = { pset={ 145, 	[9]=0 },	failed={ 0, [9]=96 }, 	dropped=2,	namereplaced=0 },
-[520] = { pset={ 350, 	[9]=0 },	failed={ 0, [9]=0 }, 	dropped=10,	namereplaced=0 },
-[510] = { pset={ 143, 	[9]=0 },	failed={ 0, [9]=143 }, 	dropped=18,	namereplaced=0 },
-[500] = { pset={ 143, 	[9]=0 },	failed={ 0, [9]=40 }, 	dropped=9,	namereplaced=0 },
-[480] = { pset={ 350-20,[9]=0 },	failed={ 0, [9]=166 }, 	dropped=37,	namereplaced=0 },
-[470] = { pset={ 143, 	[9]=0 },	failed={ 0, [9]=0 }, 	dropped=5,	namereplaced=1 },
-[450] = { pset={ 146-3, [9]=0 },	failed={ 0, [9]=0 }, 	dropped=24,	namereplaced=0 },
-[430] = { pset={ 350-20,[9]=0 },	failed={ 0, [9]=143 }, 	dropped=104,namereplaced=0 },
-[420] = { pset={ 143-60,[9]=0 },	failed={ 0, [9]=0 }, 	dropped=9,	namereplaced=0 },
-[410] = { pset={ 143-1, [9]=0 },	failed={ 0, [9]=0 }, 	dropped=13,	namereplaced=0 },
-[400] = { pset={ 350-20,[9]=0 },	failed={ 0, [9]=0 }, 	dropped=17,	namereplaced=0 },
-[370] = { pset={ 143, 	[9]=0 },	failed={ 0, [9]=0 }, 	dropped=18,	namereplaced=0 },
-[350] = { pset={ 143, 	[9]=0 },	failed={ 0, [9]=0 }, 	dropped=12,	namereplaced=0 },
-[330] = { pset={ 350-20,[9]=0 },	failed={ 0, [9]=0 }, 	dropped=41,	namereplaced=0 },
-[300] = { pset={ 143, 	[9]=0 },	failed={ 0, [9]=0 }, 	dropped=13,	namereplaced=0 },
-[290] = { pset={ 143, 	[9]=0 },	failed={ 0, [9]=0 }, 	dropped=30,	namereplaced=0 },
-[280] = { pset={ 350-20,[9]=0 },	failed={ 0, [9]=0 }, 	dropped=67,	namereplaced=0 },
-[270] = { pset={ 167, 	[9]=0 },	failed={ 0, [9]=0 }, 	dropped=10,	namereplaced=0 },
-[240] = { pset={ 167, 	[9]=0 },	failed={ 0, [9]=0 }, 	dropped=14,	namereplaced=0 },
-[230] = { pset={ 350-21,[9]=0 },	failed={ 0, [9]=0 }, 	dropped=83,	namereplaced=0 },
-[220] = { pset={ 199, 	[9]=0 },	failed={ 0, [9]=0 }, 	dropped=12,	namereplaced=0 },
-[210] = { pset={ 140, 	[9]=0 },	failed={ 0, [9]=0 }, 	dropped=7,	namereplaced=0 },
-[190] = { pset={ 383-15,[9]=0 },	failed={ 0, [9]=0 }, 	dropped=95,	namereplaced=0 },
-[170] = { pset={ 187, 	[9]=0 },	failed={ 0, [9]=0 }, 	dropped=20,	namereplaced=0 },
-[160] = { pset={ 119, 	[9]=0 },	failed={ 0, [9]=0 }, 	dropped=9,	namereplaced=0 },
-[150] = { pset={ 310, 	[9]=0 },	failed={ 0, [9]=0 }, 	dropped=25,	namereplaced=0 },
-[130] = { pset={ 100, 	[9]=0 },	failed={ 0, [9]=0 }, 	dropped=7,	namereplaced=0 },
-[120] = { pset={  92, 	[9]=0 },	failed={ 0, [9]=0 }, 	dropped=15,	namereplaced=1 },
+[793] = { pset={ [9]=249-1 }, failed={ [9]=1 }, namereplaced=4 },
+[786] = { pset={ [9]=244+1 }, namereplaced=2 },-- why +1?
+[784] = { namereplaced=5 },
+[782] = { pset={ 264+1 }, namereplaced=12 },
+[776] = { namereplaced=4 },
+[775] = { namereplaced=3 },
+[773] = { namereplaced=2 },
+[762] = { pset={ 269-20,[9]=269-20 }, dropped=1 },
+[754] = { dropped=1 },
+[751] = { pset={ [9]=301-20 } },
+[730] = { pset={ 301-1, [9]=301-1 }, dropped=2 },
+[710] = { dropped=2, namereplaced=2 },
+[700] = { dropped=1, namereplaced=2 },
+[690] = { pset={ [9]=0 }, dropped=1, namereplaced=2 },
+[680] = { pset={ [9]=4 }, dropped=2, namereplaced=2 },
+[670] = { pset={ [9]=0 }, namereplaced=6 },
+[660] = { pset={ [9]=0 }, dropped=2, namereplaced=2 },
+[650] = { pset={ [9]=0 } },
+[640] = { pset={ [9]=0 }, dropped=2 },
+[620] = { pset={ [9]=0 }, dropped=1, namereplaced=6 },
+[610] = { pset={ [9]=0 }, dropped=2, namereplaced=10 },
+[590] = { pset={ [9]=0 }, namereplaced=20 },
+[580] = { pset={ [9]=110 }, dropped=2, namereplaced=2 },
+[570] = { pset={ [9]=0 }, dropped=2 },
+[560] = { pset={ 306-20, [9]=0 }, dropped=4, namereplaced=2 },
+[540] = { pset={ [9]=0 }, dropped=3 },
+[530] = { pset={ [9]=0 }, failed={ [9]=96 }, dropped=2 },
+[520] = { pset={ [9]=0 }, dropped=9 },
+[510] = { pset={ [9]=0 }, failed={ [9]=143 }, 	dropped=17 },
+[500] = { pset={ [9]=0 }, failed={ [9]=40 }, 	dropped=9 },
+[480] = { pset={ 350-20, [9]=0 }, failed={ [9]=166 }, 	dropped=36 },
+[470] = { pset={ [9]=0 }, dropped=4, namereplaced=1 },
+[450] = { pset={ 146-3, [9]=0 }, dropped=24 },
+[430] = { pset={ 350-20, [9]=0 }, failed={ [9]=144 }, 	dropped=104 },
+[420] = { pset={ 143-60, [9]=0 }, dropped=8 },
+[410] = { pset={ 143-1, [9]=0 }, dropped=13 },
+[400] = { pset={ 350-20, [9]=0 }, dropped=16 },
+[370] = { pset={ [9]=0 }, dropped=16 },
+[350] = { pset={ [9]=0 }, dropped=11 },
+[330] = { pset={ 350-20, [9]=0 }, dropped=38, namereplaced=1 },
+[300] = { pset={ [9]=0 }, dropped=13 },
+[290] = { pset={ [9]=0 }, dropped=29 },
+[280] = { pset={ 350-20, [9]=0 }, dropped=66 },
+[270] = { pset={ [9]=0 }, dropped=9, namereplaced=1 },
+[240] = { pset={ [9]=0 }, dropped=13 },
+[230] = { pset={ 350-21, [9]=0 }, dropped=83 },
+[220] = { pset={ [9]=0 }, dropped=12 },
+[210] = { pset={ [9]=0 }, dropped=7 },
+[190] = { pset={ 383-15, [9]=0 }, dropped=94, namereplaced=5 },
+[170] = { dropped=20 },
+[160] = { dropped=9 },
+[150] = { dropped=23 },
+[130] = { dropped=7 },
+[120] = { dropped=15, namereplaced=5 },
 }
 end

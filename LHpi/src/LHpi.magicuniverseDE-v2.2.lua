@@ -26,6 +26,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
+--[[ CHANGES
+use LHpi-v2.1
+let LHpi lib set savepath
+]]
+
 -- options that control the amount of feedback/logging done by the script
 --- @field [parent=#global] #boolean VERBOSE 			default false
 VERBOSE = false
@@ -59,10 +64,10 @@ SAVEHTML = false
 SAVELOG = true
 --- save price table to file before importing to MA;	default false
 -- @field [parent=#global] #boolean SAVETABLE
-SAVETABLE = false -- needs incremental putFile to be remotely readable :)
+SAVETABLE = false
 --- must always be equal to the scripts filename !
 -- @field [parent=#global] #string scriptname	
-scriptname = "LHpi.magicuniverseDE-v2.0.lua" 
+scriptname = "LHpi.magicuniverseDE-v2.1.lua" 
 --[[FIXME the dynamic approach myname does not work, ma.GetFile returns nil for its own log :(
 do
 	--local _s,_e,myname = string.find( ma.GetFile("Magic Album.log"), "Starting Lua script .-([^\\]+%.lua)$" )
@@ -73,13 +78,10 @@ do
 	end
 end
 --]]
---- savepath for OFFLINE (read) and SAVEHTML (write). must point to an existing directory relative to MA's root.
--- @field [parent=#global] #string savepath
-savepath = "Prices\\" .. string.gsub( scriptname , "%-v%d+%.%d+%.lua$" , "" ) .. "\\"
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.0"
+libver = "2.1"
 --- @field [parent=#global] #table LHpi		LHpi library table
 LHpi = {}
 
@@ -95,7 +97,7 @@ site.regex = '<tr>\n<td align="center">\n%b<>%b<>\n%b<>%b<>%b<>\n%b<>%b<>\n(.-)\
 site.currency = "€" -- not used yet
 site.encoding = "cp1252"
 
-local STAMMKUNDE = false -- for magicuniverse.de, parse 10% lower Stammkunden-Preis instead of default price (the one sent to the Warenkorb)
+local STAMMKUNDE = true -- for magicuniverse.de, parse 10% lower Stammkunden-Preis instead of default price (the one sent to the Warenkorb)
 
 --[[- "main" function.
  called by Magic Album to import prices. Parameters are passed from MA.
@@ -147,7 +149,7 @@ end -- function ImportPrice
  @param #number langid
  @param #number frucid
  @param #boolean offline	(optional) use local file instead of url
- @return #table { #string = #table { foilonly = #boolean , offline = #boolean } } 
+ @return #table { #string = #table { foilonly = #boolean , isfile = #boolean } } 
 ]]
 function site.BuildUrl( setid,langid,frucid,offline )
 	site.domain = "www.magicuniverse.de/html/"
@@ -191,7 +193,7 @@ end -- function site.BuildUrl
  
  @function [parent=#site] ParseHtmlData
  @param #string foundstring		one occurence of siteregex from raw html data
- @param #table urldetails	{ foilonly = #boolean , offline = #boolean , setid = #number, langid = #number, frucid = #number }
+ @param #table urldetails	{ foilonly = #boolean , isfile = #boolean , setid = #number, langid = #number, frucid = #number }
  @return #table { names = #table { #number = #string, ... }, price = #table { #number = #string, ... }} 
 ]]
 function site.ParseHtmlData( foundstring , urldetails )
@@ -240,6 +242,10 @@ function site.BCDpluginName ( name , setid )
 		LHpi.Log( "site.BCDpluginName got " .. name .. " from set " .. setid , 2 )
 	end
 	
+	-- probably need this to correct "die beliebtesten X der letzen Tage" entries 
+	--card.name = string.gsub( card.name , "?" , "'")
+	
+	
 	-- seperate "(alpha)" and beta from beta-urls
 	if setid == 90 then -- importing Alpha
 		if string.find( name , "%([aA]lpha%)" ) then
@@ -254,12 +260,7 @@ function site.BCDpluginName ( name , setid )
 			name = string.gsub( name , "%s*%(beta%)" , "" ) -- catch needlessly suffixed rawdata
 			name = string.gsub( name , "%(beta, " , "(") -- remove beta infix from condition descriptor
 		end 
---	elseif setid == 150 then -- Legends
---		if string.find( name , "%(ital%.?%)" ) then
---			name = string.gsub( name , "%(ital%.?%)" , "(DROP italian)" )
---			LHpi.Log("TODO Implement Card mangling to set lang instead of drop")
---			--card.lang = { nil,nil,nil,nil,[5] = "ITA" }
---		end
+
 	end -- if setid
 	
 	-- mark condition modifier suffixed cards to be dropped
@@ -280,6 +281,10 @@ function site.BCDpluginName ( name , setid )
 	name = string.gsub( name , "signiert!%)$" , "%0 (DROP)" )
 	name = string.gsub( name , "unterschrieben%)$" , "%0 (DROP)" )
 	name = string.gsub( name , "unterschrieben, excellent%)$" , "%0 (DROP)" )
+	name = string.gsub( name , "%(played[/%-|]light played%)" , "%0 (DROP)" )
+	name = string.gsub( name , "light played$" , "%0 (DROP)" )
+	name = string.gsub( name , "%(lp %- played%)" , "%0 (DROP)" )
+	name = string.gsub( name , "%(lp%) %(ia%)$" , "%0 (DROP)" )
 
 	return name
 end -- function site.BCDpluginName
@@ -290,7 +295,7 @@ end -- function site.BCDpluginName
  @function [parent=#site] BCDpluginCard
  @param #table card		the card LHpi.BuildCardData is working on
  @param #number setid
- @returns #table card modified card is passed back for further processing
+ @returns #table card 	modified card is passed back for further processing
 ]]
 function site.BCDpluginCard( card , setid )
 	if DEBUG then
@@ -301,12 +306,12 @@ function site.BCDpluginCard( card , setid )
 	if setid == 140 then -- Revised
 		if card.name == "Schilftroll (Fehldruck, deutsch)" then
 			card.lang = { [3]="GER" }
-			card.name = "Mana Barbs (Misprint 'Mana Troll')"
+			card.name = "Mana Barbs"
 		end
 	elseif setid == 180 then -- 4th Edition
 		if card.name == "Warp Artifact (FEHLDRUCK)" then
 			card.lang = { [3]="GER" }
-			card.name = "El-Hajjâj (Misprint 'El-Pancake')"
+			card.name = "El-Hajjâj"
 		end
 	elseif setid == 150 then -- Legends
 		if string.find( card.name , "%(ital%.?%)" ) then
@@ -337,16 +342,13 @@ site.langs = {
 --- @field [parent=#site] #table frucs	rarity array { #number = #string }
 site.frucs = { "Foil" , "Rare" , "Uncommon" , "Common" , "Purple" }
 
---TODO local condprio = { [0] = "NONE", } -- table to sort condition description. lower indexed will overwrite when building the cardsetTable
+-- table to sort condition description. lower indexed should overwrite when building the cardsetTable
+-- nothing implemented yet
+--TODO site.condprio = { [0] = "NONE", }
 
 --[[- table of available sets
 -- { #number = #table { #number id, #table lang = #table { #boolean, ... } , #table fruc = # table { #boolean, ... }, #string url } }
 -- #number id		: setid (can be found in "Database\Sets.txt" file)
--- #table cards	: { #number reg, #number tok }
--- 					table of expected cardcounts used for sanity checking the import.
--- 					must be hardcoded here until ma.getcardcount(setid, cardtype[all|regular|token|basicland] is possile :)
--- 		#number cards.reg	: number of expected regular cards
--- 		#number cards.tok	: number of expected tokens
 -- #table fruc		: table of available rarity urls to be parsed
 --		compare with site.frucs
 -- 		#boolean fruc[1]	: does foil url exist?
@@ -440,7 +442,7 @@ site.sets = {
 [150]={id = 150, lang = { true , [3]=false , [5]=true }, fruc = { false,true ,true ,true  }, url = "Legends"},
 [130]={id = 130, lang = { true , [3]=false }, fruc = { false,true ,true ,true  }, url = "Antiquities"},
 [120]={id = 120, lang = { true , [3]=false }, fruc = { false,true ,true ,true  }, url = "Arabian_Nights"},
--- TODO add special and promo sets
+-- special and promo sets: sorting out the single page seems more trouble than it's worth
 } -- end table site.sets
 
 --[[- card name replacement tables.
@@ -450,12 +452,25 @@ site.sets = {
 --- @field [parent=#site] #table namereplace
 site.namereplace = {
 [788] = { -- M2013
-["Liliana o. t. Dark Realms Emblem"]	= "Liliana of the Dark Realms Emblem"
+["Emblem: Liliana o. t. Dark Realms"]	= "Emblem: Liliana of the Dark Realms"
+},
+[779] = { -- M2013
+["Æther Adept"] 						= "AEther Adept",
+},
+[770] = { --M2011
+["Æther Adept"] 						= "AEther Adept",
+["Token - Ooze (G) - (2/2)"]			= "Ooze (5)",
+["Token - Ooze (G) - (1/1)"]			= "Ooze (6)",
+},
+[460] = { -- 7th Edition
+["Æther Flash"] 						= "Aether Flash",
+["Tainted Æther"] 						= "Tainted Aether",
 },
 [140] = { -- Revised
 ["Serendib Efreet (Fehldruck)"] 		= "Serendib Efreet",
 ["Pearl Unicorn"] 						= "Pearled Unicorn",
-["Monss Goblin Raiders"] 				= "Mons's Goblin Raiders"
+["Monss Goblin Raiders"] 				= "Mons's Goblin Raiders",
+["El-Hajjâj"]							= "El-Hajjaj",
 },
 [139] = { -- Revised Limited (german)
 ["Schwarzer Ritus (Dark Ritual)"] 		= "Schwarzer Ritus",
@@ -463,23 +478,23 @@ site.namereplace = {
 ["Bengalische Heldin"] 					= "Benalische Heldin",
 ["Advocatus Diaboli"] 					= "Advokatus Diaboli",
 ["Zersetzung (Desintegrate)"] 			= "Zersetzung",
-["Ketos' Zauberbuch"] 					= "Ketos Zauberbuch",
 ["Leibwächter d. Veteranen"] 			= "Leibwächter des Veteranen",
 ["Stab des Verderbens"] 				= "Stab der Verderbnis",
 ["Der schwarze Tot"] 					= "Der Schwarze Tod",
-["Greif Roc aus dem Khergebrige"] 		= "Greif Roc aus dem Khergebirge",
 ["Rückkopplung"] 						= "Rückkoppelung",
 ["Armageddon-Uhr"] 						= "Armageddonuhr",
-["Mons Plündernde Goblins"] 			= "Mons's Goblin Raiders", -- "Mons' plündernde Goblins" failed, might be the ' at end of string?
 ["Gaeas Vasall"] 						= "Gäas Vasall",
 ["Bogenschützen der Elfen"] 			= "Bogenschütze der Elfen",
 ["Ornithropher"] 						= "Ornithopter",
 ["Granitgargoyle"] 						= "Granit Gargoyle",
 ["Inselfisch Jaskonius"] 				= "Inselfisch Jasconius",
-["Hypnotiserendes Gespenst"] 			= "Hypnotisierendes Gespenst"
+["Hypnotiserendes Gespenst"] 			= "Hypnotisierendes Gespenst",
+["Mons Plündernde Goblins"]				= "Mons’ plündernde Goblins",
+["Ketos? Zauberbuch"]					= "Ketos Zauberbuch",
+["Jandors Satteltaschen"]				= "Jandors Satteltasche"
 },
 [110] = { -- Unlimited
-["Will-o-The-Wisp"] 					= "Will-o’-the-Wisp"
+["Will-o-The-Wisp"] 					= "Will-O’-The-Wisp"
 },
 [100] = { -- Beta (shares urls with Alpha)
 ["Time Walk (alpha, near mint)"]		= "Time Walk (alpha)(near mint)"
@@ -488,11 +503,14 @@ site.namereplace = {
 ["Time Walk (alpha, near mint)"]		= "Time Walk (alpha)(near mint)"
 },
 [793] = { -- Gatecrash
-["AEtherize"]							= "Ætherize",
-["Domrirade Emblem"] 					= "Domri Rade Emblem"
+["Emblem: Domrirade"] 					= "Emblem: Domri Rade"
 },
 [786] = { -- Avacyn Restored
-["Tamiyo, the Moonsage Emblem"]			= "Tamiyo, the Moon Sage Emblem"
+["Emblem: Tamiyo, the Moonsage"]			= "Emblem Tamiyo, the Moon Sage",
+["Token - Spirit (W)"]						= "Spirit (3)",
+["Token - Spirit (U)"]						= "Spirit (4)",
+["Token - Human (W)"]						= "Human (2)",
+["Token - Human (R)"]						= "Human (7)",
 },
 [784] = { -- Dark Ascension
 ["Hinterland Hermit"] 					= "Hinterland Hermit|Hinterland Scourge",
@@ -531,24 +549,79 @@ site.namereplace = {
 ["Village Ironsmith"] 					= "Village Ironsmith|Ironfang",
 ["Grizzled Outcasts"] 					= "Grizzled Outcasts|Krallenhorde Wantons",
 ["Villagers of Estwald"] 				= "Villagers of Estwald|Howlpack of Estwald",
+["Token - Zombie (B) (7)"]				= "Zombie (7)",
+["Token - Zombie (B) (8)"]				= "Zombie (8)",
+["Token - Zombie (B) (9)"]				= "Zombie (9)",
+["Token - Wolf (B)"]					= "Wolf (6)",
+["Token - Wolf (G)"]					= "Wolf (12)",
 ["Doublesidedcards-Checklist"]			= "Checklist"
 },
+[776] = { -- New Phyrexia
+["Arm with Æther"]						= "Arm with AEther",
+},
 [775] = { -- Mirrodin Besieged
-["Poisoncounter"]						= "Poison Counter"
+["Token - Poisoncounter"]				= "Token - Poison Counter"
 },
 [773] = { -- Scars of Mirrodin
-["Poisoncounter"]						= "Poison Counter"
+["Token - Wurm (Art) (Deathtouch)"] 	= "Wurm (8)",
+["Token - Wurm (Art) (Lifelink)"] 		= "Wurm (9)",
+["Token - Poisoncounter"]				= "Token - Poison Counter"
 },
-[750] = { -- Morningtide
-["Faery Rogue"] 						= "Faerie Rogue"
+[767] = { -- Rise of the Eldrazi
+["TOKEN - Eldrazi Spawn (Vers. A)"] 	= "Eldrazi Spawn (1a)",
+["TOKEN - Eldrazi Spawn (Vers. B)"] 	= "Eldrazi Spawn (1b)",
+["TOKEN - Eldrazi Spawn (Vers. C)"] 	= "Eldrazi Spawn (1c)",
+},
+[765] = { -- Worldwake
+["Æther Tradewinds"]					= "AEther Tradewinds",
 },
 [762] = { -- Zendikar
-["Meerfolk"] 							= "Merfolk"
+["Token - Meerfolk (U)"] 				= "Token - Merfolk (U)",
+["Æther Figment"]						= "AEther Figment",
+},
+[756] = { -- Conflux
+["Scornful Æther-Lich"]					= "Scornful AEther-Lich",
+},
+[751] = { -- Shadowmoor
+["Æthertow"]							= "AEthertow",
+["Token - Elf, Warrior (G)"]			= "Elf Warrior (5)",
+["Token - Elf Warrior (G|W)"]			= "Elf Warrior (12)",
+--["Token - Elf, Krieger (G)"]			= "Elf, Krieger (5)",
+--["Token - Elf, Krieger (G|W)"]			= "Elf, Krieger (12)",
+["Token - Elemental (R)"] 				= "Elemental (4)",
+["Token - Elemental (B|R)"] 			= "Elemental (9)",
+--["Token - Elementarwesen (R)"] 			= "Elementarwesen (4)",
+--["Token - Elementarwesen (B|R)"] 		= "Elementarwesen (9)",
+},
+[750] = { -- Morningtide
+["Token - Faery Rogue"]					= "Token - Faerie Rogue"
 },
 [730] = { -- Lorwyn
-["Elf, Warrior"] 						= "Elf Warrior",
-["Kithkin, Soldier"] 					= "Kithkin Soldier",
-["Meerfolk Wizard"] 					= "Merfolk Wizard"
+["Æthersnipe"]							= "AEthersnipe",
+["Token - Elf, Warrior (G)"] 			= "Token - Elf Warrior (G)",
+["Token - Kithkin, Soldier (W)"] 		= "Token - Kithkin Soldier (W)",
+["Token - Meerfolk Wizard (U)"] 		= "Token - Merfolk Wizard (U)",
+["Token - Elemental (W)"] 				= "Elemental (2)",
+["Token - Elemental (G)"]	 			= "Elemental (8)",
+},
+[710] = { -- Future Sight
+["Vedalken Æthermage"]					= "Vedalken AEthermage",
+},
+[700] = { -- Planar Chaos
+["Æther Membrane"]						= "AEther Membrane",
+["Frozen Æther"]						= "Frozen AEther",
+},
+[680] = { -- Time Spiral
+["Æther Web"]							= "AEther Web",
+["Ætherflame Wall"]						= "AEtherflame Wall",
+["Lim-Dul the Necromancer"]				= "Lim-Dûl the Necromancer"
+},
+[660] = { -- Dissension
+["Azorius Æthermage"]					= "Azorius AEthermage",
+["Æthermage's Touch"]					= "AEthermage's Touch",
+},
+[650] = { -- Guildpact
+["Ætherplasm"]							= "AEtherplasm"
 },
 [640] = { -- Ravnica: City of Guilds
 ["Drooling Groodian"] 					= "Drooling Groodion",
@@ -562,7 +635,8 @@ site.namereplace = {
 ["Rune-Tail, Kitsune Ascendant"] 		= "Rune-Tail, Kitsune Ascendant|Rune-Tail’s Essence",
 ["Homura, Human Ascendant"] 			= "Homura, Human Ascendant|Homura’s Essence",
 ["Kuon, Ogre Ascendant"] 				= "Kuon, Ogre Ascendant|Kuon’s Essence",
-["Erayo, Soratami Ascendant"] 			= "Erayo, Soratami Ascendant|Erayo’s Essence"
+["Erayo, Soratami Ascendant"] 			= "Erayo, Soratami Ascendant|Erayo’s Essence",
+["Æther Shockwave"]						= "AEther Shockwave"
 },
 [610] = { -- Betrayers of Kamigawa
 ["Hired Muscle"] 						= "Hired Muscle|Scarmaker",
@@ -581,18 +655,59 @@ site.namereplace = {
 ["Jushi Apprentice"]					= "Jushi Apprentice|Tomoya the Revealer",
 ["Orochi Eggwatcher"]					= "Orochi Eggwatcher|Shidako, Broodmistress",
 ["Nezumi Graverobber"]					= "Nezumi Graverobber|Nighteyes the Desecrator",
-["Akki Lavarunner"]						= "Akki Lavarunner|Tok-Tok, Volcano Born"
+["Akki Lavarunner"]						= "Akki Lavarunner|Tok-Tok, Volcano Born",
+["Brothers Yamazaki"]					= "Brothers Yamazaki (a)",
+--["Brothers Yamazaki (b)"]				= "Brothers Yamazaki (b)",
+},
+[580] = { -- Fifth Dawn
+["Fold into Æther"]						= "Fold into AEther"
+},
+[570] = { -- Darksteel
+["Æther Snap"]							= "AEther Snap",
+["Æther Vial"]							= "AEther Vial",
 },
 [560] = { -- Mirrodin
-["Goblin Warwagon"]						= "Goblin War Wagon"
+["Goblin Warwagon"]						= "Goblin War Wagon",
+["Æther Spellbomb"]						= "AEther Spellbomb",
+["Gate to the Æther"]					= "Gate to the AEther"
+},
+[520] = { -- Onslaught
+["Æther Charge"]						= "AEther Charge"
 },
 [500] = { -- Torment
 ["Chainers Edict"]						= "Chainer's Edict",
 ["Caphalid Illusionist"]				= "Cephalid Illusionist"
 },
+[480] = { -- Odyssey
+["Æther Burst"]							= "AEther Burst"
+},
+[470] = { -- Apocalypse
+["Æther Mutation"]						= "AEther Mutation"
+},
+[430] = { -- Invasion
+["Æther Rift"]							= "AEther Rift"
+},
+[370] = { -- Urza's Saga
+["Æther Sting"]							= "AEther Sting"
+},
+[330] = { -- Urza's Saga
+["Tainted Æther"]						= "Tainted AEther"
+},
+[300] = { -- Exodus
+["Æther Tide"]							= "AEther Tide"
+},
+[270] = { -- Weatherlight
+["Æther Flash"]							= "AEther Flash"
+},
+[210] = { -- Homelands
+["Æther Storm"]							= "AEther Storm"
+},
 [120] = { -- Arabian Nights
-["Ifh-Bíff Efreet"] 					= "Ifh-Biff Efreet"
-}
+["Ring of Ma'rûf"] 						= "Ring of Ma ruf",
+["El-Hajjâj"]							= "El-Hajjaj",
+["Dandân"]								= "Dandan",
+["Ghazbán Ogre"]						= "Ghazban Ogre",
+},
 } -- end table site.namereplace
 
 --[[- card variant tables.
@@ -613,43 +728,6 @@ site.namereplace = {
 --- @field [parent=#site] #table variants ]]
 --- @field [parent=#site] #table variants
 site.variants = {
-[770] = { -- M2011
-["Plains"] 									= { "Plains"	, { 1    , 2    , 3    , 4     } },
-["Island"] 									= { "Island" 	, { 1    , 2    , 3    , 4     } },
-["Swamp"] 									= { "Swamp"		, { 1    , 2    , 3    , 4     } },
-["Mountain"] 								= { "Mountain"	, { 1    , 2    , 3    , 4     } },
-["Forest"] 									= { "Forest" 	, { 1    , 2    , 3    , 4     } },
-["Plains (230)"]							= { "Plains"	, { 1    , false, false, false } }, 
-["Plains (231)"]							= { "Plains"	, { false, 2    , false, false } },
-["Plains (232)"]							= { "Plains"	, { false, false, 3    , false } },
-["Plains (233)"]							= { "Plains"	, { false, false, false, 4     } },
-["Island (234)"]							= { "Island"	, { 1    , false, false, false } },
-["Island (235)"]							= { "Island"	, { false, 2    , false, false } },
-["Island (236)"]							= { "Island"	, { false, false, 3    , false } },
-["Island (237)"]							= { "Island"	, { false, false, false, 4     } },
-["Swamp (238)"]								= { "Swamp"		, { 1    , false, false, false } },
-["Swamp (239)"]								= { "Swamp"		, { false, 2    , false, false } },
-["Swamp (240)"]								= { "Swamp"		, { false, false, 3    , false } },
-["Swamp (241)"]								= { "Swamp"		, { false, false, false, 4     } },
-["Mountain (242)"]							= { "Mountain"	, { 1    , false, false, false } },
-["Mountain (243)"]							= { "Mountain"	, { false, 2    , false, false } },
-["Mountain (244)"]							= { "Mountain"	, { false, false, 3    , false } },
-["Mountain (245)"]							= { "Mountain"	, { false, false, false, 4     } },
-["Forest (246)"]							= { "Forest"	, { 1    , false, false, false } },
-["Forest (247)"]							= { "Forest"	, { false, 2    , false, false } },
-["Forest (248)"]							= { "Forest"	, { false, false, 3    , false } },
-["Forest (249)"]							= { "Forest"	, { false, false, false, 4     } },
-["Token - Ooze (G) - (2/2)"]				= { "Ooze"		, { 1    , false } },
-["Token - Ooze (G) - (1/1)"]				= { "Ooze"		, { false, 2     } }
-},
-[550] = { -- 8th
-["Plains"] 									= { "Plains"	, { 1    , 2    , 3    , 4     } },
-["Island"] 									= { "Island" 	, { 1    , 2    , 3    , 4     } },
-["Swamp"] 									= { "Swamp"		, { 1    , 2    , 3    , 4     } },
-["Mountain"] 								= { "Mountain"	, { 1    , 2    , 3    , 4     } },
-["Forest"] 									= { "Forest" 	, { 1    , 2    , 3    , 4     } },
-["Swamp (341)"]								= { "Swamp"		, { false, false, 3    , false } }
-},
 [100] = { -- Beta
 ["Plains"] 									= { "Plains"	, { 1    , 2    , 3     } },
 ["Island"] 									= { "Island" 	, { 1    , 2    , 3     } },
@@ -671,118 +749,6 @@ site.variants = {
 ["Forest (vers.1)"]							= { "Forest"	, { 1    , false, false } },
 ["Forest (vers.2)"]							= { "Forest"	, { false, 2    , false } },
 ["Forest (vers.3)"]							= { "Forest"	, { false, false, 3     } }
-},
-[786] = { -- Avacyn Restored
-["Plains"] 									= { "Plains"	, { 1    , 2    , 3     } },
-["Island"] 									= { "Island" 	, { 1    , 2    , 3     } },
-["Swamp"] 									= { "Swamp"		, { 1    , 2    , 3     } },
-["Mountain"] 								= { "Mountain"	, { 1    , 2    , 3     } },
-["Forest"] 									= { "Forest" 	, { 1    , 2    , 3     } },
-["Plains (230)"]							= { "Plains"	, { 1    , false, false } },
-["Plains (231)"]							= { "Plains"	, { false, 2    , false } },
-["Plains (232)"]							= { "Plains"	, { false, false, 3     } },
-["Island (233)"]							= { "Island"	, { 1    , false, false } },
-["Island (234)"]							= { "Island"	, { false, 2    , false } },
-["Island (235)"]							= { "Island"	, { false, false, 3     } },
-["Swamp (236)"]								= { "Swamp"		, { 1    , false, false } },
-["Swamp (237)"]								= { "Swamp"		, { false, 2    , false } },
-["Swamp (238)"]								= { "Swamp"		, { false, false, 3     } },
-["Mountain (239)"]							= { "Mountain"	, { 1    , false, false } },
-["Mountain (240)"]							= { "Mountain"	, { false, 2    , false } },
-["Mountain (241)"]							= { "Mountain"	, { false, false, 3     } },
-["Forest (242)"]							= { "Forest"	, { 1    , false, false } },
-["Forest (243)"]							= { "Forest"	, { false, 2    , false } },
-["Forest (244)"]							= { "Forest"	, { false, false, 3     } },
-["Token - Spirit (W)"]						= { "Spirit"	, { 1    , false } },
-["Token - Spirit (U)"]						= { "Spirit"	, { false, 2     } },
-["Token - Human (W)"]						= { "Human"		, { 1    ,false  } },
-["Token - Human (R)"]						= { "Human"		, { false, 2     } }
-},
-[782] = { -- Innistrad
-["Plains"] 									= { "Plains"	, { 1    , 2    , 3     } },
-["Island"] 									= { "Island" 	, { 1    , 2    , 3     } },
-["Swamp"] 									= { "Swamp"		, { 1    , 2    , 3     } },
-["Mountain"] 								= { "Mountain"	, { 1    , 2    , 3     } },
-["Forest"] 									= { "Forest" 	, { 1    , 2    , 3     } },
-["Plains (250)"]							= { "Plains"	, { 1    , false, false } },
-["Plains (251)"]							= { "Plains"	, { false, 2    , false } },
-["Plains (252)"]							= { "Plains"	, { false, false, 3     } },
-["Island (253)"]							= { "Island"	, { 1    , false, false } },
-["Island (254)"]							= { "Island"	, { false, 2    , false } },
-["Island (255)"]							= { "Island"	, { false, false, 3     } },
-["Swamp (256)"]								= { "Swamp"		, { 1    , false, false } },
-["Swamp (257)"]								= { "Swamp"		, { false, 2    , false } },
-["Swamp (258)"]								= { "Swamp"		, { false, false, 3     } },
-["Mountain (259)"]							= { "Mountain"	, { 1    , false, false } },
-["Mountain (260)"]							= { "Mountain"	, { false, 2    , false } },
-["Mountain (261)"]							= { "Mountain"	, { false, false, 3     } },
-["Forest (262)"]							= { "Forest"	, { 1    , false, false } },
-["Forest (263)"]							= { "Forest"	, { false, 2    , false } },
-["Forest (264)"]							= { "Forest"	, { false, false, 3     } },
-["Token - Zombie (B) (7)"]					= { "Zombie"	, { 1    , false, false } },
-["Token - Zombie (B) (8)"]					= { "Zombie"	, { false, 2    , false } },
-["Token - Zombie (B) (9)"]					= { "Zombie"	, { false, false, 3     } },
-["Token - Wolf (B)"]						= { "Wolf"		, { 1    , false } },
-["Token - Wolf (G)"]						= { "Wolf"		, { false, 2     } }
-},
-[773] = { -- Scars of Mirrodin
-["Plains"] 									= { "Plains"	, { 1    , 2    , 3    , 4     } },
-["Island"] 									= { "Island" 	, { 1    , 2    , 3    , 4     } },
-["Swamp"] 									= { "Swamp"		, { 1    , 2    , 3    , 4     } },
-["Mountain"] 								= { "Mountain"	, { 1    , 2    , 3    , 4     } },
-["Forest"] 									= { "Forest" 	, { 1    , 2    , 3    , 4     } },
-["Plains (230)"]							= { "Plains"	, { 1    , false ,false, false } }, 
-["Plains (231)"]							= { "Plains"	, { false, 2    , false, false } },
-["Plains (232)"]							= { "Plains"	, { false, false, 3    , false } },
-["Plains (233)"]							= { "Plains"	, { false, false, false, 4     } },
-["Island (234)"]							= { "Island"	, { 1    , false, false, false } },
-["Island (235)"]							= { "Island"	, { false, 2    , false, false } },
-["Island (236)"]							= { "Island"	, { false, false, 3    , false } },
-["Island (237)"]							= { "Island"	, { false, false, false, 4     } },
-["Swamp (238)"]								= { "Swamp"		, { 1    , false, false, false } },
-["Swamp (239)"]								= { "Swamp"		, { false, 2    , false, false } },
-["Swamp (240)"]								= { "Swamp"		, { false, false, 3    , false } },
-["Swamp (241)"]								= { "Swamp"		, { false, false, false, 4     } },
-["Mountain (242)"]							= { "Mountain"	, { 1    , false, false, false } },
-["Mountain (243)"]							= { "Mountain"	, { false, 2    , false, false } },
-["Mountain (244)"]							= { "Mountain"	, { false, false, 3    , false } },
-["Mountain (245)"]							= { "Mountain"	, { false, false, false, 4     } },
-["Forest (246)"]							= { "Forest"	, { 1    , false, false, false } },
-["Forest (247)"]							= { "Forest"	, { false, 2    , false, false } },
-["Forest (248)"]							= { "Forest"	, { false, false, 3    , false } },
-["Forest (249)"]							= { "Forest"	, { false, false, false, 4     } },
-["Token - Wurm (Art) (Deathtouch)"] 		= { "Wurm"		, { 1    , false } },
-["Token - Wurm (Art) (Lifelink)"] 			= { "Wurm"		, { false, 2     } }
-},
-[767] = { -- Rise of the Eldrazi
-["Plains"] 									= { "Plains"	, { 1    , 2    , 3    , 4     } },
-["Island"] 									= { "Island" 	, { 1    , 2    , 3    , 4     } },
-["Swamp"] 									= { "Swamp"		, { 1    , 2    , 3    , 4     } },
-["Mountain"] 								= { "Mountain"	, { 1    , 2    , 3    , 4     } },
-["Forest"] 									= { "Forest" 	, { 1    , 2    , 3    , 4     } },
-["Plains (229)"]							= { "Plains"	, { 1    , false, false, false } }, 
-["Plains (230)"]							= { "Plains"	, { false, 2    , false, false } },
-["Plains (231)"]							= { "Plains"	, { false, false, 3    , false } },
-["Plains (232)"]							= { "Plains"	, { false, false, false, 4     } },
-["Island (233)"]							= { "Island"	, { 1    , false, false, false } },
-["Island (234)"]							= { "Island"	, { false, 2    , false, false } },
-["Island (235)"]							= { "Island"	, { false, false, 3    , false } },
-["Island (236)"]							= { "Island"	, { false, false, false, 4     } },
-["Swamp (237)"]								= { "Swamp"		, { 1    , false, false, false } },
-["Swamp (238)"]								= { "Swamp"		, { false, 2    , false, false } },
-["Swamp (239)"]								= { "Swamp"		, { false, false, 3    , false } },
-["Swamp (240)"]								= { "Swamp"		, { false, false, false, 4     } },
-["Mountain (241)"]							= { "Mountain"	, { 1    , false, false, false } },
-["Mountain (242)"]							= { "Mountain"	, { false, 2    , false, false } },
-["Mountain (243)"]							= { "Mountain"	, { false, false, 3    , false } },
-["Mountain (244)"]							= { "Mountain"	, { false, false, false, 4     } },
-["Forest (245)"]							= { "Forest"	, { 1    , false, false, false } },
-["Forest (246)"]							= { "Forest"	, { false, 2    , false, false } },
-["Forest (247)"]							= { "Forest"	, { false, false, 3    , false } },
-["Forest (248)"]							= { "Forest"	, { false, false, false, 4     } },
-["TOKEN - Eldrazi Spawn (Vers. A)"] 		= { "Eldrazi Spawn"	, { "a"  , false, false } },
-["TOKEN - Eldrazi Spawn (Vers. B)"] 		= { "Eldrazi Spawn"	, { false, "b"  , false } },
-["TOKEN - Eldrazi Spawn (Vers. C)"] 		= { "Eldrazi Spawn"	, { false, false, "c"   } }
 },
 [762] = { -- Zendikar
 ["Plains - Vollbild"] 						= { "Plains"	, { 1    , 2    , 3    , 4    } },
@@ -810,95 +776,6 @@ site.variants = {
 ["Forest - Vollbild (247)"]					= { "Forest"	, { false, 2    , false, false } },
 ["Forest - Vollbild (248)"]					= { "Forest"	, { false, false, 3    , false } },
 ["Forest - Vollbild (249)"]					= { "Forest"	, { false, false, false, 4     } }
-},
-[751] = { -- Shadowmoor
-["Plains"] 									= { "Plains"	, { 1    , 2    , 3    , 4     } },
-["Island"] 									= { "Island" 	, { 1    , 2    , 3    , 4     } },
-["Swamp"] 									= { "Swamp"		, { 1    , 2    , 3    , 4     } },
-["Mountain"] 								= { "Mountain"	, { 1    , 2    , 3    , 4     } },
-["Forest"] 									= { "Forest" 	, { 1    , 2    , 3    , 4     } },
-["Plains (282)"]							= { "Plains"	, { 1    , false ,false, false } }, 
-["Plains (283)"]							= { "Plains"	, { false, 2    , false, false } },
-["Plains (284)"]							= { "Plains"	, { false, false, 3    , false } },
-["Plains (285)"]							= { "Plains"	, { false, false, false, 4     } },
-["Island (286)"]							= { "Island"	, { 1    , false, false, false } },
-["Island (287)"]							= { "Island"	, { false, 2    , false, false } },
-["Island (288)"]							= { "Island"	, { false, false, 3    , false } },
-["Island (289)"]							= { "Island"	, { false, false, false, 4     } },
-["Swamp (290)"]								= { "Swamp"		, { 1    , false, false, false } },
-["Swamp (291)"]								= { "Swamp"		, { false, 2    , false, false } },
-["Swamp (292)"]								= { "Swamp"		, { false, false, 3    , false } },
-["Swamp (293)"]								= { "Swamp"		, { false, false, false, 4     } },
-["Mountain (294)"]							= { "Mountain"	, { 1    , false, false, false } },
-["Mountain (295)"]							= { "Mountain"	, { false, 2    , false, false } },
-["Mountain (296)"]							= { "Mountain"	, { false, false, 3    , false } },
-["Mountain (297)"]							= { "Mountain"	, { false, false, false, 4     } },
-["Forest (298)"]							= { "Forest"	, { 1    , false, false, false } },
-["Forest (299)"]							= { "Forest"	, { false, 2    , false, false } },
-["Forest (300)"]							= { "Forest"	, { false, false, 3    , false } },
-["Forest (301)"]							= { "Forest"	, { false, false, false, 4     } },
-["Token - Elf, Warrior (G)"]				= { "Elf Warrior"	, { 1    , false } },
-["Token - Elf Warrior (G/W)"]				= { "Elf Warrior"	, { false, 1     } },
-["Token - Elemental (R)"] 					= { "Elemental"		, { 1    , false } },
-["Token - Elemental (B/R)"] 				= { "Elemental"		, { false, 2     } }
-},
-[730] = { -- Lorwyn
-["Plains"] 									= { "Plains"	, { 1    , 2    , 3    , 4     } },
-["Island"] 									= { "Island" 	, { 1    , 2    , 3    , 4     } },
-["Swamp"] 									= { "Swamp"		, { 1    , 2    , 3    , 4     } },
-["Mountain"] 								= { "Mountain"	, { 1    , 2    , 3    , 4     } },
-["Forest"] 									= { "Forest" 	, { 1    , 2    , 3    , 4     } },
-["Plains (282)"]							= { "Plains"	, { 1    , false ,false, false } }, 
-["Plains (283)"]							= { "Plains"	, { false, 2    , false, false } },
-["Plains (284)"]							= { "Plains"	, { false, false, 3    , false } },
-["Plains (285)"]							= { "Plains"	, { false, false, false, 4     } },
-["Island (286)"]							= { "Island"	, { 1    , false, false, false } },
-["Island (287)"]							= { "Island"	, { false, 2    , false, false } },
-["Island (288)"]							= { "Island"	, { false, false, 3    , false } },
-["Island (289)"]							= { "Island"	, { false, false, false, 4     } },
-["Swamp (290)"]								= { "Swamp"		, { 1    , false, false, false } },
-["Swamp (291)"]								= { "Swamp"		, { false, 2    , false, false } },
-["Swamp (292)"]								= { "Swamp"		, { false, false, 3    , false } },
-["Swamp (293)"]								= { "Swamp"		, { false, false, false, 4     } },
-["Mountain (294)"]							= { "Mountain"	, { 1    , false, false, false } },
-["Mountain (295)"]							= { "Mountain"	, { false, 2    , false, false } },
-["Mountain (296)"]							= { "Mountain"	, { false, false, 3    , false } },
-["Mountain (297)"]							= { "Mountain"	, { false, false, false, 4     } },
-["Forest (298)"]							= { "Forest"	, { 1    , false, false, false } },
-["Forest (299)"]							= { "Forest"	, { false, 2    , false, false } },
-["Forest (300)"]							= { "Forest"	, { false, false, 3    , false } },
-["Forest (301)"]							= { "Forest"	, { false, false, false, 4     } },
-["Token - Elemental (W)"] 					= { "Elemental"	, { 1    , false } },
-["Token - Elemental (G)"] 					= { "Elemental"	, { false, 2     } }
-},
-[590] = { -- Champions of Kamigawa
-["Plains"] 									= { "Plains"	, { 1    , 2    , 3    , 4     } },
-["Island"] 									= { "Island" 	, { 1    , 2    , 3    , 4     } },
-["Swamp"] 									= { "Swamp"		, { 1    , 2    , 3    , 4     } },
-["Mountain"] 								= { "Mountain"	, { 1    , 2    , 3    , 4     } },
-["Forest"] 									= { "Forest" 	, { 1    , 2    , 3    , 4     } },
-["Plains (287)"]							= { "Plains"	, { 1    , false ,false, false } }, 
-["Plains (288)"]							= { "Plains"	, { false, 2    , false, false } },
-["Plains (289)"]							= { "Plains"	, { false, false, 3    , false } },
-["Plains (290)"]							= { "Plains"	, { false, false, false, 4     } },
-["Island (291)"]							= { "Island"	, { 1    , false, false, false } },
-["Island (292)"]							= { "Island"	, { false, 2    , false, false } },
-["Island (293)"]							= { "Island"	, { false, false, 3    , false } },
-["Island (294)"]							= { "Island"	, { false, false, false, 4     } },
-["Swamp (295)"]								= { "Swamp"		, { 1    , false, false, false } },
-["Swamp (296)"]								= { "Swamp"		, { false, 2    , false, false } },
-["Swamp (297)"]								= { "Swamp"		, { false, false, 3    , false } },
-["Swamp (298)"]								= { "Swamp"		, { false, false, false, 4     } },
-["Mountain (299)"]							= { "Mountain"	, { 1    , false, false, false } },
-["Mountain (300)"]							= { "Mountain"	, { false, 2    , false, false } },
-["Mountain (301)"]							= { "Mountain"	, { false, false, 3    , false } },
-["Mountain (302)"]							= { "Mountain"	, { false, false, false, 4     } },
-["Forest (303)"]							= { "Forest"	, { 1    , false, false, false } },
-["Forest (304)"]							= { "Forest"	, { false, 2    , false, false } },
-["Forest (305)"]							= { "Forest"	, { false, false, 3    , false } },
-["Forest (306)"]							= { "Forest"	, { false, false, false, 4     } },
-["Brothers Yamazaki"]						= { "Brothers Yamazaki"	, { "a"  , false } },
-["Brothers Yamazaki (b)"]					= { "Brothers Yamazaki"	, { false, "b"   } }
 },
 [130] = { -- Antiquities
 ["Mishra's Factory (Spring - Version 1)"] 	= { "Mishra's Factory"		, { 1    , false, false, false } },
@@ -960,12 +837,6 @@ site.variants = {
 --- @field [parent=#site] #table foiltweak ]]
 --- @field [parent=#site] #table foiltweak
 site.foiltweak = {
---[[ example
-[766] = { -- Phyrexia VS Coalition
- 	["Phyrexian Negator"] 	= { foil = true  },
-	["Urza's Rage"] 		= { foil = true  }
-}
---]]
 } -- end table site.foiltweak
 
 if CHECKEXPECTED then
@@ -976,82 +847,69 @@ if CHECKEXPECTED then
 --- @field [parent=#site] #table expected ]]
 --- @field [parent=#site] #table expected
 site.expected = {
+EXPECTTOKENS = true,
 -- Core sets
-[788] = { pset={ 249+11,	[3]=249 },	failed={ 0,	[3]=11 },	dropped=0,	namereplaced=1 },-- ok
-[779] = { pset={ 249+7,		[3]=249 },	failed={ 0,	[3]=7 },	dropped=0,	namereplaced=0 },-- ok
-[770] = { pset={ 249+6,		[3]=255 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },-- ok
-[759] = { pset={ 249+8,		[3]=257 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },-- ok
-[720] = { pset={ 384-1+6,	[3]=388 },	failed={ 0,	[3]=1 },	dropped=0,	namereplaced=0 },-- ok
-[630] = { pset={ 359-20,	[3]=332 },	failed={ 0,	[3]=7 },	dropped=0,	namereplaced=0 },-- ok
-[550] = { pset={ 357-19,	[3]=336 },	failed={ 0,	[3]=2 },	dropped=0,	namereplaced=0 },-- ok
-[460] = { pset={ 350-130,	[3]=220 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[180] = { pset={ 378-136,	[3]=242 },	failed={ 0,	[3]=1 },	dropped=0,	namereplaced=0 },-- ok
-[140] = { pset={ 306,		[3]=46 },	failed={ 2,	[3]=1 },	dropped=199,namereplaced=3 },-- ok
-[139] = { pset={ 0,			[3]=306 },	failed={ 0,	[3]=0 },	dropped=9,	namereplaced=19 },-- ok
-[110] = { pset={ 302-24,	[3]=0 },	failed={ 0,	[3]=0 },	dropped=107,namereplaced=1 },-- ok
-[100] = { pset={ 302-134,	[3]=0 },	failed={ 7,	[3]=0 },	dropped=352,namereplaced=1 },--ok
-[90]  = { pset={ 295-61,	[3]=0 },	failed={ 0,	[3]=0 },	dropped=293,namereplaced=0 },-- ok
+[788] = { namereplaced=1 },
+[779] = { namereplaced=2 },
+[770] = { namereplaced=4 },
+[720] = { pset={ [3]=389-1 }, failed={ [3]=1 } },
+[630] = { pset={ 359-20, [3]=359-20-7 }, failed={ [3]=7 } },
+[550] = { pset={ 357-19, [3]=357-19-2 }, failed={ [3]=2 } },
+[460] = { pset={ 350-130, [3]=350-130 }, namereplaced=2 }, --no commons
+[180] = { pset={ 378-136, [3]=378-136 } }, --no commons
+[140] = { pset={ [3]=306-260 }, failed={ 2, [3]=1 }, dropped=199, namereplaced=4 },
+[139] = { dropped=9, namereplaced=19 },
+[110] = { pset={ 302-24 }, dropped=107, namereplaced=1 },
+[100] = { pset={ 302-134 },	failed={ 7 }, dropped=352, namereplaced=1 },
+[90]  = { pset={ 295-61 }, dropped=293,},
 -- Expansions
-[793] = { pset={ 249+8, 	[3]=249 },	failed={ 2,	[3]=10 },	dropped=0,	namereplaced=3 },--ok
-[791] = { pset={ 274+12,	[3]=274 },	failed={ 0,	[3]=12 },	dropped=0,	namereplaced=0 },--ok
-[786] = { pset={ 244+8,		[3]=244 },	failed={ 0,	[3]=6 },	dropped=0,	namereplaced=1 },--ok
-[784] = { pset={ 158+3+1,	[3]=158 },	failed={ 0,	[3]=4 },	dropped=0,	namereplaced=27 },--ok
-[782] = { pset={ 264+12+1,	[3]=264 },	failed={ 0,	[3]=10 },	dropped=0,	namereplaced=41 },--ok
-[776] = { pset={ 175+4,		[3]=179 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },-- ok
-[775] = { pset={ 155+5,		[3]=161 },	failed={ 1,	[3]=0 },	dropped=0,	namereplaced=1 },-- ok
-[773] = { pset={ 249+9,		[3]=259 },	failed={ 1,	[3]=0 },	dropped=0,	namereplaced=1 },--ok
-[767] = { pset={ 248+7,		[3]=255 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[765] = { pset={ 145+6,		[3]=151 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[762] = { pset={ 269-20+11,	[3]=260 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=1 },-- ok
-[758] = { pset={ 145+4,		[3]=149 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[756] = { pset={ 145+2,		[3]=147 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[754] = { pset={ 249+10,	[3]=259 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[752] = { pset={ 180+7,		[3]=187 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[751] = { pset={ 301+12,	[3]=313 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[750] = { pset={ 150+3,		[3]=153 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=1 },--ok
-[730] = { pset={ 301+11,	[3]=312 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=3 },--ok
-[710] = { pset={ 180,		[3]=180 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },-- ok
-[700] = { pset={ 165,		[3]=165 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[690] = { pset={ 121,		[3]=121 },	failed={ 298,[3]=298 },	dropped=0,	namereplaced=0 },--ok
-[680] = { pset={ 301,		[3]=301 },	failed={ 121,[3]=121 },	dropped=0,	namereplaced=0 },--ok
-[670] = { pset={ 155,		[3]=155 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[660] = { pset={ 180,		[3]=180 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[650] = { pset={ 165,		[3]=165 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[640] = { pset={ 306,		[3]=306 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=10 },--ok
-[620] = { pset={ 165,		[3]=165 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=5 },--ok
-[610] = { pset={ 165,		[3]=165 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=10 },--ok
-[590] = { pset={ 307-20,	[3]=287 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=10 },--ok
-[580] = { pset={ 165,		[3]=165 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[570] = { pset={ 165,		[3]=165 },	failed={ 0,	[3]=0 },	dropped=1,	namereplaced=0 },--ok
-[560] = { pset={ 306-20,	[3]=286 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=1 },--ok
-[540] = { pset={ 143,		[3]=143 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[530] = { pset={ 145,		[3]=145 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[520] = { pset={ 350-20,	[3]=330 },	failed={ 0,	[3]=0 },	dropped=3,	namereplaced=0 },--ok
-[510] = { pset={ 143,		[3]=143 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[500] = { pset={ 143,		[3]=143 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=2 },--ok
-[480] = { pset={ 350-20,	[3]=330 },	failed={ 0,	[3]=0 },	dropped=1,	namereplaced=0 },--ok
-[470] = { pset={ 143,		[3]=143 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[450] = { pset={ 143,		[3]=143 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[430] = { pset={ 350-20,	[3]=330 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[420] = { pset={ 143,		[3]=0 },	failed={ 0,	[3]=143 },	dropped=0,	namereplaced=0 },--ok
-[410] = { pset={ 143,		[3]=0 },	failed={ 0,	[3]=143 },	dropped=0,	namereplaced=0 },--ok
-[400] = { pset={ 350-20,	[3]=0 },	failed={ 0,	[3]=330 },	dropped=0,	namereplaced=0 },--ok
-[370] = { pset={ 143,		[3]=143 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[350] = { pset={ 143,		[3]=143 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[330] = { pset={ 350,		[3]=350 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[300] = { pset={ 143,		[3]=143 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[290] = { pset={ 143,		[3]=0 },	failed={ 0,	[3]=143 },	dropped=1,	namereplaced=0 },--ok
-[280] = { pset={ 350-20,	[3]=330 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[270] = { pset={ 167,		[3]=167 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[240] = { pset={ 167,		[3]=167 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[230] = { pset={ 350-20,	[3]=330 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[220] = { pset={ 199,		[3]=199 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[210] = { pset={ 140,		[3]=140 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[190] = { pset={ 383-20,	[3]=363 },	failed={ 1,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[170] = { pset={ 187,		[3]=0 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=0 },--ok
-[160] = { pset={ 119,		[3]=0 },	failed={ 0,	[3]=0 },	dropped=9,	namereplaced=0 },--ok
-[150] = { pset={ 310, 		[5]=0 },	failed={ 0, [5]=19 },	dropped=87,	namereplaced=0 },--ok
-[130] = { pset={ 100,		[3]=0 },	failed={ 3,	[3]=0 },	dropped=51,	namereplaced=0 },--ok
-[120] = { pset={  92,		[3]=0 },	failed={ 0,	[3]=0 },	dropped=0,	namereplaced=1 },--ok
+[793] = { namereplaced=1 },
+[786] = { namereplaced=5 },
+[784] = { pset={ 161+1 }, failed={ [3]=1 }, namereplaced=27 },-- +1/fail is checklist
+[782] = { pset={ 276+1 }, failed={ [3]=1}, namereplaced=46 },-- +1/fail is checklist
+[776] = { namereplaced=2 },
+[775] = { failed={ 1, [3]=1 }, namereplaced=1 },-- fail is Poison Counter
+[773] = { failed={ 1, [3]=1 }, namereplaced=3 },-- fail is Poison Counter
+[767] = { namereplaced=3 },
+[765] = { namereplaced=2 },
+[762] = { namereplaced=3 },
+[756] = { namereplaced=2 },
+[751] = { namereplaced=6 },
+[750] = { namereplaced=1 },
+[730] = { namereplaced=7 },
+[710] = { namereplaced=2 },
+[700] = { namereplaced=7 },
+[690] = { failed={ 298,[3]=298 } },
+[680] = { failed={ 121,[3]=121 }, namereplaced=6 },
+[660] = { namereplaced=2 },
+[650] = { namereplaced=2 },
+[640] = { namereplaced=10 },
+[620] = { namereplaced=6 },
+[610] = { namereplaced=10 },
+[590] = { pset={ 307-20,	[3]=307-20 }, namereplaced=11 },
+[580] = { namereplaced=1 },
+[570] = { dropped=1, namereplaced=4 },
+[560] = { pset={ 306-20, [3]=306-20 }, namereplaced=3 },
+[520] = { pset={ 350-20,	[3]=350-20 }, dropped=3, namereplaced=2 },
+[500] = { namereplaced=2 },
+[480] = { pset={ 350-20, [3]=350-20 }, dropped=1, namereplaced=1 },
+[470] = { namereplaced=1 },
+[430] = { pset={ 350-20, [3]=350-20 }, namereplaced=1 },
+[420] = { pset={ [3]=0 }, failed={ [3]=143 } },
+[410] = { pset={ [3]=0 }, failed={ [3]=143 } },
+[400] = { pset={ 350-20, [3]=0 },	failed={ [3]=330 } },
+[370] = { namereplaced=1},
+[330] = { namereplaced=1},
+[300] = { namereplaced=1},
+[290] = { dropped=1 },
+[280] = { pset={ 350-20,	[3]=350-20 } },
+[270] = { namereplaced=1 },
+[230] = { pset={ 350-20, [3]=350-20 } },
+[210] = { namereplaced=1 },
+[190] = { pset={ 383-20, [3]=383-20 }, dropped=1 },
+[160] = { dropped=9 },
+[150] = { pset={ [5]=0 }, failed={ [5]=19 }, dropped=87 },
+[130] = { dropped=54 },
+[120] = { namereplaced=4 },
 }
 end

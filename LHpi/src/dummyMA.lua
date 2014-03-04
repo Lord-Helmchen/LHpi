@@ -1,6 +1,30 @@
---- Magic Album API dummy
--- to test LHpi within an IDE and without needing Magic Album
--- @module ma
+--*- coding: utf-8 -*-
+--[[- Magic Album API dummy
+to test LHpi within an IDE and without needing Magic Album
+
+Inspired by and loosely based on "MTG Mint Card.lua" by Goblin Hero, Stromglad1 and "Import Prices.lua" by woogerboy21;
+who generously granted permission to "do as I like" with their code;
+everything else Copyright (C) 2012-2013 by Christian Harms.
+If you want to contact me about the script, try its release thread in http://www.slightlymagic.net/forum/viewforum.php?f=32
+
+@module dummyMA
+@author Christian Harms
+@copyright 2012-2013 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
+@release This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+]]
+
+--- @module ma
 ma = {}
 if not io then
 	io = {}
@@ -18,6 +42,7 @@ end -- function ImportPrice
 
 --- GetURL
 -- Returns downloaded web page or nil if there was an error (page not found, network problems, etc.)
+-- dummy: just prints request to stdout
 -- 
 -- @function [parent=#ma] GetURL
 -- @param #string url
@@ -34,6 +59,7 @@ end
 -- filepath is relative to the Magic Album folder. I.e. if you call
 --  file = ma.GetFile("Prices\\test.dat")
 -- "MA_FOLDER\Prices\test.dat" will be loaded. Do not forget to use double slashes for paths.
+-- dummy: functional. DANGER: no security implemented.
 -- 
 -- @function [parent=#ma] GetFile
 -- @param #string filepath
@@ -58,12 +84,14 @@ end
 -- "filepath" is relative to the Magic Album folder (see GetFile description).
 -- If "append" parameter is missing or 0 - file will be overwritten.
 -- Otherwise data will be added to the end of file.
+-- dummy: functional. DANGER: no security implemented.
 -- 
 -- @function [parent=#ma] PutFile
 -- @param #string filepath
 -- @param #string data
 -- @param #number append nil or 0 for overwrite
 function ma.PutFile(filepath, data, append)
+	--print("dummy.PutFile called for " .. filepath)
 	local a = append or 0
 	local handle
 	if append == 0 then
@@ -80,6 +108,7 @@ end
 
 --- Log
 -- Adds debug message to Magic Album log file.
+-- dummy: just prints to stdout instead.
 -- 
 -- @function [parent=#ma] Log
 -- @param #string message
@@ -95,6 +124,7 @@ end
 -- cardversion is the version of the card as it is shown in Magic Album. If set to "*" all versions of the card will be processed.
 -- regprice and foilprice are the numerical values. Pass zero if you do not know or do not want to set the value.
 -- this function returns the number of modified cards.
+-- dummy: just prints request to stdout
 -- 
 -- Examples:
 -- Set the price of foil M11 English Celestial Purge to $4.25
@@ -130,6 +160,7 @@ end
 
 --- SetProgress
 -- Sets progress bar text and position. Position is a numeric value in range 0..100. 
+-- dummy: just prints request to stdout
 -- 
 -- @function [parent=#ma] SetProgress
 -- @param #string text
@@ -137,6 +168,46 @@ end
 function ma.SetProgress(text, position)
 	print("ma.SetProgress\t " .. position .. " %\t: \"" .. text .. "\"")
 end
+
+function loadlibonly()
+	local libver="2.1"
+	do -- load LHpi library from external file
+		local libfile = "Prices\\LHpi-v" .. libver .. ".lua"
+		local LHpilib = ma.GetFile( libfile )
+		if not LHpilib then
+			error( "LHpi library " .. libfile .. " not found." )
+		else -- execute LHpilib to make LHpi.* available
+			LHpilib = string.gsub( LHpilib , "^\239\187\191" , "" ) -- remove unicode BOM (0xEF, 0xBB, 0xBF) for files tainted by it :)
+			if VERBOSE then
+				ma.Log( "LHpi library " .. libfile .. " loaded and ready for execution." )
+			end
+			local execlib,errormsg = load( LHpilib , "=(load) LHpi library" )
+			if not execlib then
+				error( errormsg )
+			end
+			LHpi = execlib()
+		end	-- if not LHpilib else
+	end -- do load LHpi library
+	collectgarbage() -- we now have LHpi table with all its functions inside, let's clear LHpilib and execlib() from memory
+	LHpi.Log( "LHpi lib is ready to use." )
+end -- function
+
+local function mergetables (teins,tzwei,tdrei,tvier)
+	for k,v in pairs(tzwei) do 
+		teins[k] = v
+	end
+	if tdrei then
+		for k,v in pairs(tdrei) do 
+			teins[k] = v
+		end
+	end	 
+	if tvier then
+		for k,v in pairs(tvier) do 
+			teins[k] = v
+		end
+	end	 
+	return teins
+end -- function
 
 local alllangs = {
  [1]  = "English";
@@ -157,87 +228,6 @@ local alllangs = {
  [16] = "Ancient Greek";
 }
 
-local coresets = {
- [788] = "Magic 2013";
- [779] = "Magic 2012";
- [770] = "Magic 2011";
- [759] = "Magic 2010";
- [720] = "Tenth Edition";
- [630] = "9th Edition";
- [550] = "8th Edition";
- [460] = "7th Edition";
- [360] = "6th Edition";
- [250] = "5th Edition";
- [180] = "4th Edition";
- [140] = "Revised Edition";
- [139] = "Revised Edition (Limited)";
- [110] = "Unlimited";
- [100] = "Beta";
- [90]  = "Alpha";
-}
-local expansionsets = {
- [793] = "Gatecrash";
- [791] = "Return to Ravnica";
- [786] = "Avacyn Restored";
- [784] = "Dark Ascension";
- [782] = "Innistrad";
- [776] = "New Phyrexia";
- [775] = "Mirrodin Besieged";
- [773] = "Scars of Mirrodin";
- [767] = "Rise of the Eldrazi";
- [765] = "Worldwake";
- [762] = "Zendikar";
- [758] = "Alara Reborn";
- [756] = "Conflux";
- [754] = "Shards of Alara";
- [752] = "Eventide";
- [751] = "Shadowmoor";
- [750] = "Morningtide";
- [730] = "Lorwyn";
- [710] = "Future Sight";
- [700] = "Planar Chaos";
- [690] = "Time Spiral Timeshifted";
- [680] = "Time Spiral";
- [670] = "Coldsnap";
- [660] = "Dissension";
- [650] = "Guildpact";
- [640] = "Ravnica: City of Guilds";
- [620] = "Saviors of Kamigawa";
- [610] = "Betrayers of Kamigawa";
- [590] = "Champions of Kamigawa";
- [580] = "Fifth Dawn";
- [570] = "Darksteel";
- [560] = "Mirrodin";
- [540] = "Scourge";
- [530] = "Legions";
- [520] = "Onslaught";
- [510] = "Judgment";
- [500] = "Torment";
- [480] = "Odyssey";
- [470] = "Apocalypse";
- [450] = "Planeshift";
- [430] = "Invasion";
- [420] = "Prophecy";
- [410] = "Nemesis";
- [400] = "Mercadian Masques";
- [370] = "Urza's Destiny";
- [350] = "Urza's Legacy";
- [330] = "Urza's Saga";
- [300] = "Exodus";
- [290] = "Stronghold";
- [280] = "Tempest";
- [270] = "Weatherlight";
- [240] = "Visions";
- [230] = "Mirage";
- [220] = "Alliances";
- [210] = "Homelands";
- [190] = "Ice Age";
- [170] = "Fallen Empires";
- [160] = "The Dark";
- [150] = "Legends";
- [130] = "Antiquities";
- [120] = "Arabian Nights";
-}
 local promosets = {
  [50] = "Full Box Promotion";
  [45] = "Magic Premiere Shop";
@@ -312,38 +302,120 @@ local specialsets = {
  [200] = "Chronicles";
  [70]  = "Vanguard";
 }
-
-local function mergetables (teins,tzwei)
-	for k,v in pairs(tzwei) do 
-		teins[k] = v
-	 end
-	 return teins
-end
+local expansionsets = {
+ [793] = "Gatecrash";
+ [791] = "Return to Ravnica";
+ [786] = "Avacyn Restored";
+ [784] = "Dark Ascension";
+ [782] = "Innistrad";
+ [776] = "New Phyrexia";
+ [775] = "Mirrodin Besieged";
+ [773] = "Scars of Mirrodin";
+ [767] = "Rise of the Eldrazi";
+ [765] = "Worldwake";
+ [762] = "Zendikar";
+ [758] = "Alara Reborn";
+ [756] = "Conflux";
+ [754] = "Shards of Alara";
+ [752] = "Eventide";
+ [751] = "Shadowmoor";
+ [750] = "Morningtide";
+ [730] = "Lorwyn";
+ [710] = "Future Sight";
+ [700] = "Planar Chaos";
+ [690] = "Time Spiral Timeshifted";
+ [680] = "Time Spiral";
+ [670] = "Coldsnap";
+ [660] = "Dissension";
+ [650] = "Guildpact";
+ [640] = "Ravnica: City of Guilds";
+ [620] = "Saviors of Kamigawa";
+ [610] = "Betrayers of Kamigawa";
+ [590] = "Champions of Kamigawa";
+ [580] = "Fifth Dawn";
+ [570] = "Darksteel";
+ [560] = "Mirrodin";
+ [540] = "Scourge";
+ [530] = "Legions";
+ [520] = "Onslaught";
+ [510] = "Judgment";
+ [500] = "Torment";
+ [480] = "Odyssey";
+ [470] = "Apocalypse";
+ [450] = "Planeshift";
+ [430] = "Invasion";
+ [420] = "Prophecy";
+ [410] = "Nemesis";
+ [400] = "Mercadian Masques";
+ [370] = "Urza's Destiny";
+ [350] = "Urza's Legacy";
+ [330] = "Urza's Saga";
+ [300] = "Exodus";
+ [290] = "Stronghold";
+ [280] = "Tempest";
+ [270] = "Weatherlight";
+ [240] = "Visions";
+ [230] = "Mirage";
+ [220] = "Alliances";
+ [210] = "Homelands";
+ [190] = "Ice Age";
+ [170] = "Fallen Empires";
+ [160] = "The Dark";
+ [150] = "Legends";
+ [130] = "Antiquities";
+ [120] = "Arabian Nights";
+}
+local coresets = {
+ [788] = "Magic 2013";
+ [779] = "Magic 2012";
+ [770] = "Magic 2011";
+ [759] = "Magic 2010";
+ [720] = "Tenth Edition";
+ [630] = "9th Edition";
+ [550] = "8th Edition";
+ [460] = "7th Edition";
+ [360] = "6th Edition";
+ [250] = "5th Edition";
+ [180] = "4th Edition";
+ [140] = "Revised Edition";
+ [139] = "Revised Edition (Limited)";
+ [110] = "Unlimited";
+ [100] = "Beta";
+ [90]  = "Alpha";
+}
 
 local function main()
 	print("dummy says: Hello lua!")
-	--dofile("Prices\\LHpi.magicuniverseDE-v2.0.lua")
-	dofile("Prices\\LHpi.mtgmintcard-v2.0.lua")
-	--dofile("Prices\\LHpi.tcgplayerPriceGuide-v2.0.lua")
+	--loadlibonly()
+	--dofile("Prices\\Import Prices.lua")
+	dofile("Prices\\LHpi.magicuniverseDE-v2.1.lua")
+	--dofile("Prices\\LHpi.mtgmintcard-v2.1.lua")
+	--dofile("Prices\\LHpi.tcgplayerPriceGuide-v2.1.lua")
+	--dofile("Prices\\LHpi.trader-onlineDE-v2.1.lua")
 	-- force debug enviroment options
 	VERBOSE = true
 	LOGDROPS = true
 	LOGNAMEREPLACE = true
 	CHECKEXPECTED = true
 	DEBUG = true
-	DEBUGSKIPFOUND = true
-	DEBUGVARIANTS = true
+	DEBUGSKIPFOUND = false
+	DEBUGVARIANTS = false
 	OFFLINE = true
 	SAVEHTML = false
+	SAVETABLE=true
 	print("dummy says: sitescript dofile'd")
 	local fakeimportfoil = "Y"
-	--local fakeimportlangs = { [1] = "English" }
+	local fakeimportlangs = { [1] = "English" }
+	--local fakeimportlangs = { [3] = "German" }
 	local fakeimportlangs = { [1] = "English", [3]  = "German" , [5] = "Italian" ,[9] = "Simplified Chinese"}
 	--local fakeimportlangs = alllangs
-	--local fakeimportsets = {   [788] = "Magic 2013"; }
+	--local fakeimportsets = { [788] = "Magic 2013"; }
+	--local fakeimportsets = { [784]="Dark Ascension";[782]="Innistrad";[786]="Avacyn Restored";}
 	--local fakeimportsets = coresets
 	local fakeimportsets = mergetables ( coresets, expansionsets)
+	--local fakeimportsets = mergetables ( coresets, expansionsets, specialsets, promosets )
 	ImportPrice( fakeimportfoil, fakeimportlangs, fakeimportsets )
+	--print(LHpi.Tostring( "this is a string." ))
 	print("dummy says: Goodbye lua!")
 end
 
