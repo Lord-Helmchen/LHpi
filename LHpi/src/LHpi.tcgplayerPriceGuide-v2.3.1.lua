@@ -24,8 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-Updated for MA 1.5.2.264b
-use LHpi-v2.2
+use LHpi-v2.3 
+added M14 and MMA
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -64,7 +64,7 @@ SAVELOG = true
 SAVETABLE = false
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.2"
+libver = "2.3"
 --- must always be equal to the scripts filename !
 -- @field [parent=#global] #string scriptname	
 scriptname = "LHpi.tcgplayerPriceGuide-v" .. libver .. ".1.lua" 
@@ -229,6 +229,7 @@ site.sets = {
 	and LHpi.Listsources will sort out the duplicate urls anyway.
 --]]
 -- Core sets
+[797]={ id = 797 , fruc = { true , true },	lang = { true }, url = "Magic%202014%20(M14)"},
 [788]={ id = 788 , fruc = { true , true } , lang = { true }, url = "Magic%202013%20(M13)"},
 [779]={ id = 779 , fruc = { true , true } , lang = { true }, url = "Magic%202012%20(M12)"},
 [759]={ id = 759 , fruc = { true , true } , lang = { true }, url = "Magic%202010"},
@@ -309,6 +310,7 @@ site.sets = {
 [130]={ id = 130 , fruc = { true , false} , lang = { true }, url = "Antiquities"},
 [120]={ id = 120 , fruc = { true , false} , lang = { true }, url = "Arabian%20Nights"},
 -- special sets
+[796]={ id = 796 , fruc = { true , true } ,	lang = { true }, url = "Modern+Masters"},
 [600]={ id = 600 , fruc = { true , false} , lang = { true }, url = "Unhinged"},
 [320]={ id = 320 , fruc = { true , false} , lang = { true }, url = "Unglued"},
 [380]={ id = 380 , fruc = { true , false} , lang = { true }, url = "Portal%20Three%20Kingdoms"},   
@@ -539,7 +541,7 @@ if CHECKEXPECTED then
 site.expected = {
 -- Core sets
 [770] = { failed={ 15 } },
-[720] = { pset={ 384-1 } },
+[720] = { pset={ 384-1 }, failed={ 1 } },
 [250] = { namereplaced=1 },
 [180] = { namereplaced=2 },
 [140] = { namereplaced=1 },
@@ -568,7 +570,7 @@ site.expected = {
 [190] = { namereplaced=5 },
 [170] = { failed={ 85 } },
 [120] = { namereplaced=18 },
-[130] = { failed={ 15 } },
+[130] = { failed={ 16 } },
 -- special sets
 [600] = { namereplaced=4 },
 [380] = { namereplaced=11 },

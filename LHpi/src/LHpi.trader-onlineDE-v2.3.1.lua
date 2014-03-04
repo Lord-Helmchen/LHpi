@@ -27,8 +27,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-Updated for MA 1.5.2.264b
-use LHpi-v2.2
+use LHpi-v2.3 
+preemptively added M14
+added MMA
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -67,7 +68,7 @@ SAVELOG = true
 SAVETABLE = false
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.2"
+libver = "2.3"
 --- must always be equal to the scripts filename !
 -- @field [parent=#global] #string scriptname	
 scriptname = "LHpi.trader-onlineDE-v" .. libver .. ".1.lua" 
@@ -394,6 +395,7 @@ site.sets = {
 [130]={id = 130,	lang = { true , 	[3]=false }, 	fruc = { false,true }, 	url = "AQ"},
 [120]={id = 120,	lang = { true , 	[3]=false }, 	fruc = { false,true }, 	url = "AN"},
 -- special sets
+[796]={id = 796,	lang = { true,		[3]=false },	fruc = { true, true },	url = "MMA"}, -- Modern Masters
 [600]={id = 600,	lang = { true ,		[3]=false },	fruc = { true ,true } ,	url = "UH"}, -- Unhinged
 [320]={id = 320,	lang = { true ,		[3]=false },	fruc = { false,true } ,	url = "UG"}, -- Unglued
 [310]={id = 310,	lang = { true ,		[3]=true  },	fruc = { false,true } ,	url = "PT2"}, -- Portal Second Age
@@ -469,7 +471,8 @@ site.namereplace = {
 -- Expansions
 [795] = { -- Dragon's Maze
 ["Aetherling"]							= "Ætherling",
-["Bewaffnet|Gefährlich"]				= "Bewaffnet|Gefärhlich",
+["Token - Elementarwesen (Token)"]		= "Elementarwesen",
+--["Bewaffnet|Gefährlich"]				= "Bewaffnet|Gefärhlich",
 },
 [793] = { -- Gatecrash
 ["Aetherize"]							= "Ætherize",
@@ -615,18 +618,15 @@ site.namereplace = {
 ["Brüllender Blutsiedler"]				= "Brüllender Blutsieder",
 },
 [420] = { -- Prophecy
-["Alexi, Westwindzauberin"]				= "Alexi Westwindzauberin",
+--["Alexi, Westwindzauberin"]				= "Alexi Westwindzauberin",
 },
 [410] = { -- Portal Second Age
 ["Rhox (112)a"]							= "Rhox",
 ["Aufstrebender Envincar"]				= "Aufstrebender Evincar",
 },
 [400] = { -- Mercadian Masques
-["Älteste des Dunkelwaldes"]			= "Älteste des Dunkelwalds",
-["Cateranische Entführer"]				= "Cateranischer Entführer"
-},
-[290] = { -- Stronghold
-["Engel des Krieges"]					= "Engel des Kriegers",
+--["Älteste des Dunkelwaldes"]			= "Älteste des Dunkelwalds",
+--["Cateranische Entführer"]				= "Cateranischer Entführer"
 },
 [270] = { -- Weatherlight
 ["Benalische Infantrie"]				= "Benalische Infanterie",
@@ -677,10 +677,6 @@ site.namereplace = {
 ["Deja Vu"]								= "Déjà Vu",
 ["Furcheinflößender Ansturm"]			= "Furchteinflößender Ansturm",
 ["Plündernde Horde"]					= "Plündernde Horden",
-},
-[201] = { -- Renaissance
---["Der Koloß von Sardia"]				= "Der Koloss von Sardia",
-["Schutzkreis geg. Artefakte"]			= "Schutzkreis gegen Artefakte",
 },
 [200] = { -- Chronicles
 ["Dandan"]								= "Dandân",
@@ -753,45 +749,40 @@ EXPECTTOKENS = true,
 [140] = { namereplaced=7 },
 [139] = { namereplaced=2 },
 [110] = { pset={ 291 }, namereplaced=1 },
-[100] = { pset={ 251 } },
+[100] = { pset={ 249 } },
 -- Expansions
-[795] = { pset={ 157-1, [3]=157-1 }, namereplaced=2 }, -- -1 is elemental token
+[795] = { pset={ [3]=157-1 }, failed={ [3]=1 }, namereplaced=2 }, -- -1/fail is token
 [793] = { namereplaced=1 },
 [786] = { namereplaced=8 },
-[784] = { pset={ 161+1 }, failed={ [3]=1 }, namereplaced=7 }, --+1 is Checklist
-[782] = { pset={ 276+1 }, failed={ [3]=1 }, namereplaced=9 }, -- fail/+1 is Checklist
+[784] = { pset={ 161+1 }, failed={ [3]=1 }, namereplaced=6 }, --+1 is Checklist
+[782] = { pset={ 276+1 }, failed={ [3]=1 }, namereplaced=9 }, -- +1/fail is Checklist
 [773] = { failed={ 1, [3]=1 }, namereplaced=6 }, -- fail is Poison Counter
 [767] = { namereplaced=3 },
 [754] = { namereplaced=4 },
 [751] = { namereplaced=10 },
 [730] = { namereplaced=4 },
 [710] = { namereplaced=2 },
-[690] = { dropped=966, namereplaced=6 },
-[680] = { dropped=362, namereplaced=1 },
+[690] = { dropped=976, namereplaced=5 },
+[680] = { dropped=372, namereplaced=1 },
 [670] = { namereplaced=2 },
 [654] = { namereplaced=3 },
 [650] = { namereplaced=1 },
-[620] = { namereplaced=14 },
+[620] = { namereplaced=15 },
 [610] = { namereplaced=19 },
-[590] = { namereplaced=32 },
+[590] = { namereplaced=33 },
 [580] = { namereplaced=4 },
 [530] = { namereplaced=2 },
-[420] = { namereplaced=1 },
 [410] = { failed={ [3]=1 }, namereplaced = 3 },
-[400] = { namereplaced=3 },
-[290] = { namereplaced=1 },
 [270] = { namereplaced=2 },
 [220] = { namereplaced=6 },
 [190] = { namereplaced=4 },
 [160] = { namereplaced=1 }, -- in ita
-[150] = { pset={ [5]=0 }, failed={ [5]=310 } },
 [120] = { namereplaced=3 },
 -- special sets
 [600] = { namereplaced=7 },
 [320] = { namereplaced=6 },
 [310] = { namereplaced=2 },
 [260] = { pset={ [3]=222 }, namereplaced=4 },
-[201] = { namereplaced=1 },
 [200] = { namereplaced=2 },
 }
 end

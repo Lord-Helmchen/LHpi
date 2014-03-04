@@ -39,10 +39,10 @@ string.format all LOG that contain variables
 ]]
 
 --[[ CHANGES
-fixed handling of unset cardcounts
+updated for MA 1.5.2.267 (M14 and MMA added)
 ]]
 --- @field [parent=#LHpi] #string version
-LHpi.version = "2.2"
+LHpi.version = "2.3"
 
 --[[- "main" function called by Magic Album; just display error and return.
  Called by Magic Album to import prices. Parameters are passed from MA.
@@ -94,7 +94,7 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 		if myname and myname ~= "" then
 			scriptname = myname
 		else -- use hardcoded scriptname as fallback
-			scriptname = "LHpi.SITESCRIPT_NAME_NOT_SET-v2.0.lua"
+			scriptname = "LHpi.SITESCRIPT_NAME_NOT_SET-v" .. LHpi.version .. ".lua"
 		end
 	end -- if
 	print(savepath)
@@ -112,8 +112,8 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 			SAVEHTML = false
 			LHpi.Log( "failed to write file to savepath " .. savepath .. ". Disabling SAVEHTML" )
 			if DEBUG then
-				--error( "failed to write file to savepath " .. savepath .. "!" )
-				print( "failed to write file to savepath " .. savepath .. ". Disabling SAVEHTML" )
+				error( "failed to write file to savepath " .. savepath .. "!" )
+				--print( "failed to write file to savepath " .. savepath .. ". Disabling SAVEHTML" )
 			end
 		end -- if not folderwritable
 	end -- if SAVEHTML
@@ -1350,6 +1350,39 @@ end -- function LHpi.Logtable
 -- { #number = #table { #string = #table { #string, #table { #number or #boolean , ... } } , ... } , ...  }
 LHpi.sets = {
 -- Coresets
+[797] = { name="Magic 2014",
+	cardcount={ reg = 249, tok = 13 },
+	variants={
+["Plains"] 						= { "Plains"	, { 1    , 2    , 3    , 4     } },
+["Island"] 						= { "Island" 	, { 1    , 2    , 3    , 4     } },
+["Swamp"] 						= { "Swamp"		, { 1    , 2    , 3    , 4     } },
+["Mountain"] 					= { "Mountain"	, { 1    , 2    , 3    , 4     } },
+["Forest"] 						= { "Forest" 	, { 1    , 2    , 3    , 4     } },
+["Plains (230)"]				= { "Plains"	, { 1    , false, false, false } }, 
+["Plains (231)"]				= { "Plains"	, { false, 2    , false, false } },
+["Plains (232)"]				= { "Plains"	, { false, false, 3    , false } },
+["Plains (233)"]				= { "Plains"	, { false, false, false, 4     } },
+["Island (234)"]				= { "Island"	, { 1    , false, false, false } },
+["Island (235)"]				= { "Island"	, { false, 2    , false, false } },
+["Island (236)"]				= { "Island"	, { false, false, 3    , false } },
+["Island (237)"]				= { "Island"	, { false, false, false, 4     } },
+["Swamp (238)"]					= { "Swamp"		, { 1    , false, false, false } },
+["Swamp (239)"]					= { "Swamp"		, { false, 2    , false, false } },
+["Swamp (240)"]					= { "Swamp"		, { false, false, 3    , false } },
+["Swamp (241)"]					= { "Swamp"		, { false, false, false, 4     } },
+["Mountain (242)"]				= { "Mountain"	, { 1    , false, false, false } },
+["Mountain (243)"]				= { "Mountain"	, { false, 2    , false, false } },
+["Mountain (244)"]				= { "Mountain"	, { false, false, 3    , false } },
+["Mountain (245)"]				= { "Mountain"	, { false, false, false, 4     } },
+["Forest (246)"]				= { "Forest"	, { 1    , false, false, false } },
+["Forest (247)"]				= { "Forest"	, { false, 2    , false, false } },
+["Forest (248)"]				= { "Forest"	, { false, false, 3    , false } },
+["Forest (249)"]				= { "Forest"	, { false, false, false, 4     } },
+["Elemental"]					= { "Elemental"	, { 1    , 2     } },
+["Elemental (7)"]				= { "Elemental"	, { 1    , false } },
+["Elemental (8)"]				= { "Elemental"	, { false, 2     } },
+	},
+},
 [788] = { name="Magic 2013",
 	cardcount={ reg = 249, tok = 11 },
 	variants={
@@ -2725,6 +2758,10 @@ LHpi.sets = {
 	},
 },
 -- special sets
+[796] = { name="Modern Masters",
+	cardcount={ reg = 229, tok = 16 },
+	variants={}
+},
 [600] = { name="Unhinged",
 	cardcount={ reg = 141, tok = 0 }, -- Unhinged
 	variants={}

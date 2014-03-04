@@ -27,8 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-Updated for MA 1.5.2.264b
-use LHpi-v2.2
+use LHpi-v2.3 
+preemptively added M14
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -67,7 +67,7 @@ SAVELOG = true
 SAVETABLE = false
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.2"
+libver = "2.3"
 --- must always be equal to the scripts filename !
 -- @field [parent=#global] #string scriptname	
 scriptname = "LHpi.magicuniverseDE-v" .. libver .. ".1.lua" 
@@ -267,7 +267,7 @@ function site.BCDpluginName ( name , setid )
 	name = string.gsub( name , "%([eE]xce[l]+ent%)$" , "%0 (DROP)" )
 	name = string.gsub( name , "%(light played%)$" , "%0 (DROP)" )
 	name = string.gsub( name , "%([lL][pP]%)$" , "%0 (DROP)" )
-	name = string.gsub( name , "%(light played[/%-]played%)" , "%0 (DROP)" )
+	name = string.gsub( name , "%(light played[/%-|][Pp]layed%)" , "%0 (DROP)" )
 	name = string.gsub( name , "%([lL][pP]/[pP]%)$" , "%0 (DROP)" )
 	name = string.gsub( name , "%(played%)$" , "%0 (DROP)" )
 	name = string.gsub( name , "%([pP]%)$" , "%0 (DROP)" )
@@ -280,6 +280,7 @@ function site.BCDpluginName ( name , setid )
 	name = string.gsub( name , "unterschrieben%)$" , "%0 (DROP)" )
 	name = string.gsub( name , "unterschrieben, excellent%)$" , "%0 (DROP)" )
 	name = string.gsub( name , "%(played[/%-|]light played%)" , "%0 (DROP)" )
+	name = string.gsub( name , "%(played[/|]played%)$" , "%0 (DROP)" )
 	name = string.gsub( name , "light played$" , "%0 (DROP)" )
 	name = string.gsub( name , "%(lp %- played%)" , "%0 (DROP)" )
 	name = string.gsub( name , "%(lp%) %(ia%)$" , "%0 (DROP)" )
@@ -317,6 +318,7 @@ function site.BCDpluginCard( card , setid )
 			card.lang = { [5] = "ITA" }
 			card.regprice = { [5] = card.regprice[1] }
 		end
+			card.name = string.gsub( card.name , "%s*%(LG%)" , "" )
 	end -- if setid
 
 	return card
@@ -361,6 +363,7 @@ site.frucs = { "Foil" , "Rare" , "Uncommon" , "Common" , "Purple" }
 --- @field [parent=#site] #table sets
 site.sets = {
 -- Core sets
+[797]={id = 797, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "M2014"}, 
 [788]={id = 788, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "M2013"}, 
 [779]={id = 779, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "M2012"}, 
 [770]={id = 770, lang = { true , [3]=true  }, fruc = { true ,true ,true ,true  }, url = "M2011"}, 
@@ -709,6 +712,9 @@ site.namereplace = {
 [210] = { -- Homelands
 ["Æther Storm"]							= "AEther Storm"
 },
+[150] = { -- Legends
+["Ærathi Berserker (ital.)"]			= "AErathi Berserker (ital.)"
+},
 [120] = { -- Arabian Nights
 ["Ring of Ma'rûf"] 						= "Ring of Ma ruf",
 ["El-Hajjâj"]							= "El-Hajjaj",
@@ -870,7 +876,7 @@ EXPECTTOKENS = true,
 [100] = { pset={ 302-134 },	failed={ 7 }, dropped=352, namereplaced=1 },
 [90]  = { pset={ 295-61 }, dropped=293,},
 -- Expansions
-[795] = { pset={ 157-1, [3]=157-1 } }, -- -1 is elemental token
+[795] = { pset={ [3]=157-1 }, failed ={ [3]=1} }, -- -1/fail is elemental token
 [793] = { namereplaced=1 },
 [786] = { namereplaced=5 },
 [784] = { pset={ 161+1 }, failed={ [3]=1 }, namereplaced=27 },-- +1/fail is checklist
@@ -886,7 +892,7 @@ EXPECTTOKENS = true,
 [750] = { namereplaced=1 },
 [730] = { namereplaced=7 },
 [710] = { namereplaced=2 },
-[700] = { namereplaced=7 },
+[700] = { namereplaced=4 },
 [690] = { failed={ 298,[3]=298 } },
 [680] = { failed={ 121,[3]=121 }, namereplaced=6 },
 [660] = { namereplaced=2 },
@@ -916,8 +922,8 @@ EXPECTTOKENS = true,
 [210] = { namereplaced=1 },
 [190] = { pset={ 383-20, [3]=383-20 }, dropped=1 },
 [160] = { dropped=9 },
-[150] = { pset={ [5]=0 }, failed={ [5]=19 }, dropped=87 },
-[130] = { dropped=54 },
+[150] = { pset={ [5]=19 }, dropped=87, namereplaced=1 },
+[130] = { dropped=57 },
 [120] = { namereplaced=4 },
 }
 end

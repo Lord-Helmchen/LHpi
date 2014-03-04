@@ -27,7 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-updated dropcounts
+use LHpi-v2.3 
+added M14 and MMA
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -66,10 +67,10 @@ SAVELOG = true
 SAVETABLE = false
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.2"
+libver = "2.3"
 --- must always be equal to the scripts filename !
 -- @field [parent=#global] #string scriptname	
-scriptname = "LHpi.mtgmintcard-v" .. libver .. ".2.lua" 
+scriptname = "LHpi.mtgmintcard-v" .. libver .. ".1.lua" 
 
 --- @field [parent=#global] #table LHpi		LHpi library table
 LHpi = {}
@@ -269,6 +270,7 @@ site.frucs = { "Foils" , "Regular" }
 --- @field [parent=#site] #table sets
 site.sets = {
  -- Core sets
+[797]={id = 797,	lang = { true, 		[9]=true },		fruc = { true, true },	url = "2014+Core+set"},
 [788]={id = 788,	lang = { true , 	[9]=true }, 	fruc = { true ,true }, 	url = "2013+Core+set"}, 
 [779]={id = 779,	lang = { true , 	[9]=true }, 	fruc = { true ,true }, 	url = "2012+Core+set"}, 
 [770]={id = 770,	lang = { true , 	[9]=true }, 	fruc = { true ,true }, 	url = "2011+Core+set"}, 
@@ -348,6 +350,8 @@ site.sets = {
 [150]={id = 150,	lang = { true , 	[9]=false }, 	fruc = { false,true }, 	url = "Legends"},
 [130]={id = 130,	lang = { true , 	[9]=false }, 	fruc = { false,true }, 	url = "Antiquities"},
 [120]={id = 120,	lang = { true , 	[9]=false }, 	fruc = { false,true }, 	url = "Arabian+Nights"},
+-- special sets
+[796]={id = 796,	lang = { true,		[9]=false },	fruc = { true, true},	url = "Modern+Masters"},
 -- TODO add special and promo sets
 } -- end table site.sets
 
@@ -357,6 +361,10 @@ site.sets = {
 --- @field [parent=#site] #table namereplace ]]
 --- @field [parent=#site] #table namereplace
 site.namereplace = {
+[797] = { -- M2014
+["Opporunity"] 							= "Opportunity",
+["Sliver Contruct"]						= "Sliver Construct",
+},
 [759] = { -- M2010
 ["Runeclaw Bears"] 						= "Runeclaw Bear",
 },
@@ -483,7 +491,13 @@ site.namereplace = {
 ["Dandân"]								= "Dandan",
 ["Ifh-Biff Efreet"]						= "Ifh-Bíff Efreet",
 ["Ring of Ma'ruf"]						= "Ring of Ma ruf",
-}
+},
+-- special sets
+[796] = { -- Modern Masters
+["Æthersnipe (Aethersnipe)"]			= "Æthersnipe",
+["Aether Spellbomb (Æther Spellbomb)"]	= "Æther Spellbomb",
+["Æther Vial (Aether Vial)"]			= "Æther Vial",
+},
 } -- end table site.namereplace
 
 --[[- card variant tables.
@@ -527,6 +541,7 @@ if CHECKEXPECTED then
 --- @field [parent=#site] #table expected
 site.expected = {
 -- Core sets
+[797] = { namereplaced=3 },
 [779] = { pset={ [9]=249+1 } },--why +1?
 [770] = { dropped=1 },
 [759] = { pset={ [9]=249-20 }, dropped=8, namereplaced=4 },
@@ -534,15 +549,15 @@ site.expected = {
 [630] = { pset={ 359-31, [9]=0 } },
 [550] = { pset={ 357-27, [9]=0 } },
 [460] = { pset={ 350-20, [9]=0 }, failed={ [9]=125 }, dropped=3, namereplaced=1 },
-[360] = { pset={ 350-20 }, dropped=20 },
+[360] = { pset={ 350-20 }, dropped=19 },
 [250] = { pset={ 449-20 }, dropped=52, namereplaced=1 },
-[180] = { pset={ 378-15, [9]=0 }, dropped=96, namereplaced=1 },
-[140] = { pset={ 306-15, [9]=0 }, dropped=41, namereplaced=1 },
+[180] = { pset={ 378-15, [9]=0 }, dropped=93, namereplaced=1 },
+[140] = { pset={ 306-15, [9]=0 }, dropped=39, namereplaced=1 },
 [110] = { dropped=3 },
 [100] = { pset={ 302-19 } },
 -- Expansions
 [795] = { namereplaced=7 },
-[793] = { pset={ [9]=249-1 }, failed={ [9]=1 }, namereplaced=4 },
+[793] = { namereplaced=4 },
 [786] = { pset={ [9]=244+1 }, namereplaced=2 },-- why +1?
 [784] = { namereplaced=5 },
 [782] = { pset={ 264+1 }, namereplaced=12 },
@@ -557,43 +572,45 @@ site.expected = {
 [690] = { pset={ [9]=0 }, dropped=1, namereplaced=2 },
 [680] = { pset={ [9]=4 }, dropped=2, namereplaced=2 },
 [670] = { pset={ [9]=0 }, namereplaced=6 },
-[660] = { pset={ [9]=0 }, dropped=2, namereplaced=2 },
+[660] = { pset={ [9]=0 }, dropped=1, namereplaced=2 },
 [650] = { pset={ [9]=0 } },
 [640] = { pset={ [9]=0 }, dropped=2 },
 [620] = { pset={ [9]=0 }, dropped=1, namereplaced=6 },
 [610] = { pset={ [9]=0 }, dropped=2, namereplaced=10 },
 [590] = { pset={ [9]=0 }, namereplaced=20 },
 [580] = { pset={ [9]=110 }, dropped=2, namereplaced=2 },
-[570] = { pset={ [9]=0 }, dropped=2 },
+[570] = { pset={ [9]=0 }, dropped=1 },
 [560] = { pset={ 306-20, [9]=0 }, dropped=4, namereplaced=2 },
 [540] = { pset={ [9]=0 }, dropped=3 },
 [530] = { pset={ [9]=0 }, failed={ [9]=96 }, dropped=2 },
-[520] = { pset={ [9]=0 }, dropped=9 },
-[510] = { pset={ [9]=0 }, failed={ [9]=143 }, 	dropped=17 },
+[520] = { pset={ [9]=0 }, dropped=8 },
+[510] = { pset={ [9]=0 }, failed={ [9]=143 }, 	dropped=16 },
 [500] = { pset={ [9]=0 }, failed={ [9]=40 }, 	dropped=8 },
-[480] = { pset={ 350-20, [9]=0 }, failed={ [9]=166 }, 	dropped=36 },
+[480] = { pset={ 350-20, [9]=0 }, failed={ [9]=166 }, 	dropped=33 },
 [470] = { pset={ [9]=0 }, dropped=4, namereplaced=1 },
-[450] = { pset={ 146-3, [9]=0 }, dropped=24 },
-[430] = { pset={ 350-20, [9]=0 }, failed={ [9]=144 }, 	dropped=104 },
+[450] = { pset={ 146-3, [9]=0 }, dropped=23 },
+[430] = { pset={ 350-20, [9]=0 }, failed={ [9]=144 }, 	dropped=101 },
 [420] = { pset={ 143-60, [9]=0 }, dropped=8 },
 [410] = { pset={ 143-1, [9]=0 }, dropped=13 },
 [400] = { pset={ 350-20, [9]=0 }, dropped=15 },
-[370] = { pset={ [9]=0 }, dropped=15 },
+[370] = { pset={ [9]=0 }, dropped=11 },
 [350] = { pset={ [9]=0 }, dropped=11 },
-[330] = { pset={ 350-20, [9]=0 }, dropped=38, namereplaced=1 },
+[330] = { pset={ 350-20, [9]=0 }, dropped=37, namereplaced=1 },
 [300] = { pset={ [9]=0 }, dropped=12 },
-[290] = { pset={ [9]=0 }, dropped=28 },
-[280] = { pset={ 350-20, [9]=0 }, dropped=64 },
+[290] = { pset={ [9]=0 }, dropped=26 },
+[280] = { pset={ 350-20, [9]=0 }, dropped=59 },
 [270] = { pset={ [9]=0 }, dropped=9, namereplaced=1 },
 [240] = { pset={ [9]=0 }, dropped=12 },
-[230] = { pset={ 350-21, [9]=0 }, dropped=80 },
-[220] = { pset={ [9]=0 }, dropped=12, namereplaced=1 },
+[230] = { pset={ 350-21, [9]=0 }, dropped=78 },
+[220] = { pset={ [9]=0 }, dropped=11, namereplaced=1 },
 [210] = { pset={ [9]=0 }, dropped=7 },
-[190] = { pset={ 383-15, [9]=0 }, dropped=92, namereplaced=5 },
+[190] = { pset={ 383-15, [9]=0 }, dropped=91, namereplaced=5 },
 [170] = { dropped=20 },
 [160] = { dropped=9 },
-[150] = { dropped=23 },
+[150] = { dropped=22 },
 [130] = { dropped=7 },
 [120] = { dropped=15, namereplaced=5 },
+-- special sets
+[796] = { namereplaced=6}
 }
 end
