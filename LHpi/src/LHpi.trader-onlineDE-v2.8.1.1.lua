@@ -9,7 +9,7 @@ who generously granted permission to "do as I like" with their code;
 everything else Copyright (C) 2012-2014 by Christian Harms.
 If you want to contact me about the script, try its release thread in http://www.slightlymagic.net/forum/viewforum.php?f=32
 
-@module LHpi_magicuniverseDE
+@module LHpi.site
 @author Christian Harms
 @copyright 2012-2014 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
 @release This program is free software: you can redistribute it and/or modify
@@ -27,70 +27,83 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-use LHpi-v2.6 (BNG)
-added BNG and all available special sets
 ]]
 
 -- options that control the amount of feedback/logging done by the script
+
 --- @field [parent=#global] #boolean VERBOSE 			default false
-VERBOSE = false
+--VERBOSE = true
 --- @field [parent=#global] #boolean LOGDROPS 			default false
-LOGDROPS = false
+--LOGDROPS = true
 --- @field [parent=#global] #boolean LOGNAMEREPLACE 	default false
-LOGNAMEREPLACE = false
+--LOGNAMEREPLACE = true
 --- @field [parent=#global] #boolean LOGFOILTWEAK	 	default false
-LOGFOILTWEAK = false
+--LOGFOILTWEAK = true
 
 -- options that control the script's behaviour.
---- compare card count with expected numbers; default true
+
+--- compare prices set and failed with expected numbers; default true
 -- @field [parent=#global] #boolean CHECKEXPECTED
-CHECKEXPECTED = true
---  Don't change anything below this line unless you know what you're doing :-)
+--CHECKEXPECTED = false
+
+--  Don't change anything below this line unless you know what you're doing :-) --
+
+--- also complain if drop,namereplace or foiltweak count differs; default false
+-- @field [parent=#global] #boolean STRICTCHECKEXPECTED
+--STRICTCHECKEXPECTED = true
 ---	log everything and exit on error; default false
--- @field [parent=#global] #boolean DEBUG			log all and exit on error; default false
-DEBUG = false
----	while DEBUG, do not log raw html data found by regex 
--- @field [parent=#global] #boolean DEBUG			log all and exit on error; default true
-DEBUGSKIPFOUND = true
---- DEBUG inside variant loops; default true
--- @field [parent=#global] #boolean DEBUGVARIANTS	DEBUG inside variant loops; default false
-DEBUGVARIANTS = false
+-- @field [parent=#global] #boolean DEBUG
+--DEBUG = true
+---	while DEBUG, do not log raw html data found by regex; default true 
+-- @field [parent=#global] #boolean DEBUGSKIPFOUND
+--DEBUGSKIPFOUND = false
+--- DEBUG inside variant loops; default false
+-- @field [parent=#global] #boolean DEBUGVARIANTS
+--DEBUGVARIANTS = true
 ---	read source data from #string.savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
-OFFLINE = false
---- save a local copy of each source html to #string.savepath if not in OFFLINE mode; default false
+--OFFLINE = true
+--- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
-SAVEHTML = false
+--SAVEHTML = true
 --- log to seperate logfile instead of Magic Album.log;	default true
 -- @field [parent=#global] #boolean SAVELOG
-SAVELOG = true
+--SAVELOG = false
 --- save price table to file before importing to MA;	default false
 -- @field [parent=#global] #boolean SAVETABLE
-SAVETABLE = false
+--SAVETABLE = true
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.6"
---- must always be equal to the scripts filename !
+libver = "2.8"
+--- revision of the LHpi library datafile to use
+-- @field [parent=#global] #string dataver
+dataver = "1"
+--- must always be equal to the script's filename !
 -- @field [parent=#global] #string scriptname
-scriptname = "LHpi.trader-onlineDE-v" .. libver .. ".1.lua" 
+scriptname = "LHpi.trader-onlineDE-v" .. libver .. "." .. dataver .. ".1.lua" 
 
 --- @field [parent=#global] #table LHpi		LHpi library table
 LHpi = {}
 
---- Site specific configuration
--- Settings that define the source site's structure and functions that depend on it
--- @type site
--- 
--- @field #string regex
--- @field #string currency
--- @field #string encoding
--- @field #string resultpattern
+--[[- Site specific configuration
+ Settings that define the source site's structure and functions that depend on it
+ 
+ @type site ]]
 site={}
+
+--[[- regex matches shall include all info about a single card that one html-file has,
+ i.e. "*CARDNAME*FOILSTATUS*PRICE*".
+ it will be chopped into its parts by site.ParseHtmlData later. 
+ @field [parent=#site] #string regex ]]
 site.regex = '<tr><td colspan="11"><hr noshade size=1></td></tr>\n%s*<tr>\n%s*(.-)</font></td>\n%s*<td width'
-site.encoding="cp1252"
---site.encoding="utf-8"
-site.currency = "€"
+
+--- resultregex can be used to display in the Log how many card the source file claims to contain
+-- @field #string resultregex
 site.resultregex = "Es wurden <b>(%d+)</b> Artikel"
+--- @field #string currency		not used yet;default "$"
+site.currency = "€"
+--- @field #string encoding		default "cp1252"
+site.encoding="cp1252"
 
 --[[- "main" function.
  called by Magic Album to import prices. Parameters are passed from MA.
@@ -107,18 +120,32 @@ site.resultregex = "Es wurden <b>(%d+)</b> Artikel"
 	-- array of sets the script should import, represented as pairs { #number = #string } (see "Database\Sets.txt").
 ]]
 function ImportPrice( importfoil , importlangs , importsets )
-	if SAVELOG then
+	if SAVELOG~=false then
 		ma.Log( "Check " .. scriptname .. ".log for detailed information" )
 	end
+	ma.SetProgress( "Loading LHpi library", 0 )
 	do -- load LHpi library from external file
-		local libfile = "Prices\\LHpi-v" .. libver .. ".lua"
-		local LHpilib = ma.GetFile( libfile )
+		local libname = "Prices\\lib\\LHpi-v" .. libver .. ".lua"
+		local LHpilib = ma.GetFile( libname )
+		local oldlibname = "Prices\\LHpi-v" .. libver .. ".lua"
+		local oldLHpilib = ma.GetFile ( oldlibname )
+		local loglater = ""
+		if oldLHpilib then
+			if DEBUG then
+				error("LHpi library found in deprecated location. Please move it to Prices\\lib subdirectory!")
+			end
+			loglater = loglater .. "LHpi library found in deprecated location.\n"
+			if not LHpilib then
+				loglater = loglater .. "Using file in old location as fallback."
+				LHpilib = oldLHpilib
+			end
+		end
 		if not LHpilib then
-			error( "LHpi library " .. libfile .. " not found." )
+			error( "LHpi library " .. libname .. " not found." )
 		else -- execute LHpilib to make LHpi.* available
 			LHpilib = string.gsub( LHpilib , "^\239\187\191" , "" ) -- remove unicode BOM (0xEF, 0xBB, 0xBF) for files tainted by it :)
 			if VERBOSE then
-				ma.Log( "LHpi library " .. libfile .. " loaded and ready for execution." )
+				ma.Log( "LHpi library " .. libname .. " loaded and ready for execution." )
 			end
 			local execlib,errormsg = load( LHpilib , "=(load) LHpi library" )
 			if not execlib then
@@ -126,6 +153,7 @@ function ImportPrice( importfoil , importlangs , importsets )
 			end
 			LHpi = execlib()
 		end	-- if not LHpilib else
+		LHpi.Log(loglater)
 	end -- do load LHpi library
 	collectgarbage() -- we now have LHpi table with all its functions inside, let's clear LHpilib and execlib() from memory
 	LHpi.Log( "LHpi lib is ready to use." )
@@ -135,15 +163,17 @@ end -- function ImportPrice
 
 --[[-  build source url/filename.
  Has to be done in sitescript since url structure is site specific.
+ To allow returning more than one url here, BuildUrl is required to wrap it/them into a container table.
+
  foilonly and isfile fields can be nil and then are assumed to be false.
+ while isfile is read and interpreted by the library, foilonly is not. Its only here as a convenient shortcut to set card.foil in your site.ParseHtmlData  
  
  @function [parent=#site] BuildUrl
  @param #number setid
  @param #number langid
  @param #number frucid
- @param #boolean offline	(optional) use local file instead of url
- @return #table { #string = #table { foilonly = #boolean , isfile = #boolean } }
-
+ @param #boolean offline	(can be nil) use local file instead of url
+ @return #table { #string = #table { isfile = #boolean, foilonly = #boolean } }
 ]]
 function site.BuildUrl( setid,langid,frucid,offline )
 	site.domain = "www.trader-online.de/"
@@ -166,7 +196,7 @@ function site.BuildUrl( setid,langid,frucid,offline )
 	elseif langid == 5 then
 		seturl = "i" .. string.gsub( seturl, "%%20", "" )
 	end
-	local url = site.domain ..  site.frucfileprefix .. site.file .. site.setprefix .. site.frucs[frucid] .. "-" .. seturl .. site.langs[langid].url
+	local url = site.domain ..  site.frucfileprefix .. site.file .. site.setprefix .. site.frucs[frucid].url .. "-" .. seturl .. site.langs[langid].url
 	if offline then
 		url = string.gsub( url, "%?", "_" )
 		url = string.gsub( url, "/", "_" )
@@ -174,7 +204,7 @@ function site.BuildUrl( setid,langid,frucid,offline )
 	else
 		container[url] = {}
 	end -- if offline 
-	if frucid == 1 then -- mark url as foil-only
+	if site.frucs[frucid].isfoil then -- mark url as foil-only
 		container[url].foilonly = true
 	else
 		-- url without foil marker
@@ -195,7 +225,7 @@ function site.BuildUrl( setid,langid,frucid,offline )
 			container[url1] = {}			
 			container[url2] = {}			
 		end
-		if frucid == 1 then
+		if site.frucs[frucid].isfoil then
 			container[url1].foilonly = true
 			container[url2].foilonly = true
 		end
@@ -211,16 +241,19 @@ end -- function site.BuildUrl
  This is, of course, not optimal for speed, but the most flexible.
 
  Return value newCard can receive optional additional fields:
- #table pluginData is passed on by LHpi.buildCardData for use in
- site.BCDpluginName and/or site.BCDpluginCard.
- #string name will pre-set the card's unique (for the cardsetTable) identifying name.
- #table lang, #boolean drop, #table variant, #table regprice, #table foilprice
- will override LHpi.buildCardData generated values.
+ @return #boolean newcard.foil		(semi-optional) set the card as foil. It's often a good idea to explicitely set this, for example by querying site.frucs[urldetails.frucid].isfoil
+ @return #table newCard.pluginData	(optional) is passed on by LHpi.buildCardData for use in site.BCDpluginName and/or site.BCDpluginCard.
+ @return #string newCard.name		(optional) will pre-set the card's unique (for the cardsetTable) identifying name.
+ @return #table newCard.lang		(optional) will override LHpi.buildCardData generated values.
+ @return #boolean newCard.drop		(optional) will override LHpi.buildCardData generated values.
+ @return #table newCard.variant		(optional) will override LHpi.buildCardData generated values.
+ @return #table newCard.regprice	(optional) will override LHpi.buildCardData generated values.
+ @return #table newCard.foilprice 	(optional) will override LHpi.buildCardData generated values.
  
  @function [parent=#site] ParseHtmlData
  @param #string foundstring		one occurence of siteregex from raw html data
- @param #table urldetails	{ foilonly = #boolean , isfile = #boolean , setid = #number, langid = #number, frucid = #number }
- @return #table { names = #table { #number = #string, ... }, price = #table { #number = #string, ... }} 
+ @param #table urldetails	{ isfile = #boolean , setid = #number, langid = #number, frucid = #number , foilonly = #boolean }
+ @return #table { #number = { names = #table { #number = #string, ... }, price = #table { #number = #string, ... } } } 
 ]]
 function site.ParseHtmlData( foundstring , urldetails )
 	local newCard = { names = {} , price = {} }
@@ -244,29 +277,24 @@ function site.ParseHtmlData( foundstring , urldetails )
 		price= tonumber( price )
 	end
 	newCard.price[urldetails.langid] = price
+	newCard.foil = site.frucs[urldetails.frucid].isfoil
 	newCard.pluginData = { fruc=fruc, set=set, color=color }
-	return newCard
+	return { newCard }
 end -- function site.ParseHtmlData
 
 
---[[- special cases card data manipulation
- Ties into LHpi.buildCardData to make changes that are specific to one site and thus don't belong into the library
- 
- @function [parent=#site] BCDpluginPre
- @param #string name		the cardname LHpi.buildardData is working on
- @param #number setid
- @returns #string name	modified cardname is passed back for further processing
-]]
---[[- special cases card data manipulation
+--[[- special cases card data manipulation.
  Ties into LHpi.buildCardData to make changes that are specific to one site and thus don't belong into the library.
- This Plugin is called before most of LHpi's BuildCardData proecssing.
+ This Plugin is called before most of LHpi's BuildCardData processing.
 
  @function [parent=#site] BCDpluginPre
  @param #table card		the card LHpi.BuildCardData is working on
  @param #number setid
- @returns #table card modified card is passed back for further processing
+ @param #table importfoil	passed from ImportPrice to drop unwanted cards
+ @param #table importlangs	passed from ImportPrice to drop unwanted cards
+ @return #table 		modified card is passed back for further processing
 ]]
-function site.BCDpluginPre ( card , setid )
+function site.BCDpluginPre ( card , setid , importfoil, importlangs )
 	if DEBUG then
 		LHpi.Log( "site.BCDpluginPre got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
 	end
@@ -310,32 +338,37 @@ end -- function site.BCDpluginPre
 -------------------------------------------------------------------------------------------------------------
 
 --[[- table of (supported) languages.
--- { #number = { id = #number, full = #string, abbr = #string } }
--- 
---- @field [parent=#site] #table langs ]]
---- @field [parent=#site] #table langs
+ can contain url infixes for use in site.BuildUrl.
+ static language fields (id,full,abbr) can be read from LHpi.Data.languages
+ { #number = { url = #string } }
+ 
+ @field [parent=#site] #table langs ]]
 site.langs = {
-	[1] = {id=1, full = "English", 	abbr="ENG", url="-E" },
-	[3] = {id=3, full = "German", 	abbr="GER", url="-D" },
-	[5] = {id=5, full = "Italian", 	abbr="ITA", url="-E" },
+	[1] = { url="-E" },
+	[3] = { url="-D" },
+	[5] = { url="-E" },
 }
 
---- @field [parent=#site] #table frucs	rarity array { #number = #string }
-site.frucs = { "Foil" , "Serie" }
+--[[- table of available rarities.
+ can contain url infixes for use in site.BuildUrl
 
---[[- table of available sets
--- { #number = #table { #number id, #table lang = #table { #boolean, ... } , #table fruc = # table { #boolean, ... }, #string url } }
--- #number id		: setid (can be found in "Database\Sets.txt" file)
--- #table fruc		: table of available rarity urls to be parsed
---		compare with site.frucs
--- 		#boolean fruc[1]	: does foil url exist?
--- 		#boolean fruc[2]	: does regular url exist?
--- #table lang		:  table of available languages { #boolean , ... }
--- #string url		: set url infix
--- 
---- @field [parent=#site] #table sets ]]
---- @field [parent=#site] #table sets
+ @field [parent=#site] #table frucs	rarity table { #number = #table { #number, #string, #boolean, #boolean, #string } ]]
+site.frucs = {
+	[1]= { id=1, name="Foil"	, isfoil=true , isnonfoil=false, url="Foil"	 },
+	[2]= { id=2, name="nonFoil"	, isfoil=false, isnonfoil=true , url="Serie" },
+}
+
+--[[- table of available sets.
+ site.sets[#number setid] = #table { #number id, #table lang = #table { #boolean, ... } , #table fruc = # table { #boolean, ... }, #string url }
+  #number id		setid (can be found in "Database\Sets.txt" file)
+  #table fruc		table of available fruc urls to be parsed
+ @see compare with site.frucs
+  #table lang		table of available languages { #boolean , ... }
+  #string url		set url infix
+ 
+ @field [parent=#site] #table sets ]]
 site.sets = {
+-- Core Sets
 [797]={id = 797, lang = { true , [3]=true }, fruc = { true ,true }, url = "M14"}, 
 [788]={id = 788, lang = { true , [3]=true }, fruc = { true ,true }, url = "M13"}, 
 [779]={id = 779, lang = { true , [3]=true }, fruc = { true ,true }, url = "M12"}, 
@@ -435,10 +468,9 @@ site.sets = {
 } -- end table site.sets
 
 --[[- card name replacement tables.
--- { #number = #table { #string = #string } }
--- 
---- @field [parent=#site] #table namereplace ]]
---- @field [parent=#site] #table namereplace
+ { #number = #table { #string = #string } }
+ 
+ @field [parent=#site] #table namereplace ]]
 site.namereplace = {
 [797] = { -- M2014
 ["Token - Elemental (7) (R)"]				= "Elemental (7)",
@@ -516,6 +548,7 @@ site.namereplace = {
 [802] = { --Born of the Gods
 ["Brimaz' Vorhut"]						= "Vanguard of Brimaz",
 --["Brimaz' Vorhut"]						= "Brimaz’ Vorhut",
+["Unravel the Aether"]					= "Unravel the Æther",
 ["Token - Bird (W)"]					= "Bird (1)",
 ["Token - Bird (U)"]					= "Bird (4)",
 },
@@ -794,7 +827,7 @@ site.namereplace = {
 ["Erase"]								= "Erase (Not the Urza’s Legacy One)",
 ["Who|What/When|Where/Why"]				= "Who|What|When|Where|Why",
 ["Yet Another Aether Vortex"]			= "Yet Another Æther Vortex",
---TODO['"Ach! Hans, Run!"']
+--TODO ['"Ach! Hans, Run!"']
 },
 [320] = { -- Unglued
 ["B.F.M. (Big Furry Monster) links"]	= "B.F.M. (left)",
@@ -819,23 +852,13 @@ site.namereplace = {
 } -- end table site.namereplace
 
 --[[- card variant tables.
--- tables of cards that need to set variant.
--- For each setid, if unset uses sensible defaults from LHpi.sets.variants.
--- Note that you need to replicate the default values for the whole setid here, 
--- even if you set only a single card from the set differently.
--- 
---
--- { #number = #table { #string = #table { #string, #table { #number or #boolean , ... } } , ... } , ...  }
--- [0] = { -- Basic Lands as example (setid 0 is not used)
--- ["Plains"] 						= { "Plains"	, { 1    , 2    , 3    , 4     } },
--- ["Island"] 						= { "Island" 	, { 1    , 2    , 3    , 4     } },
--- ["Swamp"] 						= { "Swamp"		, { 1    , 2    , 3    , 4     } },
--- ["Mountain"] 					= { "Mountain"	, { 1    , 2    , 3    , 4     } },
--- ["Forest"] 						= { "Forest" 	, { 1    , 2    , 3    , 4     } }
--- },
--- 
---- @field [parent=#site] #table variants ]]
---- @field [parent=#site] #table variants
+ tables of cards that need to set variant.
+ For each setid, if unset uses sensible defaults from LHpi.Data.sets.variants.
+ Note that you need to replicate the default values for the whole setid here,
+ even if you set only a single card from the set differently.
+
+ { #number = #table { #string = #table { #string, #table { #number or #boolean , ... } } , ... } , ...  }
+ @field [parent=#site] #table variants ]]
 site.variants = {
 [450] = { --Planeshift
 },
@@ -856,11 +879,10 @@ site.variants = {
 },
 } -- end table site.variants
 
---[[- foil status replacement tables
--- { #number = #table { #string = #table { #boolean foil } } }
--- 
---- @field [parent=#site] #table foiltweak ]]
---- @field [parent=#site] #table foiltweak
+--[[- foil status replacement tables.
+ { #number = #table { #string = #table { #boolean foil } } }
+ 
+ @field [parent=#site] #table foiltweak ]]
 site.foiltweak = {
 --[772]={
 --not needed, card have "(Foil)" suffix
@@ -869,14 +891,14 @@ site.foiltweak = {
 --	},
 } -- end table site.foiltweak
 
-if CHECKEXPECTED then
+if CHECKEXPECTED~=false then
 --[[- table of expected results.
--- as of script release
--- { #number = #table { #table pset = #table { #number = #number, ... }, #table failed = #table { #number = #number, ... }, dropped = #number , namereplaced = #number , foiltweaked = #number }
--- 
---- @field [parent=#site] #table expected ]]
---- @field [parent=#site] #table expected
+ as of script release
+ { #number = #table { #table pset = #table { #number = #number, ... }, #table failed = #table { #number = #number, ... }, dropped = #number , namereplaced = #number , foiltweaked = #number }
+ 
+ @field [parent=#site] #table expected ]]
 site.expected = {
+---@field [parent=#site.expected]	#boolean EXPECTTOKENS	false:pset defaults to regular, true:pset defauts to regular+tokens
 EXPECTTOKENS = true,
 -- Core sets
 [797] = { namereplaced=4 },
@@ -894,7 +916,7 @@ EXPECTTOKENS = true,
 [110] = { pset={ 286 }, namereplaced=1 },
 [100] = { pset={ 255 } },
 -- Expansions
-[802] = { namereplaced=3, pset={ [3]=176-11 }, failed= { [3]=10 } }, -- -10 is tokens
+[802] = { namereplaced=5, pset={ [3]=176-11 }, failed= { [3]=10 } }, -- -10 is tokens
 [800] = { namereplaced=8 },
 [795] = { pset={ [3]=157-1 }, failed= { [3]=1 }, namereplaced=1 }, -- -1 is token
 [793] = { namereplaced=1 },
@@ -912,8 +934,8 @@ EXPECTTOKENS = true,
 [730] = { namereplaced=5 },
 [710] = { namereplaced=4 },
 [700] = { namereplaced=3 },
-[690] = { dropped=983, namereplaced=5 },
-[680] = { dropped=383, namereplaced=5 },
+[690] = { dropped=982, namereplaced=5 },
+[680] = { dropped=382, namereplaced=5 },
 [670] = { namereplaced=4 },
 [660] = { namereplaced=4 },
 [650] = { namereplaced=4 },
@@ -949,10 +971,11 @@ EXPECTTOKENS = true,
 [785] = { namereplaced=3, foiltweaked=2 },
 [772] = { namereplaced=1, foiltweaked=0 },
 [757] = { foiltweaked=2 },
-[600] = { namereplaced=8 },
+[600] = { pset={ 141-1 }, failed={ 1 }, namereplaced=8 },--"Ach! Hans, Run"
 [320] = { namereplaced=6 },
 [310] = { namereplaced=2 },
 [260] = { pset={ [3]=228-6 }, namereplaced=4 },--no "DG" Variant in GER
 [200] = { namereplaced=2 },
-}
-end
+}--end table site.expected
+end--if
+--EOF
