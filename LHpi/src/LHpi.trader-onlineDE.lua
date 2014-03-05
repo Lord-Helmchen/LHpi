@@ -93,7 +93,7 @@ libver = "2.9"
 dataver = "2"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "1"
+scriptver = "10"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.trader-onlineDE-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
