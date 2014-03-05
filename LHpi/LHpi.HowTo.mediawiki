@@ -1,0 +1,736 @@
+== Introduction ==
+
+This wiki page gives information about properties and functions you can find in LHpi sitescriptTemplate file.
+It helps you to understand what you must/can define and how-to define it.
+
+Any remarks or feedbacks are welcome.
+
+===Properties===
+
+====LHpi library version====
+
+Make sure that your script defines the version of LHpi library it uses.
+
+The property to adapt in sitescript file is:	<tt>libver</tt>
+
+Example:	
+
+<code>libver = "2.7"</code>
+====LHpi library version====
+
+Make sure that your script defines the version of LHpi data file it uses.
+
+The property to adapt in sitescript file is:	<tt>dataver</tt>
+
+Example:<code>dataver = "1"</code>
+
+====(semi-optional)Name of sitescript====
+
+The first thing to do is to define the sitescript filename in order for LHpi library to know which one is executed.<br/>
+It is used to construct the log file name (if [[#LHpi_properties|SAVELOG]] is true) and the [[#LHpi_properties|savepath]] default (needed for example if you want to save your HTML page locally for later offline process).
+
+The property to adapt in sitescript file is:   <tt>scriptname</tt>
+
+Example:
+
+<code>scriptname = "LHpi.TheWebsiteName-v".. libver .. dataver .. ".1.lua"</code>
+
+It is a good choice to leave the library and data versions into the filename in order to know, without editing sitescript file, which version of LHpi library is used.
+If unset, defaults to fallback value "LHpi.SITESCRIPT_NAME_NOT_SET-v" .. LHpi.version .. ".lua", which probably is not what you want.
+
+See also [[How-To_sitescriptTemplate#multiple_copies_ot_the_same_script]]
+
+====Regular expression to retrieve card info====
+
+Next thing to configure is the regular expression used by LHpi to retrieve all information of cards from HTML page.<br/>
+You can find useful information about LUA regular expression in the LUA reference page:  [http://www.lua.org/pil/20.2.html]
+
+The regular expression shall match all of '''one''' card's price info from the HTML page, so that each result contains (at least) the card name (or names, if multiple localized names are given in one entry) and price, but including also other information that is given for the card, such as foil status and language (if this information is not constant through the whole source file).<br/>
+Seperating all this information into its parts is done later via <code>site.ParseHtmlData</code>. Having all localized names is useful to set the card langage semi-automatically. If only one common entry is given for both foil and nonfoil price, you will need to apply some additional tricks later.<br/>
+
+To test your regular expression, you can download locally (with your browser) from your website the HTML page of a set. <br/>
+Edit that HTML page with Notepad++ and use the Find function (CTRL + F). In the Find windows, on the bottom left in Find Mode, you have the choice "Regular Expression".<br/>
+Select that option and try your regular expression. Each time you click on Next button, the selection done by Notepad++ should highlight all information of ONE card, with a different card highlighted at each Next click.
+Alternatively, continue writing the absolute minimum required for a runable sitescript, set DEBUG to true, DEBUGSKIPFOUND to false, run the sitescript and compare the log with the source data.
+
+The property to adapt in sitescript file is:	site.regex
+
+Example:	<tt><nowiki>site.regex = "(<div.-name=\".-\".-foil=\"%d\".-class=\"price\">.-</span>)"</nowiki></tt>
+
+====(Optional) Currency====
+
+You can also define currency used by your website when different from the dollar '$'. Currently, this informationis not used, but it might be useful later. Once it is, it will default to "$" if unset.
+
+The property to adapt in sitescript file is:	site.currency
+
+Example:  site.currency="€"
+
+====(Optional) Regular expression about expected results====
+
+If the website displayed information about the set, for example the number of card, you can define the regular expression to retrieve these informations.<br/>
+LHpi will log this together with the number of cards it is about to set prices for. This could be useful to manually check that the number of card data matches equals the number of cards claimed to be in the html source file, to make sure your regex finds all entries.
+
+The property to adapt in sitescript file is:   site.resultregex
+
+By default, property is not set.<br/>
+When property is not defined, the corresponding log line will be skipped.
+
+====(Optional) Site Encoding====
+
+When the website uses a specific encoding (e.g. UTF-8), you can define it in this property.<br/>
+A correct encoding definition is needed in order for LHpi to process card data correctly and make sure that the price can be imported by MA. Both LHpi and MA expect strings to be utf-8 encoded.<br/>
+The '''names''' returned from site.ParseHtmlData are converted by <code>LHpi.LHpi.Toutf8</code>. Curently, only "cp1252" actually does any converting, while "utf8" or "utf-8" intentionally returns the string as it was.<br/>
+If you need it, you can call <code>LHpi.LHpi.Toutf8</code> with other strings from your sitescript.
+
+The property to adapt in sitescript file is:	site.encoding
+
+Example:	<tt>site.encoding="UTF8"</tt><br/>
+By default, the property is not set and default encoding used is "cp1252"
+
+====Site languages====
+
+The language of cards supported by the website should be defined here.
+
+By default, English language is defined but you can add more languages when supported. (do we need the example? The template contains all languages that are supported by MA, commented out. Only the url infix is left blank and needs to be filled in.)
+
+The property to adapt in sitescript file is:	site.langs
+
+Example:
+
+<code>
+ <nowiki>
+ site.langs = {
+      [1] = {id=1, full = "English", abbr="ENG",  url="eng" },
+      [4] = {id=4, full = "French",  abbr="FRA",  url="fra" }
+ }</nowiki>
+</code>
+The format of each entry is:
+
+<code>[<langid>] = {id=<langid>, full = "<Fullname>", abbr="<AbbrName", url="<ParameterValue>"]</code>
+
+where
+
+* <langid> is the ID of language as defined by Magic Album in file \Database\Languages.txt
+* <Fullname> is the full name of the language
+* <AbbrName> if the abbreviated name of the language
+* <ParameterValue> is the value that can be appended to the website url when retrieving cards in that language
+
+====FRUC - '''F'''oil '''R'''are '''U'''ncommon '''C'''ommon table====
+The property defines all types of cards available on the website. This table is useful when card information are available at different urls depending on their rarity/foilage.
+
+The property to adapt in sitescript file is:	<tt>site.frucs</tt>
+=====2.7 and below=====
+You can use the fruc's strings as url infixes in <code>site.BuildUrl</code>.<br/>
+'''important note''': The library assumes fruc[1] to be foil and all other frucs to be nonfoil. Thus, when you set to import only one type of foilage to be imported in MA's price manager dialog, all non-applicable frucs will not be imported. If the site gives foil and nonfoil prices on the same page, you still need to define two frucs. Have <code>site.BuildUrl</code> return the same url for both frucs. Duplicate urls for the same set will not be downloaded nor processed twice.
+
+Example:	
+<code>site.frucs = { "foil", "regular" }</code>
+=====2.8 and above=====
+The rarity categories defined in this table contain booleans to have each fruc identify itself as foil and/or nonfoil. They are used to determine whether a cetegorie should be imported, according to the setting chosen in MA's "Manage Prices" dialog. The fruc table also contains url infixes you can use in <code>site.BuildUrl</code>, similar to the url fields in <tt>site.sets</tt> and <tt>site.langs</tt>.
+
+Examples:<br/>
+site has a seperate page for foil and nonfoil prices:<br/>
+<code>
+ site.frucs = {
+   [1]= { id=1, name="Foil"   , isfoil=true , isnonfoil=false, url="foil" },
+   [2]= { id=2, name="nonFoil"   , isfoil=false, isnonfoil=true , url="regular" },
+ }</code>
+site has only a single page per set, with both foil and nonfoil prices:<br/>
+<code>
+ site.frucs = {
+   [1]= { id=1, name="nonfoil+Foil"   , isfoil=true , isnonfoil=true, url="" },
+ }</code>
+site has a seperate page for foils, three pages for nonfoil cards of different rarities, and a page with foil and nonfoil prices for Timespiral-Timeshifted cards:<br/>
+<code>
+ site.frucs = {
+   [1]= { id=1, name="Foil"   , isfoil=true , isnonfoil=false, url="foil" },
+   [2]= { id=2, name="Rare"   , isfoil=false, isnonfoil=true , url="rare" },
+   [3]= { id=3, name="Uncommon", isfoil=false, isnonfoil=true , url="uncommon" },
+   [4]= { id=4, name="Common"   , isfoil=false, isnonfoil=true , url="common" },
+   [5]= { id=5, name="Purple"   , isfoil=true, isnonfoil=true , url="timeshifted" },
+ }</code>
+
+====Site sets====
+
+The most important property of the sitescript.
+
+The property to adapt in sitescript file is:	<tt>site.sets</tt>
+
+It defines the mapping between the Magic Album (MA) and the website supported sets.<br/>
+It tells LHpi library that the MA set with id xxx is available on the website with foil/regular prices, in which language(s), at specific url suffix.
+
+Here is the format of one set mapping:
+
+<code><nowiki>[<setid>]={id = <setid>,	lang = { <eng avail>, [<langid>]=<lang avail>}, fruc = { <foil avail>, <regular avail> }, url = "<url suffix>"},</nowiki></code>
+
+where 
+
+* <setid> is the id of the set as defined by MA. See file \Database\Sets.txt
+* <eng avail> is a boolean indicating whether the price information is available for cards in ENGLISH language or not
+* <langid> is the id of a language as defined by MA. See file \Database\Languages.txt
+* <lang avail> is a boolean indicating if the price information is available for cards in language defined by <langid> (previous marker)
+NOTE:  <langid> and <lang avail> markers are used together when website supports card information in language different than English. If no other language is available, only <eng avail> marker needs to be set.
+
+* <foil avail> is a boolean indicating whether price of foil cards is available or not
+* <regular avail> is a boolean indicating whether price of regular cards is available or not.
+NOTE: You can have more boolean in the fruc array. The number of boolean depends on the FRUC property you defined previously. If the (previous) property is an array of 4 frucs (e.g. {"foil", "rare", "uncommon", "common"}) then the fruc property in the set mapping would have 4 booleans: {true, true, true, true} each one defining whether the price of corresponding fruc is available or not.
+
+* <url suffix> is the suffix added to the website url in order to retrieve price of cards for the current set.
+
+Example:
+
+<code>[800]={id = 800,	lang = { true, [4]=true}, fruc = { true, true }, url = "1966"},	-- Theros</code>
+
+* 800 is the id of Theros set defined by MA
+* Both English and French languages are available on the website for card prices
+* Both foil and regular prices are available on the website. Assume than site.fruc is defined like {"foil", "regular"}
+* The id of the Theros set on website is 1966. That id (=suffix) will be appended to the url when retrieving card prices of Theros.
+
+====(Optional)Card name replacement====
+
+Sometimes, the card name given by the website does not match the card name defined in MA.<br/>
+You need to match both in order to set the price. This is the objective of the property.
+
+The property to adapt in sitescript file is:	<tt>site.namereplace</tt>
+
+The format is:
+
+<code>
+ <nowiki>
+ {
+  [<setid>] = { 
+     ["<website cardname 1>"]	= "<MA cardname 1>",
+     ["<website cardname 2>"]	= "<MA cardname 2>"
+  }
+ }</nowiki>
+</code>
+
+where 
+
+* <setid> is the id of the set defined by MA. See file \Database\Sets.txt.
+* <website cardname> is the name of the card as defined by the website
+* <MA cardname> if the name of the corresponding card defined by MA
+
+Note:
+* A set can have more than one namereplacement mapping (cardname 1, cardname 2, ...)
+* site.namereplacement can have more then one set replacement definition
+=====using namereplace instead of variant/foiltweak tables=====
+If you want to make use of the default variant and foiltweak tables defined in LHpi.Data, but the card names of the site do not match the expected names (and are not automatically converted to them by LHpi.BuildCardData), you can also use namerepalcement for this.<br>
+Example:<br/>
+
+<code>
+ <nowiki>
+ {
+  [786] = { -- Avacyn Restored
+   ["Spirit Token (White)"]				= "Spirit (3)",
+   ["Spirit Token (Blue)"]				= "Spirit (4)",
+   ["Human Token (White)"]				= "Human (2)",
+   ["Human Token (Red)"]				= "Human (7)",
+  },
+ }</nowiki>
+</code>
+
+====(Optional)Variants====
+
+Some sets have variants of the same card, for example basic lands.<br/>
+The variants property defines all of this and does mapping between the name of card given by the website and its variant in MA.
+
+The property to adapt in sitescript file is:	<tt>site.variants</tt>
+
+The format is:
+<code><nowiki>
+ {
+   [<setid>] = {
+    ["<website cardname>"] = { "<MA cardname>", { <variants name> } },
+    ...
+   }
+ ...
+ }</nowiki>
+</code>
+
+where 
+
+* <setid> is the id of the set defined by MA. See file \Database\Sets.txt.
+* <website cardname> is the variant name of the card as defined by the website
+* <MA cardname> if the name of the corresponding card defined by MA
+* <variants name> if the array of variants name as defined by MA. Usually, it is { 1, 2, 3, 4 }; see the default variant tables in LHpi.Data for other examples.
+
+Example:
+<code>
+ [800] = { -- Theros
+   ["Plains"] 						= { "Plains"	, { 1    , 2    , 3    , 4     } },
+   ["Island"] 						= { "Island" 	, { 1    , 2    , 3    , 4     } },
+   ["Swamp 1"] 						= { "Swamp"		, { 1    , false, false, false } },
+   ["Swamp 2"] 						= { "Swamp"		, { false, 2    , false, false } },
+   ["Swamp 3"] 						= { "Swamp"		, { false, false, 3    , false } },
+   ["Swamp 4"] 						= { "Swamp"		, { false, false, false, 4     } },
+   ["Mountain"] 					= { "Mountain"	, { 1    , 2    , 3    , 4     } },
+   ["Forest"] 						= { "Forest" 	, { 1    , 2    , 3    , 4     } }
+ }
+</code>
+
+Website uses the same name for Plains, Island, Mountain and Forest variants. So the price for these card will be identical for all variants.<br/>
+However, website does distinction between variant of Swamp. So "Swamp 1" is mapped to the variant 1 of Swamp in MA, "Swamp 2 is mapped to variant 2, ...
+
+Please note that defining a set variant in sitescript will override all default variants defined by LHpi library for that set. So make sure to define all variants in your sitescript to avoid losing variants previously defined by LHpi. Alternatively, use a namereplacement table to set the card names to the ones expected by the default variant table.
+In sets that have a collector number, the default variant table defined by LHpi.Data uses "'''name''' ('''collector number''')" to denote variants, and "'''name'''" for "all variants". Sets without collector numbers use the variant name instead of the collector number.
+
+====(Optional)Foil tweak====
+
+This is similar to the namereplace table and can be used to set specific cards to foil or nonfoil explicitely.
+
+The property to adapt in sitescript file is:	site.foiltweak
+
+The format is:
+
+<code><nowiki>{
+[<setid>] = { 
+	["<website cardname 1>"]	= { foil = <foilstatus> },
+	["<website cardname 2>"]	= { foil = <foilstatus> }
+...
+}
+...
+}
+</nowiki></code>
+where 
+
+- <setid> is the id of the set defined by MA. See file \Database\Sets.txt.
+- <website cardname> is the name of the card as defined by the website
+- <foilstatus> is a boolean, true for foil.
+
+Please note that defining a set foiltweak in the sitescript will override all default foiltweaks defined by LHpi library for that set. So make sure to define all foiltweaks in your sitescript to avoid losing filtweaks previously defined by LHpi. Alternatively, use a namereplacement table to set the card names to the ones expected by the default foiltweak table.
+
+====(Optional)Expected results====
+
+When you know exactly the information that LHpi should retrieve from website, you can define these expectation in this property. 
+
+The property to adapt in sitescript file is: 	<tt>site.expected</tt>
+
+The format is:
+
+<code>
+ {
+   [<setid>] = {  pset={ <nb of card in ENG>, [<langid>]=<nb of card in lang> }, failed={ <nb of failed in ENG>, [<langid>]=<nb of failed in lang> }, 
+                  dropped=<nb of dropped card>, namereplaced=<nb of card with name replacement>, foiltweaked=<nb of card foil tweaked> },
+ }
+</code>
+
+where
+
+* <setid> is the id of the set defined by MA. See file \Database\Sets.txt.
+* <nb of card in ENG> is the total number of card expected for the set, in English language.
+* <langid> is the id of a language as defined by MA. See file \Database\Languages.txt.
+* <nb of card in lang> is the total umber of card expected for the set, in the corresponding language.
+* <nb of failed in ENG> is the total number of card that LHpi failed to import for the set, in English language.
+* <nb of failed in lang> is the total number of card that LHpi failed to import for the set, in the corresponding language.
+* <nb of dropped card> is the total number of card that LHpi dropped for the set, all languages combined.
+* <nb of card with name replacement> is the total number of card that LHpi did name replacement, all languages combined.
+* <nb of card foil tweaked> is the total number of card that LHpi did a foiltweak replacement, all languages combined.
+
+<br/>If undefined, for each set that is both supported by the sitescript and chosen to be imported, pset[<langid>] defaults to the number of cards in the set (as supplied by <tt>LHpi.Data.sets[<setid>].cardcount</tt>) for each (supported & selected) language, while <tt>failed[<langid>]</tt>, <tt>dropped</tt>,<tt>namereplaced</tt> and <tt>foiltweaked</tt> each default to 0.
+Thus, you only need to define expectations for sets where anything special happens.
+
+Example:
+<code>
+ {
+   [788] = { pset={ 249+11, nil, 249 }, failed={ 0, nil, 11 }, dropped=0, namereplaced=1, foiltweaked=0 }, -- M2013
+ }
+</code>
+Please not that expectation occurs only if LHpi property '''CHECKEXPECTED''' is set to <tt>true</tt>.
+=====EXPECTTOKENS=====
+site.expected.EXPECTTOKENS option can be used to control how expectation works for sets without explicitly set expectation:
+<br/><code> #boolean EXPECTTOKENS	false:pset defaults to regular, true:pset defauts to regular+tokens</code>
+
+====LHpi properties====
+
+You can customize how LHpi works or reports events during price imports with the help of Global properties.
+
+* VERBOSE
+
+Controls the amount of feedback/logging done by LHpi.<br/>
+If unset, defaults to true.
+
+* LOGDROPS
+
+Controls whether dropped cards are logged or not by LHpi.<br/>
+If unset, defaults to false.
+
+* LOGNAMEREPLACE
+
+Controls whether name replacement of cards are logged or not by LHpi.<br/>
+If unset, defaults to false.
+
+* LOGFOILTWEAK '''new in 2.7'''
+
+Controls whether changing the foil status of cards are logged or not by LHpi.<br/>
+If unset, defaults to false.
+
+* CHECKEXPECTED
+
+Controls whether to check the counter of import done by LHpi agains the expected counter values defined in <code>site.expected</code>. With library 2.8 and above, this only checks set and failed prices. See Site Expected results property and STRICTCHECKEXPECTED below.<br/>
+If unset, defaults to true.
+
+* STRICTCHECKEXPECTED '''new in 2.7'''
+
+Controls whether to complain if drop,namereplace or foiltweak count differs. Only has any effect if CHECKEXPECTED==true. See Site Expected results property.<br/>
+If unset, defaults to false.
+
+* DEBUG
+When true, LHpi logs everything (which is more than VERBOSE, but still honouring LOGDROPS and LOGNAMEREPLACE) and exits in case of errors (instead of continuing as best as it can).
+If unset, defaults to false.
+
+* DEBUGSKIPFOUND
+
+While DEBUG, do not log raw html data found by site.regex. Set this to true and check the log to debug your site.regex.
+If unset, defaults to true.
+
+* DEBUGVARIANTS
+
+Enable DEBUG when card variants are encountered by LHpi. This is proably only needed true if you change the library code that deals with variants.<br/>
+If unset, defaults to false.
+
+* OFFLINE
+
+Control whether LHpi reads source data from local directory ('savepath' property) only or from site url. Use this to import old data or to save yourself and the website some bandwith while debugging your sitescript.<br/>
+If unset, defaults to false.
+
+* SAVEHTML
+
+Controls whether LHpi saves a local copy of each source html to 'savepath' when not in OFFLINE mode.<br/>
+When property is activated, the local directory where LHpi saves data must be writable, otherwise LHpi will just disable SAVEHTML and note it in the log.<br/>
+If unset, defaults to false.
+
+* SAVELOG
+
+Control whether LHpi logs to separate logfile (true) or in Magic Album.log (false).<br/>
+If unset, defaults to true.
+
+* SAVETABLE
+
+Control whether LHpi saves prices into a file (in 'savepath') before importing to Magic Album. As with SAVEHTML, this will be set to false if savepath is not writeable.<br/>
+If unset, defaults to false.
+
+* savepath
+
+Name of existing directory, in \Prices folder, where LHpi read (OFFLINE) or write (SAVEHTML) source html data when corresponding properties are activated.<br/>
+If this property is not set and LHpi is required to use it (OFFLINE or SAVEHTML activated), then the savepath defined by LHpi corresponds to the scriptname without versioning information.
+
+===Functions===
+
+====ImportPrice (  importfoil,  importlangs,  importsets  )====
+
+This is the main function, called by Magic Album, to import prices of selected sets for selected languages, in regular or foil quality.<br/>
+It is the entry point where LHpi load it's library LUA file and starts the import magic.
+
+Do not change anything in this function and keep it like this.
+
+====site.BuildUrl (  setid,  langid,  frucid,  offline  )====
+
+The purpose of this function is to construct the url where LHpi will retrieve HTML data containing card information about a specific set, language and FRUC.
+
+Parameters of the function are:
+
+* setid:	ID of the set for which url is constructed
+* langid:	ID of the language to import
+* frucid:	ID of the FRUC to import
+* offline:	Boolean flag indicating whether the source are retrieved from local file or from internet
+
+The content of the function already presents in sitescript.lua file can be used as an example.<br/>
+What you should adapt for your website is following properties in the function:
+
+: <code>site.domain = 'www.example.com/prices/'</code>	
+: The domain of the website where you find the prices. Without 'http' prefix.
+
+
+: <code>site.file = 'set.php?context=magic'</code>
+: The name of the file appended to the domain, and containing HTML parameters which do not concern the setid, langid nor fruc.
+	
+
+: <code>site.setprefix = "&set="</code>
+:The HTML parameter defining the ID of the set on the website.<br/>The corresponding value of the parameter is retrieved from "site.sets[<setid>].url" property.
+
+	
+: <code>site.langprefix = "&lang="</code>	
+: The HTML parameter defining the ID of the language on the website.<br/>The corresponding value of the parameter is retrieved from "site.langs[<langid>].url" property.
+
+	
+: <code>site.frucprefix = "&fruc="</code>
+: The HTML parameter defining the ID of the FRUC on the website.<br/>The corresponding value of the parameter is retrieved from "site.frucs[<frucid>]" property.
+
+	
+: <code>site.suffix = ""</code>
+: Any url suffix that can be appended to the url.
+
+
+The next property in the function you can adapt, if for example some previous parameters are not required, is the <tt>'''url'''</tt>.<br/>
+In the function, you will find a line like:
+
+: <code>local url = site.domain .. site.file .. site.setprefix .. site.sets[setid].url .. site.langprefix .. site.langs[langid].url .. site.frucprefix .. site.frucs[frucid]</code>
+: which use all properties previously defined in the function.<br/>If some of them are not needed by the website, just remove it from the <tt>url</tt> construction.
+
+The rest of the function should not be adapted, except if you know what you're doing.
+=====2.8=====
+site.BuildUrl can potentially return the same url twice, with different url.foilonly; only the first of the duplicate urls is kept. Therefore, LHpi does not query url.foilonly anymore. If you know this does not happen with your site.BuildUrl and want to query url.foilonly, do it in site.ParseHtmlData.
+
+====site.ParseHtmlData (  foundstring,  urldetails  )====
+
+The purpose of the function is to extract card information (name, price, ...) from each entry found by the site.regex property in the HTML page.
+
+Parameters of the function are:
+
+; foundstring
+: The card entry found by <tt>site.regex</tt> in the source HTML page. This entry should match information of ONE card.<br/>If you know that the HTML page has more than one entry for the same card (e.g. one entry for regular price, one entry for foil price),<br/>process only ONE entry at the time and set the correct properties on the <tt>card</tt> returned by the function.
+
+; urldetails
+: Table containing some information about the currently processed url. <br/>The information is the following:  <code>{ foilonly = #boolean , isfile = #boolean , setid = #number, langid = #number, frucid = #number }</code><br/>Properties <tt>foilonly</tt> and <tt>isfile</tt> are the ones coming from the <tt>site.BuildUrl</tt> function.
+
+You must first retrieve card information from <tt>foundstring</tt> with the help of regular expressions or other mechanisms that you know.<br/>
+For example:
+
+<code>
+ <nowiki>
+ local _start,_end,name = string.find(foundstring, 'cardname=\"(.-)\"' )
+ local _start,_end,price = string.find( foundstring , 'class="price">([%d.,]+) .-</span>' )</nowiki>
+</code>
+The price retrieved from html source can actually contain decimal separators. In order for LHpi to support different kinds of separators ( 1.000,00 vs 1,000.00 ), it is important that the price you return does not contain these.<br/>
+For example, if the price on the page is '12.50' or '12,50' (12 euros/dollars/<anything else> and 50 cents), the price you should return is '1250'.<br/>
+With that price, LHpi will divide it by 100 in order to retrieve the cent amount. To make sure LHpi does not attempt to divide a string, please do explicit <code>tonumber</code> conversion.<br/>
+A good way to do that is:
+
+<code>
+ <nowiki>
+  price = string.gsub( price , "[,.]" , "" ) -- Remove all ',' or '.' characters from the price
+  price = tonumber( price ) -- Convert price String to Number
+ </nowiki>
+</code>
+	
+Once you're done, you can construct the actual <tt>newCard</tt> returned by the function with following code:
+<code>
+ <nowiki>
+  local newCard = { names = { [urldetails.langid] = name }, price = { [urldetails.langid] = price } [, <any other properties you can found>] }
+ </nowiki>
+</code>
+names and price can contain entries for multiple languages, but the langids that do contain information should match.
+Note the marker <tt><any other properties you can found></tt>. In the <tt>newCard</tt> table, you can define some properties in addition to required <tt>names</tt> and <tt>price</tt>.<br/>
+These informations can afterward be used in next function '''<tt>site.BCDpluginPre</tt>''' and/or '''<tt>site.BCDpluginPost</tt>''' (explained later).
+
+These extra properties must be defined in a table and added to <tt>newCard</tt> under '''<tt>pluginData</tt>''' property.<br/>
+Example:  
+<code>
+ <nowiki>
+  local newCard = { names = { ... }, price = { ... } , pluginData={ propA=ValueA, propB=ValueB ... }] }
+ </nowiki>
+</code>
+In addition to required <tt>names</tt> and <tt>price</tt> properties, you can also set specific properties on the card that will be handled by LHpi. For each of these properties, if they are already defined by site.ParseHtmlData, LHpi.BuildCardData will keep the predefined values and skip the automatic detection and processing.:
+
+; name
+: this, together with the setid, is the primary key (unique identifier) of the card, as far as LHpi is concerned. Multiple entries of the same card will be collected, for example to associate different foilage, language and/or variant prices. This name must be identical to the oracle name in MA (alternatively, the localized name if the LHpi card dataset is for only one language), or through namereplacement and other processing by BuildCardData, become such (this means that for example "Forest Nr. 247 (fOiL)" would still be valid at this point). See LHpi.BuildCardData source for details or experiment. You can also set this to something unique to make sure this card triggers your namereplace,variant or foiltweak tables.
+; foil
+: a boolean that if true marks the card, and its price, as being foiled. It's probably a good idea to set this explicitely if you don't have distinct foil and nonfoil frucs. Still subject to change by foiltweak table entries.
+; drop
+: a boolean value that if true results in LHpi skipping further processing of this card entry and not adding a price to be imported. Compare also different methods of [[#dropping cards]]
+; lang
+: a table of the form <code>{ <langid>=<langabbr>, ... }</code>, where langid is a number corresponding to site.langs, and langabbr the matching abbreviation. It should only be set if the card contains a price for this language (in the price fieldd, which will then be applied to all languages set here, or predefined by regprice/foilprice below).
+; variant
+: to override the variants defined in 'site.variants' for the setid and cardname.
+; regprice
+: a table of the form <code>{ <langid>=<price>, ... }</code>, where langid again corresponds to site.langs, and price is the price of the nonfoil card in this language. If variants is defined, <price> instead is a subtable of the form <code>{ <varname>=<price>, ... }</code>, where varname is a string that must correspond to a variant name that exists for this card.
+; foilprice
+: a table of the form <code>{ <langid>=<price>, ... }</code>, where langid again corresponds to site.langs, and price is the price of the foil card in this language. If variants is defined, <price> instead is a subtable of the form <code>{ <varname>=<price>, ... }</code>, where varname is a string that must correspond to a variant name that exists for this card.
+=====2.8 and above=====
+To allow returning multiple cards, GetSourceData now expects to be returned a table of cards. In most cases, you'll parse a single card from each foundstring, so just wrap your parsed card in a container table:<br>
+<code>
+ <nowiki>
+ local newCard
+ ...
+ return { newCard }
+ </nowiki>
+</code>
+=====preferred way to supply data=====
+#Preferrably, BuildCardData can process all needed information from newCard={ names,price } and by querying site.sets and site.frucs.
+#The next best solution, if there are frucs that are mixed foil and nonfoil, is to also set newCard.foil, but otherwise still let BuildCardData, well, build the card data :-)
+#If the library does not do all that is needed, help out in the two BuildCardData plugin functions. You can supply additional data to them that LHpi.BuildCardData will not touch via card.pluginData .
+#Setting other card properties will make BuildCardData skip its processing for this property, so it is probably only a last ditch solution.
+#Once you set newCard.variants or either newCard.regprice or newCard.foilprice for cards with variants, you will probably need to enable DEBUGVARIANTS and read the logfile to see why it fails ;-) .
+=====how BuildCardDate uses newCard=====
+*how the card language is actually set:
+*#newCard.names is checked, in ascending langid order, and the first encountered nonempty name is used as card.name .
+*#newCard.names is checked for nonempty names and, if the corresponding language is set to be imported, card.lang is set.
+*#for each card.lang that is not nil/false, either card.regprice[langid] or card.foilprice[langid] is set to newCard.price .
+*how the card foilage is actually set:
+*#LHpi.Data.sets[setid].foilonly is queried
+*#card.name is checked for occurance of a "foil" substring
+*TODO should other details of BuildCardData processing be given here, or does the LHpi library's source suffice for the more interested developers?
+
+====(Optional)site.BCDpluginPre ( card , setid )====
+
+Function for special cases card data manipulation.<br/>
+Ties into <tt>LHpi.buildCardData</tt> to make changes that are specific to one site and thus don't belong into the library.<br/>
+This Plugin function is called before most of LHpi's <tt>BuildCardData</tt> processing. Already processed and set are card.name, card.lang, and cards that were already set as drop==true have been dropped before this point.
+
+Parameters:
+
+; card
+: The card, resulting from parseHtmlData and initialized by LHpi after the function call, currently processed.
+: a table <tt>{ name=<name>, pluginData=<customdata>, names={ [<langid>]=<localname>, ...}, lang={ [<langid>]=<langabbr>, ...}, <ParseHtmlData-presets> }</tt>
+; setid
+: ID of the set currently processed.
+
+; Return <tt>card</tt>	
+: modified card for futher processing.
+
+An example of such function is to replace characters in all card name by an alternative.<br/>
+For example:
+
+<code>
+ <nowiki>
+  card.name = string.gsub( card.name , "AE" , "Æ")
+  card.name = string.gsub( card.name , "Ae" , "Æ") 
+ </nowiki>
+</code>
+=====2.8 and above=====
+BCDpluginPre and BCDpluginPost now have two additional parameters passed from LHpi.BuildCardData: importfoil and importlangs. There's currently no example where they are used, but as the information is accessible to LHpi.CardData, it should probably be available to the plugins as well.
+
+====(Optional)site.BCDpluginPost( card , setid )====
+
+Function for special cases card data manipulation.<br/>
+Ties into <tt>LHpi.buildCardData</tt> to make changes that are specific to one site and thus don't belong into the library.<br/>
+This Plugin function is called after LHpi's <tt>BuildCardData</tt> processing (and probably not needed). At this point, LHpi.BuildCardData has finished its processing; card.foil and card.pluginData are still present for use, but won't be needed by LHpi anymore.
+
+Parameters:
+
+; card
+: The card currently processed by LHpi.
+: TODO: complete card able anatomy
+; setid
+: ID of the set currently processed.
+
+; Return <tt>card</tt>
+: modified card for further processing.
+
+===Hints for developing===
+Moved here (from the main page) until they find a proper place in the howto. Feel free to reorder or move them.<br>
+====just try to run it====
+The library will exit with an error if any non-optional sitescript properties or functions are undefined, to inform you what absolutely needs to be defined.<br/>
+====LHpi helper functions====
+Besides the functions outlined below at [[How-To_sitescriptTemplate#procedure of function calls]], LHpi also defines a few helper functions that are used throughout and can also be used in your sitescript.
+=====GuessFileEncoding=====
+<code>LHpi.GuessFileEncoding(string)</code><br/>
+Checks the beginning of the string parameter for unicode Byte Order Marks ("BOM") and returns the most probable character encoding. If none of the three unicode BOMs is found, "cp1252" will be guessed. Was planned to be used for autodetecting site.encoding property, but did not seem reliable enough.
+<br/>Returns, as string, one of "cp1252" , "utf8" , "utf16-le" (little endian), "utf16-be" (big endian)
+=====ByteRep=====
+<code>LHpi.ByteRep(string)</code><br/>
+Lua does not really care about character encoding, but treats every string as a sequence of bytes. This function seperates the string parameter into single bytes and returns a string with a sequence of the byte's decimal representation:
+<code>
+ <nowiki>
+ mystring = "Zwölffüßler"
+ print(LHpi.ByteRep(mystring))
+ [Z]=90 [w]=119 [�]=195 [�]=182 [l]=108 [f]=102 [f]=102 [�]=195 [�]=188 [�]=195 [�]=159 [l]=108 [e]=101 [r]=114 </nowiki></code>
+When you need to replace characters in the strings you parsed from the website and are unsure what to search for, you can use the decimal byte representation for string replacements:
+<code>
+ <nowiki>
+ mystring = string.gsub( mystring, "\195\182" , "ö" )
+ mystring = string.gsub( mystring, "\195\188" , "ü" )
+ mystring = string.gsub( mystring, "\195\159" , "ß" )</nowiki></code>
+=====Toutf8=====
+<code>LHpi.Toutf8(string,encoding)</code><br/>
+In theory, returns the parameter string, with special characters converted to utf-8.<br/>
+<br/>Parameter encoding is optional and if unset will default to site.encoding.
+<br/>if encoding == "utf-8" or encoding == "utf8" or encoding == "unicode" then string is returned unchanged.
+<br/>elseif encoding == "cp1252" or encoding == "ansi" then string is subjected to a number of gsubs. Characters are added to this function as needed, so not every possible character is converted yet.
+<br>When called with other parameters, it will throw an error.
+=====Log=====
+<code>LHpi.Log(string,level,file,append)</code><br/>
+Parameter level is optional and if unset will default to 0; 1 is VERBOSE, 2 is DEBUG.
+<br/>Parameter file is optional and if unset will default to "Prices\\" .. string.gsub( scriptname , "lua$" , "log" ). If SAVELOG==false, then ma.Log(string) will be called instead.
+<br/>Parameter append is optional and if unset will default to 1; 0 is overwrite and will delete the logfile's previous contents.
+=====Length=====
+<code>LHpi.Length(table)</code><br/>
+non-recursively counts table rows and returns the (first level) table length as number. For non-tables, length(nil)=length(false)=nil, otherwise 1.  In lua, length of a table t is defined to be any integer index n such that t[n] is not nil and t[n+1] is nil, which does not play nice with the table indices LHpi uses.
+=====Tostring=====
+<code>LHpi.Tostring(table)</code><br/>
+The native lua tostring function returns an internal identifier if called with a table. This functiion recursively returns a string representation of the table, in the form <code>{ [key]='value';... ;}</code>
+=====Logtable=====
+<code>LHpi.Logtable(table,name,loglevel)</code><br/>
+For large tables, LHpi.Tostring crashes ma. recursion too deep / out of memory ? This function LHpi.Tostring's and logs each row seperately.
+<br/>Parameter name is optional and if unset will default to tostring(table).
+<br/>Parameter loglevel is optional and if unset will default to 0.
+====multiple copies ot the same script====
+You can have multiple versions of the same script, but you need to make sure <code>scriptname = "LHpi.SCRIPTNAME-v" .. libver .. ".x.lua"</code> (somewhere around line 75, depending on sitescript) is changed to reflect the script's filename. Otherwise, they will overwrite each other's logfile and html raw data. Of course, this could be intentional, so keep the name identical if that is what you want.
+====procedure of function calls====
+some less important calls are not mentioned. They probably should and probably will.
+ <nowiki>MA calls sitescript.ImportPrice
+sitescript.Importprice loads the library, then calls LHpi.DoImport
+LHpi.DoImport calls LHpi.ProcessUserParams and initializes
+LHpi.DoImport calls LHpi.ListSources
+ LHpi.ListSources loops through sets,langs,frucs and calls site.BuildUrl
+LHpi.DoImport calls LHpi.MainImportCycle
+LHpi.MainImportCycle loops through sets,urls and calls LHpi.GetSourceData
+ LHpi.GetSourceData loops through matches with site.regex and calls site.ParseHtmlData, then returns sourceTable
+LHpi.MainImportCycle loops through sourceTable and calls LHpi.BuildCardData
+ LHpi.BuildCardData calls site.BCDpluginPre and site.BCDpluginPost and returns newcard
+ LHpi.MainImportCycle calls LHpi.FillCardsetTable with newcard
+  LHpi.FillCardsetTable might call LHpi.MergeCardrows
+  then adds a (merged) row to cardsetTable
+(optionally) LHpi.MainImportCycle calls LHpi.SaveCSV once cardsetTable is complete
+LHpi.MainImportCycle loops through cardsetTable and calls LHpi.SetPrice</nowiki>
+====dropping cards====
+Reasons for and ways to make LHpi.BuildCardData drop cards:
+* if LHpi.BuildCardData sets card.drop=true, LHpi.FillCardsetTable is skipped.
+* site.ParseHtmlData can set card.drop, which will be preserved by LHpi.BuildCardData.
+* if not card.name then card.drop = true
+* if string.find( card.name , "%(DROP[ %a]*%)" ) then card.drop = true
+** An example is in LHpi.magicuniverseDE.lua's site.BCDpluginPre. The advantage of changing the name above setting card.drop directly is that you can also add a reason for dropping to the name, which will be loggged if LOGDROPS=true.
+====non-trivial tables====
+To prevent difficult-to-find syntax errors, you might want to end each table field with a <code>,</code> or <code>;</code>, even if it is not necessarry for the ''last'' entry.
+====updating sitescripts to new library/template version====
+Obviously, if you intend to actually run your sitescript, you need to download the corresponding library and data file versions.<br/>
+Unless otherwise noted, each library version (starting with 2.7) should be compatible with each data file version. You can for example change dataver upon release of a new card set by WotC, and keep libver at a library that youand your sitescript are comfortable with.<br/>
+It is usually a ''very good idea'' to use the '''ImportPrice''' fuction from the template version that matches the library version, and only incorporate changes you might have made to it into the the new function definition.<br/>
+If you want to be nice to others that might want to use your sitescript as example or as a starting point for their own sitescript, you could verify that the luadoc still comments match the ones in the template that uses the same library version.
+=====2.6 to 2.7=====
+* The new control option <tt>LOGFOILTWEAK</tt> should be added below <tt>LOGNAMEREPLACE</tt>.
+* The new configuration <tt>dataver</tt> should be added below <tt>libver</tt>.
+* the filename and <tt>scriptname</tt> configuration should include the data file version as infix between library version and sitescript revision number.
+* ImportPrice was changed to load the library from "Prices\lib" instead of "Prices". If you made no changes to this function, just copy the new version from the updated template to your sitescript. It was written in a way that still works, even if you decide to keep the library in "Prices", so you don't strictly ''need'' to create a "\lib" subfolder for the library and data file, though future documentation will assume you did.
+* due to a high amount of improved (luadoc) comments, it's probably best to either copy&paste all of your functions and tables into a copy of the new template file, or copy&paste all (luadoc) comments from the new template file into your sitescript.
+=====2.7 to 2.8=====
+* You need to rewrite site.frucs to match the new format. The examples at [[How-To_sitescriptTemplate#site.frucs]] should get you started.
+** If you used site.fruc in your functions, they will need to be adapted, of course.
+* site.BuildUrl luadoc and example was changed slightly, but no change is strictly required to your existing implementation.
+** note that url.foilonly is not queried by LHpi anymore.
+* site.BCDpluginPre and siteBCDpluginPost both are passed two additional parameters now. To be able to take advantage of the new parameters, you need to change the function definition. If you do, please update the luadoc as well. I ''think'' the way lua works makes this change not strictly necessarry if you don't need access to the new parameters' contents.
+* site.ParseHtmlData now can return multiple cards. This means that you need to wrap the returned card(s) in a container table.
+* new option STRICTEXPECTED should be added above DEBUG
+* site.langs can be shortened, static fields can be read from LHpi.Data.languages[langid]
+====releasing your sitescript====
+Here's a few non-obligatory suggestions if you want to share your (more or less?) finished sitescript.
+=====copyright information=====
+I suggest to change the beginning comments to something like
+<code>
+ <nowiki>
+ --[[- LHpi.<sitescript name>
+ LHpi sitescript to parse data and import prices from <website name and/or url>
+ 
+ Based on LHpi.sitescriptTemplate-v<version numbers> by LordHelmchen,
+ Inspired by and loosely based on "MTG Mint Card.lua" by Goblin Hero, Stromglad1 and "Import Prices.lua" by woogerboy21;
+ everything else Copyright (C) 2014-<this year> by <your name here>.
+ <add your prefered contact method here>
+
+ @module LHpi
+ @author <your name>
+ @copyright 2014-<this year> <your name> except parts by LordHelmchen, Goblin Hero, Stromglad1 or woogerboy21
+ @release...<keep the gpl notes intact>
+ </nowiki>
+</code>
+=====upload the file somewhere=====
+If you don't want to create a seperate thread for your script(s), feel free to reply to [http://www.slightlymagic.net/forum/viewforum.php?f=32 LHpi's release thread] and attach your script there.
+=====add your script to LHpi wiki page=====
+How about adding a section for your sitescript to [[LHpi#Sitescripts]] ?<br/>
+It should start with a file information box that includes
+#a download link
+#the sitescript revision and required library and data file version numbers
+#*those numbers can be combined to form one full version number in the format <nowiki><library version>.<data file version>.<sitescript revision></nowiki>
+#*the date of the latest update to the script
+A link to the website and a short description would also be nice.<br/>
+If you want, you can keep a changelog in [[LHpi#version_history]]
