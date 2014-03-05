@@ -576,13 +576,12 @@ function main()
 	CHECKEXPECTED = true
 	STRICTCHECKEXPECTED = true
 	DEBUG = true
---	DEBUGSKIPFOUND = false
+	DEBUGSKIPFOUND = false
 	DEBUGVARIANTS = false
 	OFFLINE = true
 	SAVELOG = true
 	SAVEHTML = false
 	SAVETABLE=false
---	SAVETABLE=true
 	print("dummy says: sitescript dofile'd")
 
 --	LHpi.LoadData(2)
@@ -591,8 +590,8 @@ function main()
 	local fakeimportlangs = { [1] = "English", [3]  = "German" , [5] = "Italian" ,[9] = "Simplified Chinese"}
 --	local fakeimportlangs = alllangs
 	local fakeimportsets = { [0] = "debugset"; }
-	local fakeimportsets = { [800] = "some set"; }
---	local fakeimportsets = { [784]="Dark Ascension";[782]="Innistrad";[786]="Avacyn Restored";}
+	local fakeimportsets = { [220] = "some set"; }
+--	local fakeimportsets = { [220]="foo";[800]="bar";[0]="baz";}
 --	local fakeimportsets = coresets
 --	local fakeimportsets = dummy.mergetables ( coresets, expansionsets, specialsets, promosets )
 

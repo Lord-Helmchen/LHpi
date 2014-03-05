@@ -32,6 +32,7 @@ v2
 (all changes transparent to sitescripts)
 	minor improvements to some special sets' variant
 	misc. small improvements to code and/or comments
+	added 636:Salvat 2011
 ]]
 
 --TODO add all promo sets (cardcount,variants,foiltweak) to LHpi.Data
@@ -2809,7 +2810,39 @@ SpecialSets = nil,
 ["Forest (383)"]				= { "Forest"	, { false, false, 3     } },
 	},
 },
-[635] = { name="Magic Encyclopedia",
+[636] = { name="Salvat 2011",
+	foil="n",
+	cardcount={ reg=224, tok=0, nontr=0, overs=0 },
+	lang={ [7]=true },
+	variants={
+["Plains"] 						= { "Plains"	, { 1    , 2    , 3    , 4     } },
+["Island"] 						= { "Island" 	, { 1    , 2    , 3    , 4     } },
+["Swamp"] 						= { "Swamp"		, { 1    , 2    , 3    , 4     } },
+["Mountain"] 					= { "Mountain"	, { 1    , 2    , 3    , 4     } },
+["Forest"] 						= { "Forest" 	, { 1    , 2    , 3    , 4     } },
+["Plains (205)"]				= { "Plains"	, { 1    , false ,false, false } }, 
+["Plains (206)"]				= { "Plains"	, { false, 2    , false, false } },
+["Plains (207)"]				= { "Plains"	, { false, false, 3    , false } },
+["Plains (208)"]				= { "Plains"	, { false, false, false, 4     } },
+["Island (209)"]				= { "Island"	, { 1    , false, false, false } },
+["Island (210)"]				= { "Island"	, { false, 2    , false, false } },
+["Island (211)"]				= { "Island"	, { false, false, 3    , false } },
+["Island (212)"]				= { "Island"	, { false, false, false, 4     } },
+["Swamp (213)"]					= { "Swamp"		, { 1    , false, false, false } },
+["Swamp (214)"]					= { "Swamp"		, { false, 2    , false, false } },
+["Swamp (215)"]					= { "Swamp"		, { false, false, 3    , false } },
+["Swamp (216)"]					= { "Swamp"		, { false, false, false, 4     } },
+["Mountain (217)"]				= { "Mountain"	, { 1    , false, false, false } },
+["Mountain (218)"]				= { "Mountain"	, { false, 2    , false, false } },
+["Mountain (219)"]				= { "Mountain"	, { false, false, 3    , false } },
+["Mountain (220)"]				= { "Mountain"	, { false, false, false, 4     } },
+["Forest (221)"]				= { "Forest"	, { 1    , false, false, false } },
+["Forest (222)"]				= { "Forest"	, { false, 2    , false, false } },
+["Forest (223)"]				= { "Forest"	, { false, false, 3    , false } },
+["Forest (224)"]				= { "Forest"	, { false, false, false, 4     } }
+	},
+},
+[635] = { name="Salvat Magic Encyclopedia",
 	foil="n",
 	cardcount={ reg=600, tok=0, nontr=0, overs=0 }, 
 --	variants={

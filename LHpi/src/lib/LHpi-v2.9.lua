@@ -24,8 +24,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
---  generalizazion and improvement tasks
-
 --[[ CHANGES
 2.9
 (all changes so far are transparent to sitescripts)
@@ -40,8 +38,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	misc. small improvements to code and/or comments
 	fixed loading of data file from deprecated "Prices" location
 	fixed SAVETABLE folder writable check
+	fixed logging resultregex finds
 ]]
 
+--TODO merge with trunk
+--TODO add abs(expected-retval) to failcount
 
 local LHpi = {}
 ---	LHpi library version
@@ -103,7 +104,7 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 	if DEBUG and ((not site.regex) or site.regex == "" ) then error("undefined site.regex!") end
 	if not site.regex then site.regex = "" end
 	if not scriptname then
-	--- should always be equal to the sitescript filename !
+	--- should always be similar to the sitescript filename !
 	-- @field [parent=#global] #string scriptname
 		local _s,_e,myname = string.find( ( ma.GetFile( "Magic Album.log" ) or "" ) , "Starting Lua script .-([^\\]+%.lua)$" )
 		if myname and myname ~= "" then
@@ -324,15 +325,18 @@ function LHpi.MainImportCycle( sourcelist , totalhtmlnum , importfoil , importla
 									LHpi.Log(string.format("%s! No row sent to cardsetTable.",errormsg), 1 )
 								end
 								if DEBUG then
-									error(string.format("Set [%i] %s - %s:%s",sid,LHpi.Data.sets[sid].name,newcard.name,errormsg))
+									error(string.format("Set [%i] %s - %s:%s\t%s",sid,LHpi.Data.sets[sid].name,newcard.name,errormsg,LHpi.Tostring(filledRow)) , 2 )
 								end
 							elseif errnum > 0 then
 								if VERBOSE then
-									LHpi.Log(string.format("sent %s to cardsetTable:%s",errormsg,LHpi.Tostring(filledRow) ), 1 )
+									LHpi.Log(string.format("sent %s (%s) to cardsetTable",errormsg,newcard.name ), 1 )
+								end
+								if DEBUG then
+									LHpi.Log(string.format("Set [%i] %s - %s:%s\t%s",sid,LHpi.Data.sets[sid].name,newcard.name,errormsg,LHpi.Tostring(filledRow)), 2 )
 								end
 							else
 								if DEBUG then
-									LHpi.Log(string.format("sent %s to cardsetTable:%s",errormsg,LHpi.Tostring(filledRow) ), 2 )
+									LHpi.Log(string.format("sent %s (%s) to cardsetTable",errormsg,newcard.name ), 2 )
 								end
 							end--if errnum
 						end -- if newcard.drop
@@ -691,7 +695,7 @@ function LHpi.GetSourceData( url , details ) --
 		ma.PutFile( savepath .. url , htmldata )
 	end -- if SAVEHTML
 	
-	if VERBOSE and site.resultegex then
+	if VERBOSE and site.resultregex then
 		local _s,_e,results = string.find( htmldata, site.resultregex )
 		LHpi.Log( "html source data claims to contain " .. tostring(results) .. " cards." )
 	end
@@ -1185,9 +1189,9 @@ function LHpi.MergeCardrows ( name, langs,  oldRow , newRow , variants )
 							conflictcount=conflictcount+1
 							mergedRow.regprice[lid] = (oldRow.regprice[lid] + newRow.regprice[lid]) * 0.5
 							conflictdesc.reg[lid] = "avg:" .. mergedRow.regprice[lid]
---TODO						mergedRow.mergecounter++				
+--TODO						mergedRow.mergecounter++
 							if VERBOSE then
-								LHpi.Log(string.format("averaging conflicting %s regprice[%s] %i and %i to %i", name, LHpi.Data.languages[lid].abbr, oldRow.regprice[lid], newRow.regprice[lid], mergedRow.regprice[lid] ) , 1 )
+								LHpi.Log(string.format("averaging conflicting %s regprice[%s] %g and %g to %g", name, LHpi.Data.languages[lid].abbr, oldRow.regprice[lid], newRow.regprice[lid], mergedRow.regprice[lid] ) , 1 )
 							end--if VERBOSE
 							if DEBUG then
 								LHpi.Log("!! conflicting regprice in lang [" .. LHpi.Data.languages[lid].abbr .. "]" , 1 )
@@ -1232,7 +1236,7 @@ function LHpi.MergeCardrows ( name, langs,  oldRow , newRow , variants )
 --					conflictdesc.reg = "!!:regprice[" .. lid .. "]"
 --					mergedRow.regprice[lid] = (oldRow.regprice[lid] + newRow.regprice[lid]) * 0.5
 --					if VERBOSE then
---						LHpi.Log(string.format("averaging conflicting %s regprice[%s] %i and %i to %i", name, LHpi.Data.languages[lid].abbr, oldRow.regprice[lid], newRow.regprice[lid], mergedRow.regprice[lid] ) , 1 )
+--						LHpi.Log(string.format("averaging conflicting %s regprice[%s] %g and %g to %g", name, LHpi.Data.languages[lid].abbr, oldRow.regprice[lid], newRow.regprice[lid], mergedRow.regprice[lid] ) , 1 )
 --					end
 --					if DEBUG then
 --						LHpi.Log("!! conflicting regprice in lang [" .. LHpi.Data.languages[lid].abbr .. "]" , 1 )
@@ -1261,7 +1265,7 @@ function LHpi.MergeCardrows ( name, langs,  oldRow , newRow , variants )
 --							mergedRow.mergecounter++				
 							conflictdesc.foil[lid] = "avg:" .. mergedRow.foilprice[lid]
 							if VERBOSE then
-								LHpi.Log(string.format("averaging conflicting %s foilprice[%s] %i and %i to %i", name, LHpi.Data.languages[lid].abbr, oldRow.foilprice[lid], newRow.foilprice[lid], mergedRow.foilprice[lid] ) , 1 )
+								LHpi.Log(string.format("averaging conflicting %s foilprice[%s] %g and %g to %g", name, LHpi.Data.languages[lid].abbr, oldRow.foilprice[lid], newRow.foilprice[lid], mergedRow.foilprice[lid] ) , 1 )
 							end--if VERBOSE
 							if DEBUG then
 								LHpi.Log("!! conflicting foilprice in lang [" .. LHpi.Data.languages[lid].abbr .. "]" , 1 )

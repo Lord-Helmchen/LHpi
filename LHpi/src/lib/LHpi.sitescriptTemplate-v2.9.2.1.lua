@@ -94,7 +94,7 @@ dataver = "2"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
 scriptver = "1"
---- should always be equal to the script's filename !
+--- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.sitescriptTemplate-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
 --- savepath for OFFLINE (read) and SAVEHTML (write). must point to an existing directory relative to MA's root.
@@ -135,10 +135,10 @@ site={}
  @param #string importfoil	"Y"|"N"|"O"
 	-- parameter passed from Magic Album
 	-- "Y"|"N"|"O"		Update Regular and Foil|Update Regular|Update Foil
- @param #table importlangs	{ #number (langid)= #string }
+ @param #table importlangs	{ #number (langid)= #string , ... }
 	-- parameter passed from Magic Album
 	-- array of languages the script should import, represented as pairs { #number = #string } (see "Database\Languages.txt").
- @param #table importsets	{ #number (setid)= #string }
+ @param #table importsets	{ #number (setid)= #string , ... }
 	-- parameter passed from Magic Album
 	-- array of sets the script should import, represented as pairs { #number = #string } (see "Database\Sets.txt").
 ]]
@@ -276,7 +276,7 @@ end -- function ImportPrice
  @return #table 		modified card is passed back for further processing
  			{ name= #string , (optional) drop= #boolean , lang= #table , (optional) names= #table , (optional) pluginData= #table , (preset fields) }
 ]]
---function site.BCDpluginPre ( card , setid , importfoil, importlangs )
+--function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 --	if DEBUG then
 --		LHpi.Log( "site.BCDpluginPre got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
 --	end
@@ -284,7 +284,7 @@ end -- function ImportPrice
 --	-- if you don't want a full namereplace table, gsubs like this might take care of a lot of fails.
 --	card.name = string.gsub( card.name , "AE" , "Æ")
 --	card.name = string.gsub( card.name , "Ae" , "Æ")
-
+--
 --	return card
 --end -- function site.BCDpluginPre
 

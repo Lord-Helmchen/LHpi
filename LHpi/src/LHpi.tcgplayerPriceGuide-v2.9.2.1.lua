@@ -24,20 +24,25 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
- shortened site.langs
- simplified site.frucs,site.sets to single fruc
+synchronized with template
+drop all "SOON" prices (higher maintenance for site.expected,but less "0"s in averaging)
+corrected site.expected (apparently, they don't like Boros: a sizable portion is Plains and Mountains!?)
 ]]
 
 -- options that control the amount of feedback/logging done by the script
 
---- @field [parent=#global] #boolean VERBOSE 			default false
---VERBOSE = true
---- @field [parent=#global] #boolean LOGDROPS 			default false
---LOGDROPS = true
---- @field [parent=#global] #boolean LOGNAMEREPLACE 	default false
---LOGNAMEREPLACE = true
---- @field [parent=#global] #boolean LOGFOILTWEAK	 	default false
---LOGFOILTWEAK = true
+--- more detailed log; default false
+-- @field [parent=#global] #boolean VERBOSE
+VERBOSE = true
+--- also log dropped cards; default false
+-- @field [parent=#global] #boolean LOGDROPS
+LOGDROPS = true
+--- also log namereplacements; default false
+-- @field [parent=#global] #boolean LOGNAMEREPLACE
+LOGNAMEREPLACE = true
+--- also log foiltweaking; default false
+-- @field [parent=#global] #boolean LOGFOILTWEAK
+LOGFOILTWEAK = true
 
 -- options unique to this sitescript
 
@@ -61,28 +66,36 @@ copyprice = nil
 
 --- also complain if drop,namereplace or foiltweak count differs; default false
 -- @field [parent=#global] #boolean STRICTCHECKEXPECTED
---STRICTCHECKEXPECTED = true
+STRICTCHECKEXPECTED = true
+
 ---	log everything and exit on error; default false
 -- @field [parent=#global] #boolean DEBUG
 --DEBUG = true
----	while DEBUG, do not log raw html data found by regex; default true 
+
+---	even while DEBUG, do not log raw html data found by regex; default true 
 -- @field [parent=#global] #boolean DEBUGSKIPFOUND
 --DEBUGSKIPFOUND = false
---- DEBUG inside variant loops; default false
+
+--- DEBUG (only but deeper) inside variant loops; default false
 -- @field [parent=#global] #boolean DEBUGVARIANTS
 --DEBUGVARIANTS = true
----	read source data from #string.savepath instead of site url; default false
+
+---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
 --OFFLINE = true
---- save a local copy of each source html to #string.savepath if not in OFFLINE mode; default false
+
+--- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
 --SAVEHTML = true
+
 --- log to seperate logfile instead of Magic Album.log;	default true
 -- @field [parent=#global] #boolean SAVELOG
 --SAVELOG = false
+
 --- save price table to file before importing to MA;	default false
 -- @field [parent=#global] #boolean SAVETABLE
 --SAVETABLE = true
+
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
 libver = "2.9"
@@ -92,11 +105,13 @@ dataver = "2"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
 scriptver = "1"
---- should always be equal to the script's filename !
+--- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.tcgplayerPriceGuide-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
 
---- @field [parent=#global] #table LHpi		LHpi library table
+---	LHpi library
+-- will be loaded by ImportPrice
+-- @field [parent=#global] #table LHpi
 LHpi = {}
 
 --[[- Site specific configuration
@@ -111,10 +126,6 @@ site={}
  @field [parent=#site] #string regex ]]
 site.regex = '<TR height=20>(.-)</TR>'
 
---- Define the three price columns. This table is unique to this sitescript.
--- @field [parent=#site] #table himelo
-site.himelo = { "high" , "medium" , "low" }
-
 
 --[[- "main" function.
  called by Magic Album to import prices. Parameters are passed from MA.
@@ -123,10 +134,10 @@ site.himelo = { "high" , "medium" , "low" }
  @param #string importfoil	"Y"|"N"|"O"
 	-- parameter passed from Magic Album
 	-- "Y"|"N"|"O"		Update Regular and Foil|Update Regular|Update Foil
- @param #table importlangs	{ #number = #string }
+ @param #table importlangs	{ #number (langid)= #string , ... }
 	-- parameter passed from Magic Album
 	-- array of languages the script should import, represented as pairs { #number = #string } (see "Database\Languages.txt").
- @param #table importsets	{ #number = #string }
+ @param #table importsets	{ #number (setid)= #string , ... }
 	-- parameter passed from Magic Album
 	-- array of sets the script should import, represented as pairs { #number = #string } (see "Database\Sets.txt").
 ]]
@@ -178,14 +189,15 @@ end -- function ImportPrice
  To allow returning more than one url here, BuildUrl is required to wrap it/them into a container table.
 
  foilonly and isfile fields can be nil and then are assumed to be false.
- while isfile is read and interpreted by the library, foilonly is not. Its only here as a convenient shortcut to set card.foil in your site.ParseHtmlData  
+ while isfile is read and interpreted by the library, foilonly is not.
+ Its only here as a convenient shortcut to set card.foil in your site.ParseHtmlData  
  
  @function [parent=#site] BuildUrl
- @param #number setid
- @param #number langid
- @param #number frucid
+ @param #number setid		see site.sets
+ @param #number langid		see site.langs
+ @param #number frucid		see site.frucs
  @param #boolean offline	(can be nil) use local file instead of url
- @return #table { #string = #table { isfile = #boolean, foilonly = #boolean } }
+ @return #table { #string (url)= #table { isfile= #boolean, (optional) foilonly= #boolean } , ... }
 ]]
 function site.BuildUrl( setid,langid,frucid,offline )
 	site.domain = "magic.tcgplayer.com/db/"
@@ -230,8 +242,8 @@ end -- function site.BuildUrl
  
  @function [parent=#site] ParseHtmlData
  @param #string foundstring		one occurence of siteregex from raw html data
- @param #table urldetails	{ isfile = #boolean , setid = #number, langid = #number, frucid = #number , foilonly = #boolean }
- @return #table { #number = { names = #table { #number = #string, ... }, price = #table { #number = #string, ... } } } 
+ @param #table urldetails		{ isfile= #boolean , setid= #number, langid= #number, frucid= #number , foilonly= #boolean }
+ @return #table { #number= #table { names= #table { #number (langid)= #string , ... }, price= #number , foil= #boolean , ... } , ... } 
 ]]
 function site.ParseHtmlData( foundstring , urldetails )
 	local tablerow = {}
@@ -247,6 +259,10 @@ function site.ParseHtmlData( foundstring , urldetails )
 	price = string.gsub( price , "&nbsp;" , "" )
 	price = string.gsub( price , "%$" , "" )
 	price = string.gsub( price , "[,.]" , "" )
+	price = tonumber(price)
+	if (price == 0) and string.find(foundstring,"SOON") then
+		name = name .. "(DROP price SOON)"
+	end
 	local newCard = { names = { [1] = name } , price = { [1] = price } }
 	return { newCard }
 end -- function site.ParseHtmlData
@@ -256,13 +272,15 @@ end -- function site.ParseHtmlData
  This Plugin is called before most of LHpi's BuildCardData processing.
 
  @function [parent=#site] BCDpluginPre
- @param #table card		the card LHpi.BuildCardData is working on
- @param #number setid
- @param #table importfoil	passed from ImportPrice to drop unwanted cards
- @param #table importlangs	passed from ImportPrice to drop unwanted cards
+ @param #table card			the card LHpi.BuildCardData is working on
+ 			{ name= #string , lang= #table , names= #table , pluginData= #table or nil , (preset fields) }
+ @param #number setid		see site.sets 
+ @param #string importfoil	"y"|"n"|"o" passed from DoImport to drop unwanted cards
+ @param #table importlangs	{ #number (langid)= #string , ... } passed from DoImport to drop unwanted cards
  @return #table 		modified card is passed back for further processing
+ 			{ name= #string , (optional) drop= #boolean , lang= #table , (optional) names= #table , (optional) pluginData= #table , (preset fields) }
 ]]
-function site.BCDpluginPre( card , setid , importfoil, importlangs )
+function site.BCDpluginPre( card, setid, importfoil, importlangs )
 	if DEBUG then
 		LHpi.Log( "site.BCDpluginPre got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
 	end
@@ -278,10 +296,12 @@ end -- function site.BCDpluginPre
  
  @function [parent=#site] BCDpluginPost
  @param #table card		the card LHpi.BuildCardData is working on
- @param #number setid
- @param #table importfoil	passed from ImportPrice to drop unwanted cards
- @param #table importlangs	passed from ImportPrice to drop unwanted cards
+ 			{ name= #string , (can be nil) drop= #boolean , lang= #table , (can be nil) names= #table , (can be nil) variant= #table , (can be nil) regprice= #table , (can be nil) foilprice= #table }
+ @param #number setid		see site.sets 
+ @param #string importfoil	"y"|"n"|"o" passed from DoImport to drop unwanted cards
+ @param #table importlangs	{ #number (langid)= #string , ... } passed from DoImport to drop unwanted cards
  @return #table			modified card is passed back for further processing
+ 			{ name= #string , drop= #boolean, lang= #table , (optional) names= #table , variant= (#table or nil), regprice= #table , foilprice= #table }
 ]]
 function site.BCDpluginPost( card , setid , importfoil, importlangs )
 	if DEBUG then
@@ -302,20 +322,38 @@ end -- function site.BCDpluginPost
 -- tables
 -------------------------------------------------------------------------------------------------------------
 
+--- Define the three price columns. This table is unique to this sitescript.
+-- @field [parent=#site] #table himelo
+site.himelo = { "high" , "medium" , "low" }
+
 --[[- table of (supported) languages.
  can contain url infixes for use in site.BuildUrl.
- static language fields (id,full,abbr) can be read from LHpi.Data.languages
- { #number = { url = #string } }
+ static language fields (full,abbr) can be read from LHpi.Data.languages.
+
+ fields are for subtables indexed by #number langid.
+ { #number (langid)= { id= #number , url= #string } , ... }
  
- @field [parent=#site] #table langs ]]
+ @type site.langs
+ @field [parent=#site.langs] #number id		for reverse lookup (can be found in "..\Database\Languages.txt" file)
+ @field [parent=#site.langs] #string url	infix for site.BuildUrl
+]]
 site.langs = {
-	[1] = { url="" },
+	[1] = { id=1,  url="" },
 }
 
 --[[- table of available rarities.
- can contain url infixes for use in site.BuildUrl
+ can contain url infixes for use in site.BuildUrl.
 
- @field [parent=#site] #table frucs	rarity table { #number = #table { #number, #string, #boolean, #boolean, #string } ]]
+  fields are for subtables indexed by #number frucid.
+ { #number= { id= #number , name= #string , isfoil= #boolean , isnonfoil= #boolean , url= #string } , ... }
+ 
+ @type site.frucs
+ @field [parent=#site.langs] #number id		for reverse lookup
+ @field [parent=#site.frucs] #string name	for log
+ @field [parent=#site.frucs] #boolean isfoil
+ @field [parent=#site.frucs] #boolean isnonfoil
+ @field [parent=#site.langs] #string url	infix for site.BuildUrl
+]]
 site.frucs = {
 --this is not strictly correct. The site does not give explicit foil prices, but some foilonly sets are priced nonetheless
 --We'll depend on LHpi.Data.sets[setid].foilonly and LHpi.Data.sets[setid].foiltweak for those.
@@ -323,22 +361,20 @@ site.frucs = {
 }
 
 --[[- table of available sets.
- site.sets[#number setid] = #table { #number id, #table lang = #table { #boolean, ... } , #table fruc = # table { #boolean, ... }, #string url }
-  #number id		setid (can be found in "Database\Sets.txt" file)
-  #table fruc		table of available fruc urls to be parsed
- @see compare with site.frucs
-  #table lang		table of available languages { #boolean , ... }
-  #string url		set url infix
+ List alls sets that the site has prices for,
+ and defines which frucs and languages are available for the set.
+ can contain url infixes for use in site.BuildUrl.
  
- @field [parent=#site] #table sets ]]
+ fields are for subtables indexed by #number setid.
+ { #number (setid)= #table { id= #number , lang= #table { #boolean, ... } , fruc= #table { #boolean , ... } , url= #string } , ... }
+ 
+ @type site.sets
+ @field [parent=#site.sets] #number id		for reverse lookup (can be found in "..\Database\Sets.txt" file)
+ @field [parent=#site.sets] #table lang		{ #number (langid)= #boolean , ... }
+ @field [parent=#site.sets] #table fruc		{ #number (frucid)= #boolean , ... }
+ @field [parent=#site.sets] #string url		infix for site.BuildUrl
+]]
 site.sets = {
---[[
-	Boths frucs are identical, as the site only provides one table per set
-	(which doesn't even give explicit foil prices)
-	but I wanted to retain the information Golob gathered,
-	LHpi.ProcessUserParams assumes fruc[1] to be foil,
-	and LHpi.Listsources will sort out the duplicate urls anyway.
---]]
 -- Core Sets
 [797]={id = 797, lang = { true }, fruc = { true }, url = "Magic%202014%20(M14)"},
 [788]={id = 788, lang = { true }, fruc = { true }, url = "Magic%202013%20(M13)"},
@@ -512,9 +548,13 @@ site.sets = {
 } -- end table site.sets
 
 --[[- card name replacement tables.
- { #number = #table { #string = #string } }
+
+  fields are for subtables indexed by #number setid.
+ { #number (setid)= #table { #string (oldname)= #string , ... } , ... }
  
- @field [parent=#site] #table namereplace ]]
+ @type site.namereplace
+ @field [parent=#site.namereplace] #string name
+]]
 site.namereplace = {
 [797] = { -- M2014
 ["Elemental Token"]						= "Elemental",
@@ -546,8 +586,9 @@ site.namereplace = {
 },
 [800] = { -- Theros
 ["Purphoros' Emissary"]					= "Purphoros's Emissary",
-["Soldier Token"]						= "Soldier",
 ["Soldier Token (Red)"]					= "Soldier (7)",
+["Soldier Token A"]						= "Soldier",
+["Soldier Token B"]						= "Soldier",
 },
 [795] = { -- Dragon's Maze
 ["AEtherling"]							= "Ætherling",
@@ -857,8 +898,8 @@ site.namereplace = {
 ["Forest (3)"]							= "Forest (180)",
 },
 [320] = { -- Unglued
-["B.F.M. (Big Furry Monster Left)"]		= "B.F.M. (left)",
-["B.F.M. (Big Furry Monster Right)"]	= "B.F.M. (right)",
+["B.F.M. (Big Furry Monster Left)"]		= "B.F.M. (Left)",
+["B.F.M. (Big Furry Monster Right)"]	= "B.F.M. (Right)",
 --["The Ultimate Nightmare of Wizards of the Coast\174 Cu"]	= "The Ultimate Nightmare of Wizards of the Coast® Customer Service",
 ["The Ultimate Nightmare of Wizards of the Coast® Cu"]	= "The Ultimate Nightmare of Wizards of the Coast® Customer Service",
 },
@@ -893,8 +934,12 @@ site.namereplace = {
  Note that you need to replicate the default values for the whole setid here,
  even if you set only a single card from the set differently.
 
- { #number = #table { #string = #table { #string, #table { #number or #boolean , ... } } , ... } , ...  }
- @field [parent=#site] #table variants ]]
+  fields are for subtables indexed by #number setid.
+ { #number (setid)= #table { #string (name)= #table { #string, #table { #string or #boolean , ... } } , ... } , ...  }
+
+ @type site.variants
+ @field [parent=#site.variants] #table variant
+]]
 site.variants = {
 [762] = { --Zendikar
 ["Plains"] 						= { "Plains"	, { 1    , 2    , 3    , 4    , "1a" , "2a" , "3a" , "4a"  } },
@@ -953,23 +998,35 @@ site.variants = {
 
 if CHECKEXPECTED~=false then
 --[[- table of expected results.
- as of script release
- { #number = #table { #table pset = #table { #number = #number, ... }, #table failed = #table { #number = #number, ... }, dropped = #number , namereplaced = #number , foiltweaked = #number }
+ as of script release. Used as sanity check during sitescript development and source of insanity afterwards ;-)
+ For each setid, if unset defaults to expect all cards to be set.
  
- @field [parent=#site] #table expected ]]
+  fields are for subtables indexed by #number setid.
+ { #number (setid)= #table { #table pset= #table { #number (langid)= #number, ... }, #table failed= #table { #number (langid)= #number, ... }, dropped= #number , namereplaced= #number , foiltweaked= #number } , ... }
+ 
+ @type site.expected
+ @field #table pset				{ #number (langid)= #number, ... } (optional) default depends on site.expected.EXPECTTOKENS
+ @field #table failed			{ #number (langid)= #number, ... } (optional) default { 0 , ... }
+ @field #number dropped			(optional) default 0
+ @field #number namereplaced	(optional) default 0
+ @field #number foiltweaked		(optional) default 0
+ ]]
 site.expected = {
----@field [parent=#site.expected]	#boolean EXPECTTOKENS	false:pst defaults to regular, true:pset defauts to regular+tokens
+--- false:pset defaults to regular, true:pset defaults to regular+tokens instead
+-- @field [parent=#site.expected] #boolean EXPECTTOKENS
 EXPECTTOKENS = true,
 -- Core sets
 [797] = { failed={ 1 }, namereplaced=2 },
 [779] = { namereplaced=2 },
-[770] = { namereplaced=3 },
-[759] = { pset={ 257-20 } },--no basic lands
-[720] = { dropped=1 },
+[770] = { namereplaced=3, dropped=6 },
+[759] = { pset={ 257-20-8 }, dropped=6 },--no basic lands, no tokens
+[720] = { dropped=2 },
 [460] = { namereplaced=2, dropped=1 },
 [360] = { namereplaced=1 },
 [250] = { namereplaced=1 },
---[140] = { namereplaced=1 },
+[140] = { dropped=2 },
+[100] = { pset={302-3}, dropped=3},
+[90]  = { pset={295-6}, dropped=6},
 -- Expansions
 [802] = { namereplaced=2},
 [800] = { namereplaced=3 },
@@ -983,16 +1040,16 @@ EXPECTTOKENS = true,
 [773] = { failed={ 1 }, namereplaced=2 },-- 1 fail is Poison Counter
 [767] = { namereplaced=18 },
 [765] = { namereplaced=1 },
-[762] = { pset={ 260+20 }, failed={ 1 }, namereplaced=1 },-- +20 non-fullart lands
+[762] = { pset={ 260+20-1 }, namereplaced=1, dropped=2 },-- +20 non-fullart lands
 [758] = { dropped=1 },
 [756] = { namereplaced=1 },
 [754] = { namereplaced=1 },
-[752] = { pset={ 187-1 } },--Worm token missing
-[751] = { namereplaced=5 },
-[730] = { pset={ 312-1 }, namereplaced=3 },--Elemental Shaman Token missing
+[752] = { pset={ 187-1-3 }, dropped=3 },--Worm token missing
+[751] = { pset={313-3}, namereplaced=5-1, dropped=13 },
+[730] = { pset={ 312-1-1 }, namereplaced=3, dropped=1 },--Elemental Shaman Token missing
 [710] = { namereplaced=1 },
 [700] = { namereplaced=2 },
-[680] = { namereplaced=3 },
+[680] = { pset={301-4}, dropped=4, namereplaced=3 },
 [670] = { namereplaced=2 },
 [660] = { namereplaced=2 },
 [650] = { namereplaced=1 },
@@ -1001,35 +1058,40 @@ EXPECTTOKENS = true,
 [590] = { namereplaced=10 },
 [580] = { namereplaced=1 },
 [570] = { namereplaced=2 },
-[560] = { namereplaced=3 },
-[520] = { namereplaced=1 },
-[480] = { namereplaced=1 },
+[560] = { namereplaced=3, dropped=2 },
+[520] = { namereplaced=1, dropped=2 },
+[480] = { namereplaced=1, dropped=2 },
 [470] = { namereplaced=1 },
-[450] = { namereplaced=3, foiltweaked=3 },
-[430] = { namereplaced=1 },
+[450] = { pset={146-3}, namereplaced=3-3, foiltweaked=3-3, dropped=3 },
+[430] = { namereplaced=1, dropped=2 },
 [410] = { namereplaced=1 },
+[400] = { dropped=1 },
 [370] = { namereplaced=1 },
-[330] = { namereplaced=1 },
+[330] = { namereplaced=1, dropped=2 },
 [300] = { namereplaced=1 },
+[280] = { dropped=2 },
 [270] = { namereplaced=2 },
-[220] = { namereplaced=1 },
+[230] = { dropped=2 },
+[220] = { pset={199-1}, dropped=1, namereplaced=1 },
 [210] = { namereplaced=1 },
-[190] = { namereplaced=5 },
+[190] = { namereplaced=5, dropped=2 },
 [150] = { namereplaced=1 },
 [120] = { namereplaced=3 },
-[130] = { namereplaced=17, dropped=1 },
+[130] = { namereplaced=17, dropped=3 },
 -- special sets
-[799] = { foiltweaked=2, pset={ 83-16-2 } },-- -16 basic lands, -2 (of 4) nonbasic lands 
+[799] = { foiltweaked=2, pset={ 83-16-2 } },-- -16 basic lands, -2 (of 4) nonbasic lands
+[798] = {pset={20-20}, dropped=21 }, 
 [796] = { namereplaced=3 },
-[794] = { foiltweaked=2},
-[785] = { namereplaced=1, foiltweaked=2},
+[794] = { pset={81-12}, dropped=12, foiltweaked=2},
+[785] = { pset={79-4}, namereplaced=1, foiltweaked=2-1, dropped=4 },
 [772] = { namereplaced=1, foiltweaked=2},
 [757] = { foiltweaked=2},
-[600] = { pset={141-1}, failed={1}, namereplaced=4, foiltweaked=1 },--"Ach! Hans, Run"
+[600] = { pset={141-2}, failed={1}, namereplaced=4, dropped=1, foiltweaked=1-1 },--"Ach! Hans, Run", Super Secret Tech 
 [440] = { foiltweaked=2},
-[380] = { pset={180-2}, failed={2}, namereplaced=12-2 },--Pang Tong and Kongming fail due to "-Problems
+[380] = { pset={180-2-2}, failed={2-1}, namereplaced=12-2-6, dropped=9 },--Pang Tong and Kongming fail due to "-Problems
 [320] = { namereplaced=3 },
-[260] = { namereplaced=7 },
+[310] = { dropped=10},
+[260] = { pset={228-7}, dropped=7, namereplaced=6 },-- 7 SOON
 [200] = { namereplaced=12 },
 }--end table site.expected
 end--if
