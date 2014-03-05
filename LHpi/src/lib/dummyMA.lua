@@ -25,7 +25,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-fixed compatibility with lua 5.1 (only worked with 5.2 before)
+0.3
+	misc. small improvements to code and/or comments
+	patch paths, because dev src has been moved from MA\Prices
+	dummy.fakesitescript()
 ]]
 
 --[[- "main" function called by Magic Album; just display error and return.
@@ -33,8 +36,8 @@ fixed compatibility with lua 5.1 (only worked with 5.2 before)
  We don't want to call the dummy from within MA.
  @function [parent=#global] ImportPrice
  @param #string importfoil	"Y"|"N"|"O"
- @param #table importlangs	{ #number = #string }
- @param #table importsets	{ #number = #string }
+ @param #table importlangs	{ #number (langid)= #string , ... }
+ @param #table importsets	{ #number (setid)= #string , ... }
 ]]
 function ImportPrice(importfoil, importlangs, importsets)
 	ma.Log( "Called dummyMa from MA. Raising error to inform user via dialog box." )
@@ -56,13 +59,13 @@ if not io then
 end
 
 --- GetURL.
--- Returns downloaded web page or nil if there was an error (page not found, network problems, etc.)
+-- Returns downloaded web page or nil if there was an error (page not found, network problems, etc.).
+-- 
 -- dummy: just prints request to stdout
 -- 
 -- @function [parent=#ma] GetURL
 -- @param #string url
--- @return #string webpage
--- @return nil on error
+-- @return #string webpage OR nil instead on error
 function ma.GetUrl(url)
 	print("dummy.GetUrl called for " .. url)
 	local host,file = string.match(url, "http://([^/]+)/(.+)" )
@@ -81,12 +84,12 @@ end
 -- filepath is relative to the Magic Album folder. I.e. if you call
 --  file = ma.GetFile("Prices\\test.dat")
 -- "MA_FOLDER\Prices\test.dat" will be loaded. Do not forget to use double slashes for paths.
+-- 
 -- dummy: functional. DANGER: no security implemented.
 -- 
 -- @function [parent=#ma] GetFile
 -- @param #string filepath
--- @return #string file
--- @return nil on error
+-- @return #string file OR nil instead on error
 function ma.GetFile(filepath)
 	print("dummy.GetFile called for " .. filepath)
     local handle = io.open(filepath,"r")
@@ -106,6 +109,7 @@ end
 -- "filepath" is relative to the Magic Album folder (see GetFile description).
 -- If "append" parameter is missing or 0 - file will be overwritten.
 -- Otherwise data will be added to the end of file.
+-- 
 -- dummy: functional. DANGER: no security implemented.
 -- 
 -- @function [parent=#ma] PutFile
@@ -130,6 +134,7 @@ end
 
 --- Log.
 -- Adds debug message to Magic Album log file.
+-- 
 -- dummy: just prints to stdout instead.
 -- 
 -- @function [parent=#ma] Log
@@ -181,7 +186,8 @@ function ma.SetPrice(setid, langid, cardname, cardversion, regprice, foilprice)
 end
 
 --- SetProgress.
--- Sets progress bar text and position. Position is a numeric value in range 0..100. 
+-- Sets progress bar text and position. Position is a numeric value in range 0..100.
+-- 
 -- dummy: just prints request to stdout
 -- 
 -- @function [parent=#ma] SetProgress
@@ -191,18 +197,26 @@ function ma.SetProgress(text, position)
 	print("ma.SetProgress\t " .. position .. " %\t: \"" .. text .. "\"")
 end
 
----@module dummy
+--- table to hold dummyMA additional functions
+-- @field [parent=global] dummy
 dummy={}
+---	dummy version
+-- @field [parent=#dummy] #string version
+dummy.version = "0.3"
 
 --[[- loads LHpi library for testing.
 @function [parent=#dummy] loadlibonly
-@param libver	library version to be loaded
-@return nil, but scriptname is loaded and executed
+@param #string libver			library version to be loaded
+@param #string pathprefix		(optional)
+@param #string savepathprefix	(optional)
+@return #table LHpi library object
 ]]
-function dummy.loadlibonly(libver)
-	--local libver="2.7"
+function dummy.loadlibonly(libver,pathprefix,savepathprefix)
+	local LHpi = {}
+	local pathprefix = pathprefix or ""
+	local savepathprefix = savepathprefix or ""
 	do -- load LHpi library from external file
-		local libname = "Prices\\lib\\LHpi-v" .. libver .. ".lua"
+		local libname = pathprefix .. "lib\\LHpi-v" .. libver .. ".lua"
 		local LHpilib = ma.GetFile( libname )
 		if not LHpilib then
 			error( "LHpi library " .. libname .. " not found." )
@@ -213,6 +227,15 @@ function dummy.loadlibonly(libver)
 				-- but also how the data file is loaded from within the library
 				LHpilib = string.gsub(LHpilib, 'errormsg = load','errormsg=loadstring' )
 			end
+			if pathprefix~="" then
+				--patch library to change paths
+				pathprefix = string.gsub(pathprefix,"\\","\\\\")
+				LHpilib = string.gsub(LHpilib,'Prices\\\\',pathprefix )
+				if savepathprefix~="" then
+					savepathprefix = string.gsub(savepathprefix,"\\","\\\\")
+					LHpilib = string.gsub(LHpilib,'savepath = "src','savepath = "' .. savepathprefix)
+				end
+			end--if pathprefix
 			if VERBOSE then
 				ma.Log( "LHpi library " .. libname .. " loaded and ready for execution." )
 			end
@@ -231,17 +254,22 @@ function dummy.loadlibonly(libver)
 	end -- do load LHpi library
 	collectgarbage() -- we now have LHpi table with all its functions inside, let's clear LHpilib and execlib() from memory
 	LHpi.Log( "LHpi lib is ready to use." )
+	return LHpi
 end -- function
 
 --[[- load and execute sitescript.
 You can then call the sitescript's ImportPrice, as ma would do.
 @function [parent=#dummy] loadscript
 @param #string scriptname
-@return nil, but scriptname is loaded and executed
+@param #string pathprefix		(optional)
+@param #string savepathprefix	(optional)
+@return nil, but script is loaded and executed
 ]]
-function dummy.loadscript(scriptname)
+function dummy.loadscript(scriptname,pathprefix,savepathprefix)
+	local pathprefix = pathprefix or ""
+	local savepathprefix = savepathprefix or ""
 	do
-		local scriptfile = ma.GetFile( scriptname )
+		local scriptfile = ma.GetFile( pathprefix .. scriptname )
 		if not scriptfile then
 			error( "script " .. scriptname .. " not found." )
 		else
@@ -251,11 +279,26 @@ function dummy.loadscript(scriptname)
 				-- but also how the library is loaded from within the sitescript
 				scriptfile = string.gsub(scriptfile, 'local execlib,errormsg = load','local execlib,errormsg=loadstring')
 				--but we even need to go one level deeper: change how the library loads the data file
-				scriptfile = string.gsub( scriptfile,
-										'local execlib,errormsg=loadstring',
-										'LHpilib = string.gsub(LHpilib, "errormsg = load","errormsg=loadstring") local execlib,errormsg=loadstring'
-										 )
+				scriptfile = string.gsub( scriptfile, 'local execlib,errormsg=loadstring',
+							'LHpilib=string.gsub(LHpilib,"errormsg = load","errormsg=loadstring") local execlib,errormsg=loadstring' )
 			end
+			if pathprefix~="" then
+				--patch script to change paths
+				pathprefix = string.gsub(pathprefix,"\\","\\\\")
+				scriptfile = string.gsub(scriptfile,'Prices\\\\',pathprefix )
+				if savepathprefix~="" then
+					savepathprefix = string.gsub(savepathprefix,"\\","\\\\")
+					scriptfile = string.gsub(scriptfile,'savepath = "src','savepath = "' .. savepathprefix)
+				end
+				--patch library loading to patch paths in library
+				scriptfile = string.gsub( scriptfile, "local execlib,errormsg=load",
+							'LHpilib=string.gsub(LHpilib,"Prices\\\\","'..pathprefix..'") local execlib,errormsg=load' )
+				if savepathprefix~="" then
+					savepathprefix = string.gsub(savepathprefix, "\\", "\\\\" )
+					scriptfile = string.gsub( scriptfile, "local execlib,errormsg=load",
+								'LHpilib=string.gsub(LHpilib,"savepath = \\\"src","savepath = \\\"'..savepathprefix..'\") local execlib,errormsg=load' )
+				end
+			end--if pathprefix
 			local execscript,errormsg=nil
 			if _VERSION == "Lua 5.1" then
 				-- we need to change the way the script is loaded
@@ -272,12 +315,29 @@ function dummy.loadscript(scriptname)
 	collectgarbage()
 end--function
 
+--[[- fake a minimal, nonfunctional sitescript.
+You can then run library functions to test them.
+
+@function [parent=#dummy] fakesitescript
+@return nil, but site fields an functions are set.
+]]
+function dummy.fakesitescript()
+	site={}
+	site.langs={ {id=1,url="foo"} }
+	site.sets= { [0]={id=0,lang={true},fruc={true},url="bar"} }
+	site.frucs={ {id=1,name="fruc",isfoil=true,isnonfoil=true,url="baz"} }
+	site.regex="none"
+	dataver=2
+	scriptname="LHpi.debug.lua"
+	function site.BuildUrl() return { ["fakeURL"] ={} } end
+end--function fakesitescript
+
 --[[- merge up to four tables.
 @function [parent=#dummy] mergetables
 @param #table teins
-@param #table twei
-@param #table tdrei
-@param #table tvier
+@param #table tzwei
+@param #table tdrei	(optional)
+@param #table tvier (optional)
 @return #table
 ]]
 function dummy.mergetables (teins,tzwei,tdrei,tvier)
@@ -493,40 +553,52 @@ local coresets = {
 ]]
 function main()
 	print("dummy says: Hello " .. _VERSION .. "!")
-	--dummy.loadlibonly(2.7)
-	--LHpi.LoadData(1)
-	--dummy.loadscript("Prices\\LHpi.magicuniverseDE-v2.6.1.lua")
-	--dummy.loadscript("Prices\\LHpi.sitescriptTemplate-v2.7.1.1.lua")
-	--dummy.loadscript("Prices\\Import Prices.lua")
-	--dummy.loadscript("Prices\\LHpi.magicuniverseDE-v2.6.1.lua")	
-	--dummy.loadscript("Prices\\LHpi.trader-onlineDE-v2.6.1.lua")
-	dummy.loadscript("Prices\\LHpi.tcgplayerPriceGuide-v2.7.1.1.lua")
-	--dummy.loadscript("..\\Prices\\LHpi.mtgmintcard-v2.6.1.lua")
+	--adjust paths if not developing inside "Magic Album\Prices"
+	local path="src\\"
+	--don't keep a seperate dev savepath, though
+	local savepath = "src\\..\\..\\..\\Magic Album\\Prices"
+
+--	dummy.fakesitescript()
+--	LHpi = dummy.loadlibonly(2.9,path,savepath)
+--	dummy.loadscript("\\Import Prices.lua",savepath,savepath)
+--	dummy.loadscript("\\MTG Mint Card.lua",savepath,savepath)
+--	dummy.loadscript("lib\\LHpi.sitescriptTemplate-v2.9.2.1.lua",path,savepath)
+--	dummy.loadscript("LHpi.magicuniverseDE-v2.9.2.1.lua",path,savepath)
+--	dummy.loadscript("LHpi.trader-onlineDE-v2.9.2.1.lua",path,savepath)
+	dummy.loadscript("LHpi.tcgplayerPriceGuide-v2.9.2.1.lua",path,savepath)
+--	dummy.loadscript("LHpi.mtgmintcard-v2.9.2.1.lua",path,savepath)
+--	dummy.loadscript("LHpi.mtgprice.com-v2.9.2.1.lua",path,savepath)
 	-- force debug enviroment options
 	VERBOSE = true
 	LOGDROPS = true
 	LOGNAMEREPLACE = true
 	LOGFOILTWEAK = true
 	CHECKEXPECTED = true
+	STRICTCHECKEXPECTED = true
 	DEBUG = true
-	DEBUGSKIPFOUND = true
+	DEBUGSKIPFOUND = false
 	DEBUGVARIANTS = false
 	OFFLINE = true
+	SAVELOG = true
 	SAVEHTML = false
 	SAVETABLE=false
 	print("dummy says: sitescript dofile'd")
-	local fakeimportfoil = "Y"
-	local fakeimportlangs = { [1] = "English" }
-	--local fakeimportlangs = { [3] = "German" }
-	--local fakeimportlangs = { [1] = "English", [3]  = "German" , [5] = "Italian" ,[9] = "Simplified Chinese"}
-	--local fakeimportlangs = alllangs
-	local fakeimportsets = { [600] = "DEBUG"; }
-	--local fakeimportsets = { [784]="Dark Ascension";[782]="Innistrad";[786]="Avacyn Restored";}
-	--local fakeimportsets = coresets
-	--local fakeimportsets = dummy.mergetables ( coresets, expansionsets)
-	--local fakeimportsets = dummy.mergetables ( coresets, expansionsets, specialsets, promosets )
+
+--	LHpi.LoadData(2)
+	local fakeimportfoil = "y"
+	local fakeimportlangs = { [1] = "Language" }
+	local fakeimportlangs = { [1] = "English", [3]  = "German" , [5] = "Italian" ,[9] = "Simplified Chinese"}
+--	local fakeimportlangs = alllangs
+	local fakeimportsets = { [0] = "debugset"; }
+	local fakeimportsets = { [220] = "some set"; }
+--	local fakeimportsets = { [220]="foo";[800]="bar";[0]="baz";}
+--	local fakeimportsets = coresets
+--	local fakeimportsets = dummy.mergetables ( coresets, expansionsets, specialsets, promosets )
+
+--	LHpi.DoImport(fakeimportfoil, fakeimportlangs, fakeimportsets)
 	ImportPrice( fakeimportfoil, fakeimportlangs, fakeimportsets )
-	--print(LHpi.Tostring( "this is a string." ))
+--	print(LHpi.Tostring( "this is a string." ))
+--	print(LHpi.ByteRep("Zwölffüßler"))
 	print("dummy says: Goodbye lua!")
 end
 

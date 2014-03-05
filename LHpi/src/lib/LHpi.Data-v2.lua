@@ -28,17 +28,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-externalized from LHpi-v2.7
-added variant,foiltweak,cardcount to all special and some promo sets
+v2
+(all changes transparent to sitescripts)
+	minor improvements to some special sets' variant
+	misc. small improvements to code and/or comments
+	added 636:Salvat 2011
 ]]
 
---[[ TODO
-promo sets
-]]
+--TODO add all promo sets (cardcount,variants,foiltweak) to LHpi.Data
 
 local Data={}
---- @field [parent=#LHpi.Data] #string version
-Data.version = "1"
+---	data file version
+-- @field [parent=#Data] #string version
+Data.version = "2"
 
 --[[- "main" function called by Magic Album; just display error and return.
  Called by Magic Album to import prices. Parameters are passed from MA.
@@ -46,23 +48,21 @@ Data.version = "1"
  
  @function [parent=#global] ImportPrice
  @param #string importfoil	"Y"|"N"|"O"
- @param #table importlangs	{ #number = #string }
- @param #table importsets	{ #number = #string }
+ @param #table importlangs	{ #number (langid)= #string , ... }
+ @param #table importsets	{ #number (setid)= #string , ... }
 ]]
 function ImportPrice( importfoil , importlangs , importsets )
 	ma.Log( "Called LHpi.Data instead of site script. Raising error to inform user via dialog box." )
 	ma.Log( "LHpi.Data should be in \\lib subdir to prevent this." )
-	LHpi.Log( LHpi.Tostring( importfoil ) )
-	LHpi.Log( LHpi.Tostring( importlangs ) )
-	LHpi.Log( LHpi.Tostring( importsets ) )
 	error( "LHpi.Data-v" .. LHpi.Data.version .. " is a data file. Please select a LHpi-sitescript instead!" )
 end -- function ImportPrice
 
---[[- all possible languages
-@type Data.languages
-@field [parent=#Data.languages] #number id
-@field [parent=#Data.languages] #string full
-@field [parent=#Data.languages] #string abbr
+--[[- all possible languages.
+ fields are for subtables indexed by #number langid.
+ @type Data.languages
+ @field [parent=#Data.languages] #number id		(see ..\Database\Languages.txt)
+ @field [parent=#Data.languages] #string full	language name
+ @field [parent=#Data.languages] #string abbr	3 letter abbreviation
 ]]
 Data.languages = {
 	[1]  = {id=1,  full = "English",				abbr="ENG" },
@@ -85,11 +85,13 @@ Data.languages = {
 
 
 --[[- site independent set information.
+ fields are for subtables indexed by #number setid.
  @type Data.sets
- @field [parent=#Data.sets] #table cardcount	number of (English) cards in MA database. { #number = { reg = #number , tok = #number } , ... }.
- @field [parent=#Data.sets] #boolean foilonly	set contains only foil cards.
- @field [parent=#Data.sets] #table variants	default card variant tables.
- @field [parent=#Data.sets] #table foiltweak	default foiltweak tables. { #number = #table { #string = #table { #string, #table { #number or #boolean , ... } } , ... } , ...  }
+ @field [parent=#Data.sets] #string name		set name (see ..\"Database\Sets.txt").
+ @field [parent=#Data.sets] #table cardcount	number of (English) cards in MA database. { reg= #number , tok= #number }.
+ @field [parent=#Data.sets] #boolean foilonly	true if set contains (almost) only foil cards.
+ @field [parent=#Data.sets] #table variants		default card variant tables. { #string (name)= #table { #string , #table { (#string or false) , ... } } , ... }
+ @field [parent=#Data.sets] #table foiltweak	default foiltweak tables. { #string (name)= #table { foil= #boolean } , ... }
  ]]
 Data.sets = {
 --- not really a seperate subtable, just a bookmark for quick navigation in eclipse.
@@ -2181,6 +2183,10 @@ Expansions = nil,
 ["Mishra's Factory (Summer)"] 	= { "Mishra's Factory"	, { false, 2    , false, false } },
 ["Mishra's Factory (Autumn)"] 	= { "Mishra's Factory"	, { false, false, 3    , false } },
 ["Mishra's Factory (Winter)"] 	= { "Mishra's Factory"	, { false, false, false, 4     } },
+["Mishra's Factory (1)"]	 	= { "Mishra's Factory"	, { 1    , false, false, false } },
+["Mishra's Factory (2)"]	 	= { "Mishra's Factory"	, { false, 2    , false, false } },
+["Mishra's Factory (3)"] 		= { "Mishra's Factory"	, { false, false, 3    , false } },
+["Mishra's Factory (4)"] 		= { "Mishra's Factory"	, { false, false, false, 4     } },
 ["Strip Mine"] 					= { "Strip Mine"		, { 1    , 2    , 3    , 4     } },
 ["Strip Mine (1)"] 				= { "Strip Mine"		, { 1    , false, false, false } },--No Horizon
 ["Strip Mine (2)"] 				= { "Strip Mine"		, { false, 2    , false, false } },--Uneven Horizon
@@ -2804,11 +2810,43 @@ SpecialSets = nil,
 ["Forest (383)"]				= { "Forest"	, { false, false, 3     } },
 	},
 },
-[635] = { name="Magic Encyclopedia",
+[636] = { name="Salvat 2011",
+	foil="n",
+	cardcount={ reg=224, tok=0, nontr=0, overs=0 },
+	lang={ [7]=true },
+	variants={
+["Plains"] 						= { "Plains"	, { 1    , 2    , 3    , 4     } },
+["Island"] 						= { "Island" 	, { 1    , 2    , 3    , 4     } },
+["Swamp"] 						= { "Swamp"		, { 1    , 2    , 3    , 4     } },
+["Mountain"] 					= { "Mountain"	, { 1    , 2    , 3    , 4     } },
+["Forest"] 						= { "Forest" 	, { 1    , 2    , 3    , 4     } },
+["Plains (205)"]				= { "Plains"	, { 1    , false ,false, false } }, 
+["Plains (206)"]				= { "Plains"	, { false, 2    , false, false } },
+["Plains (207)"]				= { "Plains"	, { false, false, 3    , false } },
+["Plains (208)"]				= { "Plains"	, { false, false, false, 4     } },
+["Island (209)"]				= { "Island"	, { 1    , false, false, false } },
+["Island (210)"]				= { "Island"	, { false, 2    , false, false } },
+["Island (211)"]				= { "Island"	, { false, false, 3    , false } },
+["Island (212)"]				= { "Island"	, { false, false, false, 4     } },
+["Swamp (213)"]					= { "Swamp"		, { 1    , false, false, false } },
+["Swamp (214)"]					= { "Swamp"		, { false, 2    , false, false } },
+["Swamp (215)"]					= { "Swamp"		, { false, false, 3    , false } },
+["Swamp (216)"]					= { "Swamp"		, { false, false, false, 4     } },
+["Mountain (217)"]				= { "Mountain"	, { 1    , false, false, false } },
+["Mountain (218)"]				= { "Mountain"	, { false, 2    , false, false } },
+["Mountain (219)"]				= { "Mountain"	, { false, false, 3    , false } },
+["Mountain (220)"]				= { "Mountain"	, { false, false, false, 4     } },
+["Forest (221)"]				= { "Forest"	, { 1    , false, false, false } },
+["Forest (222)"]				= { "Forest"	, { false, 2    , false, false } },
+["Forest (223)"]				= { "Forest"	, { false, false, 3    , false } },
+["Forest (224)"]				= { "Forest"	, { false, false, false, 4     } }
+	},
+},
+[635] = { name="Salvat Magic Encyclopedia",
 	foil="n",
 	cardcount={ reg=600, tok=0, nontr=0, overs=0 }, 
 --	variants={
---TODO [635] variant table (FRA,SPA,ITA)
+--TODO [635] variant table based on ITA
 --	},
 },
 [600] = { name="Unhinged",
@@ -2835,6 +2873,7 @@ SpecialSets = nil,
 ["Forest (88)"]					= { "Forest"	, { 1    , false, false } },
 ["Forest (89)"]					= { "Forest"	, { false, 2    , false } },
 ["Forest (90)"]					= { "Forest"	, { false, false, 3     } },
+--TODO [490] change name to collector number
 ["Phyrexian War Beast"] 		= { "Phyrexian War Beast"	, { 1    , 2     } },
 ["Phyrexian War Beast (1)"] 	= { "Phyrexian War Beast"	, { 1    , false } },
 ["Phyrexian War Beast (2)"] 	= { "Phyrexian War Beast"	, { false, 2     } },
@@ -3027,8 +3066,10 @@ SpecialSets = nil,
 	cardcount={ reg = 88 , tok = 6 }, -- Unglued
 	variants={
 ["B.F.M."] 						= { "B.F.M."	, { "Left", "Right" } },
-["B.F.M. (left)"] 				= { "B.F.M."	, { "Left", false   } },
-["B.F.M. (right)"] 				= { "B.F.M."	, { false , "Right" } },
+--["B.F.M. (left)"] 				= { "B.F.M."	, { "Left", false   } },
+--["B.F.M. (right)"] 				= { "B.F.M."	, { false , "Right" } },
+["B.F.M. (Left)"] 				= { "B.F.M."	, { "Left", false   } },
+["B.F.M. (Right)"] 				= { "B.F.M."	, { false , "Right" } },
 	},
 },
 [310] = { name="Portal Second Age",
@@ -3086,46 +3127,46 @@ SpecialSets = nil,
 ["Forest (2)"]					= { "Forest"	, { false, 2    , false, false } },
 ["Forest (3)"]					= { "Forest"	, { false, false, 3    , false } },
 ["Forest (4)"]					= { "Forest"	, { false, false, false, 4     } },
-["Anaconda"]					= { "Anaconda"				, { ""	 , "ST"	} },
-["Anaconda (ST)"]				= { "Anaconda"				, { false, "ST"	} },
-["Blaze"]						= { "Blaze"					, { ""	 , "ST"	} },
-["Blaze (ST)"]					= { "Blaze"					, { false, "ST"	} },
-["Elite Cat Warrior"]			= { "Elite Cat Warrior"		, { ""	 , "ST"	} },
-["Elite Cat Warrior (ST)"]		= { "Elite Cat Warrior"		, { false, "ST"	} },
-["Hand of Death"]				= { "Hand of Death"			, { ""	 , "ST"	} },
-["Hand of Death (ST)"]			= { "Hand of Death"			, { false, "ST"	} },
-["Monstrous Growth"]			= { "Monstrous Growth"		, { ""	 , "ST"	} },
-["Monstrous Growth (ST)"]		= { "Monstrous Growth"		, { false, "ST"	} },
-["Raging Goblin"]				= { "Raging Goblin"			, { ""	 , "ST"	} },
-["Raging Goblin (ST)"]			= { "Raging Goblin"			, { false, "ST"	} },
-["Warrior's Charge"]			= { "Warrior's Charge"		, { ""	 , "ST"	} },
-["Warrior's Charge (ST)"]		= { "Warrior's Charge"		, { false, "ST"	} },
-["Armored Pegasus"]				= { "Armored Pegasus"		, { ""	 , "DG"	} },
-["Armored Pegasus (DG)"]		= { "Armored Pegasus"		, { false, "DG"	} },
-["Bull Hippo"]					= { "Bull Hippo"			, { ""	 , "DG"	} },
-["Bull Hippo (DG)"]				= { "Bull Hippo"			, { false, "DG"	} },
-["Cloud Pirates"]				= { "Cloud Pirates"			, { ""	 , "DG"	} },
-["Cloud Pirates (DG)"]			= { "Cloud Pirates"			, { false, "DG"	} },
-["Feral Shadow"]				= { "Feral Shadow"			, { ""	 , "DG"	} },
-["Feral Shadow (DG)"]			= { "Feral Shadow"			, { false, "DG"	} },
-["Snapping Drake"]				= { "Snapping Drake"		, { ""	 , "DG"	} },
-["Snapping Drake (DG)"]			= { "Snapping Drake"		, { false, "DG"	} },
-["Storm Crow"]					= { "Storm Crow"			, { ""	 , "DG"	} },
-["Storm Crow (DG)"]				= { "Storm Crow"			, { false, "DG"	} },
-["Anakonda"]					= { "Anakonda"				, { ""	 , "ST"	} },
-["Anakonda (ST)"]				= { "Anakonda"				, { false, "ST"	} },
-["Heiße Glut"]					= { "Heiße Glut"			, { ""	 , "ST"	} },
-["Heiße Glut (ST)"]				= { "Heiße Glut"			, { false, "ST"	} },
-["Katzenkriegerelite"]			= { "Katzenkriegerelite"	, { ""	 , "ST"	} },
-["Katzenkriegerelite (ST)"]		= { "Katzenkriegerelite"	, { false, "ST"	} },
-["Todbringende Hand"]			= { "Todbringende Hand"		, { ""	 , "ST"	} },
-["Todbringende Hand (ST)"]		= { "Todbringende Hand"		, { false, "ST"	} },
-["Unheimliches Wachstum"]		= { "Unheimliches Wachstum"	, { ""	 , "ST"	} },
-["Unheimliches Wachstum (ST)"]	= { "Unheimliches Wachstum"	, { false, "ST"	} },
-["Wütender Goblin"]				= { "Wütender Goblin"		, { ""	 , "ST"	} },
-["Wütender Goblin (ST)"]		= { "Wütender Goblin"		, { false, "ST"	} },
-["Attacke der Krieger"]			= { "Attacke der Krieger"	, { ""	 , "ST"	} },
-["Attacke der Krieger (ST)"]	= { "Attacke der Krieger"	, { false, "ST"	} },
+["Anaconda"]					= { "Anaconda"				, { ""	 , false } },
+["Anaconda (ST)"]				= { "Anaconda"				, { false, "ST"	 } },
+["Blaze"]						= { "Blaze"					, { ""	 , false } },
+["Blaze (ST)"]					= { "Blaze"					, { false, "ST"	 } },
+["Elite Cat Warrior"]			= { "Elite Cat Warrior"		, { ""	 , false } },
+["Elite Cat Warrior (ST)"]		= { "Elite Cat Warrior"		, { false, "ST"	 } },
+["Hand of Death"]				= { "Hand of Death"			, { ""	 , false } },
+["Hand of Death (ST)"]			= { "Hand of Death"			, { false, "ST"	 } },
+["Monstrous Growth"]			= { "Monstrous Growth"		, { ""	 , false } },
+["Monstrous Growth (ST)"]		= { "Monstrous Growth"		, { false, "ST"	 } },
+["Raging Goblin"]				= { "Raging Goblin"			, { ""	 , false } },
+["Raging Goblin (ST)"]			= { "Raging Goblin"			, { false, "ST"	 } },
+["Warrior's Charge"]			= { "Warrior's Charge"		, { ""	 , false } },
+["Warrior's Charge (ST)"]		= { "Warrior's Charge"		, { false, "ST"	 } },
+["Armored Pegasus"]				= { "Armored Pegasus"		, { ""	 , false } },
+["Armored Pegasus (DG)"]		= { "Armored Pegasus"		, { false, "DG"	 } },
+["Bull Hippo"]					= { "Bull Hippo"			, { ""	 , false } },
+["Bull Hippo (DG)"]				= { "Bull Hippo"			, { false, "DG"	 } },
+["Cloud Pirates"]				= { "Cloud Pirates"			, { ""	 , false } },
+["Cloud Pirates (DG)"]			= { "Cloud Pirates"			, { false, "DG"	 } },
+["Feral Shadow"]				= { "Feral Shadow"			, { ""	 , false } },
+["Feral Shadow (DG)"]			= { "Feral Shadow"			, { false, "DG"	 } },
+["Snapping Drake"]				= { "Snapping Drake"		, { ""	 , false } },
+["Snapping Drake (DG)"]			= { "Snapping Drake"		, { false, "DG"	 } },
+["Storm Crow"]					= { "Storm Crow"			, { ""	 , false } },
+["Storm Crow (DG)"]				= { "Storm Crow"			, { false, "DG"	 } },
+["Anakonda"]					= { "Anakonda"				, { ""	 , false } },
+["Anakonda (ST)"]				= { "Anakonda"				, { false, "ST"	 } },
+["Heiße Glut"]					= { "Heiße Glut"			, { ""	 , false } },
+["Heiße Glut (ST)"]				= { "Heiße Glut"			, { false, "ST"	 } },
+["Katzenkriegerelite"]			= { "Katzenkriegerelite"	, { ""	 , false } },
+["Katzenkriegerelite (ST)"]		= { "Katzenkriegerelite"	, { false, "ST"	 } },
+["Todbringende Hand"]			= { "Todbringende Hand"		, { ""	 , false } },
+["Todbringende Hand (ST)"]		= { "Todbringende Hand"		, { false, "ST"	 } },
+["Unheimliches Wachstum"]		= { "Unheimliches Wachstum"	, { ""	 , false } },
+["Unheimliches Wachstum (ST)"]	= { "Unheimliches Wachstum"	, { false, "ST"	 } },
+["Wütender Goblin"]				= { "Wütender Goblin"		, { ""	 , false } },
+["Wütender Goblin (ST)"]		= { "Wütender Goblin"		, { false, "ST"	 } },
+["Attacke der Krieger"]			= { "Attacke der Krieger"	, { ""	 , false } },
+["Attacke der Krieger (ST)"]	= { "Attacke der Krieger"	, { false, "ST"	 } },
 	},
 },
 [235] = { name="Multiverse Gift Box",
@@ -3319,6 +3360,7 @@ Promos = nil,
 	cardcount={ reg=70, tok=1, nontr=0, overs=0 }, 
 	foiltweak={
 ["Centaur"]				= { foil = false},
+["Golem"]				= { foil = false},
 	},
 },
 [24] = { name="Champs Promos",
@@ -3351,9 +3393,12 @@ Promos = nil,
 	cardcount={ reg=66, tok=1, nontr=1, overs=5 }, 
 	variants={
 ["Lu Bu, Master-at-Arms"] 			= { "Lu Bu, Master-at-Arms"		, { "April", "July" } },
+["Lu Bu, Master-at-Arms (April)"] 	= { "Lu Bu, Master-at-Arms"		, { "April", false  } },
+["Lu Bu, Master-at-Arms (July"] 	= { "Lu Bu, Master-at-Arms"		, { false  , "July" } },
 ["Plains"] 							= { "Plains"		, { "DGM" } },
 	},
 	foiltweak={
+--TODO [22] add all foil=only to foiltweak	
 ["Lu Bu, Master-at-Arms"]			= { foil = false},
 ["Revenant"]						= { foil = false},
 ["Dirtcowl Wurm"]					= { foil = false},
@@ -3376,16 +3421,25 @@ Promos = nil,
 	cardcount={ reg=53, tok=24, nontr=0, overs=10 }, 
 	variants={
 ["Bear"] 							= { "Bear"		, { "ONS", "ODY" } },
+["Bear (ONS)"] 						= { "Bear"		, { "ONS", false } },
+["Bear (ODY)"] 						= { "Bear"		, { false, "ODY" } },
 ["Beast"] 							= { "Beast"		, { "DST", "ODY" } },
+["Beast (DST)"] 					= { "Beast"		, { "DST", false } },
+["Beast (ODY)"] 					= { "Beast"		, { false, "ODY" } },
 ["Elephant"] 						= { "Elephant"	, { "INV", "ODY" } },
+["Elephant (INV)"]					= { "Elephant"	, { "INV", false } },
+["Elephant (ODY)"]					= { "Elephant"	, { false, "ODY" } },
 ["Spirit"] 							= { "Spirit"	, { "CHK", "PLS" } },
+["Spirit (CHK)"] 					= { "Spirit"	, { "CHK", false } },
+["Spirit (PLS)"] 					= { "Spirit"	, { false, "PLS" } },
 	},
 	foiltweak={
+["Lightning Bolt (146)"]		= { foil = false}, -- there's two 'Bolts here, one nofoil, one foilonly
+["Lightning Bolt (1)"]			= { foil = true }, -- there's two 'Bolts here, one nofoil, one foilonly
 ["Cryptic Command"]				= { foil = true },
 ["Damnation"]					= { foil = true },
 ["Day of Judgment"]				= { foil = true },
 ["Hypnotic Specter"]			= { foil = true },
---["Lightning Bolt"]				= { foil = true }, -- there's two 'Bolts here, one nofoil, one foilonly
 ["Powder Keg"]					= { foil = true },
 ["Psychatog"]					= { foil = true },
 ["Wasteland"]					= { foil = true },
@@ -3455,6 +3509,7 @@ Promos = nil,
 	foil="n",
 	cardcount={ reg=2, tok=0, nontr=0, overs=0 }, 
 },
+[0] = { name="fakeset for Debug" },
 }-- end table Data.sets
 
 for sid,set in pairs(Data.sets) do
@@ -3466,3 +3521,4 @@ end -- for sid,count
 --LHpi.Log( "LHpi.Data loaded and executed successfully." , 0 , nil , 0 )
 ma.Log( "LHpi.Data loaded and executed successfully." , 0 , nil , 0 )
 return Data
+--EOF
