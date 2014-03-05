@@ -3476,6 +3476,7 @@ Promos = nil,
 	foil="n",
 	cardcount={ reg=2, tok=0, nontr=0, overs=0 }, 
 },
+[0] = { name="fakeset for Debug" },
 }-- end table Data.sets
 
 for sid,set in pairs(Data.sets) do
@@ -3487,3 +3488,4 @@ end -- for sid,count
 --LHpi.Log( "LHpi.Data loaded and executed successfully." , 0 , nil , 0 )
 ma.Log( "LHpi.Data loaded and executed successfully." , 0 , nil , 0 )
 return Data
+--EOF
