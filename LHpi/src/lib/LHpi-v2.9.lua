@@ -1184,7 +1184,7 @@ function LHpi.MergeCardrows ( name, langs,  oldRow , newRow , variants )
 						else--average
 							conflictcount=conflictcount+1
 							mergedRow.regprice[lid] = (oldRow.regprice[lid] + newRow.regprice[lid]) * 0.5
-							conflictdesc.reg[lid] = "avg:" .. mergedrow.regprice[lid]
+							conflictdesc.reg[lid] = "avg:" .. mergedRow.regprice[lid]
 --TODO						mergedRow.mergecounter++				
 							if VERBOSE then
 								LHpi.Log(string.format("averaging conflicting %s regprice[%s] %i and %i to %i", name, LHpi.Data.languages[lid].abbr, oldRow.regprice[lid], newRow.regprice[lid], mergedRow.regprice[lid] ) , 1 )
@@ -1600,3 +1600,4 @@ end -- function LHpi.Logtable
 --LHpi.Log( "\239\187\191LHpi library loaded and executed successfully" , 0 , nil , 0 ) -- add unicode BOM to beginning of logfile
 LHpi.Log( "LHpi library loaded and executed successfully." , 0 , nil , 0 )
 return LHpi
+--EOF

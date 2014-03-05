@@ -100,7 +100,7 @@ scriptname = "LHpi.sitescriptTemplate-v" .. libver .. "." .. dataver .. "." .. s
 --- savepath for OFFLINE (read) and SAVEHTML (write). must point to an existing directory relative to MA's root.
 -- set by LHpi lib unless specified here.
 -- @field [parent=#global] #string savepath
---savepath = "Prices\\" .. string.gsub( scriptname , "%-v%d+%.%d+%.lua$" , "" ) .. "\\"
+--savepath = "Prices\\" .. string.gsub( scriptname , "%-?v?[%d%.]*%.lua$" , "" ) .. "\\"
 
 ---	LHpi library
 -- will be loaded by ImportPrice
