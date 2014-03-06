@@ -74,7 +74,7 @@ end -- function ImportPrice
 function LHpi.DoImport (importfoil , importlangs , importsets)
 	--TODO LHpi.LegacyConversion(), remove on next sitescript update
 	if STRICTCHECKEXPECTED then STRICTEXPECTED=STRICTCHECKEXPECTED end
-	if DEBUGSKIPFOUND then DEBUGFOUND=false else DEBUGFOUND=true end
+	if DEBUGSKIPFOUND~=nil then DEBUGFOUND= (not DEBUGSKIPFOUND) end
 	--default values for feedback options
 	if VERBOSE==nil then VERBOSE = false end
 	if LOGDROPS==nil then LOGDROPS = false end
@@ -84,7 +84,7 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 	if CHECKEXPECTED==nil then CHECKEXPECTED = true end
 	if STRICTEXPECTED==nil then STRICTEXPECTED = false end
 	if DEBUG==nil then DEBUG = false end
-	if DEBUGSKIPFOUND==nil then DEBUGSKIPFOUND = true end
+	if DEBUGFOUND==nil then DEBUGFOUND = false end
 	if DEBUGVARIANTS==nil then DEBUGVARIANTS = false end
 	if OFFLINE==nil then OFFLINE = false end
 	if SAVEHTML==nil then SAVEHTML = false end
@@ -141,20 +141,26 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 	if not site.currency then site.currency = "$" end
 	if not site.namereplace then site.namereplace={} end
 	if not site.variants then site.variants = {} end
-	for sid,_setname in pairs(supImportsets) do
-		if not site.variants[sid] then
-			if LHpi.Data.sets[sid] then
-				site.variants[sid] = LHpi.Data.sets[sid].variants
-			end -- if
-		end -- if
-	end -- for
 	if not site.foiltweak then site.foiltweak={} end
 	for sid,_setname in pairs(supImportsets) do
-		if not site.foiltweak[sid] then
-			if LHpi.Data.sets[sid] then
-				site.foiltweak[sid] = LHpi.Data.sets[sid].foiltweak
-			end -- if
-		end -- if
+		if not site.variants[sid] then site.variants[sid]={} end
+		if not site.variants[sid].override then
+			--merge
+			local mergedvariants=LHpi.Data.sets[sid].variants
+			for card,variant in pairs(site.variants[sid]) do
+				mergedvariants[card]=variant
+			end--for card,variant
+			site.variants[sid]=mergedvariants
+		end--if variants.override
+		if not site.foiltweak[sid] then site.foiltweak[sid]={} end
+		if not site.foiltweak[sid].override then
+			--merge
+			local mergedfoiltweak=LHpi.Data.sets[sid].foiltweak
+			for card,tweak in pairs(site.foiltweak[sid]) do
+				mergedfoiltweak[card]=tweak
+			end--for card,variant
+			site.foiltweak[sid]=mergedfoiltweak
+		end--if foiltweak.override
 	end -- for
 	if not site.condprio then site.condprio={ [0] = "NONE" } end
 	if CHECKEXPECTED then
@@ -1589,7 +1595,7 @@ end -- function LHpi.Tostring
 ]]
 function LHpi.Logtable( tbl , str , l )
 	local name = str or tostring( tbl )
-	local llvl = 0 or l
+	local llvl = l or 0
 	local c=0
 	if type( tbl ) == "table" then
 		LHpi.Log( string.format("BIGTABLE %s has %i rows:", name, LHpi.Length(tbl) ) , llvl )

@@ -325,6 +325,15 @@ function dummy.fakesitescript()
 	site.regex="none"
 	dataver=2
 	scriptname="LHpi.fakescript.lua"
+	site.variants= { [0]= {
+		["site"]			= { "inSiteOnly"		, { "one", "two" } },
+		["site (1)"]		= { "inSiteOnly"		, { "one", false } },
+		["site (2)"]		= { "inSiteOnly"		, { false, "two" } },
+		["same"]			= { "samefromSite"		, { "one", "two" } },
+		["same (1)"]		= { "samefromSite"		, { "one", false } },
+		["same (2)"]		= { "samefromSite"		, { false, "two" } },
+	} }
+	
 	function site.BuildUrl() return { ["fakeURL"] ={} } end
 end--function dummy.fakesitescript
 
@@ -355,7 +364,7 @@ end-- function dummy.mergetables
 
 --[[- force debug enviroment
 @function [parent=#dummy] forceEnv
-@param #table env
+@param #table env (optional)
 ]]
 function dummy.forceEnv(env)
 	env = env or dummy.env
@@ -364,14 +373,17 @@ function dummy.forceEnv(env)
 	LOGNAMEREPLACE = env.LOGNAMEREPLACE
 	LOGFOILTWEAK = env.LOGFOILTWEAK
 	CHECKEXPECTED = env.CHECKEXPECTED
-	STRICTCHECKEXPECTED = env.STRICTCHECKEXPECTED
+	STRICTEXPECTED = env.STRICTEXPECTED
 	OFFLINE = env.OFFLINE
 	SAVELOG = env.SAVELOG
 	SAVEHTML = dummy.envSAVEHTML
 	DEBUG = env.DEBUG
-	DEBUGSKIPFOUND = env.DEBUGSKIPFOUND
+	DEBUGFOUND = env.DEBUGFOUND
 	DEBUGVARIANTS = env.DEBUGVARIANTS
 	SAVETABLE = env.SAVETABLE
+	--legacy
+	STRICTCHECKEXPECTED = nil
+	DEBUGSKIPFOUND = nil
 end--function dummy.forceEnv
 
 --[[- run and time sitescript multiple times.
@@ -391,7 +403,7 @@ function dummy.performancetest(repeats,script,impF,impL,impS,timefile)
 		dummy.forceEnv()
 		ImportPrice( impF, impL, impS )
 		local dt = os.clock() - t1
-		ma.PutFile(timefile,string.format("\nrun %2i: %g seconds",run,dt),1)
+		ma.PutFile(timefile,string.format("\nrun %2i: %3.3g seconds",run,dt),1)
 	end--for run
 end--function dummy.performancetest
 
@@ -602,52 +614,52 @@ function main()
 		LOGNAMEREPLACE = true,
 		LOGFOILTWEAK = true,
 		CHECKEXPECTED = true,
-		STRICTCHECKEXPECTED = true,
+		STRICTEXPECTED = true,
 		OFFLINE = true,
 		SAVELOG = true,
 		SAVEHTML = false,
-		DEBUG = true,
-		DEBUGSKIPFOUND = false,
-	--	DEBUGVARIANTS = true,
-	--	SAVETABLE=true,
+--		DEBUG = true,
+--		DEBUGFOUND = true,
+--		DEBUGVARIANTS = true,
+--		SAVETABLE=true,
 	}
 	local scripts={
-		{name="lib\\LHpi.sitescriptTemplate-v2.9.2.1.lua",path=dummy.path,savepath=dummy.savepath},
-		{name="LHpi.mtgmintcard.lua",path=dummy.path,savepath=dummy.savepath},
-		{name="LHpi.magicuniverseDE.lua",path=dummy.path,savepath=dummy.savepath},
-		{name="LHpi.trader-onlineDE.lua",path=dummy.path,savepath=dummy.savepath},
-		{name="LHpi.tcgplayerPriceGuide.lua",path=dummy.path,savepath=dummy.savepath},
-		{name="\\MTG Mint Card.lua",path=dummy.savepath,savepath=dummy.savepath},
-		{name="\\Import Prices.lua",path=dummy.savepath,savepath=dummy.savepath},
-		{name="LHpi.mtgprice.com.lua",path=dummy.path,savepath=dummy.savepath},
+		[0]={name="lib\\LHpi.sitescriptTemplate-v2.9.2.1.lua",path=dummy.path,savepath=dummy.savepath},
+		[1]={name="LHpi.mtgmintcard.lua",path=dummy.path,savepath=dummy.savepath},
+		[2]={name="LHpi.magicuniverseDE.lua",path=dummy.path,savepath=dummy.savepath},
+		[3]={name="LHpi.trader-onlineDE.lua",path=dummy.path,savepath=dummy.savepath},
+		[4]={name="LHpi.tcgplayerPriceGuide.lua",path=dummy.path,savepath=dummy.savepath},
+		[5]={name="\\MTG Mint Card.lua",path=dummy.savepath,savepath=dummy.savepath},
+		[6]={name="\\Import Prices.lua",path=dummy.savepath,savepath=dummy.savepath},
+		[7]={name="LHpi.mtgprice.com.lua",path=dummy.path,savepath=dummy.savepath},
 	}
 	--select a predefined script to be tested
-	local script=scripts[2]
+	local script=scripts[1]
 
 --	dummy.fakesitescript()
 --	dummy.loadscript(script.name,script.path,script.savepath)
 --	LHpi = dummy.loadlibonly(2.9,dummy.path,dummy.savepath)
+
 	-- force debug enviroment options
 	dummy.forceEnv(dummy.env)
 --	print("dummy says: script loaded.")
 
 	--now try to break the script :-)
---	LHpi.LoadData(2)
 	local fakeimportfoil = "y"
 	local fakeimportlangs = { [1] = "Language" }
-	local fakeimportlangs = { [1] = "English", [3]  = "German" , [5] = "Italian" ,[9] = "Simplified Chinese"}
---	local fakeimportlangs = dummy.alllangs
-	local fakeimportsets = { [0] = "debugset"; }
-	local fakeimportsets = { [797] = "some set"; }
+	local fakeimportlangs = dummy.alllangs
+	local fakeimportsets = { [0] = "fakeset"; }
+--	local fakeimportsets = { [797] = "some set"; }
 --	local fakeimportsets = { [220]="foo";[800]="bar";[0]="baz";}
-	--local fakeimportsets = dummy.coresets
+	local fakeimportsets = dummy.coresets
 --	local fakeimportsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 
-	dummy.performancetest(5,script,fakeimportfoil,fakeimportlangs,fakeimportsets,"time.log")
+--	dummy.Data = LHpi.LoadData(2)
 --	LHpi.DoImport(fakeimportfoil, fakeimportlangs, fakeimportsets)
 --	ImportPrice( fakeimportfoil, fakeimportlangs, fakeimportsets )
 --	print(LHpi.Tostring( "this is a string." ))
 --	print(LHpi.ByteRep("Zwölffüßler"))
+	dummy.performancetest(10,script,fakeimportfoil,fakeimportlangs,fakeimportsets,"time.log")
 
 	local dt = os.clock() - t1 
 	print(string.format("All this took %g seconds",dt))

@@ -35,6 +35,7 @@ v2
 	added 636:Salvat 2011
 ]]
 
+--TODO param importsets and nil all others to save memory
 --TODO add all promo sets (cardcount,variants,foiltweak) to LHpi.Data
 
 local Data={}
@@ -3509,7 +3510,17 @@ Promos = nil,
 	foil="n",
 	cardcount={ reg=2, tok=0, nontr=0, overs=0 }, 
 },
-[0] = { name="fakeset for Debug" },
+[0] = { name="fakeset for Debug",
+	variants={
+["data"]			= { "inDataOnly"		, { "one", "two" } },
+["data (1)"]		= { "inDataOnly"		, { "one", false } },
+["data (2)"]		= { "inDataOnly"		, { false, "two" } },
+["same"]			= { "samefromData"		, { "one", "two" } },
+["same (1)"]		= { "samefromData"		, { "one", false } },
+["same (2)"]		= { "samefromData"		, { false, "two" } },
+	},
+},
+	
 }-- end table Data.sets
 
 for sid,set in pairs(Data.sets) do
