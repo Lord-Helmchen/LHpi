@@ -20,17 +20,17 @@ Sitescripts will need to provide
 ** a table with expected card count numbers for LHpi's sanity checks.
 ===magicuniverse.de===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=16210 LHpi.magicuniverseDE-v2.8.1.1.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=16277 LHpi.magicuniverseDE.lua.zip]
 |-
-|Sitescript version||2.8.1.1
+|Sitescript version||2.9.2.10
 |-
-|used LHpi version||2.8
+|used LHpi version||2.9
 |-
-|used LHpi.Data version||1
+|used LHpi.Data version||2
 |-
-|updated last on||2014-03-02 hotfix
+|updated last on||2014-03-06
 |-
-|size||12.1 KiB
+|size|| 12.62 KiB
 |}
 [http://www.magicuniverse.de/html/einzelkarten.php?menue Magic Universe] is a German site with German and English cards, priced in €.
 
@@ -38,17 +38,17 @@ This site started it all, since I wanted prices in local currency, and my FLG ap
 
 ===mtgmintcard.com===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=16209 LHpi.mtgmintcard-v2.8.1.1.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=16278 LHpi.mtgmintcard.lua.zip]
 |-
-|Sitescript version||2.8.1.1
+|Sitescript version||2.9.2.9
 |-
-|used LHpi version||2.8
+|used LHpi version||2.9
 |-
-|used LHpi.Data version||1
+|used LHpi.Data version||2
 |-
-|updated last on||2014-03-02 hotfix
+|updated last on||2014-03-06
 |-
-|size||10.28 KiB
+|size|| 10.75 KiB
 |}
 Functionally the same as [[#Other scripts|"MTG Mint Card.lua"]] by Goblin Hero and Stromglad1.
 
@@ -56,39 +56,37 @@ When I wanted to generalize my script for easy addaption to other sites, this pr
 
 ===magic.tcgplayer.com PriceGuide===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=16208 LHpi.tcgplayerPriceGuide-v2.8.1.1.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=16279 LHpi.tcgplayerPriceGuide.lua.zip]
 |-
-|Sitescript version||2.8.1.1
+|Sitescript version||2.9.2.9
 |-
-|used LHpi version||2.8
+|used LHpi version||2.9
 |-
-|used LHpi.Data version||1
+|used LHpi.Data version||2
 |-
-|updated last on||2014-03-02 hotfix
+|updated last on||2014-03-06
 |-
-|size||13.5 KiB
+|size|| 14.17 KiB
 |}
 [http://magic.tcgplayer.com/magic_price_guides.asp Tcgplayer Price Guide] claims to accumulate prices from 75 online vendors. They are priced in $. Their tables give a high, low and average price; the sitescript contains a variable to select which one of those it should use.
-<br />To change the column to import from, open the script in a text editor, find <code>himelo = 3</code> which should be around line 126 and change it to <code>himelo = 1</code> for high or <code>himelo = 2</code> for medium prices. You can have [[How-To_sitescriptTemplate#multiple_copies_ot_the_same_script|multiple copies ot the same script]]
+<br />To change the column to import from, open the script in a text editor, find <code>himelo = 3</code> and change it to <code>himelo = 1</code> for high or <code>himelo = 2</code> for medium prices. You can have [[How-To_sitescriptTemplate#multiple_copies_ot_the_same_script|multiple copies of the same script]]
 <br />As requested by Golob [http://www.slightlymagic.net/forum/viewtopic.php?f=32&t=2324&start=300#p108605 here].
-<br />Also, Promo and most special sets have not been tested yet and are commented out.
-<br />Note that cards with multiple versions are averaged in some sets and set to "variant 1"'s price in others, as the source list does not clearly identify the version.
-Even when it does, it is unclear if the entry without version suffix is meant to be all unspecified or version 1 only.
-<s>As I wanted to keep this sitescript as basic as possible, I decided against guessing a real variant table and just added expected failcounts.</s>In most cases, "CARD" price is set for all versions and averaged with "CARD (version)" price for given versions now.
+<br />Also, most Promo sets have not been tested yet and are commented out.
+<br />Note that cards with multiple versions are averaged in some sets and set to "variant 1"'s price in others, as the source list does not clearly identify the version. Even when it does, it is unclear if the entry without version suffix is meant to be all unspecified or version 1 only. In most cases, "CARD" price is set for all versions and averaged with "CARD (version)" price for given versions now.
 
 ===trader-online.de===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=16207 LHpi.trader-onlineDE-v2.8.1.1.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=16276 LHpi.trader-onlineDE-v2.8.1.1.lua.zip]
 |-
-|Sitescript version||2.8.1.1
+|Sitescript version||2.9.2.9
 |-
-|used LHpi version||2.8
+|used LHpi version||2.9
 |-
-|used LHpi.Data version||1
+|used LHpi.Data version||2
 |-
-|updated last on||2014-03-02 hotfix
+|updated last on||2014-03-06
 |-
-|size||12.52 KiB
+|size|| 13.08 KiB
 |}
 [http://www.trader-online.de/Magic_Online-Shop.php Trader Online] is a German site with German and English cards, priced in €.
 
@@ -96,13 +94,13 @@ I found this site while looking for Token images, found it to be parseable by si
 
 ==The LHpi Library==
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=16206 LHpi-v2.8.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=16275 LHpi-v2.9.lua.zip]
 |-
-|Tested with Ma version||1.6.1.321
+|Tested with Ma version||1.6.1.325
 |-
-|updated last on||2014-03-02 hotfix
+|updated last on||2014-03-06
 |-
-|size||15.69 KiB
+|size|| 16.64 KiB
 |}
 It is not expected to be fast, but as reliable as possible:<br />
 It first compares the user requested sets and languages with what the sitescript has available and builds a table of urls to querry, seperated by set.<br />
@@ -112,30 +110,31 @@ Should the same card (defined by set,card,language,(picture-)version ) be encoun
 Once that cardsetTable is completed (all urls belonging to the set are parsed), it sends the prices to MA.
 Finally, it compares the count of set prices with the number of cards in the set (or, if given, the expectation given in the sitescript).
 See [[How-To_sitescriptTemplate#procedure_of_function_calls]] for details.
-Logging to a seperate file is now enabbled per default (but still configurable by the variable SAVELOG in the script), since ma.PutFile(file,data,0) behaviour bug was fixed. The log is overwritten on subsequent re-runs of the script.
+Logging to a seperate file is now disabled by default again (but still configurable by the variable SAVELOG in the script). The log (\Prices\LHpi.log) is overwritten on subsequent re-runs of a script.
 
 ===LHpi.Data===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=15850 LHpi.Data-v1.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=16274 LHpi.Data-v2.lua.zip]
 |-
 |Library version||>=2.7
 |-
-|updated last on||2014-02-12
+|updated last on||2014-03-06
 |-
-|size||20.98 KiB
+|size|| 21.55 KiB
 |}
-Since library version 2.7, static set data (number of cards,foilage,variant and foiltweak tables) were moved into a seperate data file that gets loaded by the library on initialization. This will allow to distinguish between code updates (to the library) and set data updates (which are usually needed when a new set is released). Version numbering of the sitescripts will reflect both library and data versions used.
+Since library version 2.7, site-independent set data (number of cards,foilage, default variant and foiltweak tables) were moved into a seperate data file that gets loaded by the library on initialization. This will allow to distinguish between code updates (to the library) and set data updates (which are usually needed when a new set is released). Version numbering of the sitescripts will reflect both library and data versions used.
 
 ==Installation and usage==
 #Download at least one sitescript and both the LHpi libray and data file in the version the sitescript uses.
+#* note the change to version numbers and file names in 2.9.2 , see [[#version_history]] for details. 
 #Unzip into the "Prices" subdirectory of your Magic Album installation.
 #(recommended, but not yet strictly necessary) Create a subfolder called "lib" under "Prices" and move both library and data file into the subfolder.
-#(optional) If you want to use the SAVEHTML feature, you need to create an empty subdirectory, named like the sitescript without version suffix (for example "Prices\LHpi.magicuniverseDE").
+#(optional) If you want to use the SAVEHTML or SAVETABLE feature, you need to create an empty subdirectory, named like the sitescript without file extension (for example "Prices\LHpi.magicuniverseDE").
 #(re)start Magic Album and use the sitescript ('''not''' the library nor the data file. Step 3 makes this warning obsolete.) from Magic Album's Price Manager dialog.
 
 If something does not happen as expected
 * make sure the script is saved utf-8 encoded. It's customary for lua scripts to be saved ANSI encoded, but as MA expects utf input, this is what I considered the most wysiwyg approach to set cards with special characters in their names.
-* open the lua file in a text editor and change "VERBOSE = false" to "VERBOSE = true" (somewhere around line 33) and "--STRICTCHECKEXPECTED=true" to "STRICTCHECKEXPECTED=true". This will make the script provide feedback to help track down any problems (or just to see what it was doing) and also enable additional checks. The logging will be sent to "[MA Folder]\Prices\[scriptname].log".
+* open the lua file in a text editor and change "--VERBOSE = true" to "VERBOSE = true", likewise enable "LOGDROPS","LOGNAMEREPLACE","LOGFOILTWEAK","STRICTCHECKEXPECTED" and "SAVELOG". This will make the script provide more feedback to help track down any problems (or just to see what it was doing) and also enable additional checks. The logging will then be sent to "[MA Folder]\Prices\[scriptname].log".
 I'll try to answer any questions you might have. If the script misbehaves please follow the two steps above and attach a copy of the .log to your post.
 
 ==Development==
@@ -146,31 +145,31 @@ Detailed instructions on the properties and functions to define in your sitescri
 
 ===sitescriptTemplate===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=16129 LHpi.sitescriptTemplate-v2.8.1.1.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=16273 LHpi.sitescriptTemplate-v2.9.2.8.lua.zip]
 |-
-|Sitescript version||2.8.1.1
+|Sitescript version||8
 |-
-|uses LHpi library version||2.8
+|uses LHpi library version||2.9
 |-
-|uses LHpi.Data version||1
+|uses LHpi.Data version||2
 |-
-|updated last on||2014-02-25
+|updated last on||2014-03-06
 |-
-|size||8.84 KiB
+|size|| 9.2 KiB
 |}
 This is just an empty, commented template to help write new sitescripts.
 
 ===dummyMA.lua===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=15848 dummyMA-v0.2.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=16272 dummyMA.zip]
 |-
-|version||0.2
+|version||0.3
 |-
-|updated last on||2013-02-13
+|updated last on||2013-03-06
 |-
-|size||6.27 KiB
+|size|| 7 KiB
 |}
-Magic Album API dummy to test and debug LHpi within an IDE (such as eclipse) and without needing Magic Album. Now fixed for backwards compatibility with Lua 5.1. 
+Magic Album API dummy to test and debug LHpi within an IDE (such as eclipse) and without needing Magic Album. Now fixed for backwards compatibility with Lua 5.1 and paths outside of MA's "Prices" directory.
 
 ===Planned features===
 in no particular order
@@ -178,11 +177,12 @@ in no particular order
 ** add all <s>special and</s> promo sets (cardcount,variants,foiltweak) to LHpi.Data
 * tweak log : better differentiation of log levels (normal,verbose,debug); rewrite normal-level logentries to be more pleasing to read.<br />I'd love to get users' feedback on this: how silent should normal level be; what should not be logged unless in debug mode?
 *<code>(((a+b)/2)+c)/2 != (a+b+c)/3 = (((a+b)/2*2)+c)/3</code><br/> For mathematically correct averaging, need to attach a counter to averaged prices, then on next averaging, do <code>if counter then newaverage=(oldaverage*(counter+1) + newprice) / (counter+2)</code>
+* improve handling of variant and foiltweak defaults
 
 ===Possible features===
 in no particular order
 * passing importsets to BuildCardData could sort out the mess that is magicuniverse's promo page, at the cost of lots looping through sets. Should thus be done in site.BCDPlugins
-* ideally, most information in LHpi.sets could be read from MA via API getter functions.
+* ideally, most information in LHpi.Data.sets could be read from MA via API getter functions.
 * add hardcoded exchange rate for crude currency conversion between parsing and importing.
 * <s>handle conflicting prices differently. Is averaging ok, or should the script discard one (which?) of the prices and/or throw an error ?</s> Until further notice, I'm ok with <s>how averaging works.</s>averaging conflicts. How it's done needs some work.
 * import prices from condition-suffixed cards instead of dropping them.
@@ -191,6 +191,7 @@ in no particular order
 ***	global conditions{} to define priorities
 ***	then fillCardsetTable needs a new check before overwriting existing data
 * add another sitescript (and adapt library if needed)
+add feature requests here, please.
 
 ===Problems===
 * can't set the sitescript's name dynammically.
@@ -212,14 +213,18 @@ end
 ** Kongming, “Sleeping Dragon” (PTK)
 ** Pang Tong, “Young Phoenix” (PTK)
 * Can't distinguish between regular and oversized versions of the same card. probably affects all Commander sets.
+
 ===Hints for developers===
 Some information that might be useful if you want to write/improve sitescripts. Please add questions related to developing here, so I know what needs to be documented.
 
 moved to [[How-To_sitescriptTemplate#Hints_for_developing]]
 
 ===version history===
-I decided to start all versions at 2.0, since it's the continuation of magicuniverseDEv1.6.lua, but with enough changes to warrant the next major version number. <s>Do not expect revision numbers to stay synched.</s> <s>Starting with 2.2.1, sitescript minor version will conform to used library version, and the sitecripts will have their version suffixed.</s>Starting with 2.7 sitescript versioning will be libversion.dataversion.sitescriptrevision. This should make it more clear which versions to keep and what can be deleted after updating. The sitescripts will know which library and data version they need and attempt to load the right one or exit gracefully.
-<br /><br />In case you need an old version or just want to see how the scripts have evolved: The version numbers below are also download links.
+I decided to start all versions at 2.0, since it's the continuation of magicuniverseDEv1.6.lua, but with enough changes to warrant the next major version number. <s>Do not expect revision numbers to stay synched.</s> <s>Starting with 2.2.1, sitescript minor version will conform to used library version, and the sitecripts will have their version suffixed.</s>Starting with 2.7 sitescript versioning will be libversion.dataversion.sitescriptrevision. This should make it more clear which versions to keep and what can be deleted after updating. The sitescripts will know which library and data version they need and attempt to load the right one or exit gracefully.<br/>
+
+Staring with 2.9, the versioning was changed yet again: libversion.dataversion.sitescriptrevision still stands, but the version number will no longer be suffixed to the sitescripts' filename. They still are kept inside the script. This means that the same .csv will be used by Magic album to store the imported prices through updates, and also makes drop-in updates of library and/or datafile simpler. Sitescript revision numbers have been raised to reflect the number of past releases.<br />
+
+<br />In case you need an old version or just want to see how the scripts have evolved: The version numbers below are also download links.
 
 ====pre-2.0====
 ;1.2 (Downloaded 22 times)
@@ -302,11 +307,32 @@ I decided to start all versions at 2.0, since it's the continuation of magicuniv
 :read static language fields from LHpi.Data.languages
 :shortened site.langs
 :hotfix: two bugs fixed (thanks to Bloodnut for reporting them)
+;[http://www.slightlymagic.net/forum/download/file.php?id=16275 2.9]
+:(all changes are transparent to sitescripts)
+:fixed and improved MergeCardrows (was broken if importfoil=="N" or "O" - reported by Bloodnut)
+:got rid of most global variables
+:	curhtmlnum		local in MainImportCycle
+:	persetcount 	local in MainImportCycle
+:					BuildCardData also returns #boolean namereplaced, #boolean foiltweaked
+:					SetPrice also returns #table psetcount, #table failcount
+:	totalcount,setcountdiffers		local in DoImport
+:					MainImportCycle returns #table totalcount, #table setcountdiffers
+:misc. small improvements to code and/or comments
+:fixed loading of data file from deprecated "Prices" location
+:fixed SAVETABLE folder writable check
+:fixed logging resultregex finds
+:LHpi.Log now only uses ma.Log when loglevel<0 is used
+:LHpi.SetPrice adds abs(expected-retval) to failcount
 
 ====LHpi.Data====
 ;[http://www.slightlymagic.net/forum/download/file.php?id=15850 1]
 :initial release, split from LHpi library 2.6
 :added all Special Sets
+;[http://www.slightlymagic.net/forum/download/file.php?id=16274 2]
+:(all changes transparent to sitescripts)
+:minor improvements to some special sets' variant
+:misc. small improvements to code and/or comments
+:added 636:Salvat 2011
 
 ====magicuniverseDE====
 ;[http://www.slightlymagic.net/forum/download/file.php?id=9264 2.0]
@@ -334,6 +360,9 @@ I decided to start all versions at 2.0, since it's the continuation of magicuniv
 ;[http://www.slightlymagic.net/forum/download/file.php?id=16210 2.8.1.1]
 :uses LHpi-v2.8 and LHpi-Data-v1
 :hotfix: set options to default values
+;[http://www.slightlymagic.net/forum/download/file.php?id=16277 2.9.2.10]
+:synchronized with template
+:updated site.expected
 
 ====mtgmintcard====
 ;[http://www.slightlymagic.net/forum/download/file.php?id=9265 2.0]
@@ -360,6 +389,9 @@ I decided to start all versions at 2.0, since it's the continuation of magicuniv
 ;[http://www.slightlymagic.net/forum/download/file.php?id=16209 2.8.1.1]
 :uses LHpi-v2.8 and LHpi-Data-v1
 :hotfix: set options to default values
+;[http://www.slightlymagic.net/forum/download/file.php?id=16278 2.9.2.9]
+:synchronized with template
+:updated site.expected
 
 ====tcgplayerPriceGuide====
 ;[http://www.slightlymagic.net/forum/download/file.php?id=9267 2.0]
@@ -397,6 +429,10 @@ I decided to start all versions at 2.0, since it's the continuation of magicuniv
 :shortened site.langs
 :simplified site.frucs,site.sets to single fruc
 :hotfix: set options to default values
+;[http://www.slightlymagic.net/forum/download/file.php?id=16279 2.9.2.10]
+:synchronized with template
+:drop all "SOON" prices (higher maintenance for site.expected,but less "0"s in averaging)
+:updated site.expected (apparently, they don't like Boros: a sizable portion is Plains and Mountains!?)
 
 ====trader-onlineDE====
 ;2.0
@@ -425,6 +461,9 @@ I decided to start all versions at 2.0, since it's the continuation of magicuniv
 ;[http://www.slightlymagic.net/forum/download/file.php?id=16207 2.8.1.1]
 :uses LHpi-v2.8 and LHpi-Data-v1
 :hotfix: set options to default values
+;[http://www.slightlymagic.net/forum/download/file.php?id=16276 2.9.2.10]
+:synchronized with template
+:updated site.expected
 
 ====sitescriptTemplate====
 ;2.0
@@ -452,6 +491,10 @@ I decided to start all versions at 2.0, since it's the continuation of magicuniv
 :site.BCDplugins: added importfoil, importlangs parameters
 :site.ParseHtmlData: now returns a container, to allow multiple cards
 :new option STRICTCHECKEXPECTED
+;[http://www.slightlymagic.net/forum/download/file.php?id=16273 2.9.2.8]
+:too much simplification prevented possible functionality: reintroduced site.langs[langid].id field for reverse lookup
+:split script version from scriptname to ease possible future change to versioning scheme
+:misc. small improvements to example code and/or comments
 
 ====dummyMA====
 ;0
@@ -461,6 +504,10 @@ I decided to start all versions at 2.0, since it's the continuation of magicuniv
 ;[http://www.slightlymagic.net/forum/download/file.php?id=15848 0.2]
 :Backwards compatible with Lua5.1
 :tested with seperated LHpi.Data
+;[http://www.slightlymagic.net/forum/download/file.php?id=16272 0.3]
+:misc. small improvements to code and/or comments
+:patch paths, because dev src has been moved from MA\Prices
+:dummy.fakesitescript()
 
 ==License==
 The LHpi library and all its sitescripts are released as open source under the [[http://www.gnu.org/licenses/gpl.html GNU General Public License]]. Please note that LHpi is thusly licensed seperately from Magic Album proper, which to date is closed source.
