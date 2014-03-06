@@ -25,9 +25,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-misc. small improvements to code and/or comments
-patch paths, because dev src has been moved from MA\Prices
-dummy.fakesitescript()
+0.4
+execution timer in main()
+global variables changed to dummy.*
+new dummy.performancetest(repeats,script,impF,impL,impS,timefile)
+more comfort, less code duplication
 ]]
 
 --[[- "main" function called by Magic Album; just display error and return.
@@ -45,7 +47,7 @@ end -- function ImportPrice
 
 --[[-
 Simulate MA's API functions
-@module ma
+@type ma
 ]]
 ma = {}
 if not io then
@@ -158,7 +160,7 @@ end
 -- Set the regular and foil prices for all versions of M10 Russian Forests (using Russian card name)
 -- ma.SetPrice(759, 2, "Лес", "*", 0.01, 0.1)
 -- 
--- @function [parent=#ma SetPrice
+-- @function [parent=#ma] SetPrice
 -- @param #number setid
 -- @param #number langid
 -- @param #string cardname
@@ -167,13 +169,7 @@ end
 -- @param #number foilprice 	#nil is also possible
 -- @return #number modifiednum
 function ma.SetPrice(setid, langid, cardname, cardversion, regprice, foilprice)
-	local dummystring = ""
-	dummystring = dummystring .. "ma.SetPrice\tsetid=\"" .. setid .. "\""
-	dummystring = dummystring .. "\tlangid=\"" .. langid .. "\""
-	dummystring = dummystring .. "\tcardname=\"" .. cardname .. "\""
-	dummystring = dummystring .. "\tcardversion=\"" .. tostring(cardversion) .. "\""
-	dummystring = dummystring .. "\tregprice=\"" .. regprice .. "\""
-	dummystring = dummystring .. "\tfoilprice=\"" .. foilprice .."\""
+	local dummystring=string.format('ma.SetPrice: setid=%q  langid=%q  cardname=%-20q\tcardversion=%q\tregprice=%q\tfoilprice=%q',setid,langid,cardname,tostring(cardversion),regprice,foilprice)
 	print (dummystring)
 	--if cardversion == "*" then
 	--	return 4
@@ -193,29 +189,30 @@ end
 -- @param #string text
 -- @param #number position	0 ... 100
 function ma.SetProgress(text, position)
-	print("ma.SetProgress\t " .. position .. " %\t: \"" .. text .. "\"")
+	--print("ma.SetProgress\t " .. position .. " %\t: \"" .. text .. "\"")
+	print(string.format("ma.SetProgress:%3.2f%%\t: %q",position,text))
 end
 
 --- table to hold dummyMA additional functions
--- @field [parent=global] dummy
-dummy={}
+-- @type dummy
+local dummy={}
 ---	dummy version
 -- @field [parent=#dummy] #string version
-dummy.version = "0.3"
+dummy.version = "0.4"
 
 --[[- loads LHpi library for testing.
 @function [parent=#dummy] loadlibonly
 @param #string libver			library version to be loaded
-@param #string pathprefix		(optional)
-@param #string savepathprefix	(optional)
+@param #string path		(optional)
+@param #string savepath	(optional)
 @return #table LHpi library object
 ]]
-function dummy.loadlibonly(libver,pathprefix,savepathprefix)
+function dummy.loadlibonly(libver,path,savepath)
 	local LHpi = {}
-	local pathprefix = pathprefix or ""
-	local savepathprefix = savepathprefix or ""
+	local path = path or ""
+	local savepath = savepath or ""
 	do -- load LHpi library from external file
-		local libname = pathprefix .. "lib\\LHpi-v" .. libver .. ".lua"
+		local libname = path .. "lib\\LHpi-v" .. libver .. ".lua"
 		local LHpilib = ma.GetFile( libname )
 		if not LHpilib then
 			error( "LHpi library " .. libname .. " not found." )
@@ -226,15 +223,15 @@ function dummy.loadlibonly(libver,pathprefix,savepathprefix)
 				-- but also how the data file is loaded from within the library
 				LHpilib = string.gsub(LHpilib, 'errormsg = load','errormsg=loadstring' )
 			end
-			if pathprefix~="" then
+			if path~="" then
 				--patch library to change paths
-				pathprefix = string.gsub(pathprefix,"\\","\\\\")
-				LHpilib = string.gsub(LHpilib,'Prices\\\\',pathprefix )
-				if savepathprefix~="" then
-					savepathprefix = string.gsub(savepathprefix,"\\","\\\\")
-					LHpilib = string.gsub(LHpilib,'savepath = "src','savepath = "' .. savepathprefix)
+				path = string.gsub(path,"\\","\\\\")
+				LHpilib = string.gsub(LHpilib,'Prices\\\\',path )
+				if savepath~="" then
+					savepath = string.gsub(savepath,"\\","\\\\")
+					LHpilib = string.gsub(LHpilib,'savepath = "src','savepath = "' .. savepath)
 				end
-			end--if pathprefix
+			end--if path
 			if VERBOSE then
 				ma.Log( "LHpi library " .. libname .. " loaded and ready for execution." )
 			end
@@ -254,21 +251,21 @@ function dummy.loadlibonly(libver,pathprefix,savepathprefix)
 	collectgarbage() -- we now have LHpi table with all its functions inside, let's clear LHpilib and execlib() from memory
 	LHpi.Log( "LHpi lib is ready to use." )
 	return LHpi
-end -- function
+end -- function dummy.loadlibonly
 
 --[[- load and execute sitescript.
 You can then call the sitescript's ImportPrice, as ma would do.
 @function [parent=#dummy] loadscript
 @param #string scriptname
-@param #string pathprefix		(optional)
-@param #string savepathprefix	(optional)
+@param #string path		(optional)
+@param #string savepath	(optional)
 @return nil, but script is loaded and executed
 ]]
-function dummy.loadscript(scriptname,pathprefix,savepathprefix)
-	local pathprefix = pathprefix or ""
-	local savepathprefix = savepathprefix or ""
+function dummy.loadscript(scriptname,path,savepath)
+	local path = path or ""
+	local savepath = savepath or ""
 	do
-		local scriptfile = ma.GetFile( pathprefix .. scriptname )
+		local scriptfile = ma.GetFile( path .. scriptname )
 		if not scriptfile then
 			error( "script " .. scriptname .. " not found." )
 		else
@@ -281,23 +278,23 @@ function dummy.loadscript(scriptname,pathprefix,savepathprefix)
 				scriptfile = string.gsub( scriptfile, 'local execlib,errormsg=loadstring',
 							'LHpilib=string.gsub(LHpilib,"errormsg = load","errormsg=loadstring") local execlib,errormsg=loadstring' )
 			end
-			if pathprefix~="" then
+			if path~="" then
 				--patch script to change paths
-				pathprefix = string.gsub(pathprefix,"\\","\\\\")
-				scriptfile = string.gsub(scriptfile,'Prices\\\\',pathprefix )
-				if savepathprefix~="" then
-					savepathprefix = string.gsub(savepathprefix,"\\","\\\\")
-					scriptfile = string.gsub(scriptfile,'savepath = "src','savepath = "' .. savepathprefix)
+				path = string.gsub(path,"\\","\\\\")
+				scriptfile = string.gsub(scriptfile,'Prices\\\\',path )
+				if savepath~="" then
+					savepath = string.gsub(savepath,"\\","\\\\")
+					scriptfile = string.gsub(scriptfile,'savepath = "src','savepath = "' .. savepath)
 				end
 				--patch library loading to patch paths in library
 				scriptfile = string.gsub( scriptfile, "local execlib,errormsg=load",
-							'LHpilib=string.gsub(LHpilib,"Prices\\\\","'..pathprefix..'") local execlib,errormsg=load' )
-				if savepathprefix~="" then
-					savepathprefix = string.gsub(savepathprefix, "\\", "\\\\" )
+							'LHpilib=string.gsub(LHpilib,"Prices\\\\","'..path..'") local execlib,errormsg=load' )
+				if savepath~="" then
+					savepath = string.gsub(savepath, "\\", "\\\\" )
 					scriptfile = string.gsub( scriptfile, "local execlib,errormsg=load",
-								'LHpilib=string.gsub(LHpilib,"savepath = \\\"src","savepath = \\\"'..savepathprefix..'\") local execlib,errormsg=load' )
+								'LHpilib=string.gsub(LHpilib,"savepath = \\\"src","savepath = \\\"'..savepath..'\") local execlib,errormsg=load' )
 				end
-			end--if pathprefix
+			end--if path
 			local execscript,errormsg=nil
 			if _VERSION == "Lua 5.1" then
 				-- we need to change the way the script is loaded
@@ -312,7 +309,7 @@ function dummy.loadscript(scriptname,pathprefix,savepathprefix)
 		end--if scriptfile	
 	end--do
 	collectgarbage()
-end--function
+end--function dummy.loadscript
 
 --[[- fake a minimal, nonfunctional sitescript.
 You can then run library functions to test them.
@@ -327,9 +324,9 @@ function dummy.fakesitescript()
 	site.frucs={ {id=1,name="fruc",isfoil=true,isnonfoil=true,url="baz"} }
 	site.regex="none"
 	dataver=2
-	scriptname="LHpi.debug.lua"
+	scriptname="LHpi.fakescript.lua"
 	function site.BuildUrl() return { ["fakeURL"] ={} } end
-end--function fakesitescript
+end--function dummy.fakesitescript
 
 --[[- merge up to four tables.
 @function [parent=#dummy] mergetables
@@ -354,10 +351,52 @@ function dummy.mergetables (teins,tzwei,tdrei,tvier)
 		end
 	end	 
 	return teins
-end -- function
+end-- function dummy.mergetables
 
---- @field #table alllangs
-local alllangs = {
+--[[- force debug enviroment
+@function [parent=#dummy] forceEnv
+@param #table env
+]]
+function dummy.forceEnv(env)
+	env = env or dummy.env
+	VERBOSE = env.VERBOSE
+	LOGDROPS = env.LOGDROPS
+	LOGNAMEREPLACE = env.LOGNAMEREPLACE
+	LOGFOILTWEAK = env.LOGFOILTWEAK
+	CHECKEXPECTED = env.CHECKEXPECTED
+	STRICTCHECKEXPECTED = env.STRICTCHECKEXPECTED
+	OFFLINE = env.OFFLINE
+	SAVELOG = env.SAVELOG
+	SAVEHTML = dummy.envSAVEHTML
+	DEBUG = env.DEBUG
+	DEBUGSKIPFOUND = env.DEBUGSKIPFOUND
+	DEBUGVARIANTS = env.DEBUGVARIANTS
+	SAVETABLE = env.SAVETABLE
+end--function dummy.forceEnv
+
+--[[- run and time sitescript multiple times.
+@function [parent=#dummy] performancetest
+@param #number repeats
+@param #table script
+@param #table impF
+@param #table impL
+@param #table impS
+@param #string timefile (optional) default:"timelog.txt"
+]]
+function dummy.performancetest(repeats,script,impF,impL,impS,timefile)
+	timefile = timefile or "timelog.txt"
+	for run=1, repeats do
+		local t1 = os.clock()
+		dummy.loadscript(script.name,script.path,script.savepath)
+		dummy.forceEnv()
+		ImportPrice( impF, impL, impS )
+		local dt = os.clock() - t1
+		ma.PutFile(timefile,string.format("\nrun %2i: %g seconds",run,dt),1)
+	end--for run
+end--function dummy.performancetest
+
+--- @field [parent=#dummy] #table alllangs
+dummy.alllangs = {
  [1]  = "English";
  [2]  = "Russian";
  [3]  = "German";
@@ -376,8 +415,8 @@ local alllangs = {
  [16] = "Ancient Greek";
 }
 
---- @field #table promosets
-local promosets = {
+--- @field [parent=#dummy] #table promosets
+dummy.promosets = {
  [50] = "Full Box Promotion";
  [45] = "Magic Premiere Shop";
  [42] = "Summer of Magic Promos";
@@ -409,8 +448,8 @@ local promosets = {
  [2]  = "DCI Legend Membership";
 }
 
---- @field #table specialsets
-local specialsets = {
+--- @field [parent=#dummy] #table specialsets
+dummy.specialsets = {
  [801] = "Commander 2013 Edition";
  [799] = "Duel Decks: Heroes vs. Monsters";
  [798] = "From the Vault: Twenty";
@@ -458,8 +497,8 @@ local specialsets = {
  [200] = "Chronicles";
  [70]  = "Vanguard";
 }
---- @field #table expansionsets
-local expansionsets = {
+--- @field [parent=#dummy] #table expansionsets
+dummy.expansionsets = {
  [802] = "Born of the Gods";
  [800] = "Theros";
  [795] = "Dragon's Maze";
@@ -525,8 +564,8 @@ local expansionsets = {
  [130] = "Antiquities";
  [120] = "Arabian Nights";
 }
---- @field #table coresets
-local coresets = {
+--- @field [parent=#dummy] #table coresets
+dummy.coresets = {
  [797] = "Magic 2014";
  [788] = "Magic 2013";
  [779] = "Magic 2012";
@@ -552,54 +591,68 @@ local coresets = {
 ]]
 function main()
 	print("dummy says: Hello " .. _VERSION .. "!")
+	local t1 = os.clock()
 	--adjust paths if not developing inside "Magic Album\Prices"
-	local path="src\\"
+	dummy.path="src\\"
 	--don't keep a seperate dev savepath, though
-	local savepath = "src\\..\\..\\..\\Magic Album\\Prices"
+	dummy.savepath = "src\\..\\..\\..\\Magic Album\\Prices"
+	dummy.env={--set debug enviroment options
+		VERBOSE = true,
+		LOGDROPS = true,
+		LOGNAMEREPLACE = true,
+		LOGFOILTWEAK = true,
+		CHECKEXPECTED = true,
+		STRICTCHECKEXPECTED = true,
+		OFFLINE = true,
+		SAVELOG = true,
+		SAVEHTML = false,
+		DEBUG = true,
+		DEBUGSKIPFOUND = false,
+	--	DEBUGVARIANTS = true,
+	--	SAVETABLE=true,
+	}
+	local scripts={
+		{name="lib\\LHpi.sitescriptTemplate-v2.9.2.1.lua",path=dummy.path,savepath=dummy.savepath},
+		{name="LHpi.mtgmintcard.lua",path=dummy.path,savepath=dummy.savepath},
+		{name="LHpi.magicuniverseDE.lua",path=dummy.path,savepath=dummy.savepath},
+		{name="LHpi.trader-onlineDE.lua",path=dummy.path,savepath=dummy.savepath},
+		{name="LHpi.tcgplayerPriceGuide.lua",path=dummy.path,savepath=dummy.savepath},
+		{name="\\MTG Mint Card.lua",path=dummy.savepath,savepath=dummy.savepath},
+		{name="\\Import Prices.lua",path=dummy.savepath,savepath=dummy.savepath},
+		{name="LHpi.mtgprice.com.lua",path=dummy.path,savepath=dummy.savepath},
+	}
+	--select a predefined script to be tested
+	local script=scripts[2]
 
 --	dummy.fakesitescript()
---	LHpi = dummy.loadlibonly(2.9,path,savepath)
---	dummy.loadscript("\\Import Prices.lua",savepath,savepath)
---	dummy.loadscript("\\MTG Mint Card.lua",savepath,savepath)
---	dummy.loadscript("lib\\LHpi.sitescriptTemplate-v2.9.2.1.lua",path,savepath)
---	dummy.loadscript("LHpi.magicuniverseDE.lua",path,savepath)
---	dummy.loadscript("LHpi.trader-onlineDE.lua",path,savepath)
---	dummy.loadscript("LHpi.tcgplayerPriceGuide.lua",path,savepath)
-	dummy.loadscript("LHpi.mtgmintcard.lua",path,savepath)
---	dummy.loadscript("LHpi.mtgprice.com-v2.8.1.1.lua",path,savepath)
+--	dummy.loadscript(script.name,script.path,script.savepath)
+--	LHpi = dummy.loadlibonly(2.9,dummy.path,dummy.savepath)
 	-- force debug enviroment options
-	VERBOSE = true
-	LOGDROPS = true
-	LOGNAMEREPLACE = true
-	LOGFOILTWEAK = true
-	CHECKEXPECTED = true
-	STRICTCHECKEXPECTED = true
-	OFFLINE = true
-	SAVELOG = true
-	SAVEHTML = false
-	DEBUG = true
---	DEBUGSKIPFOUND = false
---	DEBUGVARIANTS = true
---	SAVETABLE=true
-	print("dummy says: script loaded.")
+	dummy.forceEnv(dummy.env)
+--	print("dummy says: script loaded.")
 
+	--now try to break the script :-)
 --	LHpi.LoadData(2)
 	local fakeimportfoil = "y"
 	local fakeimportlangs = { [1] = "Language" }
 	local fakeimportlangs = { [1] = "English", [3]  = "German" , [5] = "Italian" ,[9] = "Simplified Chinese"}
---	local fakeimportlangs = alllangs
+--	local fakeimportlangs = dummy.alllangs
 	local fakeimportsets = { [0] = "debugset"; }
-	local fakeimportsets = { [260] = "some set"; }
+	local fakeimportsets = { [797] = "some set"; }
 --	local fakeimportsets = { [220]="foo";[800]="bar";[0]="baz";}
---	local fakeimportsets = coresets
---	local fakeimportsets = dummy.mergetables ( coresets, expansionsets, specialsets, promosets )
+	--local fakeimportsets = dummy.coresets
+--	local fakeimportsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 
+	dummy.performancetest(5,script,fakeimportfoil,fakeimportlangs,fakeimportsets,"timelog.txt")
 --	LHpi.DoImport(fakeimportfoil, fakeimportlangs, fakeimportsets)
-	ImportPrice( fakeimportfoil, fakeimportlangs, fakeimportsets )
+--	ImportPrice( fakeimportfoil, fakeimportlangs, fakeimportsets )
 --	print(LHpi.Tostring( "this is a string." ))
 --	print(LHpi.ByteRep("Zwölffüßler"))
+
+	local dt = os.clock() - t1 
+	print(string.format("All this took %g seconds",dt))
 	print("dummy says: Goodbye lua!")
-end
+end--main()
 
 main()
 --EOF
