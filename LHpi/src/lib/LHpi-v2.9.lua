@@ -25,24 +25,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.9
-(all changes so far are transparent to sitescripts)
-	fixed and improved MergeCardrows (was broken if importfoil=="N" or "O" - reported by Bloodnut)
-	got rid of most global variables
-		curhtmlnum		local in MainImportCycle
-		persetcount 	local in MainImportCycle
-						BuildCardData also returns #boolean namereplaced, #boolean foiltweaked
-						SetPrice also returns #table psetcount, #table failcount
-		totalcount,setcountdiffers		local in DoImport
-						MainImportCycle returns #table totalcount, #table setcountdiffers
-	misc. small improvements to code and/or comments
-	fixed loading of data file from deprecated "Prices" location
-	fixed SAVETABLE folder writable check
-	fixed logging resultregex finds
-	LHpi.Log now only uses ma.Log when loglevel<0 is used
-	LHpi.SetPrice adds abs(expected-retval) to failcount
+	os.clock() loglevel 2
+	fix default logfile "LHpi.Log" -> "LHpi.log"
+	changed bolean options
+	*a legacy conversion is in place
+	*DEBUGSKIPFOUND -> DEBUGFOUND
+	*STRICTCHECKEXPECTED -> STRICTEXPECTED
 ]]
 
+--TODO count averageing events
+--TODO merge Data.variants with site.variants
+--add toggle to override instead
+--TODO move remaining global fields to LHpi.* and compare performance
 
 local LHpi = {}
 ---	LHpi library version
@@ -78,6 +72,9 @@ end -- function ImportPrice
 ]]
 
 function LHpi.DoImport (importfoil , importlangs , importsets)
+	--TODO LHpi.LegacyConversion(), remove on next sitescript update
+	if STRICTCHECKEXPECTED then STRICTEXPECTED=STRICTCHECKEXPECTED end
+	if DEBUGSKIPFOUND then DEBUGFOUND=false else DEBUGFOUND=true end
 	--default values for feedback options
 	if VERBOSE==nil then VERBOSE = false end
 	if LOGDROPS==nil then LOGDROPS = false end
@@ -85,7 +82,7 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 	if LOGFOILTWEAK==nil then LOGFOILTWEAK = false end
 	-- default values for behaviour options
 	if CHECKEXPECTED==nil then CHECKEXPECTED = true end
-	if STRICTCHECKEXPECTED==nil then STRICTCHECKEXPECTED = false end
+	if STRICTEXPECTED==nil then STRICTEXPECTED = false end
 	if DEBUG==nil then DEBUG = false end
 	if DEBUGSKIPFOUND==nil then DEBUGSKIPFOUND = true end
 	if DEBUGVARIANTS==nil then DEBUGVARIANTS = false end
@@ -115,7 +112,7 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 	end -- if
 
 	if DEBUG and ((not dataver) or site.dataver == "" ) then error("undefined dataver!") end
-	if not dataver then dataver = "1" end
+	if not dataver then dataver = "2" end
 	---	LHpi static set data
 	--@field [parent=#LHpi] #table Data
 	LHpi.Data = LHpi.LoadData(dataver)
@@ -206,18 +203,18 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 			error( errormsg )
 		end	-- function
 	end -- if
--- Don't need to define defaults here as long as BuildCardData checks for their existence before calling them.	
---	if not site.BCDpluginPre then
---		function site.BCDpluginPre ( card , setid )
---			return card
---		end -- function
---	end -- if
---	if not site.BCDpluginPost then
---		function site.BCDpluginPost( card , setid )
---			card.pluginData = nil
---			return card
---		end -- function
---	end -- if
+	-- Don't need to define defaults here as long as BuildCardData checks for their existence before calling them.	
+	--	if not site.BCDpluginPre then
+	--		function site.BCDpluginPre ( card , setid )
+	--			return card
+	--		end -- function
+	--	end -- if
+	--	if not site.BCDpluginPost then
+	--		function site.BCDpluginPost( card , setid )
+	--			card.pluginData = nil
+	--			return card
+	--		end -- function
+	--	end -- if
 	
 	-- build sourceList of urls/files to fetch
 	local sourceList, sourceCount = LHpi.ListSources( supImportfoil , supImportlangs , supImportsets )
@@ -398,7 +395,7 @@ function LHpi.MainImportCycle( sourcelist , totalhtmlnum , importfoil , importla
 						if ( site.expected[cSet.id].pset[lid] or 0 ) ~= persetcount.pset[lid] then allgood = false end
 						if ( site.expected[cSet.id].failed[lid] or 0 ) ~= persetcount.failed[lid] then allgood = false end
 					end -- for lid,_cLang in importlangs
-					if STRICTCHECKEXPECTED then
+					if STRICTEXPECTED then
 						if ( site.expected[sid].dropped or 0 ) ~= persetcount.dropped then allgood = false end
 						if ( site.expected[sid].namereplaced or 0 ) ~= persetcount.namereplaced then allgood = false end
 						if ( site.expected[sid].foiltweaked or 0 ) ~= persetcount.foiltweaked then allgood = false end
@@ -702,7 +699,7 @@ function LHpi.GetSourceData( url , details ) --
 	
 	local sourceTable = {}
 	for foundstring in string.gmatch( htmldata , site.regex) do
-		if DEBUG and not DEBUGSKIPFOUND then
+		if DEBUGFOUND then
 			LHpi.Log( "FOUND : " .. foundstring )
 		end
 		for _datanum,foundData in next, site.ParseHtmlData(foundstring , details ) do
@@ -1515,7 +1512,7 @@ end -- function LHpi.Toutf8
 function LHpi.Log( str , l , f , a )
 	local loglevel = l or 0
 	local apnd = a or 1
-	local logfile = "Prices\\LHpi.Log" -- fallback if global #string scriptname is missing
+	local logfile = "Prices\\LHpi.log" -- fallback if global #string scriptname is missing
 	if SAVELOG~=false then
 		if scriptname then
 			logfile = "Prices\\" .. string.gsub( scriptname , "lua$" , "log" )
@@ -1527,7 +1524,8 @@ function LHpi.Log( str , l , f , a )
 	if loglevel == 1 then
 		str = " " .. str
 	elseif loglevel == 2 then
-		str = "DEBUG\t" .. str
+		str = string.format("%3.3f\t%s",os.clock(),str)
+--		str = "DEBUG\t" .. str
 		--logfile = string.gsub(logfile, "log$", "DEBUG.log") -- for seperate debuglog
 	end
 	if loglevel < 0 then

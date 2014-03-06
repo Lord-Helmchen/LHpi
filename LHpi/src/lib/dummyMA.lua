@@ -381,10 +381,10 @@ end--function dummy.forceEnv
 @param #table impF
 @param #table impL
 @param #table impS
-@param #string timefile (optional) default:"timelog.txt"
+@param #string timefile (optional) default:"time.log"
 ]]
 function dummy.performancetest(repeats,script,impF,impL,impS,timefile)
-	timefile = timefile or "timelog.txt"
+	timefile = timefile or "time.log"
 	for run=1, repeats do
 		local t1 = os.clock()
 		dummy.loadscript(script.name,script.path,script.savepath)
@@ -643,7 +643,7 @@ function main()
 	--local fakeimportsets = dummy.coresets
 --	local fakeimportsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 
-	dummy.performancetest(5,script,fakeimportfoil,fakeimportlangs,fakeimportsets,"timelog.txt")
+	dummy.performancetest(5,script,fakeimportfoil,fakeimportlangs,fakeimportsets,"time.log")
 --	LHpi.DoImport(fakeimportfoil, fakeimportlangs, fakeimportsets)
 --	ImportPrice( fakeimportfoil, fakeimportlangs, fakeimportsets )
 --	print(LHpi.Tostring( "this is a string." ))

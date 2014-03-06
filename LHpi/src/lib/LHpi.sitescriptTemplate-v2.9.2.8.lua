@@ -55,7 +55,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 --- also complain if drop,namereplace or foiltweak count differs; default false
 -- @field [parent=#global] #boolean STRICTCHECKEXPECTED
---STRICTCHECKEXPECTED = true
+--STRICTEXPECTED = true
 
 --- log to seperate logfile instead of Magic Album.log;	default true
 -- @field [parent=#global] #boolean SAVELOG
@@ -79,7 +79,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ---	even while DEBUG, do not log raw html data found by regex; default true 
 -- @field [parent=#global] #boolean DEBUGSKIPFOUND
---DEBUGSKIPFOUND = false
+--DEBUGFOUND = false
 
 --- DEBUG (only but deeper) inside variant loops; default false
 -- @field [parent=#global] #boolean DEBUGVARIANTS
