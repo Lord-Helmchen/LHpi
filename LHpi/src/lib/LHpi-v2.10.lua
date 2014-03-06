@@ -25,18 +25,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-	os.clock() loglevel 2
-	fix default logfile "LHpi.Log" -> "LHpi.log"
-	changed bolean options
-	*a legacy conversion is in place
-	*DEBUGSKIPFOUND -> DEBUGFOUND
-	*STRICTCHECKEXPECTED -> STRICTEXPECTED
+*os.clock() loglevel 2
+*fix default logfile "LHpi.Log" -> "LHpi.log"
+*changed bolean options
+**a legacy conversion is in place
+**DEBUGSKIPFOUND -> DEBUGFOUND
+**STRICTCHECKEXPECTED -> STRICTEXPECTED
+*merge site.variants with Data.variants, same with foiltweak
 ]]
 
---TODO count averageing events
---TODO merge Data.variants with site.variants
---add toggle to override instead
---TODO move remaining global fields to LHpi.* and compare performance
+--TODO count averageing events with counter attached to prices
+--TODO nil unneeded Data.sets[sid]
 
 local LHpi = {}
 ---	LHpi library version
@@ -73,8 +72,8 @@ end -- function ImportPrice
 
 function LHpi.DoImport (importfoil , importlangs , importsets)
 	--TODO LHpi.LegacyConversion(), remove on next sitescript update
-	if STRICTCHECKEXPECTED then STRICTEXPECTED=STRICTCHECKEXPECTED end
-	if DEBUGSKIPFOUND~=nil then DEBUGFOUND= (not DEBUGSKIPFOUND) end
+	if STRICTCHECKEXPECTED then STRICTEXPECTED=STRICTCHECKEXPECTED STRICTCHECKEXPECTED=nil end
+	if DEBUGSKIPFOUND~=nil then DEBUGFOUND= (not DEBUGSKIPFOUND) DEBUGSKIPFOUND=nil end
 	--default values for feedback options
 	if VERBOSE==nil then VERBOSE = false end
 	if LOGDROPS==nil then LOGDROPS = false end

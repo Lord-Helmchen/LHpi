@@ -55,7 +55,7 @@ synchronized with template
 
 --- also complain if drop,namereplace or foiltweak count differs; default false
 -- @field [parent=#global] #boolean STRICTCHECKEXPECTED
---STRICTCHECKEXPECTED = true
+--STRICTEXPECTED = true
 
 --- log to seperate logfile instead of Magic Album.log;	default true
 -- @field [parent=#global] #boolean SAVELOG
@@ -79,7 +79,7 @@ synchronized with template
 
 ---	even while DEBUG, do not log raw html data found by regex; default true 
 -- @field [parent=#global] #boolean DEBUGSKIPFOUND
---DEBUGSKIPFOUND = false
+--DEBUGFOUND = false
 
 --- DEBUG (only but deeper) inside variant loops; default false
 -- @field [parent=#global] #boolean DEBUGVARIANTS
@@ -87,13 +87,13 @@ synchronized with template
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.9"
+libver = "2.10"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
 dataver = "2"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "10"
+scriptver = "11"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.trader-onlineDE-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -900,46 +900,46 @@ site.namereplace = {
 
 --[[- card variant tables.
  tables of cards that need to set variant.
- For each setid, if unset uses sensible defaults from LHpi.Data.sets.variants.
- Note that you need to replicate the default values for the whole setid here,
- even if you set only a single card from the set differently.
-
-  fields are for subtables indexed by #number setid.
+ For each setid, will be merged with sensible defaults from LHpi.Data.sets[setid].variants.
+ When variants for the same card are set here and in LHpi.Data, sitescript's entry overwrites Data's.
+ 
+ fields are for subtables indexed by #number setid.
  { #number (setid)= #table { #string (name)= #table { #string, #table { #string or #boolean , ... } } , ... } , ...  }
 
  @type site.variants
+ @field [parent=#site.variants] #boolean override	(optional) if true, defaults from LHpi.Data will not be used at all
  @field [parent=#site.variants] #table variant
 ]]
 site.variants = {
 [450] = { --Planeshift
 },
 [130] = { -- Antiquities
-["Mishra's Factory"] 			= { "Mishra's Factory"		, { 1    , 2    , 3    , 4     } },
+--["Mishra's Factory"] 			= { "Mishra's Factory"		, { 1    , 2    , 3    , 4     } },
 ["Mishra's Factory, Frühling"] 	= { "Mishra's Factory"		, { 1    , false, false, false } },
 ["Mishra's Factory, Sommer"] 	= { "Mishra's Factory"		, { false, 2    , false, false } },
 ["Mishra's Factory, Herbst"] 	= { "Mishra's Factory"		, { false, false, 3    , false } },
 ["Mishra's Factory, Winter"] 	= { "Mishra's Factory"		, { false, false, false, 4     } },
-["Strip Mine"] 					= { "Strip Mine"			, { 1    , 2    , 3    , 4     } },
+--["Strip Mine"] 					= { "Strip Mine"			, { 1    , 2    , 3    , 4     } },
 ["Strip Mine, kein Himmel"] 	= { "Strip Mine"			, { 1    , false, false, false } },
 ["Strip Mine, ebene Treppen"] 	= { "Strip Mine"			, { false, 2    , false, false } },
 ["Strip Mine, mit Turm"] 		= { "Strip Mine"			, { false, false, 3    , false } },
 ["Strip Mine, unebene Treppen"] = { "Strip Mine"			, { false, false, false, 4     } },
-["Urza's Mine"] 				= { "Urza's Mine"			, { 1    , 2    , 3    , 4     } },
-["Urza's Power Plant"] 			= { "Urza's Power Plant"	, { 1    , 2    , 3    , 4     } },
-["Urza's Tower"] 				= { "Urza's Tower"			, { 1    , 2    , 3    , 4     } },
+--["Urza's Mine"] 				= { "Urza's Mine"			, { 1    , 2    , 3    , 4     } },
+--["Urza's Power Plant"] 			= { "Urza's Power Plant"	, { 1    , 2    , 3    , 4     } },
+--["Urza's Tower"] 				= { "Urza's Tower"			, { 1    , 2    , 3    , 4     } },
 },
 } -- end table site.variants
 
 --[[- foil status replacement tables.
  tables of cards that need to set foilage.
- For each setid, if unset uses sensible defaults from LHpi.Data.sets.foiltweak.
- Note that you need to replicate the default values for the whole setid here,
- even if you set only a single card from the set differently.
+ For each setid, will be merged with sensible defaults from LHpi.Data.sets[setid].variants.
+ When variants for the same card are set here and in LHpi.Data, sitescript's entry overwrites Data's.
 
   fields are for subtables indexed by #number setid.
  { #number (setid)= #table { #string (name)= #table { foil= #boolean } , ... } , ... }
  
  @type site.foiltweak
+ @field [parent=#site.variants] #boolean override	(optional) if true, defaults from LHpi.Data will not be used at all
  @field [parent=#site.foiltweak] #table foilstatus
 ]]
 site.foiltweak = {

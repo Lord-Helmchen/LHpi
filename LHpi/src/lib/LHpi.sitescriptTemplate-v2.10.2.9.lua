@@ -25,9 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-	too much simplification prevented possible functionality: reintroduced site.langs[langid].id field for reverse lookup
-	split script version from scriptname to ease possible future change to versioning scheme
-	misc. small improvements to example code and/or comments
+2.10
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -87,7 +85,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.9"
+libver = "2.10"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
 dataver = "2"
