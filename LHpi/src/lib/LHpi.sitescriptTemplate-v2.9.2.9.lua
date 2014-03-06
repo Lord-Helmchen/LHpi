@@ -93,7 +93,7 @@ libver = "2.9"
 dataver = "2"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "8"
+scriptver = "9"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.sitescriptTemplate-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -560,18 +560,19 @@ site.namereplace = {
 
 --[[- card variant tables.
  tables of cards that need to set variant.
- For each setid, if unset uses sensible defaults from LHpi.Data.sets.variants.
- Note that you need to replicate the default values for the whole setid here,
- even if you set only a single card from the set differently.
-
-  fields are for subtables indexed by #number setid.
+ For each setid, will be merged with sensible defaults from LHpi.Data.sets[setid].variants.
+ When variants for the same card are set here and in LHpi.Data, sitescript's entry overwrites Data's.
+ 
+ fields are for subtables indexed by #number setid.
  { #number (setid)= #table { #string (name)= #table { #string, #table { #string or #boolean , ... } } , ... } , ...  }
 
  @type site.variants
+ @field [parent=#site.variants] #boolean override	(optional) if true, defaults from LHpi.Data will not be used at all
  @field [parent=#site.variants] #table variant
 ]]
 site.variants = {
 --[0] = { -- Basic Lands as example (setid 0 is not used)
+--override=false,
 --["Plains"] 					= { "Plains"	, { 1    , 2    , 3    , 4     } },
 --["Island"] 					= { "Island" 	, { 1    , 2    , 3    , 4     } },
 --["Swamp"] 					= { "Swamp"		, { 1    , 2    , 3    , 4     } },
@@ -582,19 +583,20 @@ site.variants = {
 
 --[[- foil status replacement tables.
  tables of cards that need to set foilage.
- For each setid, if unset uses sensible defaults from LHpi.Data.sets.foiltweak.
- Note that you need to replicate the default values for the whole setid here,
- even if you set only a single card from the set differently.
+ For each setid, will be merged with sensible defaults from LHpi.Data.sets[setid].variants.
+ When variants for the same card are set here and in LHpi.Data, sitescript's entry overwrites Data's.
 
   fields are for subtables indexed by #number setid.
  { #number (setid)= #table { #string (name)= #table { foil= #boolean } , ... } , ... }
  
  @type site.foiltweak
+ @field [parent=#site.variants] #boolean override	(optional) if true, defaults from LHpi.Data will not be used at all
  @field [parent=#site.foiltweak] #table foilstatus
 ]]
 site.foiltweak = {
 --[[ example
 [766] = { -- Phyrexia VS Coalition
+	override=true,
  	["Phyrexian Negator"] 	= { foil = true  },
 	["Urza's Rage"] 		= { foil = true  }
 }
