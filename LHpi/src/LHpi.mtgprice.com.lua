@@ -27,9 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-	too much simplification prevented possible functionality: reintroduced site.langs[langid].id field for reverse lookup
-	split script version from scriptname to ease possible future change to versioning scheme
-	misc. small improvements to example code and/or comments
+initial release
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -61,7 +59,7 @@ STRICTCHECKEXPECTED = true
 
 --- log to seperate logfile instead of Magic Album.log;	default true
 -- @field [parent=#global] #boolean SAVELOG
-SAVELOG = false
+--SAVELOG = false
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
@@ -69,7 +67,7 @@ SAVELOG = false
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
-SAVEHTML = true
+--SAVEHTML = true
 
 --- save price table to file before importing to MA;	default false
 -- @field [parent=#global] #boolean SAVETABLE
@@ -444,34 +442,34 @@ site.sets = {
 [130]={id = 130, lang = { [1]=true }, fruc = { false, true }, url = "Antiquities"},
 [120]={id = 120, lang = { [1]=true }, fruc = { false, true }, url = "Arabian_Nights"},
 -- special sets
---TODO FtV are foilonly. check all foilage
-----[801]={id = 801, lang = { [1]=true }, fruc = { true , true }, url = "C13"},--Commander 2013
-----[799]={id = 799, lang = { [1]=true }, fruc = { false, true }, url = "DDL"},--Duel Decks: Heroes vs. Monsters
-----[798]={id = 798, lang = { [1]=true }, fruc = { true , false}, url = "V13"},--From the Vault: Twenty
+--TODO FtV are foilonly. check all frucs
+--[801]={id = 801, lang = { [1]=true }, fruc = { true , true }, url = "C13"},--Commander 2013
+--[799]={id = 799, lang = { [1]=true }, fruc = { false, true }, url = "DDL"},--Duel Decks: Heroes vs. Monsters
+--[798]={id = 798, lang = { [1]=true }, fruc = { true , false}, url = "V13"},--From the Vault: Twenty
 --[796]={id = 796, lang = { [1]=true }, fruc = { true , true }, url = "Modern_Masters"},
-----[794]={id = 794, lang = { [1]=true }, fruc = { false, true }, url = "DDK"},--Duel Decks: Sorin vs. Tibalt
+--[794]={id = 794, lang = { [1]=true }, fruc = { false, true }, url = "DDK"},--Duel Decks: Sorin vs. Tibalt
 --[792]={id = 792, lang = { [1]=true }, fruc = { false, true }, url = "Commanders_Arsenal"},
 --[790]={id = 790, lang = { [1]=true }, fruc = { false, true }, url = "Duel_Decks_Izzet_vs_Golgari"},
 --[789]={id = 789, lang = { [1]=true }, fruc = { true , false}, url = "From_the_Vault_Realms"},
-----TODO "Planechase_2012_Planes" is subset of 787
+--TODO "Planechase_2012_Planes" is subset of 787
 --[787]={id = 787, lang = { [1]=true }, fruc = { false, true }, url = "Planechase_2012"},--Planechase 2012
 --[785]={id = 785, lang = { [1]=true }, fruc = { false, true }, url = "Duel_Decks_Venser_vs_Koth"},
 --[783]={id = 783, lang = { [1]=true }, fruc = { true , false}, url = "Premium_Deck_Series_Graveborn"},
 --[781]={id = 781, lang = { [1]=true }, fruc = { false, true }, url = "Duel_Decks_Ajani_vs_Nicol_Bolas"},
 --[780]={id = 780, lang = { [1]=true }, fruc = { true , false}, url = "From_the_Vault_Legends"},
-----TODO Commander has oversized in MA, not in url
+--TODO Commander has oversized in MA, not in url
 --[778]={id = 778, lang = { [1]=true }, fruc = { false, true }, url = "Commander"},
 --[777]={id = 777, lang = { [1]=true }, fruc = { false, true }, url = "Duel_Decks_Knights_vs_Dragons"},
 --[774]={id = 774, lang = { [1]=true }, fruc = { true , false}, url = "Premium_Deck_Series_Fire_and_Lightning"},
 --[772]={id = 772, lang = { [1]=true }, fruc = { false, true }, url = "Duel_Decks_Elspeth_vs_Tezzeret"},
 --[771]={id = 771, lang = { [1]=true }, fruc = { true , false}, url = "From_the_Vault_Relics"},
-----TODO Archenemy_Schemes is subset of 769
+--TODO Archenemy_Schemes is subset of 769
 --[769]={id = 769, lang = { [1]=true }, fruc = { false, true }, url = "Archenemy"},
 --[768]=nil,--Duels of the Planeswalkers
 --[766]={id = 766, lang = { [1]=true }, fruc = { false, true }, url = "Duel_Decks_Phyrexia_vs_The_Coalition"},
 --[764]={id = 764, lang = { [1]=true }, fruc = { true , false}, url = "Premium_Deck_Series_Slivers"},
 --[763]={id = 763, lang = { [1]=true }, fruc = { false, true }, url = "Duel_Decks_Garruk_vs_Liliana"},
----- TODO Plancechase_Planes is subset of 761
+-- TODO Plancechase_Planes is subset of 761
 --[761]={id = 761, lang = { [1]=true }, fruc = { false, true }, url = "Planechase"},--Planechase
 --[760]={id = 760, lang = { [1]=true }, fruc = { true , false}, url = "From_the_Vault_Exiled"},
 --[757]={id = 757, lang = { [1]=true }, fruc = { false, true }, url = "Duel_Decks_Divine_vs_Demonic"},
@@ -479,7 +477,7 @@ site.sets = {
 --[753]={id = 753, lang = { [1]=true }, fruc = { true , false}, url = "From_the_Vault_Dragons"},
 --[740]={id = 740, lang = { [1]=true }, fruc = { false, true }, url = "Duel_Decks_Elves_vs_Goblins"},
 --[675]={id = 675, lang = { [1]=true }, fruc = { false, true }, url = ""},--Coldsnap Theme Decks
-----[635]={id = 635, lang = { [1]=true }, fruc = {  }, url = ""},--Magic Encyclopedia
+--[635]={id = 635, lang = { [1]=true }, fruc = {  }, url = ""},--Magic Encyclopedia
 --[600]={id = 600, lang = { [1]=true }, fruc = { false, true }, url = "Unhinged"},--no foils on site
 --[490]={id = 490, lang = { [1]=true }, fruc = { false, true }, url = "Deckmasters_Box_Set"},--Deckmaster --TODO foiltweak
 --[440]={id = 440, lang = { [1]=true }, fruc = { false, true }, url = "Beatdown_Box_Set"},
@@ -487,52 +485,52 @@ site.sets = {
 --[405]={id = 405, lang = { [1]=true }, fruc = { false, true }, url = "Battle_Royale_Box_Set"},
 --[390]={id = 390, lang = { [1]=true }, fruc = { false, true }, url = "Starter_1999"},
 --[380]={id = 380, lang = { [1]=true }, fruc = { false, true }, url = "Portal_Three_Kingdoms"},   
-----[340]={id = 340, lang = { [1]=true }, fruc = {  }, url = "ATH"},--Anthologies
+--[340]={id = 340, lang = { [1]=true }, fruc = {  }, url = "ATH"},--Anthologies
 --[320]={id = 320, lang = { [1]=true }, fruc = { false, true }, url = "Unglued"},
 --[310]={id = 310, lang = { [1]=true }, fruc = { false, true }, url = "Portal_Second_Age"},   
 --[260]={id = 260, lang = { [1]=true }, fruc = { false, true }, url = "Portal"},
-----[225]={id = 225, lang = { [1]=true }, fruc = {  }, url = ""},--Introductory Two-Player Set
-----[201]={id = 201, lang = { [1]=true }, fruc = {  }, url = ""},--Renaissance
+--[225]={id = 225, lang = { [1]=true }, fruc = {  }, url = ""},--Introductory Two-Player Set
+--[201]={id = 201, lang = { [1]=true }, fruc = {  }, url = ""},--Renaissance
 --[200]={id = 200, lang = { [1]=true }, fruc = { false, true }, url = "Chronicles"},
-----[70] ={id =  70, lang = { [1]=true }, fruc = { true , false}, url = "VAN"},--Vanguard
-----[69] ={id =  69, lang = { [1]=true }, fruc = {  }, url = ""},--Box Topper Cards
----- Promo Cards
-----[50] ={id =  50, lang = { [1]=true }, fruc = {  }, url = ""},--Full Box Promotion
-----[45] ={id =  45, lang = { [1]=true }, fruc = {  }, url = ""},--Magic Premiere Shop
+--[70] ={id =  70, lang = { [1]=true }, fruc = { true , false}, url = "VAN"},--Vanguard
+--[69] ={id =  69, lang = { [1]=true }, fruc = {  }, url = ""},--Box Topper Cards
+-- Promo Cards
+--[50] ={id =  50, lang = { [1]=true }, fruc = {  }, url = ""},--Full Box Promotion
+--[45] ={id =  45, lang = { [1]=true }, fruc = {  }, url = ""},--Magic Premiere Shop
 --[43] ={id =  43, lang = { [1]=true }, fruc = { true , false}, url = "Two-Headed_Giant"},
 --[42] ={id =  42, lang = { [1]=true }, fruc = { true , false}, url = "Summer of Magic"},
 --[41] ={id =  41, lang = { [1]=true }, fruc = { true , false}, url = "Happy_Holidays"},
 --[40] ={id =  40, lang = { [1]=true }, fruc = { true , false}, url = "Arena_League"},
-----[33] ={id =  33, lang = { [1]=true }, fruc = {  }, url = ""},--Championships Prizes
+--[33] ={id =  33, lang = { [1]=true }, fruc = {  }, url = ""},--Championships Prizes
 --[32] ={id =  32, lang = { [1]=true }, fruc = { true , false}, url = "Pro_Tour"},
 --[31] ={id =  31, lang = { [1]=true }, fruc = { true , false}, url = "Grand_Prix"},
 --[30] ={id =  30, lang = { [1]=true }, fruc = { true , false}, url = "Friday_Night_Magic"},
----- subsets of 27: "Euro_Land_Program" , "Guru" , "Asia Pacific Land Program"
-----[27] ={id =  27, lang = { [1]=true }, fruc = {  }, url = ""},--Alternate Art Lands
+-- subsets of 27: "Euro_Land_Program" , "Guru" , "Asia Pacific Land Program"
+--[27] ={id =  27, lang = { [1]=true }, fruc = {  }, url = ""},--Alternate Art Lands
 --[26] ={id =  26, lang = { [1]=true }, fruc = { true , false}, url = "Game_Day"},
 --[25] ={id =  25, lang = { [1]=true }, fruc = { true , false}, url = "Judge_Gift_Program"},
-----TODO half of the cards are foilonly
+--TODO half of the cards are foilonly
 --[24] ={id =  24, lang = { [1]=true }, fruc = { true , false}, url = "Champs"},
 --[23] ={id =  23, lang = { [1]=true }, fruc = { false, true }, url = "Gateway"},--Gateway & WPN Promos
 --[22] ={id =  22, lang = { [1]=true }, fruc = { true , false}, url = "Prerelease_Events"},
 ----TODO Release_Events is subset of 21
 --[21] ={id =  21, lang = { [1]=true }, fruc = { true , false}, url = "Launch_Parties"},--Release & Launch Party Cards
 --[20] ={id =  20, lang = { [1]=true }, fruc = { true , false}, url = "Player_Rewards"},--Magic Player Rewards
-----[15] ={id =  15, lang = { [1]=true }, fruc = {  }, url = ""},--Convention Promos
-----[12] ={id =  12, lang = { [1]=true }, fruc = {  }, url = ""},--Hobby Japan Commemorative Cards
-----[11] ={id =  11, lang = { [1]=true }, fruc = {  }, url = ""},--Redemption Program Cards
-----[10] ={id =  10, lang = { [1]=true }, fruc = {  }, url = ""},--Junior Series Promos
-----[9]  ={id =   9, lang = { [1]=true }, fruc = {  }, url = ""},--Video Game Promos
-----[8]  ={id =   8, lang = { [1]=true }, fruc = {  }, url = ""},--Stores Promos
-----[7]  ={id =   7, lang = { [1]=true }, fruc = {  }, url = ""},--Magazine Inserts
-----[6]  ={id =   6, lang = { [1]=true }, fruc = {  }, url = ""},--Comic Inserts
-----[5]  ={id =   5, lang = { [1]=true }, fruc = {  }, url = ""},--Book Inserts
-----[4]  ={id =   4, lang = { [1]=true }, fruc = {  }, url = ""},--Ultra Rare Cards
+--[15] ={id =  15, lang = { [1]=true }, fruc = {  }, url = ""},--Convention Promos
+--[12] ={id =  12, lang = { [1]=true }, fruc = {  }, url = ""},--Hobby Japan Commemorative Cards
+--[11] ={id =  11, lang = { [1]=true }, fruc = {  }, url = ""},--Redemption Program Cards
+--[10] ={id =  10, lang = { [1]=true }, fruc = {  }, url = ""},--Junior Series Promos
+--[9]  ={id =   9, lang = { [1]=true }, fruc = {  }, url = ""},--Video Game Promos
+--[8]  ={id =   8, lang = { [1]=true }, fruc = {  }, url = ""},--Stores Promos
+--[7]  ={id =   7, lang = { [1]=true }, fruc = {  }, url = ""},--Magazine Inserts
+--[6]  ={id =   6, lang = { [1]=true }, fruc = {  }, url = ""},--Comic Inserts
+--[5]  ={id =   5, lang = { [1]=true }, fruc = {  }, url = ""},--Book Inserts
+--[4]  ={id =   4, lang = { [1]=true }, fruc = {  }, url = ""},--Ultra Rare Cards
 --[2]  ={id =   2, lang = { [1]=true }, fruc = { false,true }, url = "Legend_Membership"},
-----TODO what is "15th_Anniversary" ?
-----TODO what is "World_Magic_Cup_Qualifier" ?
-----TODO what is "Super_Series" ?
-----TODO sort out "Media_Inserts"
+--TODO what is "15th_Anniversary" ?
+--TODO what is "World_Magic_Cup_Qualifier" ?
+--TODO what is "Super_Series" ?
+--TODO sort out "Media_Inserts"
 } -- end table site.sets
 
 --[[- card name replacement tables.
@@ -544,8 +542,9 @@ site.sets = {
  @field [parent=#site.namereplace] #string name
 ]]
 site.namereplace = {
---[[ probably needs this for each set with basic lands.
-see LHpi.Data (or MA) for collector numbers to go with the land versions
+--[[
+--TODO probably needs this for each set with basic lands.
+--see LHpi.Data (or MA) for collector numbers to go with the land versions
 []={
 ["Forest (1)"]			= "Forest ()",
 ["Forest (2)"]			= "Forest ()",
@@ -657,6 +656,7 @@ site.expected = {
 EXPECTTOKENS = false,
 -- -- Core sets
 [797] = { namereplaced=4*5 },
+--TODO expect a lot of namereplacements
 }--end table site.expected
 end--if
 --EOF
