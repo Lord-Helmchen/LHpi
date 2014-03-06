@@ -311,12 +311,15 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :(all changes are transparent to sitescripts)
 :fixed and improved MergeCardrows (was broken if importfoil=="N" or "O" - reported by Bloodnut)
 :got rid of most global variables
-:	curhtmlnum		local in MainImportCycle
-:	persetcount 	local in MainImportCycle
-:					BuildCardData also returns #boolean namereplaced, #boolean foiltweaked
-:					SetPrice also returns #table psetcount, #table failcount
-:	totalcount,setcountdiffers		local in DoImport
-:					MainImportCycle returns #table totalcount, #table setcountdiffers
+:*curhtmlnum
+:**local in MainImportCycle
+:*persetcount
+:**local in MainImportCycle
+:**BuildCardData also returns #boolean namereplaced, #boolean foiltweaked
+:**SetPrice also returns #table psetcount, #table failcount
+:*totalcount,setcountdiffers
+:**local in DoImport
+:**MainImportCycle returns #table totalcount, #table setcountdiffers
 :misc. small improvements to code and/or comments
 :fixed loading of data file from deprecated "Prices" location
 :fixed SAVETABLE folder writable check
