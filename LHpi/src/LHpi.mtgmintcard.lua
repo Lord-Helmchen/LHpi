@@ -34,16 +34,16 @@ synchronized with template
 
 --- more detailed log; default false
 -- @field [parent=#global] #boolean VERBOSE
-VERBOSE = true
+--VERBOSE = true
 --- also log dropped cards; default false
 -- @field [parent=#global] #boolean LOGDROPS
-LOGDROPS = true
+--LOGDROPS = true
 --- also log namereplacements; default false
 -- @field [parent=#global] #boolean LOGNAMEREPLACE
-LOGNAMEREPLACE = true
+--LOGNAMEREPLACE = true
 --- also log foiltweaking; default false
 -- @field [parent=#global] #boolean LOGFOILTWEAK
-LOGFOILTWEAK = true
+--LOGFOILTWEAK = true
 
 -- options that control the script's behaviour.
 
@@ -55,7 +55,23 @@ LOGFOILTWEAK = true
 
 --- also complain if drop,namereplace or foiltweak count differs; default false
 -- @field [parent=#global] #boolean STRICTCHECKEXPECTED
-STRICTCHECKEXPECTED = true
+--STRICTCHECKEXPECTED = true
+
+--- log to seperate logfile instead of Magic Album.log;	default true
+-- @field [parent=#global] #boolean SAVELOG
+--SAVELOG = false
+
+---	read source data from #string savepath instead of site url; default false
+-- @field [parent=#global] #boolean OFFLINE
+--OFFLINE = true
+
+--- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
+-- @field [parent=#global] #boolean SAVEHTML
+--SAVEHTML = true
+
+--- save price table to file before importing to MA;	default false
+-- @field [parent=#global] #boolean SAVETABLE
+--SAVETABLE = true
 
 ---	log everything and exit on error; default false
 -- @field [parent=#global] #boolean DEBUG
@@ -68,22 +84,6 @@ STRICTCHECKEXPECTED = true
 --- DEBUG (only but deeper) inside variant loops; default false
 -- @field [parent=#global] #boolean DEBUGVARIANTS
 --DEBUGVARIANTS = true
-
----	read source data from #string savepath instead of site url; default false
--- @field [parent=#global] #boolean OFFLINE
---OFFLINE = true
-
---- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
--- @field [parent=#global] #boolean SAVEHTML
---SAVEHTML = true
-
---- log to seperate logfile instead of Magic Album.log;	default true
--- @field [parent=#global] #boolean SAVELOG
---SAVELOG = false
-
---- save price table to file before importing to MA;	default false
--- @field [parent=#global] #boolean SAVETABLE
---SAVETABLE = true
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
@@ -673,10 +673,10 @@ site.expected = {
 -- @field [parent=#site.expected] #boolean EXPECTTOKENS
 EXPECTTOKENS = true,
 -- Core sets
-[797] = { pset={ [9]=262-13 }, failed={ [9]=12}, namereplaced=4 }, -- 13 tokens
+[797] = { pset={ [9]=262-13 }, failed={ [9]=13}, namereplaced=4 }, -- 13 tokens
 [788] = { pset={ [9]=249 }, failed={[9]=11} },-- fail SZH tokens
 [779] = { pset={ [9]=249 }, failed={[9]=7} },-- fail SZH tokens
-[770] = { namereplaced=4, pset={ [9]=249 }, failed={[9]=5} },-- fail SZH tokens
+[770] = { namereplaced=4, pset={ [9]=249 }, failed={[9]=6} },-- fail SZH tokens
 [759] = { pset={ [9]=249-20 }, failed={[9]=8}, dropped=8 },-- no SZH lands, fail SZH tokens
 [720] = { pset={ [9]=383-20 }, failed={[9]=6}, dropped=3 }, -- no SZH lands, fail SZH tokens	
 [630] = { pset={ 359-31 } },
@@ -690,18 +690,18 @@ EXPECTTOKENS = true,
 [100] = { pset={ 302-19 } },
 [90]  = {namereplaced=4},
 -- Expansions
-[802] = {namereplaced=8, pset={[9]=165}, failed={[9]=10}},-- fail SZH tokens
-[800] = {namereplaced=10, pset={[9]=249}, failed={[9]=9}},-- fail SZH tokens
+[802] = {namereplaced=8, pset={[9]=165}, failed={[9]=11}},-- fail SZH tokens
+[800] = {namereplaced=10, pset={[9]=249}, failed={[9]=11}},-- fail SZH tokens
 [795] = { namereplaced=4, pset={ [9]=156 }, failed={[9]=1} },-- fail SZH tokens
 [793] = { pset={ [9]=249 }, failed={[9]=8} },-- fail SZH tokens
 [791] = { pset={ [9]=274 }, failed={[9]=11} },-- fail SZH tokens
-[786] = { pset={ 252-1, [9]=244-1 }, failed={[9]=6}, namereplaced=8 },-- missing 1 swamp, fail SZH tokens
+[786] = { pset={ 252-1, [9]=244-1 }, failed={[9]=8}, namereplaced=8 },-- missing 1 swamp, fail SZH tokens
 [784] = { pset={ [9]=158 }, failed={[9]=3} },-- fail SZH tokens
-[782] = { pset={ 276+1, [9]=264 }, failed={[9]=9}, namereplaced=15 },-- fail SZH tokens, +1 is Checklist
+[782] = { pset={ 276+1, [9]=264 }, failed={[9]=12}, namereplaced=15 },-- fail SZH tokens, +1 is Checklist
 [776] = { pset={ [9]=175 }, failed={[9]=4} },-- fail SZH tokens
 [775] = { pset={160-1, [9]=155} },-- no ENG zombie token, no SZH tokens
-[773] = { namereplaced=4, pset={[9]=249+1}, failed={1, [9]=8} },-- fail SZH tokens
-[767] = { pset={ [9]=248 }, failed={[9]=5}, namereplaced=6 },-- fail SZH tokens
+[773] = { namereplaced=4, pset={[9]=249+1}, failed={1, [9]=9} },-- fail SZH tokens
+[767] = { pset={ [9]=248 }, failed={[9]=7}, namereplaced=6 },-- fail SZH tokens
 [765] = { pset={ [9]=145 } },-- no SZH tokens
 [756] = { pset={ [9]=145 } },-- no SZH tokens
 [762] = { pset={ [9]=249 } },-- no SZH tokens
@@ -709,9 +709,9 @@ EXPECTTOKENS = true,
 [756] = { pset={ [9]=145 } },-- no SZH tokens
 [754] = { pset={ [9]=249 }, failed={[9]=9}, namereplaced=1 },-- fail SZH tokens
 [752] = { pset={ [9]=180 }, failed={[9]=7} },-- fail SZH tokens
-[751] = { pset={ [9]=301-20 }, failed={[9]=10}, namereplaced=8 },-- fail SZH tokens, no SZH lands
+[751] = { pset={ [9]=301-20 }, failed={[9]=12}, namereplaced=8 },-- fail SZH tokens, no SZH lands
 [750] = { pset={ [9]=150 } },-- no SZH tokens
-[730] = { pset={ [9]=301-1 }, failed={[9]=10}, dropped=1, namereplaced=4 },-- -1 is missing "Changeling Berserker" (SZH), fail SZH tokens
+[730] = { pset={ [9]=301-1 }, failed={[9]=11}, dropped=1, namereplaced=4 },-- -1 is missing "Changeling Berserker" (SZH), fail SZH tokens
 [710] = { dropped=2 },
 [700] = { dropped=1 },
 [690] = { dropped=1, namereplaced=2 },

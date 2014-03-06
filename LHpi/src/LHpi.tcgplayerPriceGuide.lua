@@ -33,13 +33,13 @@ corrected site.expected (apparently, they don't like Boros: a sizable portion is
 
 --- more detailed log; default false
 -- @field [parent=#global] #boolean VERBOSE
-VERBOSE = true
+--VERBOSE = true
 --- also log dropped cards; default false
 -- @field [parent=#global] #boolean LOGDROPS
-LOGDROPS = true
+--LOGDROPS = true
 --- also log namereplacements; default false
 -- @field [parent=#global] #boolean LOGNAMEREPLACE
-LOGNAMEREPLACE = true
+--LOGNAMEREPLACE = true
 --- also log foiltweaking; default false
 -- @field [parent=#global] #boolean LOGFOILTWEAK
 LOGFOILTWEAK = true
@@ -66,7 +66,23 @@ copyprice = nil
 
 --- also complain if drop,namereplace or foiltweak count differs; default false
 -- @field [parent=#global] #boolean STRICTCHECKEXPECTED
-STRICTCHECKEXPECTED = true
+--STRICTCHECKEXPECTED = true
+
+--- log to seperate logfile instead of Magic Album.log;	default true
+-- @field [parent=#global] #boolean SAVELOG
+--SAVELOG = false
+
+---	read source data from #string savepath instead of site url; default false
+-- @field [parent=#global] #boolean OFFLINE
+--OFFLINE = true
+
+--- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
+-- @field [parent=#global] #boolean SAVEHTML
+--SAVEHTML = true
+
+--- save price table to file before importing to MA;	default false
+-- @field [parent=#global] #boolean SAVETABLE
+--SAVETABLE = true
 
 ---	log everything and exit on error; default false
 -- @field [parent=#global] #boolean DEBUG
@@ -79,22 +95,6 @@ STRICTCHECKEXPECTED = true
 --- DEBUG (only but deeper) inside variant loops; default false
 -- @field [parent=#global] #boolean DEBUGVARIANTS
 --DEBUGVARIANTS = true
-
----	read source data from #string savepath instead of site url; default false
--- @field [parent=#global] #boolean OFFLINE
---OFFLINE = true
-
---- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
--- @field [parent=#global] #boolean SAVEHTML
---SAVEHTML = true
-
---- log to seperate logfile instead of Magic Album.log;	default true
--- @field [parent=#global] #boolean SAVELOG
---SAVELOG = false
-
---- save price table to file before importing to MA;	default false
--- @field [parent=#global] #boolean SAVETABLE
---SAVETABLE = true
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver

@@ -34,16 +34,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 --- more detailed log; default false
 -- @field [parent=#global] #boolean VERBOSE
-VERBOSE = true
+--VERBOSE = true
 --- also log dropped cards; default false
 -- @field [parent=#global] #boolean LOGDROPS
-LOGDROPS = true
+--LOGDROPS = true
 --- also log namereplacements; default false
 -- @field [parent=#global] #boolean LOGNAMEREPLACE
-LOGNAMEREPLACE = true
+--LOGNAMEREPLACE = true
 --- also log foiltweaking; default false
 -- @field [parent=#global] #boolean LOGFOILTWEAK
-LOGFOILTWEAK = true
+--LOGFOILTWEAK = true
 
 -- options that control the script's behaviour.
 
@@ -57,17 +57,9 @@ LOGFOILTWEAK = true
 -- @field [parent=#global] #boolean STRICTCHECKEXPECTED
 --STRICTCHECKEXPECTED = true
 
----	log everything and exit on error; default false
--- @field [parent=#global] #boolean DEBUG
-DEBUG = true
-
----	even while DEBUG, do not log raw html data found by regex; default true 
--- @field [parent=#global] #boolean DEBUGSKIPFOUND
---DEBUGSKIPFOUND = false
-
---- DEBUG (only but deeper) inside variant loops; default false
--- @field [parent=#global] #boolean DEBUGVARIANTS
---DEBUGVARIANTS = true
+--- log to seperate logfile instead of Magic Album.log;	default true
+-- @field [parent=#global] #boolean SAVELOG
+--SAVELOG = false
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
@@ -77,13 +69,21 @@ DEBUG = true
 -- @field [parent=#global] #boolean SAVEHTML
 --SAVEHTML = true
 
---- log to seperate logfile instead of Magic Album.log;	default true
--- @field [parent=#global] #boolean SAVELOG
---SAVELOG = false
-
 --- save price table to file before importing to MA;	default false
 -- @field [parent=#global] #boolean SAVETABLE
 --SAVETABLE = true
+
+---	log everything and exit on error; default false
+-- @field [parent=#global] #boolean DEBUG
+--DEBUG = true
+
+---	even while DEBUG, do not log raw html data found by regex; default true 
+-- @field [parent=#global] #boolean DEBUGSKIPFOUND
+--DEBUGSKIPFOUND = false
+
+--- DEBUG (only but deeper) inside variant loops; default false
+-- @field [parent=#global] #boolean DEBUGVARIANTS
+--DEBUGVARIANTS = true
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver

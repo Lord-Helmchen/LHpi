@@ -39,10 +39,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	fixed loading of data file from deprecated "Prices" location
 	fixed SAVETABLE folder writable check
 	fixed logging resultregex finds
+	LHpi.Log now only uses ma.Log when loglevel<0 is used
+	LHpi.SetPrice adds abs(expected-retval) to failcount
 ]]
 
---TODO merge with trunk
---TODO add abs(expected-retval) to failcount
 
 local LHpi = {}
 ---	LHpi library version
@@ -1317,7 +1317,7 @@ function LHpi.SetPrice(setid, name, card)
 	if not card.regprice then card.regprice={} end
 	if not card.foilprice then card.foilprice={} end
 	for lid,lang in pairs(card.lang) do
-	local perlangretval
+		local perlangretval
 		if card.variant then
 			if DEBUG then
 				LHpi.Log( string.format("variant is %s regprice is %s foilprice is %s", LHpi.Tostring(card.variant), LHpi.Tostring(card.regprice[lid]), LHpi.Tostring(card.foilprice[lid]) ) ,2)
@@ -1332,36 +1332,35 @@ function LHpi.SetPrice(setid, name, card)
 					perlangretval = (perlangretval or 0) + ma.SetPrice(setid, lid, name, varname, card.regprice[lid][varname] or 0, card.foilprice[lid][varname] or 0 )
 				end -- if varname
 			end -- for varnr,varname
-			
 		else -- no variant
 			perlangretval = ma.SetPrice(setid, lid, name, "", card.regprice[lid] or 0, card.foilprice[lid] or 0)
 		end -- if card.variant
 		
 		-- count ma.SetPrice retval and log potential problems
-		if perlangretval == 0 or (not perlangretval) then
-			failcount[lid] = ( failcount[lid] or 0 ) + 1
-			if DEBUG then
-				LHpi.Log( string.format("! LHpi.SetPrice \"%s\" for language %s with n/f price %s/%s not ( %s times) set",name, lang, LHpi.Tostring(card.regprice[lid]), LHpi.Tostring(card.foilprice[lid]), tostring(perlangretval) ) ,2)
+		psetcount[lid] = ( psetcount[lid] or 0 ) + perlangretval
+		local expected
+		if card.variant then
+			--expected = LHpi.Length(card.variant)
+			for _varnr, varname in pairs(card.variant) do
+				if varname then expected = (expected or 0) + 1 end
 			end
 		else
-			psetcount[lid] = ( psetcount[lid] or 0 ) + perlangretval
+			expected = 1		
+		end
+		if perlangretval == expected then
 			if DEBUG then
 				LHpi.Log( string.format("LHpi.SetPrice\t name \"%s\" version \"%s\" set to %s/%s non/foil %s times for laguage %s", name, LHpi.Tostring(card.variant), LHpi.Tostring(card.regprice[lid]), LHpi.Tostring(card.foilprice[lid]), tostring(perlangretval), lang ) ,2)
 			end
-		end
-		if VERBOSE or DEBUG then
-			local expected
-			if not card.variant then
-				expected = 1
-			else
-				expected = LHpi.Length(card.variant)
-			end
-			if (perlangretval ~= expected) then
-				LHpi.Log( string.format("! LHpi.SetPrice \"%s\" for language %s returned unexpected retval \"%s\"; expected was %i", name, lang, tostring(perlangretval), expected ) , 1 )
-			elseif DEBUG then
-				LHpi.Log( string.format("! LHpi.SetPrice \"%s\" for language %s returned expected retval \"%s\"", name, lang, tostring(perlangretval) ) , 1 )
-			end
-		end
+		else
+			failcount[lid] = math.abs(expected - (perlangretval or 0) )
+			if VERBOSE or DEBUG then
+				if perlangretval == 0 or (not perlangretval) then
+					LHpi.Log( string.format("! LHpi.SetPrice \"%s\" for language %s with n/f price %s/%s not ( %s times) set",name, lang, LHpi.Tostring(card.regprice[lid]), LHpi.Tostring(card.foilprice[lid]), tostring(perlangretval) ) ,1)
+				else
+					LHpi.Log( string.format("! LHpi.SetPrice \"%s\" for language %s returned unexpected retval \"%s\"; expected was %i", name, lang, tostring(perlangretval), expected ) , 1 )
+				end
+			end--if VERBOSE
+		end--if perlangretval == expected
 	end -- for lid,lang
 
 	if DEBUGVARIANTS then DEBUG = false end
@@ -1498,8 +1497,13 @@ function LHpi.Toutf8( str , enc )
 end -- function LHpi.Toutf8
 
 --[[- flexible logging.
+ if SAVELOG option is true, logs to a seperate logfile for each sitescript,
+ otherwise use LHpi.log, which is overwritten on each sitescript initialization.
+ 
  loglevels:
-  1 for VERBOSE,  2 for DEBUG, else log.
+  -1 to use ma.Log instead
+   1 for VERBOSE
+   2 for DEBUG, else log.
  add other levels as needed
 
  @function [parent=#LHpi] Log
@@ -1512,8 +1516,10 @@ function LHpi.Log( str , l , f , a )
 	local loglevel = l or 0
 	local apnd = a or 1
 	local logfile = "Prices\\LHpi.Log" -- fallback if global #string scriptname is missing
-	if scriptname then
-		logfile = "Prices\\" .. string.gsub( scriptname , "lua$" , "log" )
+	if SAVELOG~=false then
+		if scriptname then
+			logfile = "Prices\\" .. string.gsub( scriptname , "lua$" , "log" )
+		end
 	end
 	if f then
 		logfile = f
@@ -1524,11 +1530,11 @@ function LHpi.Log( str , l , f , a )
 		str = "DEBUG\t" .. str
 		--logfile = string.gsub(logfile, "log$", "DEBUG.log") -- for seperate debuglog
 	end
-	if SAVELOG~=false then
-			str = "\n" .. str
-		ma.PutFile( logfile , str , apnd )
+	if loglevel < 0 then
+		ma.Log( "LHpi:" .. str )
 	else
-		ma.Log( str )
+		str = "\n" .. str
+		ma.PutFile( logfile , str , apnd )
 	end
 end -- function LHpi.Log
 
