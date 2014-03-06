@@ -25,10 +25,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-0.3
-	misc. small improvements to code and/or comments
-	patch paths, because dev src has been moved from MA\Prices
-	dummy.fakesitescript()
+misc. small improvements to code and/or comments
+patch paths, because dev src has been moved from MA\Prices
+dummy.fakesitescript()
 ]]
 
 --[[- "main" function called by Magic Album; just display error and return.
@@ -563,11 +562,11 @@ function main()
 --	dummy.loadscript("\\Import Prices.lua",savepath,savepath)
 --	dummy.loadscript("\\MTG Mint Card.lua",savepath,savepath)
 --	dummy.loadscript("lib\\LHpi.sitescriptTemplate-v2.9.2.1.lua",path,savepath)
---	dummy.loadscript("LHpi.magicuniverseDE-v2.9.2.1.lua",path,savepath)
---	dummy.loadscript("LHpi.trader-onlineDE-v2.9.2.1.lua",path,savepath)
-	dummy.loadscript("LHpi.tcgplayerPriceGuide-v2.9.2.1.lua",path,savepath)
---	dummy.loadscript("LHpi.mtgmintcard-v2.9.2.1.lua",path,savepath)
---	dummy.loadscript("LHpi.mtgprice.com-v2.9.2.1.lua",path,savepath)
+--	dummy.loadscript("LHpi.magicuniverseDE.lua",path,savepath)
+--	dummy.loadscript("LHpi.trader-onlineDE.lua",path,savepath)
+--	dummy.loadscript("LHpi.tcgplayerPriceGuide.lua",path,savepath)
+	dummy.loadscript("LHpi.mtgmintcard.lua",path,savepath)
+--	dummy.loadscript("LHpi.mtgprice.com-v2.8.1.1.lua",path,savepath)
 	-- force debug enviroment options
 	VERBOSE = true
 	LOGDROPS = true
@@ -575,14 +574,14 @@ function main()
 	LOGFOILTWEAK = true
 	CHECKEXPECTED = true
 	STRICTCHECKEXPECTED = true
-	DEBUG = true
-	DEBUGSKIPFOUND = false
-	DEBUGVARIANTS = false
 	OFFLINE = true
 	SAVELOG = true
 	SAVEHTML = false
-	SAVETABLE=false
-	print("dummy says: sitescript dofile'd")
+	DEBUG = true
+--	DEBUGSKIPFOUND = false
+--	DEBUGVARIANTS = true
+--	SAVETABLE=true
+	print("dummy says: script loaded.")
 
 --	LHpi.LoadData(2)
 	local fakeimportfoil = "y"
@@ -590,7 +589,7 @@ function main()
 	local fakeimportlangs = { [1] = "English", [3]  = "German" , [5] = "Italian" ,[9] = "Simplified Chinese"}
 --	local fakeimportlangs = alllangs
 	local fakeimportsets = { [0] = "debugset"; }
-	local fakeimportsets = { [220] = "some set"; }
+	local fakeimportsets = { [260] = "some set"; }
 --	local fakeimportsets = { [220]="foo";[800]="bar";[0]="baz";}
 --	local fakeimportsets = coresets
 --	local fakeimportsets = dummy.mergetables ( coresets, expansionsets, specialsets, promosets )
