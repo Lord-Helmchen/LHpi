@@ -71,7 +71,6 @@ end -- function ImportPrice
 ]]
 
 function LHpi.DoImport (importfoil , importlangs , importsets)
-	local timer=os.clock()
 	--TODO LHpi.LegacyConversion(), remove on next sitescript update
 	if STRICTCHECKEXPECTED then STRICTEXPECTED=STRICTCHECKEXPECTED STRICTCHECKEXPECTED=nil end
 	if DEBUGSKIPFOUND~=nil then DEBUGFOUND= (not DEBUGSKIPFOUND) DEBUGSKIPFOUND=nil end
@@ -260,9 +259,6 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 		LHpi.Log( string.format( "Total expected: " .. totalexpectedstring .. "; %i dropped, %i namereplaced and %i foiltweaked.", totalexpected.dropped, totalexpected.namereplaced, totalexpected.foiltweaked ) )
 		LHpi.Log( string.format( "count differs in %i sets: %s", LHpi.Length(setcountdiffers),LHpi.Tostring(setcountdiffers) ), 1 )
 	end -- if CHECKEXPECTED	
-	if VERBOSE then
-		LHpi.Log(string.format("LHpi.DoImport took %g seconds (CPU time).",os.clock() - timer))
-	end
 end
 
 --[[- Main import cycle 
