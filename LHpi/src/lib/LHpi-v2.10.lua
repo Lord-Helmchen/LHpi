@@ -27,15 +27,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --[[ CHANGES
 *os.clock() loglevel 2
 *fix default logfile "LHpi.Log" -> "LHpi.log"
-*changed bolean options
-**a legacy conversion is in place
+*more intuitive boolean option names
+**legacy conversion for old sitescripts
 **DEBUGSKIPFOUND -> DEBUGFOUND
 **STRICTCHECKEXPECTED -> STRICTEXPECTED
 *merge site.variants with Data.variants, same with foiltweak
 ]]
 
---TODO count averageing events with counter attached to prices
---TODO nil unneeded Data.sets[sid]
+--TODO count averaging events with counter attached to prices
+--TODO nil unneeded Data.sets[sid] to save memory?
 
 local LHpi = {}
 ---	LHpi library version
@@ -1529,8 +1529,11 @@ function LHpi.Log( str , l , f , a )
 	if loglevel == 1 then
 		str = " " .. str
 	elseif loglevel == 2 then
-		str = string.format("%3.3f\t%s",os.clock(),str)
---		str = "DEBUG\t" .. str
+		if os then
+			str = string.format("%3.3f\t%s",os.clock(),str)
+		else
+			str = "DEBUG\t" .. str
+		end
 		--logfile = string.gsub(logfile, "log$", "DEBUG.log") -- for seperate debuglog
 	end
 	if loglevel < 0 then

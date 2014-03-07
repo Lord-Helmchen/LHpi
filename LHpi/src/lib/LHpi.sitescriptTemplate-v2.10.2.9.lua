@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.10
+lib 2.10
 ]]
 
 -- options that control the amount of feedback/logging done by the script

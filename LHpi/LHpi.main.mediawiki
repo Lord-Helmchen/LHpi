@@ -38,17 +38,17 @@ This site started it all, since I wanted prices in local currency, and my FLG ap
 
 ===mtgmintcard.com===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=16278 LHpi.mtgmintcard.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=16295 LHpi.mtgmintcard.lua.zip]
 |-
-|Sitescript version||2.9.2.9
+|Sitescript version||2.10.2.10
 |-
-|used LHpi version||2.9
+|used LHpi version||2.10
 |-
 |used LHpi.Data version||2
 |-
-|updated last on||2014-03-06
+|updated last on||2014-03-07
 |-
-|size|| 10.75 KiB
+|size|| 10.79 KiB
 |}
 Functionally the same as [[#Other scripts|"MTG Mint Card.lua"]] by Goblin Hero and Stromglad1.
 
@@ -102,6 +102,15 @@ I found this site while looking for Token images, found it to be parseable by si
 |-
 |size|| 16.64 KiB
 |}
+{|
+|[http://www.slightlymagic.net/forum/download/file.php?id=16294 LHpi-v2.10.lua.zip]
+|-
+|Tested with Ma version||1.6.1.325
+|-
+|updated last on||2014-03-07
+|-
+|size|| 16.69 KiB
+|}
 It is not expected to be fast, but as reliable as possible:<br />
 It first compares the user requested sets and languages with what the sitescript has available and builds a table of urls to querry, seperated by set.<br />
 Then it loops though the sets that are both available and selected:<br />
@@ -145,29 +154,29 @@ Detailed instructions on the properties and functions to define in your sitescri
 
 ===sitescriptTemplate===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=16273 LHpi.sitescriptTemplate-v2.9.2.8.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=16293 LHpi.sitescriptTemplate-v2.10.2.9.lua.zip]
 |-
-|Sitescript version||8
+|Sitescript version||9
 |-
-|uses LHpi library version||2.9
+|uses LHpi library version||2.10
 |-
 |uses LHpi.Data version||2
 |-
-|updated last on||2014-03-06
+|updated last on||2014-03-07
 |-
-|size|| 9.2 KiB
+|size|| 9.14 KiB
 |}
 This is just an empty, commented template to help write new sitescripts.
 
 ===dummyMA.lua===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=16272 dummyMA.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=16292 dummyMA.zip]
 |-
-|version||0.3
+|version||0.4
 |-
-|updated last on||2013-03-06
+|updated last on||2013-03-07
 |-
-|size|| 7 KiB
+|size|| 7.6 KiB
 |}
 Magic Album API dummy to test and debug LHpi within an IDE (such as eclipse) and without needing Magic Album. Now fixed for backwards compatibility with Lua 5.1 and paths outside of MA's "Prices" directory.
 
@@ -177,7 +186,6 @@ in no particular order
 ** add all <s>special and</s> promo sets (cardcount,variants,foiltweak) to LHpi.Data
 * tweak log : better differentiation of log levels (normal,verbose,debug); rewrite normal-level logentries to be more pleasing to read.<br />I'd love to get users' feedback on this: how silent should normal level be; what should not be logged unless in debug mode?
 *<code>(((a+b)/2)+c)/2 != (a+b+c)/3 = (((a+b)/2*2)+c)/3</code><br/> For mathematically correct averaging, need to attach a counter to averaged prices, then on next averaging, do <code>if counter then newaverage=(oldaverage*(counter+1) + newprice) / (counter+2)</code>
-* improve handling of variant and foiltweak defaults
 
 ===Possible features===
 in no particular order
@@ -326,6 +334,14 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :fixed logging resultregex finds
 :LHpi.Log now only uses ma.Log when loglevel<0 is used
 :LHpi.SetPrice adds abs(expected-retval) to failcount
+;[http://www.slightlymagic.net/forum/download/file.php?id=16294 2.10]
+:os.clock() loglevel 2 if ''os'' is available
+:fix default logfile "LHpi.Log" -> "LHpi.log"
+:more intuitive boolean option names
+:*DEBUGSKIPFOUND -> DEBUGFOUND
+:*STRICTCHECKEXPECTED -> STRICTEXPECTED
+:*legacy conversion for old sitescripts
+:merge site.variants with Data.variants, same with foiltweak
 
 ====LHpi.Data====
 ;[http://www.slightlymagic.net/forum/download/file.php?id=15850 1]
@@ -395,6 +411,9 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 ;[http://www.slightlymagic.net/forum/download/file.php?id=16278 2.9.2.9]
 :synchronized with template
 :updated site.expected
+;[http://www.slightlymagic.net/forum/download/file.php?id=16295 2.10.2.10]
+:lib 2.10
+:foiltweak[setid].override=true
 
 ====tcgplayerPriceGuide====
 ;[http://www.slightlymagic.net/forum/download/file.php?id=9267 2.0]
@@ -498,6 +517,8 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :too much simplification prevented possible functionality: reintroduced site.langs[langid].id field for reverse lookup
 :split script version from scriptname to ease possible future change to versioning scheme
 :misc. small improvements to example code and/or comments
+;[http://www.slightlymagic.net/forum/download/file.php?id=16293 2.10.2.9]
+:lib 2.10
 
 ====dummyMA====
 ;0
@@ -511,6 +532,11 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :misc. small improvements to code and/or comments
 :patch paths, because dev src has been moved from MA\Prices
 :dummy.fakesitescript()
+;[http://www.slightlymagic.net/forum/download/file.php?id=16292 0.4]
+:execution timer in main()
+:global variables changed to dummy.*
+:new dummy.performancetest(repeats,script,impF,impL,impS,timefile)
+:more comfort, less code duplication
 
 ==License==
 The LHpi library and all its sitescripts are released as open source under the [[http://www.gnu.org/licenses/gpl.html GNU General Public License]]. Please note that LHpi is thusly licensed seperately from Magic Album proper, which to date is closed source.

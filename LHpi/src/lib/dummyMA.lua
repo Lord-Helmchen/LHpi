@@ -25,11 +25,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-0.4
-execution timer in main()
-global variables changed to dummy.*
-new dummy.performancetest(repeats,script,impF,impL,impS,timefile)
-more comfort, less code duplication
+*execution timer in main()
+*global variables changed to dummy.*
+*new dummy.performancetest(repeats,script,impF,impL,impS,timefile)
+*more comfort, less code duplication
 ]]
 
 --[[- "main" function called by Magic Album; just display error and return.

@@ -27,7 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-synchronized with template
+lib 2.10
+foiltweak[setid].override=true
 ]]
 
 -- options that control the amount of feedback/logging done by the script
