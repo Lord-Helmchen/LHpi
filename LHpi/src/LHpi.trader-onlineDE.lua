@@ -27,7 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-synchronized with template
+2.10.3.12
+JOU, JaceVsVraska
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -90,10 +91,10 @@ synchronized with template
 libver = "2.10"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
-dataver = "2"
+dataver = "3"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "11"
+scriptver = "12"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.trader-onlineDE-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -431,6 +432,7 @@ site.sets = {
 [100]={id = 100, lang = { true , [3]=false}, fruc = { false,true }, url = "B%20"},
 [90] = nil, -- Alpha 
  -- Expansions
+[806]={id = 806, lang = { true , [3]=true }, fruc = { true, true }, url = "JOU"},
 [802]={id = 802, lang = { true , [3]=true }, fruc = { true, true }, url = "BNG"},
 [800]={id = 800, lang = { true , [3]=true }, fruc = { true, true }, url = "THS"},
 [795]={id = 795, lang = { true , [3]=true }, fruc = { true, true }, url = "DGM"},
@@ -496,6 +498,7 @@ site.sets = {
 [130]={id = 130, lang = { true , [3]=false }, fruc = { false,true }, url = "AQ"},
 [120]={id = 120, lang = { true , [3]=false }, fruc = { false,true }, url = "AN"},
 -- special sets
+[805]={id = 805, lang = { true , [3]=false}, fruc = { true ,true }, url = "JVV"}, -- Duel Decks: Jace vs. Vaska
 [796]={id = 796, lang = { true , [3]=false}, fruc = { true ,true }, url = "MMA"}, -- Modern Masters
 [794]={id = 794, lang = { true , [3]=false}, fruc = { false,true }, url = "SVT"},--Duel Decks: Sorin vs. Tibalt
 [790]={id = 790, lang = { true , [3]=false}, fruc = { false,true }, url = "IZZ"},--Duel Decks: Izzet vs. Golgari

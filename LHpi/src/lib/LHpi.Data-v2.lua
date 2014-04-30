@@ -28,11 +28,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-v2
-(all changes transparent to sitescripts)
-	minor improvements to some special sets' variant
-	misc. small improvements to code and/or comments
-	added 636:Salvat 2011
+v3
+added:
+806	Journey into Nyx
+805	Duel Decks: Jace vs. Vraska
+804	Challenge Deck: Battle the Horde
+803	Challenge Deck: Face the Hydra
+
 ]]
 
 --TODO param importsets and nil all others to save memory
@@ -613,6 +615,9 @@ Coresets = nil,
 --- not really a seperate subtable, just a bookmark for quick navigation in eclipse.
 -- @field [parent=#Data.sets] #table Expansions
 Expansions = nil,
+[806] = { name = "Journey into Nyx",
+	cardcount = { reg=165, tok=6},
+},
 [802] = { name="Born of the Gods",
 	cardcount={ reg=165, tok=11 },
 	variants={
@@ -2260,6 +2265,42 @@ Expansions = nil,
 --- not really a seperate subtable, just a bookmark for quick navigation in eclipse.
 -- @field [parent=#Data.sets] #table SpecialSets
 SpecialSets = nil,
+[805] = { name="Duel Decks: Jace vs. Vraska",
+	foil="n",
+	cardcount={ reg=88, tok=1, nontr=0, overs=0 },
+	variants={
+["Island"] 						= { "Island" 	, { 1    , 2    , 3    , 4    , 5     } },
+["Swamp"] 						= { "Swamp"		, { 1    , 2    , 3    , 4    , 5     } },
+["Forest"] 						= { "Forest" 	, { 1    , 2    , 3    , 4    , 5     } },
+["Island (37)"]					= { "Island"	, { 1    , false, false, false, false } },
+["Island (38)"]					= { "Island"	, { false, 2    , false, false, false } },
+["Island (39)"]					= { "Island"	, { false, false, 3    , false, false } },
+["Island (40)"]					= { "Island"	, { false, false, false, 4    , false } },
+["Island (41)"]					= { "Island"	, { false, false, false, false, 5     } },
+["Swamp (79)"]					= { "Swamp" 	, { 1    , false, false, false, false } },
+["Swamp (80)"]					= { "Swamp" 	, { false, 2    , false, false, false } },
+["Swamp (81)"]					= { "Swamp" 	, { false, false, 3    , false, false } },
+["Swamp (82)"]					= { "Swamp" 	, { false, false, false, 4    , false } },
+["Swamp (83)"]					= { "Swamp" 	, { false, false, false, false, 5     } },
+["Forest (84)"]					= { "Forest"	, { 1    , false, false, false, false } },
+["Forest (85)"]					= { "Forest"	, { false, 2    , false, false, false } },
+["Forest (86)"]					= { "Forest"	, { false, false, 3    , false, false } },
+["Forest (87)"]					= { "Forest"	, { false, false, false, 4    , false } },
+["Forest (88)"]					= { "Forest"	, { false, false, false, false, 5     } }
+	},
+	foiltweak={
+["Jace, Architect of Thought"]	= { foil = false},
+["Vraska the Unseen"]			= { foil = false},
+	},
+},
+[804] = { name="Challenge Deck: Battle the Horde",
+	foil="n",
+	cardcount={ reg=0, tok=0, nontr=15, overs=0 },
+},
+[803] = { name="Challenge Deck: Face the Hydra",
+	foil="n",
+	cardcount={ reg=0, tok=0, nontr=15, overs=0 },
+},
 [801] = { name="Commander 2013 Edition",
 	foil="n",--15 oversized are foilonly
 	cardcount={ reg=356, tok=0, nontr=0, overs=15 },

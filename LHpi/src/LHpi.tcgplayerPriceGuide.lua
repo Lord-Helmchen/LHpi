@@ -24,7 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-synchronized with template
+2.10.3.12
+JOU
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -99,10 +100,10 @@ copyprice = nil
 libver = "2.10"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
-dataver = "2"
+dataver = "3"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "11"
+scriptver = "12"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.tcgplayerPriceGuide-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -393,6 +394,7 @@ site.sets = {
 [100]={id = 100, lang = { true }, fruc = { true }, url = "Beta%20Edition"},
 [90] ={id =  90, lang = { true }, fruc = { true }, url = "Alpha%20Edition"},
 -- Expansions
+[806]={id = 806, lang = { true }, fruc = { true }, url = "Journey%20into%20Nyx"},
 [802]={id = 802, lang = { true }, fruc = { true }, url = "Born%20of%20the%20Gods"},
 [800]={id = 800, lang = { true }, fruc = { true }, url = "Theros"},
 [795]={id = 795, lang = { true }, fruc = { true }, url = "Dragon's%20Maze"},

@@ -27,8 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-lib 2.10
-foiltweak[setid].override=true
+2.10.3.11
+JOU, JaceVsVraska
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -91,10 +91,10 @@ foiltweak[setid].override=true
 libver = "2.10"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
-dataver = "2"
+dataver = "3"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "10"
+scriptver = "11"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.mtgmintcard-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -378,6 +378,7 @@ site.sets = {
 [100]={id = 100, lang = { true , [9]=false}, fruc = { false,true }, pages=2, url = "Beta"},
 [90] ={id =  90, lang = { true , [9]=false}, fruc = { false,true }, pages=2, url = "Alpha"}, 
  -- Expansions
+[806]={id = 806, lang = { true , [9]=true }, fruc = { true ,true }, pages=1, url = "journey-into-nyx"},
 [802]={id = 802, lang = { true , [9]=true }, fruc = { true ,true }, pages=1, url = "born-of-the-gods"},
 [800]={id = 800, lang = { true , [9]=true }, fruc = { true ,true }, pages=2, url = "Theros"},
 [795]={id = 795, lang = { true , [9]=true }, fruc = { true ,true }, pages=1, url = "dragon's-maze"},
@@ -443,6 +444,7 @@ site.sets = {
 [130]={id = 130, lang = { true , [9]=false}, fruc = { false,true }, pages=1, url = "Antiquities"},
 [120]={id = 120, lang = { true , [9]=false}, fruc = { false,true }, pages=1, url = "Arabian+Nights"},
 -- special sets
+[805]={id = 805, lang = { true , [9]=false}, fruc = { true , true }, pages=1, url = "jace-vs.-vraska"},--Duel Decks: Jace vs. Vraska
 --[801]={id = 801, lang = { true , [9]=false}, fruc = { true , true }, pages=2, url = "commander-2013"},--Commander 2013 Edition
 [799]={id = 799, lang = { true , [9]=false}, fruc = { true , true }, pages=1, url = "heroes-vs.-monsters"},--Duel Decks: Heroes vs. Monsters
 [798]={id = 798, lang = { true , [9]=false}, fruc = { true , false}, pages=1, url = "from-the-vault%3A-twenty"},--From the Vault: Twenty
