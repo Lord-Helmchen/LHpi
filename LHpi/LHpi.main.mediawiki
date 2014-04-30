@@ -20,17 +20,17 @@ Sitescripts will need to provide
 ** a table with expected card count numbers for LHpi's sanity checks.
 ===magicuniverse.de===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=16277 LHpi.magicuniverseDE.lua.zip]
+|[ LHpi.magicuniverseDE.lua.zip]
 |-
-|Sitescript version||2.9.2.10
+|Sitescript version||2.10.3.11
 |-
-|used LHpi version||2.9
+|used LHpi version||2.10
 |-
-|used LHpi.Data version||2
+|used LHpi.Data version||3
 |-
-|updated last on||2014-03-06
+|updated last on||2014-04-30
 |-
-|size|| 12.62 KiB
+|size||  KiB
 |}
 [http://www.magicuniverse.de/html/einzelkarten.php?menue Magic Universe] is a German site with German and English cards, priced in €.
 
@@ -38,17 +38,17 @@ This site started it all, since I wanted prices in local currency, and my FLG ap
 
 ===mtgmintcard.com===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=16295 LHpi.mtgmintcard.lua.zip]
+|[ LHpi.mtgmintcard.lua.zip]
 |-
-|Sitescript version||2.10.2.10
+|Sitescript version||2.10.3.11
 |-
 |used LHpi version||2.10
 |-
-|used LHpi.Data version||2
+|used LHpi.Data version||3
 |-
-|updated last on||2014-03-07
+|updated last on||2014-04-30
 |-
-|size|| 10.79 KiB
+|size||  KiB
 |}
 Functionally the same as [[#Other scripts|"MTG Mint Card.lua"]] by Goblin Hero and Stromglad1.
 
@@ -56,17 +56,17 @@ When I wanted to generalize my script for easy addaption to other sites, this pr
 
 ===magic.tcgplayer.com PriceGuide===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=16279 LHpi.tcgplayerPriceGuide.lua.zip]
+|[ LHpi.tcgplayerPriceGuide.lua.zip]
 |-
-|Sitescript version||2.9.2.9
+|Sitescript version||2.10.3.11
 |-
-|used LHpi version||2.9
+|used LHpi version||2.10
 |-
-|used LHpi.Data version||2
+|used LHpi.Data version||3
 |-
-|updated last on||2014-03-06
+|updated last on||2014-04-30
 |-
-|size|| 14.17 KiB
+|size||  KiB
 |}
 [http://magic.tcgplayer.com/magic_price_guides.asp Tcgplayer Price Guide] claims to accumulate prices from 75 online vendors. They are priced in $. Their tables give a high, low and average price; the sitescript contains a variable to select which one of those it should use.
 <br />To change the column to import from, open the script in a text editor, find <code>himelo = 3</code> and change it to <code>himelo = 1</code> for high or <code>himelo = 2</code> for medium prices. You can have [[How-To_sitescriptTemplate#multiple_copies_ot_the_same_script|multiple copies of the same script]]
@@ -76,17 +76,17 @@ When I wanted to generalize my script for easy addaption to other sites, this pr
 
 ===trader-online.de===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=16276 LHpi.trader-onlineDE-v2.8.1.1.lua.zip]
+|[ LHpi.trader-onlineDE-v2.8.1.1.lua.zip]
 |-
-|Sitescript version||2.9.2.9
+|Sitescript version||2.10.3.11
 |-
-|used LHpi version||2.9
+|used LHpi version||2.10
 |-
-|used LHpi.Data version||2
+|used LHpi.Data version||3
 |-
-|updated last on||2014-03-06
+|updated last on||2014-04-30
 |-
-|size|| 13.08 KiB
+|size||  KiB
 |}
 [http://www.trader-online.de/Magic_Online-Shop.php Trader Online] is a German site with German and English cards, priced in €.
 
@@ -123,13 +123,13 @@ Logging to a seperate file is now disabled by default again (but still configura
 
 ===LHpi.Data===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=16274 LHpi.Data-v2.lua.zip]
+|[ LHpi.Data-v3.lua.zip]
 |-
 |Library version||>=2.7
 |-
-|updated last on||2014-03-06
+|updated last on||2014-04-30
 |-
-|size|| 21.55 KiB
+|size||  KiB
 |}
 Since library version 2.7, site-independent set data (number of cards,foilage, default variant and foiltweak tables) were moved into a seperate data file that gets loaded by the library on initialization. This will allow to distinguish between code updates (to the library) and set data updates (which are usually needed when a new set is released). Version numbering of the sitescripts will reflect both library and data versions used.
 
@@ -352,6 +352,13 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :minor improvements to some special sets' variant
 :misc. small improvements to code and/or comments
 :added 636:Salvat 2011
+;[ 3]
+:added:
+:*806	Journey into Nyx
+:*805	Duel Decks: Jace vs. Vraska
+:*804	Challenge Deck: Battle the Horde
+:*803	Challenge Deck: Face the Hydra
+
 
 ====magicuniverseDE====
 ;[http://www.slightlymagic.net/forum/download/file.php?id=9264 2.0]
@@ -382,6 +389,9 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 ;[http://www.slightlymagic.net/forum/download/file.php?id=16277 2.9.2.10]
 :synchronized with template
 :updated site.expected
+;[ 2.10.3.11]
+:JOU
+
 
 ====mtgmintcard====
 ;[http://www.slightlymagic.net/forum/download/file.php?id=9265 2.0]
@@ -414,6 +424,9 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 ;[http://www.slightlymagic.net/forum/download/file.php?id=16295 2.10.2.10]
 :lib 2.10
 :foiltweak[setid].override=true
+;[ 2.10.3.11]
+:JOU, JaceVsVraska
+
 
 ====tcgplayerPriceGuide====
 ;[http://www.slightlymagic.net/forum/download/file.php?id=9267 2.0]
@@ -455,6 +468,9 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :synchronized with template
 :drop all "SOON" prices (higher maintenance for site.expected,but less "0"s in averaging)
 :updated site.expected (apparently, they don't like Boros: a sizable portion is Plains and Mountains!?)
+;[ 2.10.3.11]
+:JOU
+
 
 ====trader-onlineDE====
 ;2.0
@@ -486,6 +502,8 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 ;[http://www.slightlymagic.net/forum/download/file.php?id=16276 2.9.2.10]
 :synchronized with template
 :updated site.expected
+;[ 2.10.3.11]
+:JOU, JaceVsVraska
 
 ====sitescriptTemplate====
 ;2.0

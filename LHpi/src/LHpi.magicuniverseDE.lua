@@ -99,7 +99,7 @@ libver = "2.10"
 dataver = "3"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "12"
+scriptver = "11"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.magicuniverseDE-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"

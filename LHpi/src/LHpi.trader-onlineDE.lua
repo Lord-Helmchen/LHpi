@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.10.3.12
+2.10.3.11
 JOU, JaceVsVraska
 ]]
 
@@ -94,7 +94,7 @@ libver = "2.10"
 dataver = "3"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "12"
+scriptver = "11"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.trader-onlineDE-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
