@@ -20,7 +20,7 @@ Sitescripts will need to provide
 ** a table with expected card count numbers for LHpi's sanity checks.
 ===magicuniverse.de===
 {|
-|[ LHpi.magicuniverseDE.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=17122 LHpi.magicuniverseDE.lua.zip]
 |-
 |Sitescript version||2.11.3.11
 |-
@@ -30,7 +30,7 @@ Sitescripts will need to provide
 |-
 |updated last on||2014-05-02
 |-
-|size||  KiB
+|size|| 12.67 KiB
 |}
 [http://www.magicuniverse.de/html/einzelkarten.php?menue Magic Universe] is a German site with German and English cards, priced in €.
 
@@ -38,7 +38,7 @@ This site started it all, since I wanted prices in local currency, and my FLG ap
 
 ===mtgmintcard.com===
 {|
-|[ LHpi.mtgmintcard.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=17121 LHpi.mtgmintcard.lua.zip]
 |-
 |Sitescript version||2.11.3.11
 |-
@@ -48,7 +48,7 @@ This site started it all, since I wanted prices in local currency, and my FLG ap
 |-
 |updated last on||2014-05-02
 |-
-|size||  KiB
+|size|| 10.95 KiB
 |}
 Functionally the same as [[#Other scripts|"MTG Mint Card.lua"]] by Goblin Hero and Stromglad1.
 
@@ -56,7 +56,7 @@ When I wanted to generalize my script for easy addaption to other sites, this pr
 
 ===magic.tcgplayer.com PriceGuide===
 {|
-|[ LHpi.tcgplayerPriceGuide.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=17123 LHpi.tcgplayerPriceGuide.lua.zip]
 |-
 |Sitescript version||2.11.3.11
 |-
@@ -66,7 +66,7 @@ When I wanted to generalize my script for easy addaption to other sites, this pr
 |-
 |updated last on||2014-05-02
 |-
-|size||  KiB
+|size|| 16.57 KiB
 |}
 [http://magic.tcgplayer.com/magic_price_guides.asp Tcgplayer Price Guide] claims to accumulate prices from 75 online vendors. They are priced in $. Their tables give a high, low and average price; the sitescript contains a variable to select which one of those it should use.
 <br />To change the column to import from, open the script in a text editor, find <code>himelo = 3</code> and change it to <code>himelo = 1</code> for high or <code>himelo = 2</code> for medium prices. You can have [[How-To_sitescriptTemplate#multiple_copies_ot_the_same_script|multiple copies of the same script]]
@@ -77,7 +77,7 @@ Lately, their version handling has somewhat improved, but there's still a lot of
 
 ===trader-online.de===
 {|
-|[ LHpi.trader-onlineDE.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=17119 LHpi.trader-onlineDE.lua.zip]
 |-
 |Sitescript version||2.11.3.11
 |-
@@ -87,7 +87,7 @@ Lately, their version handling has somewhat improved, but there's still a lot of
 |-
 |updated last on||2014-05-02
 |-
-|size||  KiB
+|size|| 13.36 KiB
 |}
 [http://www.trader-online.de/Magic_Online-Shop.php Trader Online] is a German site with German and English cards, priced in €.
 
@@ -95,13 +95,13 @@ I found this site while looking for Token images, found it to be parseable by si
 
 ==The LHpi Library==
 {|
-|[ LHpi-v2.11.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=17125 LHpi-v2.11.lua.zip]
 |-
 |Tested with Ma version||1.6.1.325
 |-
 |updated last on||2014-05-02
 |-
-|size||  KiB
+|size|| 16.65 KiB
 |}
 It is not expected to be fast, but as reliable as possible:<br />
 It first compares the user requested sets and languages with what the sitescript has available and builds a table of urls to querry, seperated by set.<br />
@@ -115,13 +115,13 @@ Logging to a seperate file is now disabled by default again (but still configura
 
 ===LHpi.Data===
 {|
-|[ LHpi.Data-v3.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=17124 LHpi.Data-v3.lua.zip]
 |-
 |Library version||>=2.7
 |-
 |updated last on||2014-04-30
 |-
-|size||  KiB
+|size|| 22.06 KiB
 |}
 Since library version 2.7, site-independent set data (number of cards,foilage, default variant and foiltweak tables) were moved into a seperate data file that gets loaded by the library on initialization. This will allow to distinguish between code updates (to the library) and set data updates (which are usually needed when a new set is released). Version numbering of the sitescripts will reflect both library and data versions used.
 
@@ -334,8 +334,9 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :*STRICTCHECKEXPECTED -> STRICTEXPECTED
 :*legacy conversion for old sitescripts
 :merge site.variants with Data.variants, same with foiltweak
-;[ 2.11]
+;[http://www.slightlymagic.net/forum/download/file.php?id=17125 2.11]
 :"(Version %d)" variant suffix from tcgplayer unified
+:Log library version after loading
 
 ====LHpi.Data====
 ;[http://www.slightlymagic.net/forum/download/file.php?id=15850 1]
@@ -346,7 +347,7 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :minor improvements to some special sets' variant
 :misc. small improvements to code and/or comments
 :added 636:Salvat 2011
-;[ 3]
+;[http://www.slightlymagic.net/forum/download/file.php?id=17124 3]
 :added:
 :*806	Journey into Nyx
 :*805	Duel Decks: Jace vs. Vraska
@@ -383,7 +384,7 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 ;[http://www.slightlymagic.net/forum/download/file.php?id=16277 2.9.2.10]
 :synchronized with template
 :updated site.expected
-;[ 2.11.3.11]
+;[http://www.slightlymagic.net/forum/download/file.php?id=17122 2.11.3.11]
 :JOU
 
 
@@ -418,7 +419,7 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 ;[http://www.slightlymagic.net/forum/download/file.php?id=16295 2.10.2.10]
 :lib 2.10
 :foiltweak[setid].override=true
-;[ 2.11.3.11]
+;[http://www.slightlymagic.net/forum/download/file.php?id=17121 2.11.3.11]
 :JOU, JaceVsVraska
 
 
@@ -462,7 +463,7 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :synchronized with template
 :drop all "SOON" prices (higher maintenance for site.expected,but less "0"s in averaging)
 :updated site.expected (apparently, they don't like Boros: a sizable portion is Plains and Mountains!?)
-;[ 2.11.3.11]
+;[http://www.slightlymagic.net/forum/download/file.php?id=17123 2.11.3.11]
 :JOU
 
 
@@ -496,7 +497,7 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 ;[http://www.slightlymagic.net/forum/download/file.php?id=16276 2.9.2.10]
 :synchronized with template
 :updated site.expected
-;[ 2.11.3.11]
+;[http://www.slightlymagic.net/forum/download/file.php?id=17119 2.11.3.11]
 :JOU, JaceVsVraska
 
 ====sitescriptTemplate====

@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 --[[ CHANGES
 "(Version %d)" variant suffix from tcgplayer unified
+Log library version after loading
 ]]
 
 --TODO count averaging events with counter attached to prices
@@ -1609,6 +1610,6 @@ function LHpi.Logtable( tbl , str , l )
 end -- function LHpi.Logtable
 
 --LHpi.Log( "\239\187\191LHpi library loaded and executed successfully" , 0 , nil , 0 ) -- add unicode BOM to beginning of logfile
-LHpi.Log( "LHpi library loaded and executed successfully." , 0 , nil , 0 )
+LHpi.Log( "LHpi library " .. LHpi.version .. " loaded and executed successfully." , 0 , nil , 0 )
 return LHpi
 --EOF

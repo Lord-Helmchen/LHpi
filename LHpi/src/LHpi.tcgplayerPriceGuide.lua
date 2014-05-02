@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --[[ CHANGES
 2.11.3.11
 JOU
+lots of namereplacements to match library variant tables
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -1297,8 +1298,8 @@ EXPECTTOKENS = true,
 [180] = { namereplaced=15 },
 [140] = { namereplaced=15, dropped=2 },
 --[110] = { namereplaced=15},
-[100] = { pset={302-3}, dropped=3},
-[90]  = { pset={295-6}, dropped=6},
+[100] = { pset={302-2}, dropped=2},-- 2 SOON
+[90]  = { pset={295-4}, dropped=4},-- 4 SOON
 -- Expansions
 [806] = { pset={171-6} },-- no tokens
 [802] = { namereplaced=2},
