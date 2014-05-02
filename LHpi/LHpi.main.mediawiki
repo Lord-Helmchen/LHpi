@@ -22,13 +22,13 @@ Sitescripts will need to provide
 {|
 |[ LHpi.magicuniverseDE.lua.zip]
 |-
-|Sitescript version||2.10.3.11
+|Sitescript version||2.11.3.11
 |-
-|used LHpi version||2.10
+|used LHpi version||2.11
 |-
 |used LHpi.Data version||3
 |-
-|updated last on||2014-04-30
+|updated last on||2014-05-02
 |-
 |size||  KiB
 |}
@@ -40,13 +40,13 @@ This site started it all, since I wanted prices in local currency, and my FLG ap
 {|
 |[ LHpi.mtgmintcard.lua.zip]
 |-
-|Sitescript version||2.10.3.11
+|Sitescript version||2.11.3.11
 |-
-|used LHpi version||2.10
+|used LHpi version||2.11
 |-
 |used LHpi.Data version||3
 |-
-|updated last on||2014-04-30
+|updated last on||2014-05-02
 |-
 |size||  KiB
 |}
@@ -58,13 +58,13 @@ When I wanted to generalize my script for easy addaption to other sites, this pr
 {|
 |[ LHpi.tcgplayerPriceGuide.lua.zip]
 |-
-|Sitescript version||2.10.3.11
+|Sitescript version||2.11.3.11
 |-
-|used LHpi version||2.10
+|used LHpi version||2.11
 |-
 |used LHpi.Data version||3
 |-
-|updated last on||2014-04-30
+|updated last on||2014-05-02
 |-
 |size||  KiB
 |}
@@ -77,15 +77,15 @@ Lately, their version handling has somewhat improved, but there's still a lot of
 
 ===trader-online.de===
 {|
-|[ LHpi.trader-onlineDE-v2.8.1.1.lua.zip]
+|[ LHpi.trader-onlineDE.lua.zip]
 |-
-|Sitescript version||2.10.3.11
+|Sitescript version||2.11.3.11
 |-
-|used LHpi version||2.10
+|used LHpi version||2.11
 |-
 |used LHpi.Data version||3
 |-
-|updated last on||2014-04-30
+|updated last on||2014-05-02
 |-
 |size||  KiB
 |}
@@ -95,22 +95,13 @@ I found this site while looking for Token images, found it to be parseable by si
 
 ==The LHpi Library==
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=16275 LHpi-v2.9.lua.zip]
+|[ LHpi-v2.11.lua.zip]
 |-
 |Tested with Ma version||1.6.1.325
 |-
-|updated last on||2014-03-06
+|updated last on||2014-05-02
 |-
-|size|| 16.64 KiB
-|}
-{|
-|[http://www.slightlymagic.net/forum/download/file.php?id=16294 LHpi-v2.10.lua.zip]
-|-
-|Tested with Ma version||1.6.1.325
-|-
-|updated last on||2014-03-07
-|-
-|size|| 16.69 KiB
+|size||  KiB
 |}
 It is not expected to be fast, but as reliable as possible:<br />
 It first compares the user requested sets and languages with what the sitescript has available and builds a table of urls to querry, seperated by set.<br />
@@ -343,6 +334,8 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :*STRICTCHECKEXPECTED -> STRICTEXPECTED
 :*legacy conversion for old sitescripts
 :merge site.variants with Data.variants, same with foiltweak
+;[ 2.11]
+:"(Version %d)" variant suffix from tcgplayer unified
 
 ====LHpi.Data====
 ;[http://www.slightlymagic.net/forum/download/file.php?id=15850 1]
@@ -390,7 +383,7 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 ;[http://www.slightlymagic.net/forum/download/file.php?id=16277 2.9.2.10]
 :synchronized with template
 :updated site.expected
-;[ 2.10.3.11]
+;[ 2.11.3.11]
 :JOU
 
 
@@ -425,7 +418,7 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 ;[http://www.slightlymagic.net/forum/download/file.php?id=16295 2.10.2.10]
 :lib 2.10
 :foiltweak[setid].override=true
-;[ 2.10.3.11]
+;[ 2.11.3.11]
 :JOU, JaceVsVraska
 
 
@@ -469,7 +462,7 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :synchronized with template
 :drop all "SOON" prices (higher maintenance for site.expected,but less "0"s in averaging)
 :updated site.expected (apparently, they don't like Boros: a sizable portion is Plains and Mountains!?)
-;[ 2.10.3.11]
+;[ 2.11.3.11]
 :JOU
 
 
@@ -503,7 +496,7 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 ;[http://www.slightlymagic.net/forum/download/file.php?id=16276 2.9.2.10]
 :synchronized with template
 :updated site.expected
-;[ 2.10.3.11]
+;[ 2.11.3.11]
 :JOU, JaceVsVraska
 
 ====sitescriptTemplate====
