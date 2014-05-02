@@ -25,13 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-*os.clock() loglevel 2
-*fix default logfile "LHpi.Log" -> "LHpi.log"
-*more intuitive boolean option names
-**legacy conversion for old sitescripts
-**DEBUGSKIPFOUND -> DEBUGFOUND
-**STRICTCHECKEXPECTED -> STRICTEXPECTED
-*merge site.variants with Data.variants, same with foiltweak
+"(Version %d)" variant suffix from tcgplayer unified
 ]]
 
 --TODO count averaging events with counter attached to prices
@@ -40,7 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 local LHpi = {}
 ---	LHpi library version
 -- @field [parent=#LHpi] #string version
-LHpi.version = "2.9"
+LHpi.version = "2.10"
 
 --[[- "main" function called by Magic Album; just display error and return.
  Called by Magic Album to import prices. Parameters are passed from MA.
@@ -843,7 +837,8 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 	card.name = string.gsub( card.name , " *(%(%d+%))" , " %1" )
 	card.name = string.gsub( card.name , " Nr%. -(%d+)" , " (%1)" )
 	card.name = string.gsub( card.name , " # ?(%d+)" , " (%1)" )
-	card.name = string.gsub( card.name , "%[[vV]ersion (%d)%]" , "(%1)" )
+	card.name = string.gsub( card.name , "[%[%(][vV]ersion (%d)[%]%)]" , "(%1)" )
+	--card.name = string.gsub( card.name , "%([vV]ersion (%d)%)" , "(%1)" )
 	card.name = string.gsub( card.name , "%((%d+)/%d+%)" , "(%1)" )
 
 	if sourcerow.foil~=nil then -- keep site.ParseHtmlData preset foil

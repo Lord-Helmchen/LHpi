@@ -34,7 +34,8 @@ added:
 805	Duel Decks: Jace vs. Vraska
 804	Challenge Deck: Battle the Horde
 803	Challenge Deck: Face the Hydra
-
+179 4th FBB
+small fixes to some variant tables
 ]]
 
 --TODO param importsets and nil all others to save memory
@@ -467,6 +468,31 @@ Coresets = nil,
 ["Forest (3)"]					= { "Forest"	, { false, false, 3     } },
 	},
 },
+[179] = { name="4th Edition (FBB)", -- Foreign Black Bordered / Limited
+	cardcount={ reg = 378, tok =  0 }, 
+	variants={
+["Plains"] 						= { "Plains"	, { 1    , 2    , 3     } },
+["Island"] 						= { "Island" 	, { 1    , 2    , 3     } },
+["Swamp"] 						= { "Swamp"		, { 1    , 2    , 3     } },
+["Mountain"] 					= { "Mountain"	, { 1    , 2    , 3     } },
+["Forest"] 						= { "Forest" 	, { 1    , 2    , 3     } },
+["Plains (1)"]					= { "Plains"	, { 1    , false, false } },
+["Plains (2)"]					= { "Plains"	, { false, 2    , false } },
+["Plains (3)"]					= { "Plains"	, { false, false, 3     } },
+["Island (1)"]					= { "Island"	, { 1    , false, false } },
+["Island (2)"]					= { "Island"	, { false, 2    , false } },
+["Island (3)"]					= { "Island"	, { false, false, 3     } },
+["Swamp (1)"]					= { "Swamp"		, { 1    , false, false } },
+["Swamp (2)"]					= { "Swamp"		, { false, 2    , false } },
+["Swamp (3)"]					= { "Swamp"		, { false, false, 3     } },
+["Mountain (1)"]				= { "Mountain"	, { 1    , false, false } },
+["Mountain (2)"]				= { "Mountain"	, { false, 2    , false } },
+["Mountain (3)"]				= { "Mountain"	, { false, false, 3     } },
+["Forest (1)"]					= { "Forest"	, { 1    , false, false } },
+["Forest (2)"]					= { "Forest"	, { false, 2    , false } },
+["Forest (3)"]					= { "Forest"	, { false, false, 3     } },
+	},
+},
 [141] = { name="Revised Edition (Summer Magic)",
 	cardcount={ reg=306, tok=0, nontr=0, overs=0 }, 
 	variants={
@@ -517,7 +543,7 @@ Coresets = nil,
 ["Forest (3)"]					= { "Forest"	, { false, false, 3     } },
 	},
 },
-[139] = { name="Revised Edition (Limited)",
+[139] = { name="Revised Edition (FBB)", -- Foreign Black Bordered / Limited
 	cardcount={ reg = 306, tok =  0 }, 
 	variants={
 ["Plains"] 						= { "Ebene"		, { 1    , 2    , 3     } },
@@ -624,6 +650,9 @@ Expansions = nil,
 ["Bird"]						= { "Bird"		, { 1    , 2     } },
 ["Bird (1)"]					= { "Bird"		, { 1    , false } },--White
 ["Bird (4)"]					= { "Bird"		, { false, 2     } },--Blue
+["Vogel"]						= { "Vogel"		, { 1    , 2     } },
+["Vogel (1)"]					= { "Vogel"		, { 1    , false } },--White
+["Vogel (4)"]					= { "Vogel"		, { false, 2     } },--Blue
 	},
 },
 [800] = { name="Theros",
@@ -883,9 +912,9 @@ Expansions = nil,
 ["Forest (247)"]				= { "Forest"	, { false, false, 3    , false } },
 ["Forest (248)"]				= { "Forest"	, { false, false, false, 4     } },
 ["Eldrazi Spawn"]		 		= { "Eldrazi Spawn"		, { "a"   , "b"   , "c"   } },
-["Eldrazi Spawn (1a)"]		 	= { "Eldrazi Spawn"		, { "a"   , false , false } },
-["Eldrazi Spawn (1b)"]		 	= { "Eldrazi Spawn"		, { false , "b"   , false } },
-["Eldrazi Spawn (1c)"]		 	= { "Eldrazi Spawn"		, { false , false , "c"   } },
+["Eldrazi Spawn (1a)"]		 	= { "Eldrazi Spawn"		, { "a"   , false , false } }, -- art:Aleksi Briclot
+["Eldrazi Spawn (1b)"]		 	= { "Eldrazi Spawn"		, { false , "b"   , false } }, -- art:Mark Tedin
+["Eldrazi Spawn (1c)"]		 	= { "Eldrazi Spawn"		, { false , false , "c"   } }, -- art:Veronique Meignaud
 ["Eldrazi, Ausgeburt"]			= { "Eldrazi, Ausgeburt", { "a"   , "b"   , "c"   } },
 ["Eldrazi, Ausgeburt (1a)"]	 	= { "Eldrazi, Ausgeburt", { "a"   , false , false } },
 ["Eldrazi, Ausgeburt (1b)"]	 	= { "Eldrazi, Ausgeburt", { false , "b"   , false } },
@@ -1550,8 +1579,8 @@ Expansions = nil,
 	["Kampfinstinkt (1)"] 				= { "Kampfinstinkt"					, { 1    , false } },
 	["Kampfinstinkt (2)"] 				= { "Kampfinstinkt"					, { false, 2     } },
 ["Carrier Pigeons"] 					= { "Carrier Pigeons"				, { 1    , 2     } },
-["Carrier Pidgeons (1)"] 				= { "Carrier Pidgeons"				, { 1    , false } },
-["Carrier Pidgeons (2)"] 				= { "Carrier Pidgeons"				, { false, 2     } },
+["Carrier Pigeons (1)"] 				= { "Carrier Pigeons"				, { 1    , false } },
+["Carrier Pigeons (2)"] 				= { "Carrier Pigeons"				, { false, 2     } },
 	["Brieftauben"] 					= { "Brieftauben"					, { 1    , 2     } },
 	["Brieftauben (1)"] 				= { "Brieftauben"					, { 1    , false } },
 	["Brieftauben (2)"] 				= { "Brieftauben"					, { false, 2     } },
@@ -1592,8 +1621,8 @@ Expansions = nil,
 	["Vorgetäuschter Tod (1)"] 			= { "Vorgetäuschter Tod"			, { 1    , false } },
 	["Vorgetäuschter Tod (2)"] 			= { "Vorgetäuschter Tod"			, { false, 2     } },
 ["Feast or Famine"] 					= { "Feast or Famine"				, { 1    , 2     } },
-["Feast of Famine (1)"] 				= { "Feast of Famine"				, { 1    , false } },
-["Feast of Famine (2)"] 				= { "Feast of Famine"				, { false, 2     } },
+["Feast or Famine (1)"] 				= { "Feast or Famine"				, { 1    , false } },
+["Feast or Famine (2)"] 				= { "Feast or Famine"				, { false, 2     } },
 	["Um Leben und Tod"] 				= { "Um Leben und Tod"				, { 1    , 2     } },
 	["Um Leben und Tod (1)"] 			= { "Um Leben und Tod"				, { 1    , false } },
 	["Um Leben und Tod (2)"] 			= { "Um Leben und Tod"				, { false, 2     } },
@@ -2289,8 +2318,8 @@ SpecialSets = nil,
 ["Forest (88)"]					= { "Forest"	, { false, false, false, false, 5     } }
 	},
 	foiltweak={
-["Jace, Architect of Thought"]	= { foil = false},
-["Vraska the Unseen"]			= { foil = false},
+["Jace, Architect of Thought"]	= { foil = true},
+["Vraska the Unseen"]			= { foil = true},
 	},
 },
 [804] = { name="Challenge Deck: Battle the Horde",
@@ -2383,8 +2412,8 @@ SpecialSets = nil,
 ["Swamp (36)"] 					= { "Swamp"		, { false, 2    , false, false, false, false } },
 ["Swamp (37)"] 					= { "Swamp"		, { false, false, 3    , false, false, false } },
 ["Swamp (78)"] 					= { "Swamp"		, { false, false, false, 4    , false, false } },
-["Swamp (79)"] 					= { "Swamp"		, { false, false, 3    , false, 5    , false } },
-["Swamp (80)"] 					= { "Swamp"		, { false, false, 3    , false, false, 6     } },
+["Swamp (79)"] 					= { "Swamp"		, { false, false, false, false, 5    , false } },
+["Swamp (80)"] 					= { "Swamp"		, { false, false, false, false, false, 6     } },
 ["Mountain (75)"]				= { "Mountain"	, { 1    , false, false } },
 ["Mountain (76)"]				= { "Mountain"	, { false, 2    , false } },
 ["Mountain (77)"]				= { "Mountain"	, { false, false, 3     } },

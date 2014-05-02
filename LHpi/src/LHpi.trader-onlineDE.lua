@@ -330,7 +330,7 @@ function site.BCDpluginPre ( card , setid , importfoil, importlangs )
 	if setid == 690 then -- Timeshifted
 		if not (card.pluginData.fruc == "T") then
 			card.name = card.name .. "(DROP Time Spiral)"
-			card.drop = true		
+			card.drop = true
 		end
 	elseif setid == 680 then -- Time Spiral
 		if card.pluginData.fruc == "T" then
@@ -357,6 +357,29 @@ function site.BCDpluginPre ( card , setid , importfoil, importlangs )
 	print(LHpi.Tostring(card))
 	return card
 end -- function site.BCDpluginPre
+
+--[[- special cases card data manipulation.
+ Ties into LHpi.buildCardData to make changes that are specific to one site and thus don't belong into the library
+ This Plugin is called after LHpi's BuildCardData processing (and probably not needed).
+ 
+ @function [parent=#site] BCDpluginPost
+ @param #table card		the card LHpi.BuildCardData is working on
+ 			{ name= #string , (can be nil) drop= #boolean , lang= #table , (can be nil) names= #table , (can be nil) variant= #table , (can be nil) regprice= #table , (can be nil) foilprice= #table }
+ @param #number setid		see site.sets 
+ @param #string importfoil	"y"|"n"|"o" passed from DoImport to drop unwanted cards
+ @param #table importlangs	{ #number (langid)= #string , ... } passed from DoImport to drop unwanted cards
+ @return #table			modified card is passed back for further processing
+ 			{ name= #string , drop= #boolean, lang= #table , (optional) names= #table , variant= (#table or nil), regprice= #table , foilprice= #table }
+]]
+function site.BCDpluginPost( card , setid , importfoil, importlangs )
+	if DEBUG then
+		LHpi.Log( "site.BCDpluginPost got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
+	end
+	if setid == 805 then
+		card.name = string.gsub(card.name," %(%D-%)$","")
+	end
+	return card
+end -- function site.BCDpluginPost
 
 -------------------------------------------------------------------------------------------------------------
 -- tables
@@ -498,7 +521,7 @@ site.sets = {
 [130]={id = 130, lang = { true , [3]=false }, fruc = { false,true }, url = "AQ"},
 [120]={id = 120, lang = { true , [3]=false }, fruc = { false,true }, url = "AN"},
 -- special sets
-[805]={id = 805, lang = { true , [3]=false}, fruc = { true ,true }, url = "JVV"}, -- Duel Decks: Jace vs. Vaska
+[805]={id = 805, lang = { true , [3]=false}, fruc = { false,true }, url = "JVV"}, -- Duel Decks: Jace vs. Vaska
 [796]={id = 796, lang = { true , [3]=false}, fruc = { true ,true }, url = "MMA"}, -- Modern Masters
 [794]={id = 794, lang = { true , [3]=false}, fruc = { false,true }, url = "SVT"},--Duel Decks: Sorin vs. Tibalt
 [790]={id = 790, lang = { true , [3]=false}, fruc = { false,true }, url = "IZZ"},--Duel Decks: Izzet vs. Golgari
@@ -601,6 +624,8 @@ site.namereplace = {
 ["Unravel the Aether"]					= "Unravel the Æther",
 ["Token - Bird (W)"]					= "Bird (1)",
 ["Token - Bird (U)"]					= "Bird (4)",
+["Token - Vogel (W)"]					= "Vogel (1)",
+["Token - Vogel (U)"]					= "Vogel (4)",
 },
 [800] = { -- Theros
 ["Mogis' Plünderer"]					= "Mogis’ Plünderer",
@@ -858,6 +883,10 @@ site.namereplace = {
 ["Ring of Ma'ruf"]						= "Ring of Ma ruf",
 },
 -- specal sets
+[805] = { --Duel Decks: Jace vs. Vraska
+["Aether Adept (Meister des Äthers)"]	= "Æther Adept",
+["Aether Figment (Äthergespinst)"]		= "Æther Figment",
+},
 [796] = { -- Modern Masters
 ["Aether Vial"]							= "Æther Vial",
 ["Aether Spellbomb"]					= "Æther Spellbomb",
@@ -985,10 +1014,11 @@ EXPECTTOKENS = true,
 [180] = { namereplaced=5 },
 [140] = { pset={ [3]=306-1 }, failed= { [3]=1 }, namereplaced=6 },
 [139] = { namereplaced=2 },
-[110] = { pset={ 302-9-9 }, namereplaced=1 }, -- 9 empty cards on page, 9 missing entirely
-[100] = { pset={ 253 } },
+[110] = { pset={ 302-7-9 }, namereplaced=1 }, -- 7 empty cards on page, 9 missing entirely
+[100] = { pset={ 251 } },
 -- Expansions
-[802] = { namereplaced=5, pset={ [3]=176-11 }, failed= { [3]=10 } }, -- -10 is tokens
+[806] = { pset={ [3]=171-6 }, failed= { [3]=6 } }, -- -6 is tokens
+[802] = { namereplaced=7 },
 [800] = { namereplaced=8 },
 [795] = { pset={ [3]=157-1 }, failed= { [3]=1 }, namereplaced=1 }, -- -1 is token
 [793] = { namereplaced=1 },
@@ -1006,8 +1036,8 @@ EXPECTTOKENS = true,
 [730] = { namereplaced=5 },
 [710] = { namereplaced=4 },
 [700] = { namereplaced=3 },
-[690] = { dropped=981, namereplaced=5 },
-[680] = { dropped=380, namereplaced=5 },
+[690] = { dropped=969, namereplaced=5 },
+[680] = { dropped=378, namereplaced=5 },
 [670] = { namereplaced=4 },
 [660] = { namereplaced=4 },
 [650] = { namereplaced=4 },
@@ -1037,6 +1067,7 @@ EXPECTTOKENS = true,
 [150] = { namereplaced=2 },
 [120] = { namereplaced=3 },
 -- special sets
+[805] = { namereplaced=2 },
 [796] = { namereplaced=5 },
 [794] = { foiltweaked=2 },
 [790] = { foiltweaked=2 },

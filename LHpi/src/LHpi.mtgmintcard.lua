@@ -558,9 +558,9 @@ site.namereplace = {
 ["Wurm Token 9/9"]						= "Wurm (9)",
 },
 [767] = { -- Rise of the Eldrazi
-["Eldrazi Spawn 1A"] 					= "Eldrazi Spawn (1a)",
-["Eldrazi Spawn 1B"] 					= "Eldrazi Spawn (1b)",
-["Eldrazi Spawn 1C"] 					= "Eldrazi Spawn (1c)",
+["Eldrazi Spawn Token (Aleksi Briclot)"] 		= "Eldrazi Spawn (1a)",
+["Eldrazi Spawn Token (Mark Tedin)"] 			= "Eldrazi Spawn (1b)",
+["Eldrazi Spawn Token (Veronique Meignaud)"]	= "Eldrazi Spawn (1c)",
 },
 [754] = { -- Shards of Alara
 ["Godsire Beast Token"]					= "Beast Token"
@@ -575,9 +575,9 @@ site.namereplace = {
 ["Elemental Token (White)"]				= "Elemental (2)",
 ["Elemental Token (Green)"]				= "Elemental (8)",
 },
-[690] = { -- Time Spiral Timeshifted
-["XXValor"]								= "Valor",
-},
+--[690] = { -- Time Spiral Timeshifted
+--["XXValor"]								= "Valor",
+--},
 [610] = { -- Betrayers of Kamigawa
 ["Hired Muscle"] 						= "Hired Muscle|Scarmaker",
 ["Callow Jushi"] 						= "Callow Jushi|Jaraku the Interloper",
@@ -599,6 +599,10 @@ site.namereplace = {
 --["Dandân"]								= "Dandan",
 },
 -- special sets
+[805] = { --Duel Decks: Jace vs. Vraska
+["Aether Adept(Æther Adept)"]			= "Æther Adept",
+["Aether Figment(Æther Figment)"]		= "Æther Figment",
+},
 [796] = { -- Modern Masters
 ["Aethersnipe (Æthersnipe)"]			= "Æthersnipe",
 ["Aether Spellbomb (Æther Spellbomb)"]	= "Æther Spellbomb",
@@ -609,6 +613,8 @@ site.namereplace = {
 --TODO ['"Ach! Hans, Run!"']
 },
 [320] = { -- Unglued
+["B.F.M. (Big Furry Monster)(Left)"]	= "B.F.M. (Left)",
+["B.F.M. (Big Furry Monster)(Right)"]	= "B.F.M. (Right)",
 ["B.F.M. (Big Furry Monster)"]			= "B.F.M.",--TODO grep P/T to distinguish left/right
 --["Chicken à la King"]					= "Chicken à la King",
 --["The Ultimate Nightmare ..."]			= "The Ultimate Nightmare of Wizards of the Coast® Customer Service",
@@ -685,19 +691,20 @@ EXPECTTOKENS = true,
 [630] = { pset={ 359-31 } },
 [550] = { pset={ 357-27 } },
 [460] = { pset={ 350-20 }, dropped=3 },
-[360] = { pset={ 350-20 }, dropped=18 },
+[360] = { pset={ 350-20 }, dropped=17 },
 [250] = { pset={ 449-20 }, dropped=50 },
-[180] = { pset={ 378-15 }, dropped=84 },
+[180] = { pset={ 378-15 }, dropped=82 },
 [140] = { pset={ 306-15 }, dropped=29 },
 [110] = { dropped=2 },
 [100] = { pset={ 302-19 } },
 [90]  = {namereplaced=4},
 -- Expansions
+[806] = {pset={[9]=165}, failed={[9]=6}},-- fail SZH tokens
 [802] = {namereplaced=8, pset={[9]=165}, failed={[9]=11}},-- fail SZH tokens
 [800] = {namereplaced=10, pset={[9]=249}, failed={[9]=11}},-- fail SZH tokens
 [795] = { namereplaced=4, pset={ [9]=156 }, failed={[9]=1} },-- fail SZH tokens
 [793] = { pset={ [9]=249 }, failed={[9]=8} },-- fail SZH tokens
-[791] = { pset={ [9]=274 }, failed={[9]=11} },-- fail SZH tokens
+[791] = { pset={ [9]=274 }, failed={[9]=12} },-- fail SZH tokens
 [786] = { pset={ 252-1, [9]=244-1 }, failed={[9]=8}, namereplaced=8 },-- missing 1 swamp, fail SZH tokens
 [784] = { pset={ [9]=158 }, failed={[9]=3} },-- fail SZH tokens
 [782] = { pset={ 276+1, [9]=264 }, failed={[9]=12}, namereplaced=15 },-- fail SZH tokens, +1 is Checklist
@@ -715,15 +722,15 @@ EXPECTTOKENS = true,
 [751] = { pset={ [9]=301-20 }, failed={[9]=12}, namereplaced=8 },-- fail SZH tokens, no SZH lands
 [750] = { pset={ [9]=150 } },-- no SZH tokens
 [730] = { pset={ [9]=301-1 }, failed={[9]=11}, dropped=1, namereplaced=4 },-- -1 is missing "Changeling Berserker" (SZH), fail SZH tokens
-[710] = { dropped=2 },
-[700] = { dropped=1 },
-[690] = { dropped=1, namereplaced=2 },
+[710] = { dropped=3 },
+[700] = { dropped=2 },
+[690] = { dropped=1 },
 [680] = { pset={ [9]=4 }, dropped=1 },
 [660] = { dropped=1 },
 [640] = { dropped=2 },
 [620] = { dropped=1 },
 [610] = { dropped=2, namereplaced=4 },
-[580] = { pset={ [9]=110 }, dropped=2 },
+[580] = { dropped=2 },
 [570] = { dropped=1 },
 [560] = { pset={ 306-20}, dropped=3 },
 [540] = { dropped=3 },
@@ -734,28 +741,29 @@ EXPECTTOKENS = true,
 [480] = { pset={ 350-20 }, 	dropped=29 },
 [470] = { dropped=4, namereplaced=1 },
 [450] = { pset={ 146-3 }, dropped=23 },
-[430] = { dropped=97 },
+[430] = { dropped=96 },
 [420] = { pset={ 143-60 }, dropped=8 },
 [410] = { pset={ 143-1 }, dropped=9 },
 [400] = { pset={ 350-20 }, dropped=13 },
-[370] = { dropped=9 },
-[350] = { dropped=10 },
-[330] = { pset={ 350-20 }, dropped=30 }, -- no lands
-[300] = { dropped=10 },
-[290] = { dropped=21 },
+[370] = { dropped=10 },
+[350] = { dropped=11 },
+[330] = { pset={ 350-20 }, dropped=31 }, -- no lands
+[300] = { dropped=11 },
+[290] = { dropped=20 },
 [280] = { pset={ 350-20 }, dropped=53 },
 [270] = { dropped=8 },
-[240] = { dropped=11 },
-[230] = { pset={ 350-21 }, dropped=68 },
+[240] = { dropped=10 },
+[230] = { pset={ 350-21 }, dropped=67 },
 [220] = { dropped=10 },
 [210] = { dropped=6 },
-[190] = { pset={ 383-15 }, dropped=86 },-- no basic lands
+[190] = { pset={ 383-15 }, dropped=81 },-- no basic lands
 [170] = { dropped=18 },
-[160] = { dropped=9 },
+[160] = { dropped=8 },
 [150] = { dropped=22, namereplaced=1 },
 [130] = { dropped=7, namereplaced=1 },
 [120] = { dropped=12 },
 -- special sets
+[805] = { namereplaced=2, foiltweaked=2, pset={ 89-1 } }, -- -1 token
 [796] = { namereplaced=6},
 [794] = { pset={ 81-12-1} },-- -16 basic lands, -1 token
 [790] = { pset={ 91-16-1} },-- -16 basic lands, -1 token
@@ -765,7 +773,7 @@ EXPECTTOKENS = true,
 [440] = { foiltweaked=2 },
 [320] = { dropped=3, namereplaced=2 },
 [260] = { dropped=27, pset={228-20-13} },-- no(20) basic lands, no(13) "ST"/"GT" variants
-[200] = { pset={ 125-1 }, dropped=1 },-- "Wall of Shadows" missing
+[200] = { pset={ 125-1 } },-- "Wall of Shadows" missing
 }--end table site.expected
 end--if
 --EOF

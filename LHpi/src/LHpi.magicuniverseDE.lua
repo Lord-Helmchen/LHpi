@@ -916,11 +916,12 @@ EXPECTTOKENS = true,
 [180] = { pset={ 378-136, [3]=378-136 } }, --no commons
 [140] = { pset={ [3]=306-260 }, failed={ 2, [3]=1 }, dropped=199, namereplaced=4 },
 [139] = { dropped=9, namereplaced=19 },
-[110] = { pset={ 302-24 }, dropped=107, namereplaced=1 },
+[110] = { pset={ 302-24 }, dropped=106, namereplaced=1 },
 [100] = { pset={ 302-134 },	failed={ 7 }, dropped=352, namereplaced=1 },
 [90]  = { pset={ 295-61 }, dropped=293,},
 -- Expansions
-[802] = { namereplaced=4, pset={ [3]=165 } , failed={ [3]=11 } },--no GER tokens 
+[806] = { pset={ 165, [3]=165 } },--no tokens 
+[802] = { namereplaced=4 },
 [800] = { namereplaced=4 },
 [795] = { pset={ [3]=157-1 }, failed ={ [3]=1} }, -- -1/fail is elemental token
 [793] = { namereplaced=1 },

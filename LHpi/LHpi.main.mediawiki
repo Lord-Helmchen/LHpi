@@ -73,6 +73,7 @@ When I wanted to generalize my script for easy addaption to other sites, this pr
 <br />As requested by Golob [http://www.slightlymagic.net/forum/viewtopic.php?f=32&t=2324&start=300#p108605 here].
 <br />Also, most Promo sets have not been tested yet and are commented out.
 <br />Note that cards with multiple versions are averaged in some sets and set to "variant 1"'s price in others, as the source list does not clearly identify the version. Even when it does, it is unclear if the entry without version suffix is meant to be all unspecified or version 1 only. In most cases, "CARD" price is set for all versions and averaged with "CARD (version)" price for given versions now.
+Lately, their version handling has somewhat improved, but there's still a lot of guesswork involved...
 
 ===trader-online.de===
 {|
@@ -358,7 +359,7 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :*805	Duel Decks: Jace vs. Vraska
 :*804	Challenge Deck: Battle the Horde
 :*803	Challenge Deck: Face the Hydra
-
+:small fixes to some variant tables
 
 ====magicuniverseDE====
 ;[http://www.slightlymagic.net/forum/download/file.php?id=9264 2.0]
