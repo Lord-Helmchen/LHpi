@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.10.3.11
+2.11.3.11
 JOU
 ]]
 
@@ -97,7 +97,7 @@ copyprice = nil
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.10"
+libver = "2.11"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
 dataver = "3"

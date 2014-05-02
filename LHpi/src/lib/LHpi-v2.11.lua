@@ -34,7 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 local LHpi = {}
 ---	LHpi library version
 -- @field [parent=#LHpi] #string version
-LHpi.version = "2.10"
+LHpi.version = "2.11"
 
 --[[- "main" function called by Magic Album; just display error and return.
  Called by Magic Album to import prices. Parameters are passed from MA.

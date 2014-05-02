@@ -27,7 +27,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-synchronized with template]]
+2.11.3.3
+JOU,DDM
+]]
 
 -- options that control the amount of feedback/logging done by the script
 
@@ -86,13 +88,13 @@ synchronized with template]]
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.10"
+libver = "2.11"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
-dataver = "2"
+dataver = "3"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "2"
+scriptver = "3"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.mtgprice.com-v" .. libver .. "." .. dataver .. "" .. scriptver .. ".lua"
@@ -375,6 +377,7 @@ site.sets = {
 [100]={id = 100, lang = { [1]=true }, fruc = { false, true }, url = "Beta"},
 [90] ={id =  90, lang = { [1]=true }, fruc = { false, true }, url = "Alpha"},
 -- Expansions
+[806]={id = 806, lang = { [1]=true }, fruc = { true , true }, url = "Journey_into_Nyx"},
 [802]={id = 802, lang = { [1]=true }, fruc = { true , true }, url = "Born_of_the_Gods"},
 [800]={id = 800, lang = { [1]=true }, fruc = { true , true }, url = "Theros"},
 [795]={id = 795, lang = { [1]=true }, fruc = { true , true }, url = "Dragons_Maze"},
@@ -442,6 +445,7 @@ site.sets = {
 [120]={id = 120, lang = { [1]=true }, fruc = { false, true }, url = "Arabian_Nights"},
 -- special sets
 --TODO FtV are foilonly. check all frucs
+--[805]={id = 805, lang = { [1]=false}, fruc = { true , true }, url = "DDM"},--Duel Decks: Jace vs. Vraska
 --[801]={id = 801, lang = { [1]=true }, fruc = { true , true }, url = "C13"},--Commander 2013
 --[799]={id = 799, lang = { [1]=true }, fruc = { false, true }, url = "DDL"},--Duel Decks: Heroes vs. Monsters
 --[798]={id = 798, lang = { [1]=true }, fruc = { true , false}, url = "V13"},--From the Vault: Twenty
