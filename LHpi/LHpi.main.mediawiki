@@ -95,13 +95,13 @@ I found this site while looking for Token images, found it to be parseable by si
 
 ==The LHpi Library==
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=17125 LHpi-v2.11.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=17172 LHpi-v2.11.lua.zip]
 |-
 |Tested with Ma version||1.6.1.325
 |-
-|updated last on||2014-05-02
+|updated last on||2014-05-05
 |-
-|size|| 16.65 KiB
+|size|| 16.7 KiB
 |}
 It is not expected to be fast, but as reliable as possible:<br />
 It first compares the user requested sets and languages with what the sitescript has available and builds a table of urls to querry, seperated by set.<br />
@@ -337,6 +337,8 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 ;[http://www.slightlymagic.net/forum/download/file.php?id=17125 2.11]
 :"(Version %d)" variant suffix from tcgplayer unified
 :Log library version after loading
+;[http://www.slightlymagic.net/forum/download/file.php?id=17172 2.11hotfix]
+:BuildCardData now works with foil/nonfoil only when only one language is selected. (thanks to Bloodnut for reporting)
 
 ====LHpi.Data====
 ;[http://www.slightlymagic.net/forum/download/file.php?id=15850 1]

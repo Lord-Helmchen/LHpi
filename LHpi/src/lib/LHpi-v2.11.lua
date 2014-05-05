@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --[[ CHANGES
 "(Version %d)" variant suffix from tcgplayer unified
 Log library version after loading
+hotfix: BuildCardData now works with foil/nonfoil only when only one language is selected.
 ]]
 
 --TODO count averaging events with counter attached to prices
