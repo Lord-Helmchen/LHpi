@@ -1017,9 +1017,9 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 	for lid,lang in pairs( site.langs ) do
 		if not importlangs[lid] then
 			card.lang[lid]=nil
-			card.names[lid]=nil
-			card.regprice[lid]=nil
-			card.foilprice[lid]=nil
+			if card.names then card.names[lid]=nil end
+			if card.regprice then card.regprice[lid]=nil end
+			if card.foilprice then card.foilprice[lid]=nil end
 		end--if
 	end--for lid
 	
