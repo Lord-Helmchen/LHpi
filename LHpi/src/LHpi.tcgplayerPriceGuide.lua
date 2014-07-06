@@ -24,25 +24,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.11.3.11
-JOU
-lots of namereplacements to match library variant tables
+2.11.3.12
 ]]
 
 -- options that control the amount of feedback/logging done by the script
 
 --- more detailed log; default false
 -- @field [parent=#global] #boolean VERBOSE
---VERBOSE = true
+VERBOSE = true
 --- also log dropped cards; default false
 -- @field [parent=#global] #boolean LOGDROPS
---LOGDROPS = true
+LOGDROPS = true
 --- also log namereplacements; default false
 -- @field [parent=#global] #boolean LOGNAMEREPLACE
---LOGNAMEREPLACE = true
+LOGNAMEREPLACE = true
 --- also log foiltweaking; default false
 -- @field [parent=#global] #boolean LOGFOILTWEAK
---LOGFOILTWEAK = true
+LOGFOILTWEAK = true
 
 -- options unique to this sitescript
 
@@ -66,7 +64,7 @@ copyprice = nil
 
 --- also complain if drop,namereplace or foiltweak count differs; default false
 -- @field [parent=#global] #boolean STRICTCHECKEXPECTED
---STRICTEXPECTED = true
+STRICTEXPECTED = true
 
 --- log to seperate logfile instead of Magic Album.log;	default true
 -- @field [parent=#global] #boolean SAVELOG
@@ -78,7 +76,7 @@ copyprice = nil
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
---SAVEHTML = true
+SAVEHTML = true
 
 --- save price table to file before importing to MA;	default false
 -- @field [parent=#global] #boolean SAVETABLE
@@ -104,7 +102,7 @@ libver = "2.11"
 dataver = "3"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "11"
+scriptver = "12"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.tcgplayerPriceGuide-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -558,7 +556,8 @@ site.sets = {
 ]]
 site.namereplace = {
 [797] = { -- M2014
-["Elemental Token"]						= "Elemental",
+["Elemental Token (Jones)"]				= "Elemental (7)",
+["Elemental Token (Nelson)"]			= "Elemental (8)",
 },
 [779] = { -- M2012
 ["AEther Adept"]						= "Æther Adept",
@@ -642,10 +641,10 @@ site.namereplace = {
 ["Bird Token (Blue)"]					= "Bird (4)",
 },
 [800] = { -- Theros
-["Purphoros' Emissary"]					= "Purphoros's Emissary",
+--["Purphoros' Emissary"]					= "Purphoros's Emissary",
 ["Soldier Token (Red)"]					= "Soldier (7)",
-["Soldier Token A"]						= "Soldier",
-["Soldier Token B"]						= "Soldier",
+["Soldier Token (McKinnon)"]			= "Soldier (2)",
+["Soldier Token (Velinov)"]				= "Soldier (3)",
 },
 [795] = { -- Dragon's Maze
 ["AEtherling"]							= "Ætherling",
@@ -700,7 +699,9 @@ site.namereplace = {
 ["Double-Sided Card Checklist"]			= "Checklist",
 ["Wolf Token (Deathtouch)"]				= "Wolf (6)",
 ["Wolf Token"]							= "Wolf (12)",
-["Zombie Token"]						= "Zombie",
+["Zombie Token (Graciano)"]				= "Zombie (7)",
+["Zombie Token (Moeller)"]				= "Zombie (8)",
+["Zombie Token (Sheppard)"]				= "Zombie (9)",
 },
 [776] = { -- New Phyrexia
 ["Arm with AEther"]						= "Arm with Æther"
@@ -810,6 +811,8 @@ site.namereplace = {
 ["Orochi Eggwatcher"]					= "Orochi Eggwatcher|Shidako, Broodmistress",
 ["Nezumi Graverobber"]					= "Nezumi Graverobber|Nighteyes the Desecrator",
 ["Akki Lavarunner"]						= "Akki Lavarunner|Tok-Tok, Volcano Born",
+["Brothers Yamazaki (160a Sword)"]		= "Brothers Yamazaki (a)",
+["Brothers Yamazaki (160b Pike)"]		= "Brothers Yamazaki (b)",
 },
 [580] = { -- Fifth DAwn
 ["Fold into Aether"]					= "Fold into Æther"
@@ -1287,25 +1290,26 @@ site.expected = {
 EXPECTTOKENS = true,
 -- Core sets
 [797] = { failed={ 1 }, namereplaced=2 },
+[788] = { failed={ 1 } },
 [779] = { namereplaced=1 },
-[770] = { pset={255-1}, namereplaced=3, dropped=6 },-- Cloud Crusader missing
+[770] = { pset={255}, namereplaced=3, dropped=6 },-- 6 SOON
 [759] = { dropped=6 },
 [720] = { dropped=3+2 },-- 3 SOON
 [550] = { namereplaced=1 },
-[460] = { pset={ 350-1}, namereplaced=2, dropped=2 }, -- Swamp (347) SOON
+[460] = { namereplaced=2, dropped=1 },
 [360] = { namereplaced=1 },
 [250] = { namereplaced=21 },
 [180] = { namereplaced=15 },
 [140] = { namereplaced=15, dropped=2 },
 --[110] = { namereplaced=15},
 [100] = { pset={302-2}, dropped=2},-- 2 SOON
-[90]  = { pset={295-4}, dropped=4},-- 4 SOON
+[90]  = { pset={295-6}, dropped=6},-- 6 SOON
 -- Expansions
-[806] = { pset={171-6} },-- no tokens
 [802] = { namereplaced=2},
-[800] = { namereplaced=3 },
+[800] = { namereplaced=3, dropped=1 },
 [795] = { namereplaced=1, failed={ 1 } },
 [793] = { namereplaced=1 },
+[791] = { failed={ 1 } },
 [786] = { namereplaced=4 },
 [784] = { pset={161+1}, namereplaced=15 },-- +1 Checklist
 [782] = { pset={276+1}, namereplaced=26 },-- +1 Checklist
@@ -1318,8 +1322,8 @@ EXPECTTOKENS = true,
 [758] = { dropped=1 },
 [756] = { namereplaced=1 },
 --[754] = { namereplaced=1 },
---[752] = { pset={ 187-1-3 }, dropped=3 },--Worm token missing
-[751] = { pset={313-10}, namereplaced=5, dropped=10 },-- 10 SOON
+[752] = { pset={ 187-1 }, dropped=1 },-- 1 SOON
+[751] = { pset={313-9}, namereplaced=5, dropped=9 },-- 9 SOON
 [730] = { namereplaced=3 },
 [710] = { namereplaced=1 },
 [700] = { namereplaced=2 },
@@ -1329,14 +1333,14 @@ EXPECTTOKENS = true,
 [650] = { namereplaced=1 },
 [620] = { namereplaced=6 },
 [610] = { namereplaced=5 },
-[590] = { namereplaced=10 },
+[590] = { namereplaced=12 },
 [580] = { namereplaced=1 },
 [570] = { namereplaced=2 },
 [560] = { namereplaced=3, dropped=2 },
 [520] = { namereplaced=1, dropped=2 },
 [480] = { namereplaced=1, dropped=2 },
 [470] = { namereplaced=1 },
-[450] = { pset={146-3}, namereplaced=3-3, foiltweaked=3-3, dropped=3 },
+[450] = { pset={146}, namereplaced=3, foiltweaked=3 },
 [430] = { namereplaced=1, dropped=2 },
 [410] = { namereplaced=1 },
 [400] = { dropped=1 },
@@ -1355,15 +1359,15 @@ EXPECTTOKENS = true,
 [130] = { namereplaced=17, dropped=1 },
 -- special sets
 [799] = { foiltweaked=2, pset={ 83-16 } },-- -16 basic lands, ((-2 (of 4) nonbasic lands)?)
-[798] = {pset={20-20}, dropped=21 }, 
+[798] = {pset={20}, dropped=1 }, 
 [796] = { namereplaced=3 },
-[794] = { pset={81-9}, dropped=9, foiltweaked=2},-- 9 SOON
-[785] = { pset={79-1}, namereplaced=1, foiltweaked=2-1, dropped=1 },-- 1 SOON
-[772] = { pset={80-4}, namereplaced=1, foiltweaked=2, dropped=1},-- 1 SOON (4 Islands)
+[794] = { pset={81-6}, dropped=6, foiltweaked=2},-- 6 SOON
+[785] = { pset={79}, namereplaced=1, foiltweaked=2 },
+[772] = { pset={80}, namereplaced=1, foiltweaked=2 },
 [757] = { foiltweaked=2},
-[600] = { pset={141-2}, failed={1}, namereplaced=8, dropped=20, foiltweaked=1-1 },-- 20 SOON; "Ach! Hans, Run", Super Secret Tech 
+[600] = { pset={141-1}, failed={1}, namereplaced=9, dropped=2, foiltweaked=1 },-- 2 SOON; "Ach! Hans, Run" 
 [440] = { pset={90-2}, foiltweaked=2, dropped=11 },-- 11 SOON, but only 2 Islands missing
-[380] = { pset={180-12-1}, failed={2-1}, namereplaced=2-2, dropped=12 },-- 12 SOON; Pang Tong and Kongming fail due to "-Problems
+[380] = { pset={180-5-2}, failed={2}, namereplaced=2-2, dropped=5 },-- 5 SOON; Pang Tong and Kongming fail due to "-Problems
 [320] = { namereplaced=8 },
 [310] = { pset={165-10}, dropped=10, namereplaced=15-10},-- 10 SOON
 [260] = { pset={228-6-8}, dropped=8, namereplaced=27-8 },-- 8 SOON, -6 "DG" variant
