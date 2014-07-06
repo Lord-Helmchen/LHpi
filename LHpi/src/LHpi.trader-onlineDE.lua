@@ -27,24 +27,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.11.3.11
-JOU, JaceVsVraska
+2.11.3.12
+updated expected 100,680,690,800
 ]]
 
 -- options that control the amount of feedback/logging done by the script
 
 --- more detailed log; default false
 -- @field [parent=#global] #boolean VERBOSE
---VERBOSE = true
+VERBOSE = true
 --- also log dropped cards; default false
 -- @field [parent=#global] #boolean LOGDROPS
---LOGDROPS = true
+LOGDROPS = true
 --- also log namereplacements; default false
 -- @field [parent=#global] #boolean LOGNAMEREPLACE
---LOGNAMEREPLACE = true
+LOGNAMEREPLACE = true
 --- also log foiltweaking; default false
 -- @field [parent=#global] #boolean LOGFOILTWEAK
---LOGFOILTWEAK = true
+LOGFOILTWEAK = true
 
 -- options that control the script's behaviour.
 
@@ -56,7 +56,7 @@ JOU, JaceVsVraska
 
 --- also complain if drop,namereplace or foiltweak count differs; default false
 -- @field [parent=#global] #boolean STRICTCHECKEXPECTED
---STRICTEXPECTED = true
+STRICTEXPECTED = true
 
 --- log to seperate logfile instead of Magic Album.log;	default true
 -- @field [parent=#global] #boolean SAVELOG
@@ -68,7 +68,7 @@ JOU, JaceVsVraska
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
---SAVEHTML = true
+SAVEHTML = true
 
 --- save price table to file before importing to MA;	default false
 -- @field [parent=#global] #boolean SAVETABLE
@@ -94,7 +94,7 @@ libver = "2.11"
 dataver = "3"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "11"
+scriptver = "12"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.trader-onlineDE-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -1015,10 +1015,10 @@ EXPECTTOKENS = true,
 [140] = { pset={ [3]=306-1 }, failed= { [3]=1 }, namereplaced=6 },
 [139] = { namereplaced=2 },
 [110] = { pset={ 302-7-9 }, namereplaced=1 }, -- 7 empty cards on page, 9 missing entirely
-[100] = { pset={ 251 } },
+[100] = { pset={ 249 } },
 -- Expansions
 [806] = { pset={ [3]=171-6 }, failed= { [3]=6 } }, -- -6 is tokens
-[802] = { namereplaced=7 },
+[802] = { namereplaced=6 },
 [800] = { namereplaced=8 },
 [795] = { pset={ [3]=157-1 }, failed= { [3]=1 }, namereplaced=1 }, -- -1 is token
 [793] = { namereplaced=1 },
@@ -1036,8 +1036,8 @@ EXPECTTOKENS = true,
 [730] = { namereplaced=5 },
 [710] = { namereplaced=4 },
 [700] = { namereplaced=3 },
-[690] = { dropped=969, namereplaced=5 },
-[680] = { dropped=378, namereplaced=5 },
+[690] = { dropped=956, namereplaced=5 },
+[680] = { dropped=373, namereplaced=5 },
 [670] = { namereplaced=4 },
 [660] = { namereplaced=4 },
 [650] = { namereplaced=4 },
