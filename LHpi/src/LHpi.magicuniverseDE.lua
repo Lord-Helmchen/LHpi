@@ -27,8 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.11.3.12
-JOU
+2.11.3.13
+updated 180,791,806
 ]]
 
 -- options unique to this site
@@ -40,16 +40,16 @@ JOU
 
 --- more detailed log; default false
 -- @field [parent=#global] #boolean VERBOSE
---VERBOSE = true
+VERBOSE = true
 --- also log dropped cards; default false
 -- @field [parent=#global] #boolean LOGDROPS
---LOGDROPS = true
+LOGDROPS = true
 --- also log namereplacements; default false
 -- @field [parent=#global] #boolean LOGNAMEREPLACE
---LOGNAMEREPLACE = true
+LOGNAMEREPLACE = true
 --- also log foiltweaking; default false
 -- @field [parent=#global] #boolean LOGFOILTWEAK
---LOGFOILTWEAK = true
+LOGFOILTWEAK = true
 
 -- options that control the script's behaviour.
 
@@ -61,7 +61,7 @@ JOU
 
 --- also complain if drop,namereplace or foiltweak count differs; default false
 -- @field [parent=#global] #boolean STRICTCHECKEXPECTED
---STRICTEXPECTED = true
+STRICTEXPECTED = true
 
 --- log to seperate logfile instead of Magic Album.log;	default true
 -- @field [parent=#global] #boolean SAVELOG
@@ -73,7 +73,7 @@ JOU
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
---SAVEHTML = true
+SAVEHTML = true
 
 --- save price table to file before importing to MA;	default false
 -- @field [parent=#global] #boolean SAVETABLE
@@ -99,7 +99,7 @@ libver = "2.11"
 dataver = "3"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "11"
+scriptver = "12"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.magicuniverseDE-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -373,7 +373,7 @@ function site.BCDpluginPost( card , setid, importfoil, importlangs )
 	elseif setid == 180 then -- 4th Edition
 		if card.name == "Warp Artifact (FEHLDRUCK)" then
 			card.lang = { [3]="GER" }
-			card.name = "El-Hajjâj"
+--			card.name = "El-Hajjâj"
 		end
 	elseif setid == 150 then -- Legends
 		if string.find( card.name , "%(ital%.?%)" ) then
@@ -590,6 +590,11 @@ site.namereplace = {
 },
 [90] = { -- Alpha
 ["Time Walk (alpha, near mint)"]		= "Time Walk (alpha)(near mint)"
+},
+[806] = { -- Journey into Nyx
+["Token - Snake (SPT)"]					= "Snake",
+["Token - Ophis (SPT)"]					= "Ophis",
+["Token - Spinx (U)"]					= "Sphinx",
 },
 [802] = { -- Born of the Gods
 ["Unravel the Æther"] 					= "Unravel the AEther",
@@ -913,18 +918,19 @@ EXPECTTOKENS = true,
 [630] = { pset={ 359-20, [3]=359-20-7 }, failed={ [3]=7 } },
 [550] = { pset={ 357-19, [3]=357-19-2 }, failed={ [3]=2 } },
 [460] = { pset={ 350-130, [3]=350-130 } }, --no commons
-[180] = { pset={ 378-136, [3]=378-136 } }, --no commons
+[180] = { pset={ 378-136-2, [3]=378-136-2 }, dropped=2, failed={[3]=1} }, --no commons
 [140] = { pset={ [3]=306-260 }, failed={ 2, [3]=1 }, dropped=199, namereplaced=4 },
 [139] = { dropped=9, namereplaced=19 },
 [110] = { pset={ 302-24 }, dropped=106, namereplaced=1 },
 [100] = { pset={ 302-134 },	failed={ 7 }, dropped=352, namereplaced=1 },
 [90]  = { pset={ 295-61 }, dropped=293,},
 -- Expansions
-[806] = { pset={ 165, [3]=165 } },--no tokens 
+[806] = { pset={ [3]=165 }, failed={ [3]=6}, namereplaced=2 },--GER tokens 
 [802] = { namereplaced=4 },
 [800] = { namereplaced=4 },
 [795] = { pset={ [3]=157-1 }, failed ={ [3]=1} }, -- -1/fail is elemental token
 [793] = { namereplaced=1 },
+[791] = { failed={ 1 } },
 [786] = { namereplaced=5 },
 [784] = { pset={ 161+1 }, failed={ [3]=1 }, namereplaced=27 },-- +1/fail is checklist
 [782] = { pset={ 276+1 }, failed={ [3]=1}, namereplaced=46 },-- +1/fail is checklist
