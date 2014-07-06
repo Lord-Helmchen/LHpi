@@ -44,7 +44,7 @@ small fixes to some variant tables
 local Data={}
 ---	data file version
 -- @field [parent=#Data] #string version
-Data.version = "2"
+Data.version = "3"
 
 --[[- "main" function called by Magic Album; just display error and return.
  Called by Magic Album to import prices. Parameters are passed from MA.
@@ -1334,9 +1334,6 @@ Expansions = nil,
 ["Skyship Weatherlight (Alt)"] 		= { "Skyship Weatherlight"		, { false, "Alt" } },
 ["Tahngarth, Talruum Hero"] 		= { "Tahngarth, Talruum Hero"	, { ""   , false } },
 ["Tahngarth, Talruum Hero (Alt)"]	= { "Tahngarth, Talruum Hero"	, { false, "Alt" } },
---["Ertai, the Corrupted (Alt)"] 		= { "Ertai, the Corrupted"		, { "Alt" } },
---["Skyship Weatherlight (Alt)"] 		= { "Skyship Weatherlight"		, { "Alt" } },
---["Tahngarth, Talruum Hero (Alt)"]	= { "Tahngarth, Talruum Hero"	, { "Alt" } },
 	},
 	foiltweak={
 ["Ertai, the Corrupted (Alt)"] 		= { foil = true },
