@@ -25,9 +25,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-"(Version %d)" variant suffix from tcgplayer unified
-Log library version after loading
-hotfix: BuildCardData now works with foil/nonfoil only when only one language is selected.
+2.12
+*BuildCardData
+** replace Simplified Chinese Basic Lands' names for variant checking if names[9]
+** improved card.drop logging
 ]]
 
 --TODO count averaging events with counter attached to prices
@@ -36,7 +37,7 @@ hotfix: BuildCardData now works with foil/nonfoil only when only one language is
 local LHpi = {}
 ---	LHpi library version
 -- @field [parent=#LHpi] #string version
-LHpi.version = "2.11"
+LHpi.version = "2.12"
 
 --[[- "main" function called by Magic Album; just display error and return.
  Called by Magic Album to import prices. Parameters are passed from MA.
@@ -761,7 +762,7 @@ end -- function LHpi.GetSourceData
  @return #string card.name		: unique card name used as index in cardsetTable (localized name with lowest langid)
  @return #boolean card.drop		: true if data was marked as to-be-dropped and further processing was skipped
  @return #table card.lang		: card languages { #number (langid)= #string , ... }
- @return #table card.names		: card names by language { #number (langid)= #string , ... } (not used, might be removed in future library versions)
+ @return #table card.names		: card names by language { #number (langid)= #string , ... }
  @return #table card.variant	: table of variant names { #number= #string , ... }, nil if single-versioned card
  @return #table card.regprice	: { #number (langid)= #number , ... } nonfoil prices by language, subtables if variant
  @return #table card.foilprice	: { #number (langid)= #number , ... }    foil prices by language, subtables if variant
@@ -804,12 +805,9 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 	if not card.name then-- should not be reached, but caught here to prevent errors in string.gsub/find below
 		card.drop = true
 		card.name = "DROPPED nil-name"
-		return card
 	end --if not card.name
-
 	if sourcerow.drop then -- keep site.ParseHtmlData preset drop
 		card.drop = sourcerow.drop
-		return card
 	end -- if
 
 	--[[ do site-specific card data manipulation before processing 
@@ -824,8 +822,10 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 		if DEBUG then
 			LHpi.Log ( "LHpi.buildCardData\t dropped card " .. LHpi.Tostring(card) , 2 )
 		end
-		return card
 	end -- if entry to be dropped
+	if card.drop then
+		return card
+	end--if card.drop
 	
 	card.name = string.gsub( card.name , " // " , "|" )
 	card.name = string.gsub( card.name , " / " , "|" )
@@ -885,25 +885,41 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 
 	-- drop for foil reasons must happen after foiltweak
 	if importfoil == "n" and card.foil then
+		card.name = card.name .. "(DROP foil)"
 		card.drop = true
-		return card
 	elseif importfoil == "o" and (not card.foil) then
+		card.name = card.name .. "(DROP nonfoil)"
 		card.drop = true
-		return card		
 	end-- if importfoil == "y" no reason for drop here
-
-	-- replace German Basic Lands' name with English to avoid needing a duplicate variant table. 
-	card.name = string.gsub ( card.name , "^Ebene (%(%d+%))" , "Plains %1" )
-	card.name = string.gsub ( card.name , "^Insel (%(%d+%))" , "Island %1" )
-	card.name = string.gsub ( card.name , "^Sumpf (%(%d+%))" , "Swamp %1" )
-	card.name = string.gsub ( card.name , "^Gebirge (%(%d+%))" , "Mountain %1" )
-	card.name = string.gsub ( card.name , "^Wald (%(%d+%))" , "Forest %1" )
-	-- and again for unversioned. matching start _and_ end of string to avoid generating "Islandheiligtum", "Forestesbibliothek" etc.
-	card.name = string.gsub ( card.name , "^Ebene$" , "Plains" )
-	card.name = string.gsub ( card.name , "^Insel$" , "Island" )
-	card.name = string.gsub ( card.name , "^Sumpf$" , "Swamp" )
-	card.name = string.gsub ( card.name , "^Gebirge$" , "Mountain" )
-	card.name = string.gsub ( card.name , "^Wald$" , "Forest" )
+	if card.drop then
+		return card
+	end--if card.drop
+	
+	if names[3] then
+		-- replace German Basic Lands' name with English to avoid needing a duplicate variant table. 
+		card.name = string.gsub ( card.name , "^Ebene (%(%d+%))" , "Plains %1" )
+		card.name = string.gsub ( card.name , "^Insel (%(%d+%))" , "Island %1" )
+		card.name = string.gsub ( card.name , "^Sumpf (%(%d+%))" , "Swamp %1" )
+		card.name = string.gsub ( card.name , "^Gebirge (%(%d+%))" , "Mountain %1" )
+		card.name = string.gsub ( card.name , "^Wald (%(%d+%))" , "Forest %1" )
+		-- and again for unversioned. matching start _and_ end of string to avoid generating "Islandheiligtum", "Forestesbibliothek" etc.
+		card.name = string.gsub ( card.name , "^Ebene$" , "Plains" )
+		card.name = string.gsub ( card.name , "^Insel$" , "Island" )
+		card.name = string.gsub ( card.name , "^Sumpf$" , "Swamp" )
+		card.name = string.gsub ( card.name , "^Gebirge$" , "Mountain" )
+		card.name = string.gsub ( card.name , "^Wald$" , "Forest" )
+	elseif names[9] then --Simplified Chinese Basic Lands
+		card.name = string.gsub ( card.name , "^平原 (%(%d+%))" , "Plains %1" )
+		card.name = string.gsub ( card.name , "^海岛 (%(%d+%))" , "Island %1" )
+		card.name = string.gsub ( card.name , "^沼泽 (%(%d+%))" , "Swamp %1" )
+		card.name = string.gsub ( card.name , "^山脉 (%(%d+%))" , "Mountain %1" )
+		card.name = string.gsub ( card.name , "^树林 (%(%d+%))" , "Forest %1" )
+		card.name = string.gsub ( card.name , "^平原$" , "Plains" )
+		card.name = string.gsub ( card.name , "^海岛$" , "Island" )
+		card.name = string.gsub ( card.name , "^沼泽$" , "Swamp" )
+		card.name = string.gsub ( card.name , "^山脉$" , "Mountain" )
+		card.name = string.gsub ( card.name , "^树林$" , "Forest" )	
+	end--if names[i]		
 	if sourcerow.variant then -- keep site.ParseHtmlData preset variant
 		card.variant = sourcerow.variant
 	else
