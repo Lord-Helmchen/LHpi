@@ -25,7 +25,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-lib 2.10
+2.10.3.10
+dataver 3
+BuildUrl: added optional field to urldetails
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -91,7 +93,7 @@ libver = "2.10"
 dataver = "2"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "9"
+scriptver = "10"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.sitescriptTemplate-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -195,7 +197,7 @@ end -- function ImportPrice
  @param #number langid		see site.langs
  @param #number frucid		see site.frucs
  @param #boolean offline	(can be nil) use local file instead of url
- @return #table { #string (url)= #table { isfile= #boolean, (optional) foilonly= #boolean } , ... }
+ @return #table { #string (url)= #table { isfile= #boolean, (optional) foilonly= #boolean, (optional) setid= #number, (optional) langid= #number, (optional) frucid= #number } , ... }
 ]]
 --function site.BuildUrl( setid,langid,frucid,offline )
 --	site.domain = "www.example.com"
