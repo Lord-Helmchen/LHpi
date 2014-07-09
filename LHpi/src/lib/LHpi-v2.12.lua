@@ -36,6 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 * DoImport
 ** removed legacy conversion of STRICTCHECKEXPECTED to STRICTEXPECTED
 ** removed legacy conversion of DEBUGSKIPFOUND to DEBUGFOUND
+** call site.SetExpected if CHECKEXPECTED
 ]]
 
 --TODO count averaging events with counter attached to prices
@@ -164,6 +165,9 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 	end -- for
 	if not site.condprio then site.condprio={ [0] = "NONE" } end
 	if CHECKEXPECTED then
+		if site.SetExpected then --if as legacy wrapping --TODO remove on next library version
+			site.SetExpected() -- new way to set site.expected table
+		end--legacy wrapping
 		if not site.expected then site.expected = {} end
 		for sid,_setname in pairs(supImportsets) do
 			if not site.expected[sid] then
