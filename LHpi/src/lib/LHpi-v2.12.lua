@@ -29,6 +29,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *BuildCardData
 ** replace Simplified Chinese Basic Lands' names for variant checking if names[9]
 ** improved card.drop logging
+*MainImportCycle
+** try to log number of unneeded pages for each set (to help optimize LHpi.mtgmintcard.lua)
+*FillCardsetTable
+** now keeps card.names[langid] table if VERBOSE, since I cannot properly debug non-latin cards otherwise (SZH in LHpi.mtgmintcard.lua) 
+* DoImport
+** removed legacy conversion of STRICTCHECKEXPECTED to STRICTEXPECTED
+** removed legacy conversion of DEBUGSKIPFOUND to DEBUGFOUND
 ]]
 
 --TODO count averaging events with counter attached to prices
@@ -68,9 +75,6 @@ end -- function ImportPrice
 ]]
 
 function LHpi.DoImport (importfoil , importlangs , importsets)
-	--TODO LHpi.LegacyConversion(), remove on next sitescript update
-	if STRICTCHECKEXPECTED then STRICTEXPECTED=STRICTCHECKEXPECTED STRICTCHECKEXPECTED=nil end
-	if DEBUGSKIPFOUND~=nil then DEBUGFOUND= (not DEBUGSKIPFOUND) DEBUGSKIPFOUND=nil end
 	--default values for feedback options
 	if VERBOSE==nil then VERBOSE = false end
 	if LOGDROPS==nil then LOGDROPS = false end
@@ -295,16 +299,22 @@ function LHpi.MainImportCycle( sourcelist , totalhtmlnum , importfoil , importla
 				persetcount.failed[lid] = 0
 			end-- for lid
 			local progress = 0
+			local nonemptysource = {}
 			-- build cardsetTable containing all prices to be imported
 			for sourceurl,urldetails in pairs( sourcelist[sid] ) do
 				curhtmlnum = curhtmlnum + 1
 				progress = 100*curhtmlnum/totalhtmlnum
 				local pmesg = "Collecting " ..  importsets[sid] .. " into table"
+				local _s,_e,pagenr = nil, nil, nil
 				if VERBOSE then
 					pmesg = pmesg .. " (id " .. sid .. ")"
 					LHpi.Log( string.format( "%d%%: %q", progress, pmesg) , 1 )
 				end
 				ma.SetProgress( pmesg , progress )
+				if site.pagenumberregex then
+					_s,_e,pagenr=string.find(sourceurl, site.pagenumberregex )
+					if pagenr then pagenr=tonumber(pagenr) end
+				end
 				local sourceTable = LHpi.GetSourceData( sourceurl,urldetails )
 				-- process found data and fill cardsetTable
 				if sourceTable then
@@ -341,8 +351,14 @@ function LHpi.MainImportCycle( sourcelist , totalhtmlnum , importfoil , importla
 						end -- if newcard.drop
 						if DEBUGVARIANTS then DEBUG = false end
 					end -- for i,row in pairs(sourceTable)
+					if pagenr then
+						nonemptysource[pagenr] = true
+					end
 				else -- not sourceTable
 					LHpi.Log("No cards found, skipping to next source" , 1 )
+					if pagenr and (not nonemptysource[pagenr]) then
+						nonemptysource[pagenr] = false
+					end
 					if DEBUG then
 						print("!! empty sourceTable for " .. importsets[sid] .. " - " .. sourceurl)
 						--error("empty sourceTable for " .. importsets[sid] .. " - " .. sourceurl)
@@ -433,6 +449,17 @@ function LHpi.MainImportCycle( sourcelist , totalhtmlnum , importfoil , importla
 				else
 					LHpi.Log( string.format( "No expected persetcount for %s (id %i) found.", importsets[sid], sid ), 1 )
 				end -- if site.expected[sid] else
+				if site.sets[sid].pages and (nonemptysource ~= {})  then
+					local lastnonempty = 0
+					for i = 1,#nonemptysource do
+						if nonemptysource[i] then
+							lastnonempty=i
+						end
+					end--for
+					if lastnonempty < site.sets[sid].pages then
+						LHpi.Log(string.format("!! [%i] %s only needs %i pages instead of %i.",sid,LHpi.Data.sets[sid].name,lastnonempty,site.sets[sid].pages), 1 )
+					end
+				end
 			end -- if CHECKEXPECTED
 			
 			for lid,_lang in pairs(importlangs) do
@@ -827,7 +854,7 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 		return card
 	end--if card.drop
 	
-	card.name = string.gsub( card.name , " // " , "|" )
+	card.name = string.gsub( card.name , " ?// ?" , "|" )
 	card.name = string.gsub( card.name , " / " , "|" )
 	card.name = string.gsub (card.name , "([%aäÄöÖüÜ]+)/([%aäÄöÖüÜ]+)" , "%1|%2" )
 	card.name = string.gsub( card.name , "´" , "'" )
@@ -895,31 +922,35 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 		return card
 	end--if card.drop
 	
-	if names[3] then
-		-- replace German Basic Lands' name with English to avoid needing a duplicate variant table. 
-		card.name = string.gsub ( card.name , "^Ebene (%(%d+%))" , "Plains %1" )
-		card.name = string.gsub ( card.name , "^Insel (%(%d+%))" , "Island %1" )
-		card.name = string.gsub ( card.name , "^Sumpf (%(%d+%))" , "Swamp %1" )
-		card.name = string.gsub ( card.name , "^Gebirge (%(%d+%))" , "Mountain %1" )
-		card.name = string.gsub ( card.name , "^Wald (%(%d+%))" , "Forest %1" )
-		-- and again for unversioned. matching start _and_ end of string to avoid generating "Islandheiligtum", "Forestesbibliothek" etc.
-		card.name = string.gsub ( card.name , "^Ebene$" , "Plains" )
-		card.name = string.gsub ( card.name , "^Insel$" , "Island" )
-		card.name = string.gsub ( card.name , "^Sumpf$" , "Swamp" )
-		card.name = string.gsub ( card.name , "^Gebirge$" , "Mountain" )
-		card.name = string.gsub ( card.name , "^Wald$" , "Forest" )
-	elseif names[9] then --Simplified Chinese Basic Lands
-		card.name = string.gsub ( card.name , "^平原 (%(%d+%))" , "Plains %1" )
-		card.name = string.gsub ( card.name , "^海岛 (%(%d+%))" , "Island %1" )
-		card.name = string.gsub ( card.name , "^沼泽 (%(%d+%))" , "Swamp %1" )
-		card.name = string.gsub ( card.name , "^山脉 (%(%d+%))" , "Mountain %1" )
-		card.name = string.gsub ( card.name , "^树林 (%(%d+%))" , "Forest %1" )
-		card.name = string.gsub ( card.name , "^平原$" , "Plains" )
-		card.name = string.gsub ( card.name , "^海岛$" , "Island" )
-		card.name = string.gsub ( card.name , "^沼泽$" , "Swamp" )
-		card.name = string.gsub ( card.name , "^山脉$" , "Mountain" )
-		card.name = string.gsub ( card.name , "^树林$" , "Forest" )	
-	end--if names[i]		
+	if sourcerow.names then
+		if sourcerow.names[3] then
+			-- replace German Basic Lands' name with English to avoid needing a duplicate variant table. 
+			card.name = string.gsub ( card.name , "^Ebene (%(%d+%))" , "Plains %1" )
+			card.name = string.gsub ( card.name , "^Insel (%(%d+%))" , "Island %1" )
+			card.name = string.gsub ( card.name , "^Sumpf (%(%d+%))" , "Swamp %1" )
+			card.name = string.gsub ( card.name , "^Gebirge (%(%d+%))" , "Mountain %1" )
+			card.name = string.gsub ( card.name , "^Wald (%(%d+%))" , "Forest %1" )
+			-- and again for unversioned. matching start _and_ end of string to avoid generating "Islandheiligtum", "Forestesbibliothek" etc.
+			card.name = string.gsub ( card.name , "^Ebene$" , "Plains" )
+			card.name = string.gsub ( card.name , "^Insel$" , "Island" )
+			card.name = string.gsub ( card.name , "^Sumpf$" , "Swamp" )
+			card.name = string.gsub ( card.name , "^Gebirge$" , "Mountain" )
+			card.name = string.gsub ( card.name , "^Wald$" , "Forest" )
+		end
+		if sourcerow.names[9] then --Simplified Chinese Basic Lands
+			card.name = string.gsub ( card.name , "^平原 (%(%d+%))" , "Plains %1" )
+			card.name = string.gsub ( card.name , "^海岛 (%(%d+%))" , "Island %1" )
+			card.name = string.gsub ( card.name , "^沼泽 (%(%d+%))" , "Swamp %1" )
+			card.name = string.gsub ( card.name , "^山脉 (%(%d+%))" , "Mountain %1" )
+			card.name = string.gsub ( card.name , "^树林 (%(%d+%))" , "Forest %1" )
+			card.name = string.gsub ( card.name , "^平原$" , "Plains" )
+			card.name = string.gsub ( card.name , "^海岛$" , "Island" )
+			card.name = string.gsub ( card.name , "^沼泽$" , "Swamp" )
+			card.name = string.gsub ( card.name , "^山脉$" , "Mountain" )
+			card.name = string.gsub ( card.name , "^树林$" , "Forest" )	
+		end--if sourcerow.names
+	end
+	
 	if sourcerow.variant then -- keep site.ParseHtmlData preset variant
 		card.variant = sourcerow.variant
 	else
@@ -1034,7 +1065,7 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 	for lid,lang in pairs( site.langs ) do
 		if not importlangs[lid] then
 			card.lang[lid]=nil
-			if card.names then card.names[lid]=nil end
+			--if card.names then card.names[lid]=nil end
 			if card.regprice then card.regprice[lid]=nil end
 			if card.foilprice then card.foilprice[lid]=nil end
 		end--if
@@ -1056,7 +1087,7 @@ end -- function LHpi.BuildCardData
  calls LHpi.MergeCardrows
  
  @function [parent=#LHpi] FillCardsetTable
- @param #table card		single tablerow from BuildCardData: { name= #string , drop = #boolean , lang= #table , names= #table , variant= #table , regprice= #table , foilprice= #table }
+ @param #table card		single tablerow from BuildCardData: { name= #string , drop = #boolean , lang= #table , (optional) names= #table , variant= #table , regprice= #table , foilprice= #table }
  @return #number	0 if new row, -1 to -9 if severe conflict
  @return #string	conflict description
  @return modifies global #table cardsetTable
@@ -1066,6 +1097,9 @@ function LHpi.FillCardsetTable( card )
 		LHpi.Log("FillCardsetTable\t with " .. LHpi.Tostring( card ) , 2 )
 	end
 	local newCardrow = { variant = card.variant , regprice = card.regprice , foilprice = card.foilprice , lang=card.lang }
+	if VERBOSE or DEBUG then
+		newCardrow.names=card.names
+	end
 	local oldCardrow = cardsetTable[card.name]
 	if oldCardrow then
 		-- merge card.lang, so we'll loop through all languages present in either old or new cardrow
@@ -1142,11 +1176,11 @@ end -- function LHpi.FillCardsetTable()
  @function [parent=#LHpi] MergeCardrows
  @param #string name	only needed for readable log
  @param #table langs	{ #number= #string , ... }
- @param #table oldRow	{ lang= #table, (optional) variant= #table , regprice= #table , foilprice= #table } (from cardsetTable[card.name] )
- @param #table newRow	{ lang= #table, (optional) variant= #table , regprice= #table , foilprice= #table }
+ @param #table oldRow	{ lang= #table, (optional) variant= #table , regprice= #table , foilprice= #table , (optional) names= #table } (from cardsetTable[card.name] )
+ @param #table newRow	{ lang= #table, (optional) variant= #table , regprice= #table , foilprice= #table , (optional) names= #table }
  @param #table variants (optional) { #number = #string , ... }
  @return #number	0 if all ok, number of conflicts otherwise
- @return #table		{ lang= #table, (optional) variant= #table , regprice= #table , foilprice= #table } merged cardrow to fill into cardsetTable
+ @return #table		{ lang= #table, (optional) variant= #table , regprice= #table , foilprice= #table , (optional) names= #table } merged cardrow to fill into cardsetTable
  @return #table		{ reg= #table { #number (langid)= #string , ... } , foil= { #number (langid)= #string , ... } } conflict description
 ]]
 function LHpi.MergeCardrows ( name, langs,  oldRow , newRow , variants )
@@ -1189,7 +1223,7 @@ function LHpi.MergeCardrows ( name, langs,  oldRow , newRow , variants )
 --			conflictdesc.reg = ( conflictdesc.reg or "" ) .. "[" .. varnr .. "]" ..  varconflictdesc.reg
 --			conflictdesc.foil = ( conflictdesc.foil or "" ) .. "[" .. varnr .. "]" ..  varconflictdesc.foil
 		end -- for varnr,varname 
-	else -- no variant
+	else -- no variant (even variants will end up here eventually due to recursion)
 		if oldRow.regprice or newRow.regprice then
 		--at least one row has a regprice, merge them
 			if not oldRow.regprice then oldRow.regprice={} end
@@ -1204,7 +1238,7 @@ function LHpi.MergeCardrows ( name, langs,  oldRow , newRow , variants )
 							conflictcount=conflictcount+1
 							mergedRow.regprice[lid] = (oldRow.regprice[lid] + newRow.regprice[lid]) * 0.5
 							conflictdesc.reg[lid] = "avg:" .. mergedRow.regprice[lid]
---TODO						mergedRow.mergecounter++
+							--mergedRow.mergecounter++
 							if VERBOSE then
 								LHpi.Log(string.format("averaging conflicting %s regprice[%s] %g and %g to %g", name, LHpi.Data.languages[lid].abbr, oldRow.regprice[lid], newRow.regprice[lid], mergedRow.regprice[lid] ) , 1 )
 							end--if VERBOSE
@@ -1308,8 +1342,16 @@ function LHpi.MergeCardrows ( name, langs,  oldRow , newRow , variants )
 		end--if: done merging foilprices
 	end -- if variants
 	
+	mergedRow.names = {}
+	if not oldRow.names then oldRow.names={} end
+	if not newRow.names then newRow.names={} end
+	for lid=1,16 do --quick'n'dirty merge names
+		mergedRow.names[lid] = oldRow.names[lid] or newRow.names[lid]
+	end
+	if mergedRow.names == {} then mergedRow.names = nil end
 	mergedRow.lang = langs
 	mergedRow.variant = variants
+
 	return conflictcount,mergedRow,conflictdesc
 end -- function LHpi.MergeCardrows
 
@@ -1373,6 +1415,9 @@ function LHpi.SetPrice(setid, name, card)
 					LHpi.Log( string.format("! LHpi.SetPrice \"%s\" for language %s with n/f price %s/%s not ( %s times) set",name, lang, LHpi.Tostring(card.regprice[lid]), LHpi.Tostring(card.foilprice[lid]), tostring(perlangretval) ) ,1)
 				else
 					LHpi.Log( string.format("! LHpi.SetPrice \"%s\" for language %s returned unexpected retval \"%s\"; expected was %i", name, lang, tostring(perlangretval), expected ) , 1 )
+				end
+				if DEBUG then
+					LHpi.Log(LHpi.Tostring(card.names), 1 )
 				end
 			end--if VERBOSE
 		end--if perlangretval == expected
@@ -1548,6 +1593,8 @@ function LHpi.Log( str , l , f , a )
 			str = "DEBUG\t" .. str
 		end
 		--logfile = string.gsub(logfile, "log$", "DEBUG.log") -- for seperate debuglog
+	elseif loglevel == 3 then
+		logfile = string.gsub(logfile, "log$", "DEBUG.log")
 	end
 	if loglevel < 0 then
 		ma.Log( "LHpi:" .. str )
