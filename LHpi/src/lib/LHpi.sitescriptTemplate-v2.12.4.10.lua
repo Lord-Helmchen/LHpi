@@ -25,9 +25,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.10.3.10
-dataver 3
-BuildUrl: added optional field to urldetails
+2.12.4.10
+libver 2.12
+dataver 4
+BuildUrl: added optional fields to urldetails luadoc
+new (optional) field: site.pagenumberregex
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -87,10 +89,10 @@ BuildUrl: added optional field to urldetails
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.10"
+libver = "2.12"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
-dataver = "2"
+dataver = "4"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
 scriptver = "10"
@@ -122,6 +124,11 @@ site={}
 --- resultregex can be used to display in the Log how many card the source file claims to contain
 -- @field #string resultregex
 --site.resultregex = "Your query of .+ filter.+ returns (%d+) results."
+
+--- pagenumberregex can be used to check for unneeded calls to empty pages
+-- see site.BuildUrl in LHpi.mtgmintcard.lua for working example of a multiple-page-setup. 
+-- @field #string pagenumberregex
+--site.pagenumberregex = "page=(%d+)"
 
 --- @field #string currency		not used yet;default "$"
 --site.currency = "$"
@@ -378,6 +385,7 @@ site.langs = {
 ]]
 site.sets = {
 -- Core Sets
+[808]={id = 808, lang = { [1]=true }, fruc = { true , true }, url = "M15"},
 [797]={id = 797, lang = { [1]=true }, fruc = { true , true }, url = "M14"},
 [788]={id = 788, lang = { [1]=true }, fruc = { true , true }, url = "M13"},
 [779]={id = 779, lang = { [1]=true }, fruc = { true , true }, url = "M12"},
@@ -397,6 +405,7 @@ site.sets = {
 [100]={id = 100, lang = { [1]=true }, fruc = { false, true }, url = "LEB"},--Beta
 [90] ={id =  90, lang = { [1]=true }, fruc = { false, true }, url = "LEA"},--Alpha
 -- Expansions
+[806]={id = 806, lang = { [1]=true }, fruc = { true , true }, url = "JOU"},--Journey into Nyx
 [802]={id = 802, lang = { [1]=true }, fruc = { true , true }, url = "BNG"},--Born of the Gods
 [800]={id = 800, lang = { [1]=true }, fruc = { true , true }, url = "THS"},--Theros
 [795]={id = 795, lang = { [1]=true }, fruc = { true , true }, url = "DGM"},--Dragon's Maze
@@ -462,6 +471,10 @@ site.sets = {
 [130]={id = 130, lang = { [1]=true }, fruc = { false, true }, url = "ATQ"},--Antiquities
 [120]={id = 120, lang = { [1]=true }, fruc = { false, true }, url = "ARN"},--Arabian Nights
 -- special sets
+--[807]={id=807, lang = { [1]=true }, fruc = { true , true }, url = ""},--Conspiracy
+--[805]={id=805, lang = { [1]=true }, fruc = { false, true }, url = "DDM"},--Duel Decks: Jace vs. Vraska
+--[804]={id=804, lang = { [1]=true }, fruc = { false, true }, url = ""},--Challenge Deck: Battle the Horde
+--[803]={id=803, lang = { [1]=true }, fruc = { false, true }, url = ""},--Challenge Deck: Face the Hydra
 --[801]={id = 801, lang = { [1]=true }, fruc = { true , true }, url = "C13"},--Commander 2013
 --[799]={id = 799, lang = { [1]=true }, fruc = { false, true }, url = "DDL"},--Duel Decks: Heroes vs. Monsters
 --[798]={id = 798, lang = { [1]=true }, fruc = { true , false}, url = "V13"},--From the Vault: Twenty
