@@ -28,23 +28,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-v3
-added:
-806	Journey into Nyx
-805	Duel Decks: Jace vs. Vraska
-804	Challenge Deck: Battle the Horde
-803	Challenge Deck: Face the Hydra
-179 4th FBB
-small fixes to some variant tables
+v4
+added: 235,807
+fixed: 320,490,590,139
+added lots of TODO markers
 ]]
 
 --TODO param importsets and nil all others to save memory
---TODO add all promo sets (cardcount,variants,foiltweak) to LHpi.Data
 
 local Data={}
 ---	data file version
 -- @field [parent=#Data] #string version
-Data.version = "3"
+Data.version = "4"
 
 --[[- "main" function called by Magic Album; just display error and return.
  Called by Magic Album to import prices. Parameters are passed from MA.
@@ -101,6 +96,7 @@ Data.sets = {
 --- not really a seperate subtable, just a bookmark for quick navigation in eclipse.
 -- @field [parent=#Data.sets] #table Coresets
 Coresets = nil,
+--TODO M15
 [797] = { name="Magic 2014",
 	cardcount={ reg = 249, tok = 13 },
 	variants={
@@ -546,11 +542,11 @@ Coresets = nil,
 [139] = { name="Revised Edition (FBB)", -- Foreign Black Bordered / Limited
 	cardcount={ reg = 306, tok =  0 }, 
 	variants={
-["Plains"] 						= { "Ebene"		, { 1    , 2    , 3     } },
-["Island"] 						= { "Insel" 	, { 1    , 2    , 3     } },
-["Swamp"] 						= { "Sumpf"		, { 1    , 2    , 3     } },
-["Mountain"] 					= { "Gebirge"	, { 1    , 2    , 3     } },
-["Forest"] 						= { "Wald"	 	, { 1    , 2    , 3     } },
+["Plains"] 						= { "Plains"	, { 1    , 2    , 3     } },
+["Island"] 						= { "Island" 	, { 1    , 2    , 3     } },
+["Swamp"] 						= { "Swamp"		, { 1    , 2    , 3     } },
+["Mountain"] 					= { "Mountain"	, { 1    , 2    , 3     } },
+["Forest"] 						= { "Forest" 	, { 1    , 2    , 3     } },
 ["Plains (1)"]					= { "Plains"	, { 1    , false, false } },
 ["Plains (2)"]					= { "Plains"	, { false, 2    , false } },
 ["Plains (3)"]					= { "Plains"	, { false, false, 3     } },
@@ -1200,11 +1196,11 @@ Expansions = nil,
 ["Forest (305)"]				= { "Forest"	, { false, false, 3    , false } },
 ["Forest (306)"]				= { "Forest"	, { false, false, false, 4     } },
 ["Brothers Yamazaki"]			= { "Brothers Yamazaki"	, { "a"  , "b"   } },
-["Brothers Yamazaki (a)"]		= { "Brothers Yamazaki"	, { "a"  , false } },
-["Brothers Yamazaki (b)"]		= { "Brothers Yamazaki"	, { false, "b"   } },
+["Brothers Yamazaki (160a)"]	= { "Brothers Yamazaki"	, { "a"  , false } },
+["Brothers Yamazaki (160b)"]	= { "Brothers Yamazaki"	, { false, "b"   } },
 ["Yamazaki-Brüder"]				= { "Yamazaki-Brüder"	, { "a"  , "b"   } },
-["Yamazaki-Brüder (a)"]			= { "Yamazaki-Brüder"	, { "a"  , false } },
-["Yamazaki-Brüder (b)"]			= { "Yamazaki-Brüder"	, { false, "b"   } },
+["Yamazaki-Brüder (160a)"]		= { "Yamazaki-Brüder"	, { "a"  , false } },
+["Yamazaki-Brüder (160b)"]		= { "Yamazaki-Brüder"	, { false, "b"   } },
 	},
 },
 [580] = { name="Fifth Dawn",
@@ -2291,6 +2287,10 @@ Expansions = nil,
 --- not really a seperate subtable, just a bookmark for quick navigation in eclipse.
 -- @field [parent=#Data.sets] #table SpecialSets
 SpecialSets = nil,
+[807] = { name="Conspiracy",
+	foil="y",
+	cardcount={ reg=197, tok=0, nontr=0, overs=0 },
+},
 [805] = { name="Duel Decks: Jace vs. Vraska",
 	foil="n",
 	cardcount={ reg=88, tok=1, nontr=0, overs=0 },
@@ -2357,7 +2357,7 @@ SpecialSets = nil,
 ["Forest (355)"]				= { "Forest"	, { false, false, 3    , false } },
 ["Forest (356)"]				= { "Forest"	, { false, false, false, 4     } },
 	},
---TODO how to set regular vs oversized ?!?
+--TODO [801] how to set regular vs oversized ?!? also, make foiltweak table for (oversized)
 },
 [799] = { name="Duel Decks: Heroes vs. Monsters",
 	foil="n",
@@ -2932,46 +2932,47 @@ SpecialSets = nil,
 ["Swamp"] 						= { "Swamp"		, { 1    , 2    , 3     } },
 ["Mountain"] 					= { "Mountain"	, { 1    , 2    , 3     } },
 ["Forest"] 						= { "Forest" 	, { 1    , 2    , 3     } },
-["Swamp (82)"]					= { "Swamp"		, { 1    , false, false } },
-["Swamp (83)"]					= { "Swamp"		, { false, 2    , false } },
-["Swamp (84)"]					= { "Swamp"		, { false, false, 3     } },
-["Mountain (85)"]				= { "Mountain"	, { 1    , false, false } },
-["Mountain (86)"]				= { "Mountain"	, { false, 2    , false } },
-["Mountain (87)"]				= { "Mountain"	, { false, false, 3     } },
-["Forest (88)"]					= { "Forest"	, { 1    , false, false } },
-["Forest (89)"]					= { "Forest"	, { false, 2    , false } },
-["Forest (90)"]					= { "Forest"	, { false, false, 3     } },
---TODO [490] change name to collector number
-["Phyrexian War Beast"] 		= { "Phyrexian War Beast"	, { 1    , 2     } },
-["Phyrexian War Beast (1)"] 	= { "Phyrexian War Beast"	, { 1    , false } },
-["Phyrexian War Beast (2)"] 	= { "Phyrexian War Beast"	, { false, 2     } },
+["Swamp (42)"]					= { "Swamp"		, { 1    , false, false } },
+["Swamp (43)"]					= { "Swamp"		, { false, 2    , false } },
+["Swamp (44)"]					= { "Swamp"		, { false, false, 3     } },
+["Mountain (45)"]				= { "Mountain"	, { 1    , false, false } },
+["Mountain (46)"]				= { "Mountain"	, { false, 2    , false } },
+["Mountain (47)"]				= { "Mountain"	, { false, false, 3     } },
+["Forest (48)"]					= { "Forest"	, { 1    , false, false } },
+["Forest (49)"]					= { "Forest"	, { false, 2    , false } },
+["Forest (50)"]					= { "Forest"	, { false, false, 3     } },
 ["Lim-Dûl’s High Guard"] 		= { "Lim-Dûl’s High Guard"	, { 1    , 2     } },
-["Lim-Dûl’s High Guard (1)"] 	= { "Lim-Dûl’s High Guard"	, { 1    , false } },
-["Lim-Dûl’s High Guard (2)"] 	= { "Lim-Dûl’s High Guard"	, { false, 2     } },
-["Icy Manipulator"] 			= { "Icy Manipulator"		, { 1    , 2     } },
-["Icy Manipulator (1)"] 		= { "Icy Manipulator"		, { 1    , false } },
-["Icy Manipulator (2)"] 		= { "Icy Manipulator"		, { false, 2     } },
-["Yavimaya Ancients"] 			= { "Yavimaya Ancients"		, { 1    , 2     } },
-["Yavimaya Ancients (1)"] 		= { "Yavimaya Ancients"		, { 1    , false } },
-["Yavimaya Ancients (2)"] 		= { "Yavimaya Ancients"		, { false, 2     } },
+["Lim-Dûl’s High Guard (6a)"] 	= { "Lim-Dûl’s High Guard"	, { 1    , false } },
+["Lim-Dûl’s High Guard (6b)"] 	= { "Lim-Dûl’s High Guard"	, { false, 2     } },
 ["Phantasmal Fiend"] 			= { "Phantasmal Fiend"		, { 1    , 2     } },
-["Phantasmal Fiend (1)"] 		= { "Phantasmal Fiend"		, { 1    , false } },
-["Phantasmal Fiend (2)"] 		= { "Phantasmal Fiend"		, { false, 2     } },
-["Storm Shaman"] 				= { "Storm Shaman"			, { 1    , 2     } },
-["Storm Shaman (1)"] 			= { "Storm Shaman"			, { 1    , false } },
-["Storm Shaman (2)"] 			= { "Storm Shaman"			, { false, 2     } },
-["Incinerate"] 					= { "Incinerate"			, { 1    , 2     } },
-["Incinerate (1)"] 				= { "Incinerate"			, { 1    , false } },
-["Incinerate (2)"] 				= { "Incinerate"			, { false, 2     } },
+["Phantasmal Fiend (8a)"] 		= { "Phantasmal Fiend"		, { 1    , false } },
+["Phantasmal Fiend (8b)"] 		= { "Phantasmal Fiend"		, { false, 2     } },
 ["Guerrilla Tactics"] 			= { "Guerrilla Tactics"		, { 1    , 2     } },
-["Guerrilla Tactics (1)"] 		= { "Guerrilla Tactics"		, { 1    , false } },
-["Guerrilla Tactics (2)"] 		= { "Guerrilla Tactics"		, { false, 2     } },
+["Guerrilla Tactics (13a)"]		= { "Guerrilla Tactics"		, { 1    , false } },
+["Guerrilla Tactics (13b)"]		= { "Guerrilla Tactics"		, { false, 2     } },
+--["Incinerate"] 				= { "Incinerate"			, { 1    , 2     } },
+--["Incinerate (regular)"] 		= { "Incinerate"			, { 1    , false } },
+["Incinerate"] 					= { "Incinerate"			, { 1    , false } },
+["Incinerate (premium)"] 		= { "Incinerate"			, { false, 2     } },
+["Storm Shaman"] 				= { "Storm Shaman"			, { 1    , 2     } },
+["Storm Shaman (21a)"] 			= { "Storm Shaman"			, { 1    , false } },
+["Storm Shaman (21b)"] 			= { "Storm Shaman"			, { false, 2     } },
+["Yavimaya Ancients"] 			= { "Yavimaya Ancients"		, { 1    , 2     } },
+["Yavimaya Ancients (31a)"]		= { "Yavimaya Ancients"		, { 1    , false } },
+["Yavimaya Ancients (31b)"]		= { "Yavimaya Ancients"		, { false, 2     } },
+--["Icy Manipulator"] 			= { "Icy Manipulator"		, { 1    , 2     } },
+--["Icy Manipulator (regular)"] = { "Icy Manipulator"		, { 1    , false } },
+["Icy Manipulator"] 			= { "Icy Manipulator"		, { 1    , false } },
+["Icy Manipulator (premium)"] 	= { "Icy Manipulator"		, { false, 2     } },
+["Phyrexian War Beast"] 		= { "Phyrexian War Beast"	, { 1    , 2     } },
+["Phyrexian War Beast (37a)"] 	= { "Phyrexian War Beast"	, { 1    , false } },
+["Phyrexian War Beast (37b)"] 	= { "Phyrexian War Beast"	, { false, 2     } },
 	},
 	foiltweak={
 ["Necropotence"]				= { foil = true},
-["Incinerate (2)"]				= { foil = true},
+["Incinerate (premium)"]		= { foil = true},
 ["Lhurgoyf"]					= { foil = true},
-["Icy Manipulator (2)"]			= { foil = true},
+["Icy Manipulator (premium)"]	= { foil = true},
 	},
 },
 [440] = { name="Beatdown Box Set",
@@ -3129,13 +3130,15 @@ SpecialSets = nil,
 ["Forest (2)"]					= { "Forest"	, { false, 2     } },
 	},
 },
+[325] = { name="Multiverse Gift Box",
+	foil="n",
+	cardcount={ reg = 10 , tok = 0 },
+},
 [320] = { name="Unglued",
 	foil="n",
-	cardcount={ reg = 88 , tok = 6 }, -- Unglued
+	cardcount={ reg = 88 , tok = 6 },
 	variants={
 ["B.F.M."] 						= { "B.F.M."	, { "Left", "Right" } },
---["B.F.M. (left)"] 				= { "B.F.M."	, { "Left", false   } },
---["B.F.M. (right)"] 				= { "B.F.M."	, { false , "Right" } },
 ["B.F.M. (Left)"] 				= { "B.F.M."	, { "Left", false   } },
 ["B.F.M. (Right)"] 				= { "B.F.M."	, { false , "Right" } },
 	},
@@ -3352,72 +3355,84 @@ SpecialSets = nil,
 -- @field [parent=#Data.sets] #table Promos
 Promos = nil,
 [50] = { name="Full Box Promotion",
+--TODO [50]
 --	foil="",
 --	cardcount={ reg=0, tok=0, nontr=0, overs=0 }, 
 --	variants={
 --	},
 },
 [45] = { name="Magic Premiere Shop",
+--TODO [45]
 --	foil="",
 --	cardcount={ reg=0, tok=0, nontr=0, overs=0 }, 
 --	variants={
 --	},
 },
 [43] = { name="Two-Headed Giant Promos",
+--TODO [43]
 --	foil="",
 --	cardcount={ reg=0, tok=0, nontr=0, overs=0 }, 
 --	variants={
 --	},
 },
 [42] = { name="Summer of Magic Promos",
+--TODO [42]
 --	foil="",
 --	cardcount={ reg=0, tok=0, nontr=0, overs=0 }, 
 --	variants={
 --	},
 },
 [41] = { name="Happy Holidays Promos",
+--TODO [41]
 --	foil="",
 --	cardcount={ reg=0, tok=0, nontr=0, overs=0 }, 
 --	variants={
 --	},
 },
 [40] = { name="Arena Promos",
+--TODO [40]
 --	foil="",
 --	cardcount={ reg=0, tok=0, nontr=0, overs=0 }, 
 --	variants={
 --	},
 },
 [33] = { name="Championships Prizes",
+--TODO [33]
 --	foil="",
 --	cardcount={ reg=0, tok=0, nontr=0, overs=0 }, 
 --	variants={
 --	},
 },
 [32] = { name="Pro Tour Promos",
+--TODO [32]
 --	foil="",
 --	cardcount={ reg=0, tok=0, nontr=0, overs=0 }, 
 --	variants={
 --	},
 },
 [31] = { name="Grand Prix Promos",
+--TODO [31]
 --	foil="",
 --	cardcount={ reg=0, tok=0, nontr=0, overs=0 }, 
 --	variants={
 --	},
 },
 [30] = { name="Friday Night Magic Promos",
+--TODO [30]
 --	foil="",
 --	cardcount={ reg=0, tok=0, nontr=0, overs=0 }, 
 --	variants={
 --	},
 },
 [27] = { name="Alternate Art Lands",
+--TODO [27]
 --	foil="",
 --	cardcount={ reg=0, tok=0, nontr=0, overs=0 }, 
 --	variants={
 --	},
 },
 [26] = { name="Game Day Promos",
+--TODO [26]
 --	foil="",
 --	cardcount={ reg=0, tok=0, nontr=0, overs=0 }, 
 --	variants={
@@ -3523,20 +3538,22 @@ Promos = nil,
 	},
 },
 [12] = { name="Hobby Japan Commemorative Cards",
+--TODO [12]
 --	foil="n",
 --	cardcount={ reg=0, tok=0, nontr=0, overs=0 }, 
 --	--jpn only
 },
 [11] = { name="Redemption Program Cards",
+--TODO [11]
 --	foil="n",
 --	cardcount={ reg=0, tok=0, nontr=0, overs=0 }, 
 --	--jpn only
 },
 [10] = { name="Junior Series Promos",
+--TODO [10]
 --	foilonly=true,
 --	cardcount={ reg=31, tok=0, nontr=0, overs=0 }, 
 --	variants={
-----TODO
 --	},
 },
 [9] = { name="Video Game Promos",
