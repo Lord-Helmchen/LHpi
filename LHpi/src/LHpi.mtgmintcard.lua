@@ -27,24 +27,30 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.11.3.11
-JOU, JaceVsVraska
+2.12.4.12
+added 807,M15
+BuildUrl and tables changed for new site structure
+site.regex and ParseHtmlData changed for new raw format
+BCDPluginPre now handles "SZH (ENG)" card names
+added site.pagenumberregex
+updated all expected counts
+wrap site.expected in site.SetExpected()
 ]]
 
 -- options that control the amount of feedback/logging done by the script
 
 --- more detailed log; default false
 -- @field [parent=#global] #boolean VERBOSE
---VERBOSE = true
+VERBOSE = true
 --- also log dropped cards; default false
 -- @field [parent=#global] #boolean LOGDROPS
---LOGDROPS = true
+LOGDROPS = true
 --- also log namereplacements; default false
 -- @field [parent=#global] #boolean LOGNAMEREPLACE
---LOGNAMEREPLACE = true
+LOGNAMEREPLACE = true
 --- also log foiltweaking; default false
 -- @field [parent=#global] #boolean LOGFOILTWEAK
---LOGFOILTWEAK = true
+LOGFOILTWEAK = true
 
 -- options that control the script's behaviour.
 
@@ -55,8 +61,8 @@ JOU, JaceVsVraska
 --  Don't change anything below this line unless you know what you're doing :-) --
 
 --- also complain if drop,namereplace or foiltweak count differs; default false
--- @field [parent=#global] #boolean STRICTCHECKEXPECTED
---STRICTEXPECTED = true
+-- @field [parent=#global] #boolean STRICTEXPECTED
+STRICTEXPECTED = true
 
 --- log to seperate logfile instead of Magic Album.log;	default true
 -- @field [parent=#global] #boolean SAVELOG
@@ -64,11 +70,11 @@ JOU, JaceVsVraska
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
---OFFLINE = true
+OFFLINE = true
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
---SAVEHTML = true
+SAVEHTML = true
 
 --- save price table to file before importing to MA;	default false
 -- @field [parent=#global] #boolean SAVETABLE
@@ -79,7 +85,7 @@ JOU, JaceVsVraska
 --DEBUG = true
 
 ---	even while DEBUG, do not log raw html data found by regex; default true 
--- @field [parent=#global] #boolean DEBUGSKIPFOUND
+-- @field [parent=#global] #boolean DEBUGFOUND
 --DEBUGFOUND = false
 
 --- DEBUG (only but deeper) inside variant loops; default false
@@ -88,13 +94,13 @@ JOU, JaceVsVraska
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.11"
+libver = "2.12"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
-dataver = "3"
+dataver = "4"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "11"
+scriptver = "12"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.mtgmintcard-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -114,16 +120,22 @@ site={}
  i.e. "*CARDNAME*FOILSTATUS*PRICE*".
  it will be chopped into its parts by site.ParseHtmlData later. 
  @field [parent=#site] #string regex ]]
-site.regex = 'class="cardBorderBlack".-(<a.->$[%d.,]+%b<>).-</tr>'
+--site.regex = 'class="cardBorderBlack".-(<a.->$[%d.,]+%b<>).-</tr>'
+site.regex = 'class="cardBorderBlack".-(<a.->)</tr>'
 
 --- resultregex can be used to display in the Log how many card the source file claims to contain
 -- @field #string resultregex
 site.resultregex = "Your query of .+ filter.+ returns (%d+) results."
 
+--- pagenumberregex can be used to check for unneeded calls to empty pages
+-- see site.BuildUrl in LHpi.mtgmintcard.lua for working example of a multiple-page-setup. 
+-- @field #string pagenumberregex
+site.pagenumberregex = "page=(%d+)"
+
 --- @field #string currency		not used yet;default "$"
 site.currency = "$" -- not used yet
 --- @field #string encoding		default "cp1252"
-site.encoding = "utf-8" -- utf-16?
+site.encoding = "utf-8" -- claimed by html source
 
 --[[- "main" function.
  called by Magic Album to import prices. Parameters are passed from MA.
@@ -194,20 +206,20 @@ end -- function ImportPrice
  @param #number langid		see site.langs
  @param #number frucid		see site.frucs
  @param #boolean offline	(can be nil) use local file instead of url
- @return #table { #string (url)= #table { isfile= #boolean, (optional) foilonly= #boolean } , ... }
+ @return #table { #string (url)= #table { isfile= #boolean, (optional) foilonly= #boolean, (optional) setid= #number, (optional) langid= #number, (optional) frucid= #number } , ... }
 ]]
 function site.BuildUrl( setid,langid,frucid,offline )
 	local container = {}
 
 	site.domain = "www.mtgmintcard.com/"
-	site.prefix = "magic-the-gathering/"
-	site.suffix = "?page_show=200&page="
+	site.prefix = "mtg/singles/"
+	site.suffix = "?page="
+--	site.suffix = "?page_show=200&page="
 --	site.currency = "&currency_reference=EUR"
---TODO switch to advanced search url?
---http://www.mtgmintcard.com/magic-the-gathering/search?&action=advanced_search&page_show=2000&ed=1021&mo_1=1&mo_2=1&lg_1=1&lg_2=1&cc_1=1&cc_2=1&cc_4=1&cc_6=1&cc_7=1&cc_3=1&cc_8=1&cf=0&ct=-1&ty=0&t2=&pf=-1&pt=99&tf=-1&tt=99&ra_4=1&ra_3=1&ra_2=1&ra_1=1&ra_6=1&rt=&prf=0.00&prt=-1&page=6
 
 	for pagenr=1, site.sets[setid].pages do
-		local url = site.domain .. site.prefix .. site.langs[langid].url .. "-" .. site.frucs[frucid].url .. "/" .. site.sets[setid].url .. site.suffix .. pagenr
+--		local url = site.domain .. site.prefix .. site.langs[langid].url .. "-" .. site.frucs[frucid].url .. "/" .. site.sets[setid].url .. site.suffix .. pagenr
+		local url = site.domain .. site.prefix .. site.sets[setid].url .. "/" .. site.langs[langid].url .. "-" .. site.frucs[frucid].url .. site.suffix .. pagenr
 		if offline then
 			url = string.gsub( url, "%?", "_" )
 			url = string.gsub( url, "/", "_" )
@@ -215,7 +227,7 @@ function site.BuildUrl( setid,langid,frucid,offline )
 		else
 			container[url] = {}
 		end -- if offline 
-		
+		container[url].langid = langid
 		if frucid == 1 then 
 			container[url].foilonly = true
 		else
@@ -253,9 +265,13 @@ end -- function site.BuildUrl
  @return #table { #number= #table { names= #table { #number (langid)= #string , ... }, price= #number , foil= #boolean , ... } , ... } 
 ]]
 function site.ParseHtmlData( foundstring , 	urldetails )
-	local _start,_end,name = string.find(foundstring, '<a .*href=%b"">([^<]+)%b<>' )
+	local _start,_end,name = string.find(foundstring, '<a .*href=%b"">([^<]+)</a>' )
 	local _start,_end,price = string.find( foundstring , '[$€]([%d.,]+)' )
-	price = string.gsub( price , "[,.]" , "" )
+	if price then
+		price = string.gsub( price , "[,.]" , "" )
+	else
+		price=0
+	end
 	price = tonumber( price )
 	local newCard = { names = { [urldetails.langid] = name }, price = { [urldetails.langid] = price }, foil=urldetails.foilonly }
 	if DEBUG then
@@ -300,9 +316,60 @@ function site.BCDpluginPre ( card , setid , importfoil, importlangs )
 -- @lib	card.name = string.gsub( card.name , " / " , "|" )
 
 	card.name = string.gsub( card.name , " ships Sep 27" , "") -- Theros Prerelease suffix
+	card.name = string.gsub( card.name , " ships Jul 18" , "") -- M15 Prerelease suffix
+	
+	if setid == 801 or setid == 778 then -- Commander
+		card.name = string.gsub(card.name,"%([Oo]versized%)","(oversized) (DROP)")
+	elseif setid == 787 then -- Planechase
+		card.name = string.gsub(card.name ,"%s*%([Oo]versized%)" ,"" )
+	--elseif setid == 753 then
+	--	card.foil = true
+	-- taken care of by LHpi.Data.sets[753].foilonly
+	end
+	
+	if card.lang[9] then
+		if string.find(card.name, "^[^%(%)]+$" ) then
+			card.names[9]=card.name
+		else
+			local _s,_e,namechi,nameeng = string.find(card.name, "(.+)%s*(%b())$")
+			if namechi and nameeng then
+				if string.find(namechi,"Token%s*$") or string.find(nameeng, "^%([%d/ &]+%)$") then
+					card.names[9]=namechi .. nameeng
+				else
+					card.names[1]=string.gsub(nameeng, "^%((.+)%)", "%1" )
+					card.names[9]=string.gsub(namechi,"(.+)%s*$", "%1")
+					card.name=card.names[1]
+				end
+			else
+				error("BCDPlugin pattern insufficient!")
+			end--if namechi and nameeng then
+		end--if
+	end--if langid
 
 	return card
 end -- function site.BCDpluginPre
+
+--[[- special cases card data manipulation.
+ Ties into LHpi.buildCardData to make changes that are specific to one site and thus don't belong into the library
+ This Plugin is called after LHpi's BuildCardData processing (and probably not needed).
+ 
+ @function [parent=#site] BCDpluginPost
+ @param #table card		the card LHpi.BuildCardData is working on
+ 			{ name= #string , (can be nil) drop= #boolean , lang= #table , (can be nil) names= #table , (can be nil) variant= #table , (can be nil) regprice= #table , (can be nil) foilprice= #table }
+ @param #number setid		see site.sets 
+ @param #string importfoil	"y"|"n"|"o" passed from DoImport to drop unwanted cards
+ @param #table importlangs	{ #number (langid)= #string , ... } passed from DoImport to drop unwanted cards
+ @return #table			modified card is passed back for further processing
+ 			{ name= #string , drop= #boolean, lang= #table , (optional) names= #table , variant= (#table or nil), regprice= #table , foilprice= #table }
+]]
+--function site.BCDpluginPost( card , setid , importfoil, importlangs )
+--	if DEBUG then
+--		LHpi.Log( "site.BCDpluginPost got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
+--	end
+--	
+--	card.pluginData=nil
+--	return card
+--end -- function site.BCDpluginPost
 
 -------------------------------------------------------------------------------------------------------------
 -- tables
@@ -320,8 +387,8 @@ end -- function site.BCDpluginPre
  @field [parent=#site.langs] #string url	infix for site.BuildUrl
 ]]
 site.langs = {
-	[1] = { id=1, url="english" },
-	[9] = { id=2, url="chinese" },
+	[1] = { id=1, url="eng" },
+	[9] = { id=2, url="chi" },
 }
 
 --[[- table of available rarities.
@@ -339,7 +406,7 @@ site.langs = {
 ]]
 site.frucs = {
 	[1]= { id=1, name="Foil"	, isfoil=true , isnonfoil=false, url="foil" },
-	[2]= { id=2, name="nonFoil"	, isfoil=false, isnonfoil=true , url="regular" },
+	[2]= { id=2, name="nonFoil"	, isfoil=false, isnonfoil=true , url="reg" },
 }
 
 --[[- table of available sets.
@@ -357,142 +424,155 @@ site.frucs = {
  @field [parent=#site.sets] #string url		infix for site.BuildUrl
 ]]
 site.sets = {
---TODO decide SZH in site but not in MA: [9]=false or expected fails ?
  -- Core Sets
-[797]={id = 797, lang = { true , [9]=true }, fruc = { true, true },	pages=2, url = "2014+Core+set"},
-[788]={id = 788, lang = { true , [9]=true }, fruc = { true ,true }, pages=2, url = "2013+Core+set"}, 
-[779]={id = 779, lang = { true , [9]=true }, fruc = { true ,true }, pages=2, url = "2012+Core+set"}, 
-[770]={id = 770, lang = { true , [9]=true }, fruc = { true ,true }, pages=2, url = "2011+Core+set"}, 
-[759]={id = 759, lang = { true , [9]=true }, fruc = { true ,true }, pages=2, url = "2010+Core+set"}, 
-[720]={id = 720, lang = { true , [9]=true }, fruc = { true ,true }, pages=2, url = "10th+Edition+%28X+Edition%29"}, 
-[630]={id = 630, lang = { true , [9]=false}, fruc = { true ,true }, pages=2, url = "9th+Edition"}, 
-[550]={id = 550, lang = { true , [9]=false}, fruc = { true ,true }, pages=2, url = "8th+Edition"}, 
-[460]={id = 460, lang = { true , [9]=false}, fruc = { true ,true }, pages=2, url = "7th+Edition"}, -- SZH in site but not in MA
-[360]={id = 360, lang = { true , [9]=false}, fruc = { true ,true }, pages=2, url = "6th+Edition"},
-[250]={id = 250, lang = { true , [9]=false}, fruc = { false,true }, pages=3, url = "5th+Edition"},
-[180]={id = 180, lang = { true , [9]=false}, fruc = { false,true }, pages=3, url = "4th+Edition"}, 
+[808]={id = 808, lang = { true , [9]=true }, fruc = { true, true },	pages=10, url = "m15"},
+[797]={id = 797, lang = { true , [9]=true }, fruc = { true, true },	pages= 9, url = "m14"},
+[788]={id = 788, lang = { true , [9]=true }, fruc = { true ,true }, pages= 9, url = "m13"},
+[779]={id = 779, lang = { true , [9]=true }, fruc = { true ,true }, pages= 9, url = "m12"},
+[770]={id = 770, lang = { true , [9]=true }, fruc = { true ,true }, pages= 9, url = "m11"}, 
+[759]={id = 759, lang = { true , [9]=true }, fruc = { true ,true }, pages= 9, url = "m10"}, 
+[720]={id = 720, lang = { true , [9]=true }, fruc = { true ,true }, pages=13, url = "10e"}, 
+[630]={id = 630, lang = { true , [9]=false}, fruc = { true ,true }, pages=11, url = "9ed"}, 
+[550]={id = 550, lang = { true , [9]=false}, fruc = { true ,true }, pages=11, url = "8ed"}, 
+[460]={id = 460, lang = { true , [9]=false}, fruc = { true ,true }, pages=12, url = "7ed"}, -- SZH in site but not in MA
+[360]={id = 360, lang = { true , [9]=false}, fruc = { true ,true }, pages=12, url = "6ed"},
+[250]={id = 250, lang = { true , [9]=false}, fruc = { false,true }, pages=16, url = "5ed"},
+[180]={id = 180, lang = { true , [9]=false}, fruc = { false,true }, pages=15, url = "4ed"}, 
 [141]=nil,--Summer Magic
-[140]={id = 140, lang = { true , [9]=false}, fruc = { false,true }, pages=2, url = "3rd+Edition+(Revised)"},
+[140]={id = 140, lang = { true , [9]=false}, fruc = { false,true }, pages=11, url = "3ed"},
 [139]=nil,--Revised Limited Deutsch
-[110]={id = 110, lang = { true , [9]=false}, fruc = { false,true }, pages=2, url = "Unlimited"}, 
-[100]={id = 100, lang = { true , [9]=false}, fruc = { false,true }, pages=2, url = "Beta"},
-[90] ={id =  90, lang = { true , [9]=false}, fruc = { false,true }, pages=2, url = "Alpha"}, 
+[110]={id = 110, lang = { true , [9]=false}, fruc = { false,true }, pages=10, url = "2ed"}, -- Unlimited 
+[100]={id = 100, lang = { true , [9]=false}, fruc = { false,true }, pages=10, url = "leb"}, -- Beta
+[90] ={id =  90, lang = { true , [9]=false}, fruc = { false,true }, pages=10, url = "lea"}, -- Alpha 
  -- Expansions
-[806]={id = 806, lang = { true , [9]=true }, fruc = { true ,true }, pages=1, url = "journey-into-nyx"},
-[802]={id = 802, lang = { true , [9]=true }, fruc = { true ,true }, pages=1, url = "born-of-the-gods"},
-[800]={id = 800, lang = { true , [9]=true }, fruc = { true ,true }, pages=2, url = "Theros"},
-[795]={id = 795, lang = { true , [9]=true }, fruc = { true ,true }, pages=1, url = "dragon's-maze"},
-[793]={id = 793, lang = { true , [9]=true }, fruc = { true ,true }, pages=2, url = "gatecrash"},
-[791]={id = 791, lang = { true , [9]=true }, fruc = { true ,true }, pages=2, url = "Return+to+Ravnica"},
-[786]={id = 786, lang = { true , [9]=true }, fruc = { true ,true }, pages=2, url = "Avacyn+Restored"},
-[784]={id = 784, lang = { true , [9]=true }, fruc = { true ,true }, pages=1, url = "Dark+Ascension"}, 
-[782]={id = 782, lang = { true , [9]=true }, fruc = { true ,true }, pages=2, url = "Innistrad"}, 
-[776]={id = 776, lang = { true , [9]=true }, fruc = { true ,true }, pages=1, url = "New+Phyrexia"},
-[775]={id = 775, lang = { true , [9]=true }, fruc = { true ,true }, pages=1, url = "Mirrodin+Besieged"},
-[773]={id = 773, lang = { true , [9]=true }, fruc = { true ,true }, pages=2, url = "Scars+of+Mirrodin"},
-[767]={id = 767, lang = { true , [9]=true }, fruc = { true ,true }, pages=2, url = "Rise+of+the+Eldrazi"},
-[765]={id = 765, lang = { true , [9]=true }, fruc = { true ,true }, pages=1, url = "Worldwake"},
-[762]={id = 762, lang = { true , [9]=true }, fruc = { true ,true }, pages=2, url = "Zendikar"},
-[758]={id = 758, lang = { true , [9]=true }, fruc = { true ,true }, pages=1, url = "Alara%20Reborn"},
-[756]={id = 756, lang = { true , [9]=true }, fruc = { true ,true }, pages=1, url = "Conflux"},
-[754]={id = 754, lang = { true , [9]=true }, fruc = { true ,true }, pages=2, url = "Shards+of+Alara"},
-[752]={id = 752, lang = { true , [9]=true }, fruc = { true ,true }, pages=1, url = "Eventide"},
-[751]={id = 751, lang = { true , [9]=true }, fruc = { true ,true }, pages=2, url = "Shadowmoor"},
-[750]={id = 750, lang = { true , [9]=true }, fruc = { true ,true }, pages=1, url = "Morningtide"},
-[730]={id = 730, lang = { true , [9]=true }, fruc = { true ,true }, pages=2, url = "Lorwyn"},
-[710]={id = 710, lang = { true , [9]=true }, fruc = { true ,true }, pages=1, url = "Future+Sight"},
-[700]={id = 700, lang = { true , [9]=true }, fruc = { true ,true }, pages=1, url = "Planar+Chaos"},
-[690]={id = 690, lang = { true , [9]=false}, fruc = { true ,true }, pages=1, url = "Timeshifted"},
-[680]={id = 680, lang = { true , [9]=true }, fruc = { true ,true }, pages=2, url = "Time+Spiral"},
-[670]={id = 670, lang = { true , [9]=false}, fruc = { true ,true }, pages=1, url = "Coldsnap"},
-[660]={id = 660, lang = { true , [9]=false}, fruc = { true ,true }, pages=1, url = "Dissension"},
-[650]={id = 650, lang = { true , [9]=false}, fruc = { true ,true }, pages=1, url = "Guildpact"},
-[640]={id = 640, lang = { true , [9]=false}, fruc = { true ,true }, pages=2, url = "Ravnica"},
-[620]={id = 620, lang = { true , [9]=false}, fruc = { true ,true }, pages=1, url = "Saviors+of+Kamigawa"},
-[610]={id = 610, lang = { true , [9]=false}, fruc = { true ,true }, pages=1, url = "Betrayers+of+Kamigawa"},
-[590]={id = 590, lang = { true , [9]=false}, fruc = { true ,true }, pages=2, url = "Champions+of+Kamigawa"},
-[580]={id = 580, lang = { true , [9]=true }, fruc = { true ,true }, pages=1, url = "Fifth+Dawn"},
-[570]={id = 570, lang = { true , [9]=false}, fruc = { true ,true }, pages=1, url = "Darksteel"},
-[560]={id = 560, lang = { true , [9]=false}, fruc = { true ,true }, pages=2, url = "Mirrodin"},
-[540]={id = 540, lang = { true , [9]=false}, fruc = { true ,true }, pages=1, url = "Scourge"},
-[530]={id = 530, lang = { true , [9]=false}, fruc = { true ,true }, pages=1, url = "Legions"}, -- SZH in site but not in MA
-[520]={id = 520, lang = { true , [9]=false}, fruc = { true ,true }, pages=2, url = "Onslaught"}, -- SZH in site but not in MA
-[510]={id = 510, lang = { true , [9]=false}, fruc = { true ,true }, pages=1, url = "Judgment"}, -- SZH in site but not in MA
-[500]={id = 500, lang = { true , [9]=false}, fruc = { true ,true }, pages=1, url = "Torment"}, -- SZH in site but not in MA
-[480]={id = 480, lang = { true , [9]=false}, fruc = { true ,true }, pages=2, url = "Odyssey"}, -- SZH in site but not in MA
-[470]={id = 470, lang = { true , [9]=false}, fruc = { true ,true }, pages=1, url = "Apocalypse"},
-[450]={id = 450, lang = { true , [9]=false}, fruc = { true ,true }, pages=1, url = "Planeshift"},
-[430]={id = 430, lang = { true , [9]=false}, fruc = { true ,true }, pages=3, url = "Invasion"}, -- SZH in site but not in MA
-[420]={id = 420, lang = { true , [9]=false}, fruc = { true ,true }, pages=1, url = "Prophecy"},
-[410]={id = 410, lang = { true , [9]=false}, fruc = { true ,true }, pages=1, url = "Nemesis"},
-[400]={id = 400, lang = { true , [9]=false}, fruc = { true ,true }, pages=2, url = "Mercadian+Masques"},
-[370]={id = 370, lang = { true , [9]=false}, fruc = { true ,true }, pages=1, url = "Urza's+Destiny"},
-[350]={id = 350, lang = { true , [9]=false}, fruc = { true ,true }, pages=1, url = "Urza's+Legacy"},
-[330]={id = 330, lang = { true , [9]=false}, fruc = { true ,true }, pages=2, url = "Urza's+Saga"},
-[300]={id = 300, lang = { true , [9]=false}, fruc = { false,true }, pages=1, url = "Exodus"},
-[290]={id = 290, lang = { true , [9]=false}, fruc = { false,true }, pages=1, url = "Stronghold"},
-[280]={id = 280, lang = { true , [9]=false}, fruc = { false,true }, pages=2, url = "Tempest"},
-[270]={id = 270, lang = { true , [9]=false}, fruc = { false,true }, pages=1, url = "Weatherlight"},
-[240]={id = 240, lang = { true , [9]=false}, fruc = { false,true }, pages=1, url = "Visions"},
-[230]={id = 230, lang = { true , [9]=false}, fruc = { false,true }, pages=3, url = "Mirage"},
-[220]={id = 220, lang = { true , [9]=false}, fruc = { false,true }, pages=1, url = "Alliances"},
-[210]={id = 210, lang = { true , [9]=false}, fruc = { false,true }, pages=1, url = "Homelands"},
-[190]={id = 190, lang = { true , [9]=false}, fruc = { false,true }, pages=3, url = "Ice+Age"},
-[170]={id = 170, lang = { true , [9]=false}, fruc = { false,true }, pages=1, url = "Fallen+Empires"},
-[160]={id = 160, lang = { true , [9]=false}, fruc = { false,true }, pages=1, url = "The+Dark"},
-[150]={id = 150, lang = { true , [9]=false}, fruc = { false,true }, pages=2, url = "Legends"},
-[130]={id = 130, lang = { true , [9]=false}, fruc = { false,true }, pages=1, url = "Antiquities"},
-[120]={id = 120, lang = { true , [9]=false}, fruc = { false,true }, pages=1, url = "Arabian+Nights"},
+[806]={id = 806, lang = { true , [9]=true }, fruc = { true ,true }, pages= 6, url = "jou"},
+[802]={id = 802, lang = { true , [9]=true }, fruc = { true ,true }, pages= 6, url = "bng"},
+[800]={id = 800, lang = { true , [9]=true }, fruc = { true ,true }, pages= 9, url = "ths"},
+[795]={id = 795, lang = { true , [9]=true }, fruc = { true ,true }, pages= 6, url = "dgm"},
+[793]={id = 793, lang = { true , [9]=true }, fruc = { true ,true }, pages= 9, url = "gtc"},
+[791]={id = 791, lang = { true , [9]=true }, fruc = { true ,true }, pages=10, url = "rtr"},
+[786]={id = 786, lang = { true , [9]=true }, fruc = { true ,true }, pages= 9, url = "avr"},
+[784]={id = 784, lang = { true , [9]=true }, fruc = { true ,true }, pages= 6, url = "dka"}, 
+[782]={id = 782, lang = { true , [9]=true }, fruc = { true ,true }, pages=10, url = "isd"}, 
+[776]={id = 776, lang = { true , [9]=true }, fruc = { true ,true }, pages= 6, url = "nph"},
+[775]={id = 775, lang = { true , [9]=true }, fruc = { true ,true }, pages= 6, url = "mbs"},
+[773]={id = 773, lang = { true , [9]=true }, fruc = { true ,true }, pages= 9, url = "som"},
+[767]={id = 767, lang = { true , [9]=true }, fruc = { true ,true }, pages= 9, url = "roe"},
+[765]={id = 765, lang = { true , [9]=true }, fruc = { true ,true }, pages= 6, url = "wwk"},
+[762]={id = 762, lang = { true , [9]=true }, fruc = { true ,true }, pages= 9, url = "zen"},
+[758]={id = 758, lang = { true , [9]=true }, fruc = { true ,true }, pages= 5, url = "arb"},
+[756]={id = 756, lang = { true , [9]=true }, fruc = { true ,true }, pages= 5, url = "con"},
+[754]={id = 754, lang = { true , [9]=true }, fruc = { true ,true }, pages= 9, url = "ala"},
+[752]={id = 752, lang = { true , [9]=true }, fruc = { true ,true }, pages= 7, url = "eve"},
+[751]={id = 751, lang = { true , [9]=true }, fruc = { true ,true }, pages=10, url = "shm"},
+[750]={id = 750, lang = { true , [9]=true }, fruc = { true ,true }, pages= 6, url = "mor"},
+[730]={id = 730, lang = { true , [9]=true }, fruc = { true ,true }, pages=10, url = "lrw"},
+[710]={id = 710, lang = { true , [9]=true }, fruc = { true ,true }, pages= 7, url = "fut"},
+[700]={id = 700, lang = { true , [9]=true }, fruc = { true ,true }, pages= 6, url = "plc"},
+[690]={id = 690, lang = { true , [9]=false}, fruc = { true ,true }, pages= 5, url = "tsb"},
+[680]={id = 680, lang = { true , [9]=true }, fruc = { true ,true }, pages=10, url = "tsp"},
+[670]={id = 670, lang = { true , [9]=false}, fruc = { true ,true }, pages= 6, url = "csp"},
+[660]={id = 660, lang = { true , [9]=false}, fruc = { true ,true }, pages= 7, url = "dis"},
+[650]={id = 650, lang = { true , [9]=false}, fruc = { true ,true }, pages= 6, url = "gpt"},
+[640]={id = 640, lang = { true , [9]=false}, fruc = { true ,true }, pages=10, url = "rav"},
+[620]={id = 620, lang = { true , [9]=false}, fruc = { true ,true }, pages= 6, url = "sok"},
+[610]={id = 610, lang = { true , [9]=false}, fruc = { true ,true }, pages= 6, url = "bok"},
+[590]={id = 590, lang = { true , [9]=false}, fruc = { true ,true }, pages=10, url = "chk"},
+[580]={id = 580, lang = { true , [9]=true }, fruc = { true ,true }, pages= 6, url = "5dn"},
+[570]={id = 570, lang = { true , [9]=false}, fruc = { true ,true }, pages= 6, url = "dst"},
+[560]={id = 560, lang = { true , [9]=false}, fruc = { true ,true }, pages=10, url = "mrd"},
+[540]={id = 540, lang = { true , [9]=false}, fruc = { true ,true }, pages= 5, url = "scg"},
+[530]={id = 530, lang = { true , [9]=false}, fruc = { true ,true }, pages= 5, url = "lgn"}, -- SZH in site but not in MA
+[520]={id = 520, lang = { true , [9]=false}, fruc = { true ,true }, pages=12, url = "ons"}, -- SZH in site but not in MA
+[510]={id = 510, lang = { true , [9]=false}, fruc = { true ,true }, pages= 6, url = "jud"}, -- SZH in site but not in MA
+[500]={id = 500, lang = { true , [9]=false}, fruc = { true ,true }, pages= 5, url = "tor"}, -- SZH in site but not in MA
+[480]={id = 480, lang = { true , [9]=false}, fruc = { true ,true }, pages=12, url = "ody"}, -- SZH in site but not in MA
+[470]={id = 470, lang = { true , [9]=false}, fruc = { true ,true }, pages= 5, url = "apc"},
+[450]={id = 450, lang = { true , [9]=false}, fruc = { true ,true }, pages= 6, url = "pls"},
+[430]={id = 430, lang = { true , [9]=false}, fruc = { true ,true }, pages=15, url = "inv"}, -- SZH in site but not in MA
+[420]={id = 420, lang = { true , [9]=false}, fruc = { true ,true }, pages= 4, url = "pcy"},
+[410]={id = 410, lang = { true , [9]=false}, fruc = { true ,true }, pages= 6, url = "nms"},
+[400]={id = 400, lang = { true , [9]=false}, fruc = { true ,true }, pages=12, url = "mmq"},
+[370]={id = 370, lang = { true , [9]=false}, fruc = { true ,true }, pages= 6, url = "uds"},
+[350]={id = 350, lang = { true , [9]=false}, fruc = { true ,true }, pages= 6, url = "ulg"},
+[330]={id = 330, lang = { true , [9]=false}, fruc = { true ,true }, pages=13, url = "usg"},
+[300]={id = 300, lang = { true , [9]=false}, fruc = { false,true }, pages= 6, url = "exo"},
+[290]={id = 290, lang = { true , [9]=false}, fruc = { false,true }, pages= 6, url = "sth"},
+[280]={id = 280, lang = { true , [9]=false}, fruc = { false,true }, pages=13, url = "tmp"},
+[270]={id = 270, lang = { true , [9]=false}, fruc = { false,true }, pages= 6, url = "wth"},
+[240]={id = 240, lang = { true , [9]=false}, fruc = { false,true }, pages= 6, url = "vis"},
+[230]={id = 230, lang = { true , [9]=false}, fruc = { false,true }, pages=14, url = "mir"},
+[220]={id = 220, lang = { true , [9]=false}, fruc = { false,true }, pages= 6, url = "all"},
+[210]={id = 210, lang = { true , [9]=false}, fruc = { false,true }, pages= 5, url = "hml"},
+[190]={id = 190, lang = { true , [9]=false}, fruc = { false,true }, pages=15, url = "ice"},
+[170]={id = 170, lang = { true , [9]=false}, fruc = { false,true }, pages= 4, url = "fem"},
+[160]={id = 160, lang = { true , [9]=false}, fruc = { false,true }, pages= 5, url = "drk"},
+[150]={id = 150, lang = { true , [9]=false}, fruc = { false,true }, pages=12, url = "leg"},
+[130]={id = 130, lang = { true , [9]=false}, fruc = { false,true }, pages= 4, url = "atq"},
+[120]={id = 120, lang = { true , [9]=false}, fruc = { false,true }, pages= 3, url = "arn"},
 -- special sets
-[805]={id = 805, lang = { true , [9]=false}, fruc = { true , true }, pages=1, url = "jace-vs.-vraska"},--Duel Decks: Jace vs. Vraska
---[801]={id = 801, lang = { true , [9]=false}, fruc = { true , true }, pages=2, url = "commander-2013"},--Commander 2013 Edition
-[799]={id = 799, lang = { true , [9]=false}, fruc = { true , true }, pages=1, url = "heroes-vs.-monsters"},--Duel Decks: Heroes vs. Monsters
-[798]={id = 798, lang = { true , [9]=false}, fruc = { true , false}, pages=1, url = "from-the-vault%3A-twenty"},--From the Vault: Twenty
-[796]={id = 796, lang = { true , [9]=false}, fruc = { true , true }, pages=2, url = "Modern+Masters"},--Modern Masters
-[794]={id = 794, lang = { true , [9]=false}, fruc = { true , true }, pages=1, url = "sorin-vs.-tibalt"},--Duel Decks: Sorin vs. Tibalt
-[792]=nil,--Commander’s Arsenal
-[790]={id = 790, lang = { true , [9]=false}, fruc = { true , true }, pages=1, url = "izzet-vs-golgari"},--Duel Decks: Izzet vs. Golgari
---[789]={id = 789, lang = { true , [9]=true }, fruc = { true , false}, pages=4, url = "from-the-vault%3A-realms"},--From the Vault: Realms
---[787]={id = 787, lang = { true , [9]=true }, fruc = { false, true }, pages=4, url = "planechase-2012-edition"},--Planechase 2012
-[785]={id = 785, lang = { true , [9]=false}, fruc = { true , true }, pages=1, url = "venser-vs.-koth"},--Duel Decks: Venser vs. Koth
---[783]={id = 783, lang = { true , [9]=true }, fruc = { true , false}, pages=4, url = "graveborn"},--Premium Deck Series: Graveborn
---[781]={id = 781, lang = { true , [9]=true }, fruc = { true , true }, pages=4, url = "ajani-vs.-nicol-bolas"},--Duel Decks: Ajani vs. Nicol Bolas
---[780]={id = 780, lang = { true , [9]=true }, fruc = { true , false}, pages=4, url = "from-the-vault%3A-legends"},--From the Vault: Legends
---[778]={id = 778, lang = { true , [9]=true }, fruc = { false, true }, pages=4, url = "commander"},--Commander
---[777]={id = 777, lang = { true , [9]=true }, fruc = { true , true }, pages=4, url = "knights-vs.-dragons"},--Duel Decks: Knights vs. Dragons
---[774]={id = 774, lang = { true , [9]=true }, fruc = { true , false}, pages=4, url = "fire-%2526-lightning"},--Premium Deck Series: Fire and Lightning
-[772]={id = 772, lang = { true , [9]=false}, fruc = { true , true }, pages=1, url = "elspeth-vs.-tezzeret"},--Duel Decks: Elspeth vs. Tezzeret
---[771]={id = 753, lang = { true , [9]=true }, fruc = { true , false}, pages=4, url = "From+the+Vault%3A+Relics"},--From the Vault: Relics
---[769]={id = 769, lang = { true , [9]=true }, fruc = { false, true }, pages=4, url = "archenemy"},--Archenemy   
---[768]={id = 768, lang = { true , [9]=true }, fruc = { true , true }, pages=4, url = "duels-of-the-planeswalkers"},--Duels of the Planeswalkers
---[766]={id = 766, lang = { true , [9]=true }, fruc = { false, true }, pages=4, url = "phyrexia-vs.-coalition"},--Duel Decks: Phyrexia vs. The Coalition
---[764]={id = 764, lang = { true , [9]=true }, fruc = { true , false}, pages=4, url = "slivers"},--Premium Deck Series: Slivers
---[763]={id = 763, lang = { true , [9]=true }, fruc = { true , true }, pages=4, url = "garruk-vs.-liliana"},--Duel Decks: Garruk vs. Liliana
+[807]={id = 807, lang = { true , [9]=false}, fruc = { true , true }, pages= 8, url = "cns"},--Conspiracy
+[805]={id = 805, lang = { true , [9]=false}, fruc = { true , true }, pages= 3, url = "ddm"},--Duel Decks: Jace vs. Vraska
+--[804]=nil,--Challenge Deck: Battle the Horde
+--[803]=nil,--Challenge Deck: Face the Hydra
+[801]={id = 801, lang = { true , [9]=false}, fruc = { true , true }, pages=12, url = "c13"},--Commander 2013 Edition
+[799]={id = 799, lang = { true , [9]=false}, fruc = { true , true }, pages= 3, url = "hvm"},--Duel Decks: Heroes vs. Monsters
+[798]={id = 798, lang = { true , [9]=false}, fruc = { true , false}, pages= 1, url = "ftv"},--From the Vault: Twenty
+[796]={id = 796, lang = { true , [9]=false}, fruc = { true , true }, pages= 9, url = "mm"},--Modern Masters
+[794]={id = 794, lang = { true , [9]=false}, fruc = { true , true }, pages= 3, url = "ddk"},--Duel Decks: Sorin vs. Tibalt
+[792]=nil,--Commander's Arsenal
+[790]={id = 790, lang = { true , [9]=false}, fruc = { true , true }, pages= 3, url = "ddj"},--Duel Decks: Izzet vs. Golgari
+[789]={id = 789, lang = { true , [9]=false}, fruc = { true , false}, pages= 1, url = "fvr"},--From the Vault: Realms
+[787]={id = 787, lang = { true , [9]=false}, fruc = { true , true }, pages= 7, url = "p12"},--Planechase 2012
+[785]={id = 785, lang = { true , [9]=false}, fruc = { true , true }, pages= 3, url = "ddi"},--Duel Decks: Venser vs. Koth
+[783]={id = 783, lang = { true , [9]=false}, fruc = { true , false}, pages= 1, url = "pd3"},--Premium Deck Series: Graveborn
+[781]={id = 781, lang = { true , [9]=false}, fruc = { false, true }, pages= 3, url = "avn"},--Duel Decks: Ajani vs. Nicol Bolas
+[780]={id = 780, lang = { true , [9]=false}, fruc = { true , false}, pages= 1, url = "v11"},--From the Vault: Legends
+[778]={id = 778, lang = { true , [9]=false}, fruc = { true , true }, pages=11, url = "com"},--Commander
+[777]={id = 777, lang = { true , [9]=false}, fruc = { true , true }, pages= 3, url = "ddg"},--Duel Decks: Knights vs. Dragons
+[774]={id = 774, lang = { true , [9]=false}, fruc = { true , false}, pages= 2, url = "h10"},--Premium Deck Series: Fire and Lightning
+[772]={id = 772, lang = { true , [9]=false}, fruc = { true , true }, pages= 3, url = "evt"},--Duel Decks: Elspeth vs. Tezzeret
+--[771]={id = 753, lang = { true , [9]=true }, fruc = { true , false}, pages= 2, url = "From+the+Vault%3A+Relics"},--From the Vault: Relics
+[769]={id = 769, lang = { true , [9]=false}, fruc = { false, true }, pages= 7, url = "arc"},--Archenemy   
+[768]={id = 768, lang = { true , [9]=false}, fruc = { true , true }, pages= 4, url = "dpa"},--Duels of the Planeswalkers
+[766]={id = 766, lang = { true , [9]=false}, fruc = { false, true }, pages= 3, url = "pvc"},--Duel Decks: Phyrexia vs. The Coalition
+[764]={id = 764, lang = { true , [9]=false}, fruc = { true , false}, pages= 2, url = "h09"},--Premium Deck Series: Slivers
+[763]={id = 763, lang = { true , [9]=false}, fruc = { true , true }, pages= 2, url = "gvl"},--Duel Decks: Garruk vs. Liliana
 [761]=nil,--Planechase
-[760]=nil,--From the Vault: Exiled
-[757]={id = 757, lang = { true , [9]=false}, fruc = { true , true }, pages=1, url = "divine-vs.-demonic"},--Duel Decks: Divine vs. Demonic
---[755]={id = 755, lang = { true , [9]=true }, fruc = { true , true }, pages=4, url = "jace-vs.-chandra"},--Duel Decks: Jace vs. Chandra
---[753]={id = 753, lang = { true , [9]=true }, fruc = { true , false}, pages=4, url = "from-the-vault%3A-dragons"},--From the Vault: Dragons
-[740]=nil,--Duel Decks: Elves vs. Goblins   
+[760]={id = 760, lang = { true , [9]=false}, fruc = { true , false}, pages= 1, url = "v09"},--From the Vault: Exiled
+[757]={id = 757, lang = { true , [9]=false}, fruc = { true , true }, pages= 2, url = "dvd"},--Duel Decks: Divine vs. Demonic
+[755]={id = 755, lang = { true , [9]=false}, fruc = { true , true }, pages= 2, url = "jvc"},--Duel Decks: Jace vs. Chandra
+[753]={id = 753, lang = { true , [9]=false}, fruc = { false, true }, pages= 1, url = "drb"},--From the Vault: Dragons
+[740]=nil,--Duel Decks: Elves vs. Goblins
 [675]=nil,--Coldsnap Theme Decks
 [635]=nil,--Magic Encyclopedia
-[600]={id = 600, lang = { true , [9]=false}, fruc = { false, true }, pages=1, url = "unhinged"},--Unhinged
---[490]={id = 490, lang = { true , [9]=true }, fruc = { false, true }, pages=4, url = "deckmasters"},--Deckmaster
-[440]={id = 440, lang = { true , [9]=false}, fruc = { false, true }, pages=1, url = "beatdown"},--Beatdown Box Set
+[600]={id = 600, lang = { true , [9]=false}, fruc = { false, true }, pages= 5, url = "unh"},--Unhinged
+[490]={id = 490, lang = { true , [9]=false}, fruc = { false, true }, pages= 2, url = "dkm"},--Deckmaster
+[440]={id = 440, lang = { true , [9]=false}, fruc = { false, true }, pages= 3, url = "btd"},--Beatdown Box Set
 [415]=nil,--Starter 2000   
---[405]={id = 405, lang = { true , [9]=true }, fruc = { true , true }, pages=4, url = "battle-royale"},--Battle Royale Box Set
+[405]={id = 405, lang = { true , [9]=false}, fruc = { false, true }, pages= 4, url = "brb"},--Battle Royale Box Set
 [390]=nil,--Starter 1999
 [380]=nil,--Portal Three Kingdoms   
---[340]={id = 340, lang = { true , [9]=true }, fruc = { true , true }, pages=4, url = "anthologies"},--Anthologies
-[320]={id = 320, lang = { true , [9]=false}, fruc = { false, true }, pages=1, url = "unglued"},--Unglued
+[340]={id = 340, lang = { true , [9]=false}, fruc = { false, true }, pages= 1, url = "ath"},--Anthologies
+[320]={id = 320, lang = { true , [9]=false}, fruc = { false, true }, pages= 4, url = "ugl"},--Unglued
 [310]=nil,--Portal Second Age   
-[260]={id = 260, lang = { true , [9]=false}, fruc = { false, true }, pages=2, url = "portal"},--Portal
+[260]={id = 260, lang = { true , [9]=false}, fruc = { false, true }, pages= 8, url = "por"},--Portal
+[235]=nil,--Multiverse Gift Box
 [225]=nil,--Introductory Two-Player Set
 [201]=nil,--Renaissance
-[200]={id = 200, lang = { true , [9]=false}, fruc = { false, true }, pages=1, url = "chronicles"},--Chronicles
---[70] ={id =  70, lang = { true , [9]=true }, fruc = { false, true }, pages=4, url = "vanguard"},--Vanguard
+[200]={id = 200, lang = { true , [9]=false}, fruc = { false, true }, pages= 4, url = "chr"},--Chronicles
+[70] ={id =  70, lang = { true , [9]=false}, fruc = { false, true }, pages= 2, url = "vanguard"},--Vanguard
 [69] =nil,--Box Topper Cards
--- World Championship and Promo sets: sorting out the two single page seems more trouble than it's worth
+-- World Championship and Promo sets: sorting out the two single pages seems more trouble than it's worth
+--[50] ={id =  50, lang = { true , [9]=false}, fruc = { true , false}, pages=17, url = "ppr"},--Full Box Promotion
+--[25] ={id =  25, lang = { true , [9]=false}, fruc = { true , false}, pages=17, url = "ppr"},--Judge Gift Cards
+--[24] ={id =  24, lang = { true , [9]=false}, fruc = { false, true }, pages=17, url = "ppr"},--Champs Promos
+--[22] ={id =  22, lang = { true , [9]=false}, fruc = { false, true }, pages=17, url = "ppr"},--Prerelease Promos
+--[21] ={id =  21, lang = { true , [9]=false}, fruc = { false, true }, pages=17, url = "ppr"},--Release & Launch Parties Promos
+--[10] ={id =  10, lang = { true , [9]=false}, fruc = { true , false}, pages=17, url = "ppr"},--Junior Series Promos
+--[7]  ={id =   7, lang = { true , [9]=false}, fruc = { false, true }, pages=17, url = "ppr"},--Magazine Inserts
+--[5]  ={id =   5, lang = { true , [9]=false}, fruc = { false, true }, pages=17, url = "ppr"},--Book Inserts
+--[2]  ={id =   2, lang = { true , [9]=false}, fruc = { false, true }, pages=17, url = "ppr"},--DCI Legend Membership
 } -- end table site.sets
 
 --[[- card name replacement tables.
@@ -599,18 +679,40 @@ site.namereplace = {
 --["Dandân"]								= "Dandan",
 },
 -- special sets
+[807] = { --Conspiracy
+["Æther Searcher(Aether Searcher)"]		= "Æther Searcher",
+},
 [805] = { --Duel Decks: Jace vs. Vraska
 ["Aether Adept(Æther Adept)"]			= "Æther Adept",
 ["Aether Figment(Æther Figment)"]		= "Æther Figment",
+},
+[801] = { -- Commander 2013
+["Lim-Dûl’s Vault(Lim-Dul’s Vault)"]	= "Lim-Dûl’s Vault",
 },
 [796] = { -- Modern Masters
 ["Aethersnipe (Æthersnipe)"]			= "Æthersnipe",
 ["Aether Spellbomb (Æther Spellbomb)"]	= "Æther Spellbomb",
 ["Aether Vial (Æther Vial)"]			= "Æther Vial",
 },
+[787] = { -- Planechase 2012 Edition
+["Chaotic AEther"]						= "Chaotic Æther",
+},
+[780] = { -- From the Vault: Legends
+["Sharuum, the Hegemon"]				= "Sharuum the Hegemon",
+},
+[766] = { -- Duel Decks: Phyrexia vs. The Coalition
+["Urza's Rage"]							= "Urza’s Rage",
+},
+[763] = { -- Duel Decks: Garruk vs. Liliana
+["Beast Token T1"]						= "Beast (1)",
+["Beast Token T2"]						= "Beast (2)",
+},
 [600] = { -- Unhinged
 ["Who|What/When|Where/Why"]				= "Who|What|When|Where|Why",
 --TODO ['"Ach! Hans, Run!"']
+},
+[490] = { -- Deckmasters
+["Lim-Dul's High Guard"]				= "Lim-Dûl’s High Guard",
 },
 [320] = { -- Unglued
 ["B.F.M. (Big Furry Monster)(Left)"]	= "B.F.M. (Left)",
@@ -649,20 +751,29 @@ site.variants = {
  @field [parent=#site.foiltweak] #table foilstatus
 ]]
 site.foiltweak = {
---[766] = { -- Phyrexia VS Coalition
--- 	["Phyrexian Negator"] 	= { foil = true },
---	["Urza's Rage"] 		= { foil = true }
---},
 [799] = {override=true},
 [794] = {override=true},
 [790] = {override=true},
 [785] = {override=true},
+[777] = {override=true},
 [772] = {override=true},
+[768] = {override=true},
+[766] = {override=true},
+[763] = {override=true},
 [757] = {override=true},
+[755] = {override=true},
 
 } -- end table foiltweak
 
-if CHECKEXPECTED~=false then
+--[[- wrapper function for expected table 
+ Wraps table site.expected, so we can wait for LHpi.Data to be loaded before setting it.
+ This allows to read LHpi.Data.sets[setid].cardcount tables for less hardcoded numbers. 
+
+ @function [parent=#site] SetExpected
+ @param nil
+]]
+
+function site.SetExpected()
 --[[- table of expected results.
  as of script release. Used as sanity check during sitescript development and source of insanity afterwards ;-)
  For each setid, if unset defaults to expect all cards to be set.
@@ -677,10 +788,11 @@ if CHECKEXPECTED~=false then
  @field #number namereplaced	(optional) default 0
  @field #number foiltweaked		(optional) default 0
  ]]
-site.expected = {
+	site.expected = {
 --- false:pset defaults to regular, true:pset defaults to regular+tokens instead
 -- @field [parent=#site.expected] #boolean EXPECTTOKENS
-EXPECTTOKENS = true,
+	EXPECTTOKENS = true,
+--TODO reduce amount of hardcoded numbers
 -- Core sets
 [797] = { pset={ [9]=262-13 }, failed={ [9]=13}, namereplaced=4 }, -- 13 tokens
 [788] = { pset={ [9]=249 }, failed={[9]=11} },-- fail SZH tokens
@@ -692,10 +804,10 @@ EXPECTTOKENS = true,
 [550] = { pset={ 357-27 } },
 [460] = { pset={ 350-20 }, dropped=3 },
 [360] = { pset={ 350-20 }, dropped=17 },
-[250] = { pset={ 449-20 }, dropped=50 },
+[250] = { pset={ 449-20 }, dropped=49 },
 [180] = { pset={ 378-15 }, dropped=82 },
-[140] = { pset={ 306-15 }, dropped=29 },
-[110] = { dropped=2 },
+[140] = { pset={ 306-15 }, dropped=32 },
+[110] = { dropped=1 },
 [100] = { pset={ 302-19 } },
 [90]  = {namereplaced=4},
 -- Expansions
@@ -709,20 +821,20 @@ EXPECTTOKENS = true,
 [784] = { pset={ [9]=158 }, failed={[9]=3} },-- fail SZH tokens
 [782] = { pset={ 276+1, [9]=264 }, failed={[9]=12}, namereplaced=15 },-- fail SZH tokens, +1 is Checklist
 [776] = { pset={ [9]=175 }, failed={[9]=4} },-- fail SZH tokens
-[775] = { pset={160-1, [9]=155} },-- no ENG zombie token, no SZH tokens
+[775] = { pset={160-1, [9]=155}, dropped=1 },-- no ENG zombie token, no SZH tokens
 [773] = { namereplaced=4, pset={[9]=249+1}, failed={1, [9]=9} },-- fail SZH tokens
 [767] = { pset={ [9]=248 }, failed={[9]=7}, namereplaced=6 },-- fail SZH tokens
 [765] = { pset={ [9]=145 } },-- no SZH tokens
 [756] = { pset={ [9]=145 } },-- no SZH tokens
 [762] = { pset={ [9]=249 } },-- no SZH tokens
 [758] = { pset={ [9]=145 }, failed={[9]=4} },-- fail SZH tokens
-[756] = { pset={ [9]=145 } },-- no SZH tokens
-[754] = { pset={ [9]=249 }, failed={[9]=9}, namereplaced=1 },-- fail SZH tokens
+[756] = { pset={ [9]=145 }, dropped=1 },-- no SZH tokens
+[754] = { pset={ [9]=249 }, failed={[9]=9}, namereplaced=1, dropped=2 },-- fail SZH tokens
 [752] = { pset={ [9]=180 }, failed={[9]=7} },-- fail SZH tokens
 [751] = { pset={ [9]=301-20 }, failed={[9]=12}, namereplaced=8 },-- fail SZH tokens, no SZH lands
 [750] = { pset={ [9]=150 } },-- no SZH tokens
-[730] = { pset={ [9]=301-1 }, failed={[9]=11}, dropped=1, namereplaced=4 },-- -1 is missing "Changeling Berserker" (SZH), fail SZH tokens
-[710] = { dropped=3 },
+[730] = { pset={ [9]=301-1 }, failed={[9]=11}, dropped=2, namereplaced=4 },-- -1 is missing "Changeling Berserker" (SZH), fail SZH tokens
+[710] = { dropped=2 },
 [700] = { dropped=2 },
 [690] = { dropped=1 },
 [680] = { pset={ [9]=4 }, dropped=1 },
@@ -732,27 +844,27 @@ EXPECTTOKENS = true,
 [610] = { dropped=2, namereplaced=4 },
 [580] = { dropped=2 },
 [570] = { dropped=1 },
-[560] = { pset={ 306-20}, dropped=3 },
+[560] = { pset={ 306-20}, dropped=4 },
 [540] = { dropped=3 },
 [530] = { dropped=2 },
 [520] = { namereplaced=1, dropped=6 },
 [510] = { dropped=16 },
-[500] = { dropped=8 },
+[500] = { dropped=7 },
 [480] = { pset={ 350-20 }, 	dropped=29 },
-[470] = { dropped=4, namereplaced=1 },
+[470] = { dropped=3, namereplaced=1 },
 [450] = { pset={ 146-3 }, dropped=23 },
 [430] = { dropped=96 },
 [420] = { pset={ 143-60 }, dropped=8 },
 [410] = { pset={ 143-1 }, dropped=9 },
 [400] = { pset={ 350-20 }, dropped=13 },
-[370] = { dropped=10 },
+[370] = { dropped=9 },
 [350] = { dropped=11 },
 [330] = { pset={ 350-20 }, dropped=31 }, -- no lands
-[300] = { dropped=11 },
-[290] = { dropped=20 },
+[300] = { dropped=10 },
+[290] = { dropped=19 },
 [280] = { pset={ 350-20 }, dropped=53 },
 [270] = { dropped=8 },
-[240] = { dropped=10 },
+[240] = { dropped=9 },
 [230] = { pset={ 350-21 }, dropped=67 },
 [220] = { dropped=10 },
 [210] = { dropped=6 },
@@ -763,17 +875,30 @@ EXPECTTOKENS = true,
 [130] = { dropped=7, namereplaced=1 },
 [120] = { dropped=12 },
 -- special sets
+[807] = { pset={ LHpi.Data.sets[807].cardcount.both+LHpi.Data.sets[807].cardcount.nontr }, failed={ 9 }, namereplaced=2 },--no tokens
 [805] = { namereplaced=2, foiltweaked=2, pset={ 89-1 } }, -- -1 token
+[801] = { pset={ LHpi.Data.sets[801].cardcount.reg+LHpi.Data.sets[801].cardcount.overs-1 }, failed={ LHpi.Data.sets[801].cardcount.overs+1 }, dropped=LHpi.Data.sets[801].cardcount.overs, namereplaced=1 }, -- oversized still problematic, also Kongming, “Sleeping Dragon”
 [796] = { namereplaced=6},
-[794] = { pset={ 81-12-1} },-- -16 basic lands, -1 token
-[790] = { pset={ 91-16-1} },-- -16 basic lands, -1 token
-[785] = { pset={ 79-2} },-- -2 tokens
-[772] = { pset={ 80-8-1} },-- -8 basic lands, -1 token
-[600] = { pset={141-3}, failed={ 1 }, namereplaced=1 },--'Kill! Destroy!' and 'Super Secret Tech' missing, '"Ach! Hans, Run!"' fails
+[794] = { pset={ 81-12-1 } },-- -16 basic lands, -1 token
+[790] = { pset={ 91-16-1 } },-- -16 basic lands, -1 token
+[787] = { pset={ LHpi.Data.sets[787].cardcount.reg-1+LHpi.Data.sets[787].cardcount.nontr }, namereplaced=1 },-- missing Pollenbright Wings 
+[785] = { pset={ 79-2 } },-- -2 tokens
+[781] = { pset={ LHpi.Data.sets[781].cardcount.reg-1 }, foiltweaked=2 },
+[780] = { namereplaced=1},
+[778] = { pset={ LHpi.Data.sets[778].cardcount.reg-14 }, failed={ 1 }, dropped=LHpi.Data.sets[778].cardcount.overs },
+[772] = { pset={ 80-8-1 } },-- -8 basic lands, -1 token
+[769] = { pset={ 150+45 } },-- all 45 Schemes (nontraditional)
+[768] = { pset={ 113-16 } },-- -16 basic lands
+[766] = { pset={LHpi.Data.sets[766].cardcount.reg+LHpi.Data.sets[766].cardcount.tok-1}, namereplaced=1},-- missing Foresst(71)
+[763] = { pset={ 66-12 }, namereplaced=2 },
+[600] = { pset={ 141-3 }, failed={ 1 }, namereplaced=1 },--'Kill! Destroy!' and 'Super Secret Tech' missing, '"Ach! Hans, Run!"' fails
+[490] = { pset={ 58-3 }, namereplaced=1, foiltweaked=1 },-- -3 premium
 [440] = { foiltweaked=2 },
+[340] = { pset={ 1} },
 [320] = { dropped=3, namereplaced=2 },
 [260] = { dropped=27, pset={228-20-13} },-- no(20) basic lands, no(13) "ST"/"GT" variants
 [200] = { pset={ 125-1 } },-- "Wall of Shadows" missing
-}--end table site.expected
-end--if
+[70]  = { pset={ LHpi.Data.sets[70].cardcount.nontr } }-- all 32 Characters (nontraditional)
+	}--end table site.expected
+end--function site.SetExpected
 --EOF

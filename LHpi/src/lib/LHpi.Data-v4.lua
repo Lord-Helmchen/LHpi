@@ -2318,8 +2318,9 @@ Expansions = nil,
 -- @field [parent=#Data.sets] #table SpecialSets
 SpecialSets = nil,
 [807] = { name="Conspiracy",
+--TODO [807] tokens
 	foil="y",
-	cardcount={ reg=197, tok=0, nontr=0, overs=0 },
+	cardcount={ reg=197, tok=0, nontr=13, overs=0 },
 },
 [805] = { name="Duel Decks: Jace vs. Vraska",
 	foil="n",
