@@ -24,7 +24,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.11.3.12
+2.12.4.12
+added 807,805,M15
+synchronized with template
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -63,7 +65,7 @@ copyprice = nil
 --  Don't change anything below this line unless you know what you're doing :-) --
 
 --- also complain if drop,namereplace or foiltweak count differs; default false
--- @field [parent=#global] #boolean STRICTCHECKEXPECTED
+-- @field [parent=#global] #boolean STRICTEXPECTED
 STRICTEXPECTED = true
 
 --- log to seperate logfile instead of Magic Album.log;	default true
@@ -87,7 +89,7 @@ SAVEHTML = true
 --DEBUG = true
 
 ---	even while DEBUG, do not log raw html data found by regex; default true 
--- @field [parent=#global] #boolean DEBUGSKIPFOUND
+-- @field [parent=#global] #boolean DEBUGFOUND
 --DEBUGFOUND = false
 
 --- DEBUG (only but deeper) inside variant loops; default false
@@ -96,10 +98,10 @@ SAVEHTML = true
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.11"
+libver = "2.12"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
-dataver = "3"
+dataver = "4"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
 scriptver = "12"
@@ -195,7 +197,7 @@ end -- function ImportPrice
  @param #number langid		see site.langs
  @param #number frucid		see site.frucs
  @param #boolean offline	(can be nil) use local file instead of url
- @return #table { #string (url)= #table { isfile= #boolean, (optional) foilonly= #boolean } , ... }
+ @return #table { #string (url)= #table { isfile= #boolean, (optional) foilonly= #boolean, (optional) setid= #number, (optional) langid= #number, (optional) frucid= #number } , ... }
 ]]
 function site.BuildUrl( setid,langid,frucid,offline )
 	site.domain = "magic.tcgplayer.com/db/"
@@ -374,6 +376,7 @@ site.frucs = {
 ]]
 site.sets = {
 -- Core Sets
+[808]={id = 808, lang = { true }, fruc = { true }, url = "Magic%202015%20(M15)"},
 [797]={id = 797, lang = { true }, fruc = { true }, url = "Magic%202014%20(M14)"},
 [788]={id = 788, lang = { true }, fruc = { true }, url = "Magic%202013%20(M13)"},
 [779]={id = 779, lang = { true }, fruc = { true }, url = "Magic%202012%20(M12)"},
@@ -459,43 +462,47 @@ site.sets = {
 [130]={id = 130, lang = { true }, fruc = { true }, url = "Antiquities"},
 [120]={id = 120, lang = { true }, fruc = { true }, url = "Arabian%20Nights"},
 -- special sets
---[801]={id = 801, lang = { true }, fruc = { true }, url = "Commander%202013"},
+[807]={id=807, lang = { true }, fruc = { true }, url = "Conspiracy"},--Conspiracy
+[805]={id=805, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Jace%20vs.%20Vraska"},--Duel Decks: Jace vs. Vraska
+[804]=nil,--Challenge Deck: Battle the Horde
+[803]=nil,--Challenge Deck: Face the Hydra
+[801]={id = 801, lang = { true }, fruc = { true }, url = "Commander%202013"},
 [799]={id = 799, lang = { true }, fruc = { true }, url = "Duel%20Decks%3A%20Heroes%20vs.%20Monsters"},
 [798]={id = 798, lang = { true }, fruc = { true }, url = "From%20the%20Vault%3A%20Twenty"},
 [796]={id = 796, lang = { true }, fruc = { true }, url = "Modern+Masters"},
 [794]={id = 794, lang = { true }, fruc = { true }, url = "Duel%20Decks%3A%20Sorin%20vs.%20Tibalt"},
---[792]={id = 792, lang = { true }, fruc = { true }, url = "Commander%27s%20Arsenal"},
---[790]={id = 790, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Izzet%20vs.%20Golgari"},
---[789]={id = 789, lang = { true }, fruc = { true }, url = "From%20the%20Vault%3A%20Realms"},
---[787]={id = 787, lang = { true }, fruc = { true }, url = "Planechase%202012"},
+[792]={id = 792, lang = { true }, fruc = { true }, url = "Commander%27s%20Arsenal"},
+[790]={id = 790, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Izzet%20vs.%20Golgari"},
+[789]={id = 789, lang = { true }, fruc = { true }, url = "From%20the%20Vault%3A%20Realms"},
+[787]={id = 787, lang = { true }, fruc = { true }, url = "Planechase%202012"},
 [785]={id = 785, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Venser%20vs.%20Koth"},
---[783]={id = 783, lang = { true }, fruc = { true }, url = "Graveborn"},
---[781]={id = 781, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Ajani%20vs.%20Nicol%20Bolas"},
---[780]={id = 780, lang = { true }, fruc = { true }, url = "From%20the%20Vault%3A%20Legends"},
---[778]={id = 778, lang = { true }, fruc = { true }, url = "Commander"},
---[777]={id = 777, lang = { true }, fruc = { true }, url = "Knights%20vs.%20Dragons"},
---[774]={id = 774, lang = { true }, fruc = { true }, url = "Premium%20Deck%20Series:%20Fire%20and%20Lightning"},
+[783]={id = 783, lang = { true }, fruc = { true }, url = "Graveborn"},
+[781]={id = 781, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Ajani%20vs.%20Nicol%20Bolas"},
+[780]={id = 780, lang = { true }, fruc = { true }, url = "From%20the%20Vault%3A%20Legends"},
+[778]={id = 778, lang = { true }, fruc = { true }, url = "Commander"},
+[777]={id = 777, lang = { true }, fruc = { true }, url = "Knights%20vs.%20Dragons"},
+[774]={id = 774, lang = { true }, fruc = { true }, url = "Premium%20Deck%20Series:%20Fire%20and%20Lightning"},
 [772]={id = 772, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Elspeth%20vs.%20Tezzeret"},
---[771]={id = 771, lang = { true }, fruc = { true }, url = "From%20the%20Vault%3A%20Relics"},
---[769]={id = 769, lang = { true }, fruc = { true }, url = "Archenemy"},
---[768]={id = 768, lang = { true }, fruc = { true }, url = "Duels%20of%20the%20Planeswalkers"},
---[766]={id = 766, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Phyrexia%20vs.%20The%20Coalition"},
---[764]={id = 764, lang = { true }, fruc = { true }, url = "Premium%20Deck%20Series:%20Slivers"},
---[763]={id = 763, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Garruk%20VS%20Liliana"},
---[761]={id = 761, lang = { true }, fruc = { true }, url = "Planechase"},   
---[760]={id = 760, lang = { true }, fruc = { true }, url = "From%20the%20Vault%3A%20Exiled"},
+[771]={id = 771, lang = { true }, fruc = { true }, url = "From%20the%20Vault%3A%20Relics"},
+[769]={id = 769, lang = { true }, fruc = { true }, url = "Archenemy"},
+[768]={id = 768, lang = { true }, fruc = { true }, url = "Duels%20of%20the%20Planeswalkers"},
+[766]={id = 766, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Phyrexia%20vs.%20The%20Coalition"},
+[764]={id = 764, lang = { true }, fruc = { true }, url = "Premium%20Deck%20Series:%20Slivers"},
+[763]={id = 763, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Garruk%20VS%20Liliana"},
+[761]={id = 761, lang = { true }, fruc = { true }, url = "Planechase"},   
+[760]={id = 760, lang = { true }, fruc = { true }, url = "From%20the%20Vault%3A%20Exiled"},
 [757]={id = 757, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Divine%20vs.%20Demonic"},
---[755]={id = 755, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Jace%20vs.%20Chandra"},
---[753]={id = 753, lang = { true }, fruc = { true }, url = "From%20the%20Vault%3A%20Dragons"},
---[740]={id = 740, lang = { true }, fruc = { true }, url = "Duel%20Decks: Elves vs. Goblins"},
+[755]={id = 755, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Jace%20vs.%20Chandra"},
+[753]={id = 753, lang = { true }, fruc = { true }, url = "From%20the%20Vault%3A%20Dragons"},
+[740]={id = 740, lang = { true }, fruc = { true }, url = "Duel%20Decks: Elves vs. Goblins"},
 [675]=nil,--Coldsnap Theme Decks
 [635]=nil,--Magic Encyclopedia
 [600]={id = 600, lang = { true }, fruc = { true }, url = "Unhinged"},
---[490]={id = 490, lang = { true }, fruc = { true }, url = "Deckmaster"},
+[490]={id = 490, lang = { true }, fruc = { true }, url = "Deckmaster"},
 [440]={id = 440, lang = { true }, fruc = { true }, url = "Beatdown%20Box%20Set"},
---[415]={id = 415, lang = { true }, fruc = { true }, url = "Starter%202000"},   
---[405]={id = 405, lang = { true }, fruc = { true }, url = "Battle%20Royale%20Box%20Set"},
---[390]={id = 390, lang = { true }, fruc = { true }, url = "Starter%201999"},
+[415]={id = 415, lang = { true }, fruc = { true }, url = "Starter%202000"},   
+[405]={id = 405, lang = { true }, fruc = { true }, url = "Battle%20Royale%20Box%20Set"},
+[390]={id = 390, lang = { true }, fruc = { true }, url = "Starter%201999"},
 [380]={id = 380, lang = { true }, fruc = { true }, url = "Portal%20Three%20Kingdoms"},
 [340]=nil,--Anthologies
 [320]={id = 320, lang = { true }, fruc = { true }, url = "Unglued"},
@@ -504,7 +511,7 @@ site.sets = {
 [225]=nil,--Introductory Two-Player Set
 [201]=nil,--Renaissance
 [200]={id = 200, lang = { true }, fruc = { true }, url = "Chronicles"},
---[70] ={id =  70, lang = { true }, fruc = { true }, url = "Vanguard"},
+[70] ={id =  70, lang = { true }, fruc = { true }, url = "Vanguard"},
 [69] =nil,--Box Topper Cards
 -- Promo Cards
 [50] =nil,--Full Box Promotion
@@ -512,29 +519,29 @@ site.sets = {
 [43] =nil,--Two-Headed Giant Promos
 [42] =nil,--Summer of Magic Promos
 [41] =nil,--Happy Holidays Promos
---[40] ={id =  40, lang = { true }, fruc = { true }, url = "Arena%20Promos"},
+[40] ={id =  40, lang = { true }, fruc = { true }, url = "Arena%20Promos"},
 [33] =nil,--Championships Prizes
---[32] ={id =  32, lang = { true }, fruc = { true }, url = "Pro%20Tour%20Promos"},--Pro Tour Promos
---[31] ={id =  31, lang = { true }, fruc = { true }, url = "Grand%20Prix%20Promos"},--Grand Prix Promos
---[30] ={id =  30, lang = { true }, fruc = { true }, url = "FNM%20Promos"},
+[32] ={id =  32, lang = { true }, fruc = { true }, url = "Pro%20Tour%20Promos"},--Pro Tour Promos
+[31] ={id =  31, lang = { true }, fruc = { true }, url = "Grand%20Prix%20Promos"},--Grand Prix Promos
+[30] ={id =  30, lang = { true }, fruc = { true }, url = "FNM%20Promos"},
 --TODO: "APAC%20Lands" is Asian-Pacific subset of altArt, needs variant table
 --TODO: "European%20Lands" is Asian-Pacific subset of altArt, needs variant table
 --TODO: "Guru%20Lands" is Asian-Pacific subset of altArt, needs variant table
 --[27] ={id =  27, lang = { true }, fruc = { true }, url = ""},--Alternate Art Lands
---[26] ={id =  26, lang = { true }, fruc = { true }, url = "Game%20Day%20Promos"},
---[25] ={id =  25, lang = { true }, fruc = { true }, url = "Judge%20Promos"},
---[24] ={id =  24, lang = { true }, fruc = { true }, url = "Champs%20Promos"},
+[26] ={id =  26, lang = { true }, fruc = { true }, url = "Game%20Day%20Promos"},
+[25] ={id =  25, lang = { true }, fruc = { true }, url = "Judge%20Promos"},
+[24] ={id =  24, lang = { true }, fruc = { true }, url = "Champs%20Promos"},
 --TODO "WPN%20Promos" is subset of 23 Gateway & WPN Promos
---[23] ={id =  23, lang = { true }, fruc = { true }, url = "Gateway%20Promos"},
---[22] ={id =  22, lang = { true }, fruc = { true }, url = "Prerelease%20Cards"},
+[23] ={id =  23, lang = { true }, fruc = { true }, url = "Gateway%20Promos"},
+[22] ={id =  22, lang = { true }, fruc = { true }, url = "Prerelease%20Cards"},
 --TODO "Release%20Event%20Cards" is subset of 21 Release & Launch Party Cards
---[21] ={id =  21, lang = { true }, fruc = { true }, url = "Launch%20Party%20Cards"},
---[20] ={id =  20, lang = { true }, fruc = { true }, url = "Magic%20Player%20Rewards"},
+[21] ={id =  21, lang = { true }, fruc = { true }, url = "Launch%20Party%20Cards"},
+[20] ={id =  20, lang = { true }, fruc = { true }, url = "Magic%20Player%20Rewards"},
 [15] =nil,--Convention Promos
 [12] =nil,--Hobby Japan Commemorative Cards
 [11] =nil,--Redemption Program Cards
 --TODO: 10 JSS Needs Variant Table
---[10] ={id =  10, lang = { true }, fruc = { true }, url = "JSS/MSS%20Promos"},--Junior Series Promos
+[10] ={id =  10, lang = { true }, fruc = { true }, url = "JSS/MSS%20Promos"},--Junior Series Promos
 [9]  =nil,--Video Game Promos
 [8]  =nil,--Stores Promos
 [7]  =nil,--Magazine Inserts
@@ -811,8 +818,8 @@ site.namereplace = {
 ["Orochi Eggwatcher"]					= "Orochi Eggwatcher|Shidako, Broodmistress",
 ["Nezumi Graverobber"]					= "Nezumi Graverobber|Nighteyes the Desecrator",
 ["Akki Lavarunner"]						= "Akki Lavarunner|Tok-Tok, Volcano Born",
-["Brothers Yamazaki (160a Sword)"]		= "Brothers Yamazaki (a)",
-["Brothers Yamazaki (160b Pike)"]		= "Brothers Yamazaki (b)",
+["Brothers Yamazaki (160a Sword)"]		= "Brothers Yamazaki (160a)",
+["Brothers Yamazaki (160b Pike)"]		= "Brothers Yamazaki (160b)",
 },
 [580] = { -- Fifth DAwn
 ["Fold into Aether"]					= "Fold into Æther"
@@ -1098,6 +1105,13 @@ site.namereplace = {
 ["Mountain (Arabian Nights)"]			= "Mountain",
 },
 -- special sets
+[807] = { --Conspiracy
+["AEther Tradewinds"]					= "Æther Tradewinds",
+},
+[805] = { -- DD:Jace vs. Vraska
+["Aether Adept"]						= "Æther Adept",
+["Aether Figment"]						= "Æther Figment",
+},
 [796] = { -- Modern Masters
 ["Aether Vial"]							= "Æther Vial",
 ["Aether Spellbomb"]					= "Æther Spellbomb",
@@ -1268,8 +1282,14 @@ override=true,
 	},
 } -- end table site.variants
 
+--[[- wrapper function for expected table 
+ Wraps table site.expected, so we can wait for LHpi.Data to be loaded before setting it.
+ This allows to read LHpi.Data.sets[setid].cardcount tables for less hardcoded numbers. 
 
-if CHECKEXPECTED~=false then
+ @function [parent=#site] SetExpected
+ @param nil
+]]
+function site.SetExpected()
 --[[- table of expected results.
  as of script release. Used as sanity check during sitescript development and source of insanity afterwards ;-)
  For each setid, if unset defaults to expect all cards to be set.
@@ -1284,10 +1304,10 @@ if CHECKEXPECTED~=false then
  @field #number namereplaced	(optional) default 0
  @field #number foiltweaked		(optional) default 0
  ]]
-site.expected = {
+	site.expected = {
 --- false:pset defaults to regular, true:pset defaults to regular+tokens instead
 -- @field [parent=#site.expected] #boolean EXPECTTOKENS
-EXPECTTOKENS = true,
+	EXPECTTOKENS = true,
 -- Core sets
 [797] = { failed={ 1 }, namereplaced=2 },
 [788] = { failed={ 1 } },
@@ -1358,6 +1378,8 @@ EXPECTTOKENS = true,
 [120] = { namereplaced=17 },
 [130] = { namereplaced=17, dropped=1 },
 -- special sets
+[807] = { pset={ LHpi.Data.sets[807].cardcount.both+LHpi.Data.sets[807].cardcount.nontr }, failed={ 9 }, namereplaced=1 },--no tokens
+[805] = { foiltweaked=2, namereplaced=2 },
 [799] = { foiltweaked=2, pset={ 83-16 } },-- -16 basic lands, ((-2 (of 4) nonbasic lands)?)
 [798] = {pset={20}, dropped=1 }, 
 [796] = { namereplaced=3 },
@@ -1372,6 +1394,6 @@ EXPECTTOKENS = true,
 [310] = { pset={165-10}, dropped=10, namereplaced=15-10},-- 10 SOON
 [260] = { pset={228-6-8}, dropped=8, namereplaced=27-8 },-- 8 SOON, -6 "DG" variant
 [200] = { namereplaced=12 },
-}--end table site.expected
-end--if
+	}--end table site.expected
+end--function site.SetExpected()
 --EOF
