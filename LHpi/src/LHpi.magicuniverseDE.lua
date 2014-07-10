@@ -86,9 +86,9 @@ SAVEHTML = true
 -- @field [parent=#global] #boolean DEBUG
 --DEBUG = true
 
----	even while DEBUG, do not log raw html data found by regex; default true 
+---	log raw html data found by regex; default false
 -- @field [parent=#global] #boolean DEBUGFOUND
---DEBUGFOUND = false
+--DEBUGFOUND = true
 
 --- DEBUG (only but deeper) inside variant loops; default false
 -- @field [parent=#global] #boolean DEBUGVARIANTS
