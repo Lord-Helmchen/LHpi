@@ -666,6 +666,7 @@ site.namereplace = {
 },
 [801] = { -- Commander 2013
 ["Lim-Dûl’s Vault(Lim-Dul’s Vault)"]	= "Lim-Dûl’s Vault",
+["Kongming, “Sleeping Dragon“"]			= "Kongming, “Sleeping Dragon”",
 },
 [796] = { -- Modern Masters
 ["Aethersnipe (Æthersnipe)"]			= "Æthersnipe",
@@ -687,7 +688,7 @@ site.namereplace = {
 },
 [600] = { -- Unhinged
 ["Who|What/When|Where/Why"]				= "Who|What|When|Where|Why",
---TODO ['"Ach! Hans, Run!"']
+["“Ach! Hans, Run!“"]					= "“Ach! Hans, Run!”",
 },
 [490] = { -- Deckmasters
 ["Lim-Dul's High Guard"]				= "Lim-Dûl’s High Guard",
@@ -855,7 +856,7 @@ function site.SetExpected()
 -- special sets
 [807] = { pset={ LHpi.Data.sets[807].cardcount.both+LHpi.Data.sets[807].cardcount.nontr }, failed={ 9 }, namereplaced=2 },--no tokens
 [805] = { namereplaced=2, foiltweaked=2, pset={ 89-1 } }, -- -1 token
-[801] = { pset={ LHpi.Data.sets[801].cardcount.reg+LHpi.Data.sets[801].cardcount.overs-1 }, failed={ LHpi.Data.sets[801].cardcount.overs+1 }, dropped=LHpi.Data.sets[801].cardcount.overs, namereplaced=1 }, -- oversized still problematic, also Kongming, “Sleeping Dragon”
+[801] = { pset={ LHpi.Data.sets[801].cardcount.reg+LHpi.Data.sets[801].cardcount.overs }, failed={ LHpi.Data.sets[801].cardcount.overs }, dropped=LHpi.Data.sets[801].cardcount.overs, namereplaced=2 },
 [796] = { namereplaced=6},
 [794] = { pset={ 81-12-1 } },-- -16 basic lands, -1 token
 [790] = { pset={ 91-16-1 } },-- -16 basic lands, -1 token
@@ -869,7 +870,7 @@ function site.SetExpected()
 [768] = { pset={ 113-16 } },-- -16 basic lands
 [766] = { pset={LHpi.Data.sets[766].cardcount.reg+LHpi.Data.sets[766].cardcount.tok-1}, namereplaced=1},-- missing Foresst(71)
 [763] = { pset={ 66-12 }, namereplaced=2 },
-[600] = { pset={ 141-3 }, failed={ 1 }, namereplaced=1 },--'Kill! Destroy!' and 'Super Secret Tech' missing, '"Ach! Hans, Run!"' fails
+[600] = { pset={ 141-2 }, namereplaced=2 },--'Kill! Destroy!' and 'Super Secret Tech' missing
 [490] = { pset={ 58-3 }, namereplaced=1, foiltweaked=1 },-- -3 premium
 [440] = { foiltweaked=2 },
 [340] = { pset={ 1} },

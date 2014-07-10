@@ -208,10 +208,6 @@ end
 </nowiki>
 * number of cards in set must be hardcoded into library. An [url=http://www.slightlymagic.net/forum/tracker.php?p=2&t=303 ma.GetCardsInSet( setid,langid,regular|tokens )] would help, but the numbers are easy to hardcode anyways.
 * can't use mtgmintcard to get € prices. see [http://www.slightlymagic.net/forum/viewtopic.php?f=32&t=2324&start=285#p100271|here] for details.
-* cards with quotation marks in their name currently confuse the script. Affected cards are
-** “Ach! Hans, Run!” (UNH)
-** Kongming, “Sleeping Dragon” (PTK)
-** Pang Tong, “Young Phoenix” (PTK)
 * Can't distinguish between regular and oversized versions of the same card. probably affects all Commander sets.
 
 ===Hints for developers===

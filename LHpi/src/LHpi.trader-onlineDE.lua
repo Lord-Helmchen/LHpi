@@ -928,7 +928,7 @@ site.namereplace = {
 ["Erase"]								= "Erase (Not the Urza’s Legacy One)",
 ["Who|What/When|Where/Why"]				= "Who|What|When|Where|Why",
 ["Yet Another Aether Vortex"]			= "Yet Another Æther Vortex",
---TODO ['"Ach! Hans, Run!"']
+["“Ach! Hans, Run!“"]					= "“Ach! Hans, Run!”",
 },
 [320] = { -- Unglued
 ["B.F.M. (Big Furry Monster) links"]	= "B.F.M. (Left)",
@@ -1105,7 +1105,7 @@ function site.SetExpected()
 [785] = { namereplaced=3, foiltweaked=2 },
 [772] = { namereplaced=1, foiltweaked=0 },
 [757] = { foiltweaked=2 },
-[600] = { pset={ 141-1 }, failed={ 1 }, namereplaced=8, foiltweaked=1 },--"Ach! Hans, Run"
+[600] = { namereplaced=9, foiltweaked=1 },
 [320] = { namereplaced=6 },
 [310] = { namereplaced=2 },
 [260] = { pset={ 228-6-7,[3]=228-6-7 }, namereplaced=4 },-- no(6) DG, no(7) ST variants (also ma:no GER "DG")
