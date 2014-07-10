@@ -27,8 +27,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.11.3.12
+2.12.4.12
+added 801,807,M15
 updated expected 100,680,690,800
+synchronized with template
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -55,7 +57,7 @@ LOGFOILTWEAK = true
 --  Don't change anything below this line unless you know what you're doing :-) --
 
 --- also complain if drop,namereplace or foiltweak count differs; default false
--- @field [parent=#global] #boolean STRICTCHECKEXPECTED
+-- @field [parent=#global] #boolean STRICTEXPECTED
 STRICTEXPECTED = true
 
 --- log to seperate logfile instead of Magic Album.log;	default true
@@ -64,7 +66,7 @@ STRICTEXPECTED = true
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
---OFFLINE = true
+OFFLINE = true
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
@@ -79,7 +81,7 @@ SAVEHTML = true
 --DEBUG = true
 
 ---	even while DEBUG, do not log raw html data found by regex; default true 
--- @field [parent=#global] #boolean DEBUGSKIPFOUND
+-- @field [parent=#global] #boolean DEBUGFOUND
 --DEBUGFOUND = false
 
 --- DEBUG (only but deeper) inside variant loops; default false
@@ -88,10 +90,10 @@ SAVEHTML = true
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.11"
+libver = "2.12"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
-dataver = "3"
+dataver = "4"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
 scriptver = "12"
@@ -193,7 +195,7 @@ end -- function ImportPrice
  @param #number langid		see site.langs
  @param #number frucid		see site.frucs
  @param #boolean offline	(can be nil) use local file instead of url
- @return #table { #string (url)= #table { isfile= #boolean, (optional) foilonly= #boolean } , ... }
+ @return #table { #string (url)= #table { isfile= #boolean, (optional) foilonly= #boolean, (optional) setid= #number, (optional) langid= #number, (optional) frucid= #number } , ... }
 ]]
 function site.BuildUrl( setid,langid,frucid,offline )
 	site.domain = "www.trader-online.de/"
@@ -348,13 +350,22 @@ function site.BCDpluginPre ( card , setid , importfoil, importlangs )
 	elseif setid == 150 or setid == 160 then
 		-- remove "ital." suffix from italian Legends and The Dark
 		card.name = string.gsub( card.name, ", ital%.$" , "" )
-	end
+	elseif setid == 801 or setid == 807 then --Commander 2013
+print(LHpi.Tostring(card.name))
+		card.name=string.gsub(card.name, "%s*englisch$", "")
+		local _s,_e,nameeng,nameger = string.find(card.name, "(.+)%s*(%b())$")
+		if nameeng and nameger then
+			card.names[1]=string.gsub(nameeng,"(.-)%s*$", "%1")
+			card.names[3]=string.gsub(nameger, "^%((.+)%)", "%1" )
+			card.name=card.names[1]
+		end--if nameeng,nameger
+	end--if setid
+print(LHpi.Tostring(card.name) .. " : " .. LHpi.Tostring(card.names))
 	
 	-- mark condition modifier suffixed cards to be dropped
 	card.name = string.gsub( card.name , ", light played$" , "%0 (DROP)" )
 	card.name = string.gsub( card.name , ", gespielt$" , "%0 (DROP)" )
 	card.name = string.gsub( card.name , " NM%-EX$" , "%0 (DROP)" )
-	print(LHpi.Tostring(card))
 	return card
 end -- function site.BCDpluginPre
 
@@ -378,6 +389,7 @@ function site.BCDpluginPost( card , setid , importfoil, importlangs )
 	if setid == 805 then
 		card.name = string.gsub(card.name," %(%D-%)$","")
 	end
+	card.pluginData=nil
 	return card
 end -- function site.BCDpluginPost
 
@@ -436,6 +448,7 @@ site.frucs = {
 ]]
 site.sets = {
 -- Core Sets
+--[808]={id = 808, lang = { true , [3]=true }, fruc = { true ,true }, url = "M15"}, 
 [797]={id = 797, lang = { true , [3]=true }, fruc = { true ,true }, url = "M14"}, 
 [788]={id = 788, lang = { true , [3]=true }, fruc = { true ,true }, url = "M13"}, 
 [779]={id = 779, lang = { true , [3]=true }, fruc = { true ,true }, url = "M12"}, 
@@ -521,7 +534,9 @@ site.sets = {
 [130]={id = 130, lang = { true , [3]=false }, fruc = { false,true }, url = "AQ"},
 [120]={id = 120, lang = { true , [3]=false }, fruc = { false,true }, url = "AN"},
 -- special sets
+[807]={id = 807, lang = { true , [3]=false}, fruc = { true ,true }, url = "CNS"},--Conspiracy
 [805]={id = 805, lang = { true , [3]=false}, fruc = { false,true }, url = "JVV"}, -- Duel Decks: Jace vs. Vaska
+[801]={id = 801, lang = { true , [3]=false}, fruc = { false,true }, url = "C13"},--Commander 2013
 [796]={id = 796, lang = { true , [3]=false}, fruc = { true ,true }, url = "MMA"}, -- Modern Masters
 [794]={id = 794, lang = { true , [3]=false}, fruc = { false,true }, url = "SVT"},--Duel Decks: Sorin vs. Tibalt
 [790]={id = 790, lang = { true , [3]=false}, fruc = { false,true }, url = "IZZ"},--Duel Decks: Izzet vs. Golgari
@@ -797,12 +812,12 @@ site.namereplace = {
 	["Orochi-Eierbewacherin"]			= "Orochi-Eierbewacherin|Shidako, Brutmeisterin",
 ["Student of Elements"]					= "Student of Elements|Tobita, Master of Winds",
 	["Student der Elemente"]			= "Student der Elemente|Tobita, Meister der Winde",
---["Brothers Yamazaki"]					= "Brothers Yamazaki (a)",
-["Brothers Yamazaki (1)"]				= "Brothers Yamazaki (a)",
-["Brothers Yamazaki (2)"]				= "Brothers Yamazaki (b)",
---["Yamazaki-Brüder"]						= "Yamazaki-Brüder (a)",
-["Yamazaki-Brüder (1)"]					= "Yamazaki-Brüder (a)",
-["Yamazaki-Brüder (2)"]					= "Yamazaki-Brüder (b)",
+--["Brothers Yamazaki"]					= "Brothers Yamazaki (160a)",
+["Brothers Yamazaki (1)"]				= "Brothers Yamazaki (160a)",
+["Brothers Yamazaki (2)"]				= "Brothers Yamazaki (160b)",
+--["Yamazaki-Brüder"]						= "Yamazaki-Brüder (160a)",
+["Yamazaki-Brüder (1)"]					= "Yamazaki-Brüder (160a)",
+["Yamazaki-Brüder (2)"]					= "Yamazaki-Brüder (160b)",
 ["Aura der Oberschaft"]					= "Aura der Oberherrschaft",
 ["Spährenweber-Kumo"]					= "Sphärenweber-Kumo",
 ["Honor-worn Shaku"]					= "Honor-Worn Shaku",
@@ -883,9 +898,16 @@ site.namereplace = {
 ["Ring of Ma'ruf"]						= "Ring of Ma ruf",
 },
 -- specal sets
+[807] = { -- Conspiracy
+["Aether Tradewinds"]					= "Æther Tradewinds",
+},
 [805] = { --Duel Decks: Jace vs. Vraska
 ["Aether Adept (Meister des Äthers)"]	= "Æther Adept",
 ["Aether Figment (Äthergespinst)"]		= "Æther Figment",
+},
+[801] = { -- Commander 2013
+["Kongming, “Sleeping Dragon“"]			= "Kongming, “Sleeping Dragon”",
+["Aethermage's Touch"]					= "Æthermage's Touch",
 },
 [796] = { -- Modern Masters
 ["Aether Vial"]							= "Æther Vial",
@@ -982,7 +1004,14 @@ site.foiltweak = {
 --	},
 } -- end table site.foiltweak
 
-if CHECKEXPECTED~=false then
+--[[- wrapper function for expected table 
+ Wraps table site.expected, so we can wait for LHpi.Data to be loaded before setting it.
+ This allows to read LHpi.Data.sets[setid].cardcount tables for less hardcoded numbers. 
+
+ @function [parent=#site] SetExpected
+ @param nil
+]]
+function site.SetExpected()
 --[[- table of expected results.
  as of script release. Used as sanity check during sitescript development and source of insanity afterwards ;-)
  For each setid, if unset defaults to expect all cards to be set.
@@ -997,10 +1026,10 @@ if CHECKEXPECTED~=false then
  @field #number namereplaced	(optional) default 0
  @field #number foiltweaked		(optional) default 0
  ]]
-site.expected = {
+	site.expected = {
 --- false:pset defaults to regular, true:pset defaults to regular+tokens instead
 -- @field [parent=#site.expected] #boolean EXPECTTOKENS
-EXPECTTOKENS = true,
+	EXPECTTOKENS = true,
 -- Core sets
 [797] = { namereplaced=4 },
 [779] = { namereplaced=2 },
@@ -1067,7 +1096,9 @@ EXPECTTOKENS = true,
 [150] = { namereplaced=2 },
 [120] = { namereplaced=3 },
 -- special sets
+[807] = { pset={ LHpi.Data.sets[807].cardcount.reg+LHpi.Data.sets[807].cardcount.nontr }, namereplaced=2 },--no tokens
 [805] = { namereplaced=2 },
+[801] = { pset={ LHpi.Data.sets[801].cardcount.reg+LHpi.Data.sets[801].cardcount.overs }, failed={ LHpi.Data.sets[801].cardcount.overs }, namereplaced=2 },
 [796] = { namereplaced=5 },
 [794] = { foiltweaked=2 },
 [790] = { foiltweaked=2 },
@@ -1079,6 +1110,6 @@ EXPECTTOKENS = true,
 [310] = { namereplaced=2 },
 [260] = { pset={ 228-6-7,[3]=228-6-7 }, namereplaced=4 },-- no(6) DG, no(7) ST variants (also ma:no GER "DG")
 [200] = { namereplaced=2 },
-}--end table site.expected
-end--if
+	}--end table site.expected
+end--function site.SetExpected
 --EOF

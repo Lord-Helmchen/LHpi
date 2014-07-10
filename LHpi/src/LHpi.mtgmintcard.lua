@@ -337,7 +337,7 @@ function site.BCDpluginPre ( card , setid , importfoil, importlangs )
 					card.names[9]=namechi .. nameeng
 				else
 					card.names[1]=string.gsub(nameeng, "^%((.+)%)", "%1" )
-					card.names[9]=string.gsub(namechi,"(.+)%s*$", "%1")
+					card.names[9]=string.gsub(namechi,"(.-)%s*$", "%1")
 					card.name=card.names[1]
 				end
 			else
@@ -348,28 +348,6 @@ function site.BCDpluginPre ( card , setid , importfoil, importlangs )
 
 	return card
 end -- function site.BCDpluginPre
-
---[[- special cases card data manipulation.
- Ties into LHpi.buildCardData to make changes that are specific to one site and thus don't belong into the library
- This Plugin is called after LHpi's BuildCardData processing (and probably not needed).
- 
- @function [parent=#site] BCDpluginPost
- @param #table card		the card LHpi.BuildCardData is working on
- 			{ name= #string , (can be nil) drop= #boolean , lang= #table , (can be nil) names= #table , (can be nil) variant= #table , (can be nil) regprice= #table , (can be nil) foilprice= #table }
- @param #number setid		see site.sets 
- @param #string importfoil	"y"|"n"|"o" passed from DoImport to drop unwanted cards
- @param #table importlangs	{ #number (langid)= #string , ... } passed from DoImport to drop unwanted cards
- @return #table			modified card is passed back for further processing
- 			{ name= #string , drop= #boolean, lang= #table , (optional) names= #table , variant= (#table or nil), regprice= #table , foilprice= #table }
-]]
---function site.BCDpluginPost( card , setid , importfoil, importlangs )
---	if DEBUG then
---		LHpi.Log( "site.BCDpluginPost got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
---	end
---	
---	card.pluginData=nil
---	return card
---end -- function site.BCDpluginPost
 
 -------------------------------------------------------------------------------------------------------------
 -- tables
