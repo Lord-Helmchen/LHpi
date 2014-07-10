@@ -27,8 +27,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.11.3.13
+2.12.4.12
+added 801,M15
 updated 180,791,806
+fixed site.langs
+synchronized with template
 ]]
 
 -- options unique to this site
@@ -60,7 +63,7 @@ LOGFOILTWEAK = true
 --  Don't change anything below this line unless you know what you're doing :-) --
 
 --- also complain if drop,namereplace or foiltweak count differs; default false
--- @field [parent=#global] #boolean STRICTCHECKEXPECTED
+-- @field [parent=#global] #boolean STRICTEXPECTED
 STRICTEXPECTED = true
 
 --- log to seperate logfile instead of Magic Album.log;	default true
@@ -69,7 +72,7 @@ STRICTEXPECTED = true
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
---OFFLINE = true
+OFFLINE = true
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
@@ -84,7 +87,7 @@ SAVEHTML = true
 --DEBUG = true
 
 ---	even while DEBUG, do not log raw html data found by regex; default true 
--- @field [parent=#global] #boolean DEBUGSKIPFOUND
+-- @field [parent=#global] #boolean DEBUGFOUND
 --DEBUGFOUND = false
 
 --- DEBUG (only but deeper) inside variant loops; default false
@@ -93,10 +96,10 @@ SAVEHTML = true
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.11"
+libver = "2.12"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
-dataver = "3"
+dataver = "4"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
 scriptver = "12"
@@ -199,7 +202,7 @@ end -- function ImportPrice
  @param #number langid		see site.langs
  @param #number frucid		see site.frucs
  @param #boolean offline	(can be nil) use local file instead of url
- @return #table { #string (url)= #table { isfile= #boolean, (optional) foilonly= #boolean } , ... }
+ @return #table { #string (url)= #table { isfile= #boolean, (optional) foilonly= #boolean, (optional) setid= #number, (optional) langid= #number, (optional) frucid= #number } , ... }
 ]]
 function site.BuildUrl( setid,langid,frucid,offline )
 	site.domain = "www.magicuniverse.de/html/"
@@ -316,7 +319,9 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 		else -- not "(alpha")
 			card.name = string.gsub( card.name , "%s*%(beta%)" , "" ) -- catch needlessly suffixed rawdata
 			card.name = string.gsub( card.name , "%(beta, " , "(") -- remove beta infix from condition descriptor
-		end 
+		end
+	elseif setid == 801 then -- Commander
+		card.name = string.gsub(card.name,"%([Oo]versi?z?e?d?%.?%)","(oversized) (DROP)")
 	end -- if setid
 	
 	-- mark condition modifier suffixed cards to be dropped
@@ -404,8 +409,8 @@ end -- function site.BCDpluginPost
 ]]
 site.langs = {
 	[1] = { id=1, url="" },
-	[3] = { id=2, url="" },
-	[5] = { id=3, url="" },
+	[3] = { id=3, url="" },
+	[5] = { id=5, url="" },
 }
 
 --[[- table of available rarities.
@@ -449,6 +454,7 @@ site.frucs = {
 ]]
 site.sets = {
 -- Core Sets
+[808]={id = 808, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "M2015"},
 [797]={id = 797, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "M2014"}, 
 [788]={id = 788, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "M2013"}, 
 [779]={id = 779, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "M2012"}, 
@@ -458,7 +464,10 @@ site.sets = {
 [630]={id = 630, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "9th_Edition"}, 
 [550]={id = 550, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "8th_Edition"}, 
 [460]={id = 460, lang = { true , [3]=true }, fruc = { false,true ,true ,false}, url = "7th_Edition"}, 
+--[360]=nil,
+--[250=nil,
 [180]={id = 180, lang = { true , [3]=true }, fruc = { false,true ,true ,false}, url = "4th_Edition"}, 
+--[141]=nil,
 [140]={id = 140, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Revised"},
 [139]={id = 139, lang = { false, [3]=true }, fruc = { false,true ,true ,true }, url = "deutsch_limitiert"},-- Revised Limited : url only provides cNameG
 [110]={id = 110, lang = { true , [3]=false}, fruc = { false,true ,true ,true }, url = "Unlimited"}, 
@@ -531,7 +540,9 @@ site.sets = {
 [150]={id = 150, lang = { true , [3]=false, [5]=true }, fruc = { false,true ,true ,true }, url = "Legends"},
 [130]={id = 130, lang = { true , [3]=false}, fruc = { false,true ,true ,true }, url = "Antiquities"},
 [120]={id = 120, lang = { true , [3]=false}, fruc = { false,true ,true ,true }, url = "Arabian_Nights"},
--- special and promo sets: sorting out the single page seems more trouble than it's worth
+-- Special sets
+[801]={id = 801, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Commander%202013"},
+-- other special and promo sets: sorting out the single page seems more trouble than it's worth
 } -- end table site.sets
 
 --[[- card name replacement tables.
@@ -731,8 +742,8 @@ site.namereplace = {
 ["Orochi Eggwatcher"]					= "Orochi Eggwatcher|Shidako, Broodmistress",
 ["Nezumi Graverobber"]					= "Nezumi Graverobber|Nighteyes the Desecrator",
 ["Akki Lavarunner"]						= "Akki Lavarunner|Tok-Tok, Volcano Born",
-["Brothers Yamazaki"]					= "Brothers Yamazaki (a)",
---["Brothers Yamazaki (b)"]				= "Brothers Yamazaki (b)",
+["Brothers Yamazaki"]					= "Brothers Yamazaki (160a)",
+["Brothers Yamazaki (b)"]				= "Brothers Yamazaki (160b)",
 },
 [560] = { -- Mirrodin
 ["Goblin Warwagon"]						= "Goblin War Wagon",
@@ -751,6 +762,10 @@ site.namereplace = {
 ["El-Hajjâj"]							= "El-Hajjaj",
 ["Dandân"]								= "Dandan",
 ["Ghazbán Ogre"]						= "Ghazban Ogre",
+},
+-- special sets
+[801] = {
+["Kongming, 'Sleeping Dragon'"]			= "Kongming, “Sleeping Dragon”",
 },
 } -- end table site.namereplace
 
@@ -873,7 +888,7 @@ override=true,
 ["War Elephant (Vers. b)"]		 			= { "War Elephant"			, { false, 2     } },
 ["Wyluli Wolf"] 							= { "Wyluli Wolf"			, { 1    , false } },
 ["Wyluli Wolf (Vers. b)"] 					= { "Wyluli Wolf"			, { false, 2     } }
-}
+},
 } -- end table site.variants
 
 --[[- foil status replacement tables.
@@ -891,7 +906,14 @@ override=true,
 site.foiltweak = {
 } -- end table site.foiltweak
 
-if CHECKEXPECTED~=false then
+--[[- wrapper function for expected table 
+ Wraps table site.expected, so we can wait for LHpi.Data to be loaded before setting it.
+ This allows to read LHpi.Data.sets[setid].cardcount tables for less hardcoded numbers. 
+
+ @function [parent=#site] SetExpected
+ @param nil
+]]
+function site.SetExpected()
 --[[- table of expected results.
  as of script release. Used as sanity check during sitescript development and source of insanity afterwards ;-)
  For each setid, if unset defaults to expect all cards to be set.
@@ -906,10 +928,10 @@ if CHECKEXPECTED~=false then
  @field #number namereplaced	(optional) default 0
  @field #number foiltweaked		(optional) default 0
  ]]
-site.expected = {
+	site.expected = {
 --- false:pset defaults to regular, true:pset defaults to regular+tokens instead
 -- @field [parent=#site.expected] #boolean EXPECTTOKENS
-EXPECTTOKENS = true,
+	EXPECTTOKENS = true,
 -- Core sets
 [797] = { namereplaced=3 },
 [788] = { namereplaced=1 },
@@ -947,7 +969,7 @@ EXPECTTOKENS = true,
 [640] = { namereplaced=5 },
 [620] = { namereplaced=5 },
 [610] = { namereplaced=5 },
-[590] = { pset={ 307-20, [3]=307-20 }, namereplaced=11 },
+[590] = { pset={ 307-20, [3]=307-20 }, namereplaced=12 },
 [570] = { dropped=1 },
 [560] = { pset={ 306-20, [3]=306-20 }, namereplaced=1 },
 [520] = { pset={ 350-20, [3]=350-20 }, dropped=3 },
@@ -962,6 +984,10 @@ EXPECTTOKENS = true,
 [150] = { pset={ [5]=19 }, dropped=87 },
 [130] = { dropped=54 },
 [120] = { namereplaced=4 },
-}--end table site.expected
-end--if
+-- special sets
+[801] = { pset={ LHpi.Data.sets[801].cardcount.reg+LHpi.Data.sets[801].cardcount.overs }, failed={ LHpi.Data.sets[801].cardcount.overs }, dropped=LHpi.Data.sets[801].cardcount.overs, namereplaced=1 },
+	}--end table site.expected
+site.expected[801].pset[3]=site.expected[801].pset[1]
+site.expected[801].failed[3]=site.expected[801].failed[1]
+end--function site.SetExpected()
 --EOF
