@@ -30,6 +30,7 @@ libver 2.12
 dataver 4
 BuildUrl: added optional fields to urldetails luadoc
 new (optional) field: site.pagenumberregex
+wrap site.expected in site.SetExpected()
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -56,7 +57,7 @@ new (optional) field: site.pagenumberregex
 --  Don't change anything below this line unless you know what you're doing :-) --
 
 --- also complain if drop,namereplace or foiltweak count differs; default false
--- @field [parent=#global] #boolean STRICTCHECKEXPECTED
+-- @field [parent=#global] #boolean STRICTEXPECTED
 --STRICTEXPECTED = true
 
 --- log to seperate logfile instead of Magic Album.log;	default true
@@ -80,7 +81,7 @@ new (optional) field: site.pagenumberregex
 --DEBUG = true
 
 ---	even while DEBUG, do not log raw html data found by regex; default true 
--- @field [parent=#global] #boolean DEBUGSKIPFOUND
+-- @field [parent=#global] #boolean DEBUGFOUND
 --DEBUGFOUND = false
 
 --- DEBUG (only but deeper) inside variant loops; default false
@@ -616,7 +617,14 @@ site.foiltweak = {
 ]]
 } -- end table site.foiltweak
 
-if CHECKEXPECTED~=false then
+--[[- wrapper function for expected table 
+ Wraps table site.expected, so we can wait for LHpi.Data to be loaded before setting it.
+ This allows to read LHpi.Data.sets[setid].cardcount tables for less hardcoded numbers. 
+
+ @function [parent=#site] SetExpected
+ @param nil
+]]
+function site.SetExpected()
 --[[- table of expected results.
  as of script release. Used as sanity check during sitescript development and source of insanity afterwards ;-)
  For each setid, if unset defaults to expect all cards to be set.
@@ -631,12 +639,12 @@ if CHECKEXPECTED~=false then
  @field #number namereplaced	(optional) default 0
  @field #number foiltweaked		(optional) default 0
  ]]
-site.expected = {
+	site.expected = {
 --- false:pset defaults to regular, true:pset defaults to regular+tokens instead
 -- @field [parent=#site.expected] #boolean EXPECTTOKENS
-EXPECTTOKENS = false,
+	EXPECTTOKENS = false,
 -- -- Core sets
 --[788] = { pset={ 249+11, nil, 249 }, failed={ 0, nil, 11 }, dropped=0, namereplaced=1, foiltweaked=0 }, -- M2013
-}--end table site.expected
-end--if
+	}--end table site.expected
+end--function site.SetExpected()
 --EOF

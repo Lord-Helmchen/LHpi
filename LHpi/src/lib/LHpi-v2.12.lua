@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *BuildCardData
 ** replace Simplified Chinese Basic Lands' names for variant checking if names[9]
 ** improved card.drop logging
+** remove trailing 0s from collector numbers
 *MainImportCycle
 ** try to log number of unneeded pages for each set (to help optimize LHpi.mtgmintcard.lua)
 *FillCardsetTable
@@ -401,7 +402,7 @@ function LHpi.MainImportCycle( sourcelist , totalhtmlnum , importfoil , importla
 			LHpi.Log ( "Set " .. importsets[cSet.id] .. " imported." )
 			if VERBOSE then
 				if ( LHpi.Data.sets[sid] and LHpi.Data.sets[sid].cardcount ) then
-					LHpi.Log( string.format( "[%i] contains %4i cards (%4i regular, %4i tokens )", cSet.id, LHpi.Data.sets[sid].cardcount.both, LHpi.Data.sets[sid].cardcount.reg, LHpi.Data.sets[sid].cardcount.tok ) )
+					LHpi.Log( string.format( "[%i] contains %4i cards (%4i regular, %4i tokens, %4i nontraditional, %4i oversized )", cSet.id, LHpi.Data.sets[sid].cardcount.both, LHpi.Data.sets[sid].cardcount.reg, LHpi.Data.sets[sid].cardcount.tok, LHpi.Data.sets[sid].cardcount.nontr or 0, LHpi.Data.sets[sid].cardcount.overs or 0 ) )
 				else
 					LHpi.Log( string.format( "[%i] contains unknown to LHpi number of cards.", cSet.id ) )
 				end
@@ -873,6 +874,7 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 	card.name = string.gsub( card.name , "[%[%(][vV]ersion (%d)[%]%)]" , "(%1)" )
 	--card.name = string.gsub( card.name , "%([vV]ersion (%d)%)" , "(%1)" )
 	card.name = string.gsub( card.name , "%((%d+)/%d+%)" , "(%1)" )
+	card.name = string.gsub( card.name , "%(0+(%d+)%)" , "(%1)")
 
 	if sourcerow.foil~=nil then -- keep site.ParseHtmlData preset foil
 		card.foil = sourcerow.foil
