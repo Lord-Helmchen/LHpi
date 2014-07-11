@@ -25,7 +25,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 --[[ CHANGES
 2.12.4.12
-added 807,805,M15
+added most special and promo sets
+TODO-marked all others
+updated expected and namereplace tables
 synchronized with template
 ]]
 
@@ -74,7 +76,7 @@ STRICTEXPECTED = true
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
---OFFLINE = true
+OFFLINE = true
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
@@ -88,9 +90,9 @@ SAVEHTML = true
 -- @field [parent=#global] #boolean DEBUG
 --DEBUG = true
 
----	even while DEBUG, do not log raw html data found by regex; default true 
+---	log raw html data found by regex; default false 
 -- @field [parent=#global] #boolean DEBUGFOUND
---DEBUGFOUND = false
+--DEBUGFOUND = true
 
 --- DEBUG (only but deeper) inside variant loops; default false
 -- @field [parent=#global] #boolean DEBUGVARIANTS
@@ -286,7 +288,14 @@ function site.BCDpluginPre( card, setid, importfoil, importlangs )
 	end
 	card.name = string.gsub( card.name , "^(Magic QA.*)" , "(DROP) %1")
 	card.name = string.gsub( card.name , "^(Staging Check.*)" , "(DROP) %1")
-	card.name = string.gsub( card.name , "^(RWN Testing.*)" , "(DROP) %1") 
+	card.name = string.gsub( card.name , "^(RWN Testing.*)" , "(DROP) %1")
+	
+	if setid == 801 or setid == 778 then -- Commander
+		card.name = string.gsub(card.name,"[%s-]*[Oo]versized","(oversized) (DROP)")
+	elseif setid == 787 then -- Planechase
+		card.name = string.gsub(card.name ,"[%s-]*[Oo]versized" ,"" )
+	end
+	
 	return card
 end -- function site.BCDpluginPre
 
@@ -476,11 +485,11 @@ site.sets = {
 [789]={id = 789, lang = { true }, fruc = { true }, url = "From%20the%20Vault%3A%20Realms"},
 [787]={id = 787, lang = { true }, fruc = { true }, url = "Planechase%202012"},
 [785]={id = 785, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Venser%20vs.%20Koth"},
-[783]={id = 783, lang = { true }, fruc = { true }, url = "Graveborn"},
+[783]={id = 783, lang = { true }, fruc = { true }, url = "Premium%20Deck%20Series:%20Graveborn"},
 [781]={id = 781, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Ajani%20vs.%20Nicol%20Bolas"},
 [780]={id = 780, lang = { true }, fruc = { true }, url = "From%20the%20Vault%3A%20Legends"},
 [778]={id = 778, lang = { true }, fruc = { true }, url = "Commander"},
-[777]={id = 777, lang = { true }, fruc = { true }, url = "Knights%20vs.%20Dragons"},
+[777]={id = 777, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Knights%20vs%20Dragons"},
 [774]={id = 774, lang = { true }, fruc = { true }, url = "Premium%20Deck%20Series:%20Fire%20and%20Lightning"},
 [772]={id = 772, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Elspeth%20vs.%20Tezzeret"},
 [771]={id = 771, lang = { true }, fruc = { true }, url = "From%20the%20Vault%3A%20Relics"},
@@ -488,17 +497,17 @@ site.sets = {
 [768]={id = 768, lang = { true }, fruc = { true }, url = "Duels%20of%20the%20Planeswalkers"},
 [766]={id = 766, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Phyrexia%20vs.%20The%20Coalition"},
 [764]={id = 764, lang = { true }, fruc = { true }, url = "Premium%20Deck%20Series:%20Slivers"},
-[763]={id = 763, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Garruk%20VS%20Liliana"},
+[763]={id = 763, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Garruk%20vs.%20Liliana"},
 [761]={id = 761, lang = { true }, fruc = { true }, url = "Planechase"},   
 [760]={id = 760, lang = { true }, fruc = { true }, url = "From%20the%20Vault%3A%20Exiled"},
 [757]={id = 757, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Divine%20vs.%20Demonic"},
 [755]={id = 755, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Jace%20vs.%20Chandra"},
 [753]={id = 753, lang = { true }, fruc = { true }, url = "From%20the%20Vault%3A%20Dragons"},
-[740]={id = 740, lang = { true }, fruc = { true }, url = "Duel%20Decks: Elves vs. Goblins"},
+[740]={id = 740, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Elves%20vs.%20Goblins"},
 [675]=nil,--Coldsnap Theme Decks
 [635]=nil,--Magic Encyclopedia
 [600]={id = 600, lang = { true }, fruc = { true }, url = "Unhinged"},
-[490]={id = 490, lang = { true }, fruc = { true }, url = "Deckmaster"},
+[490]=nil,--Deckmaster
 [440]={id = 440, lang = { true }, fruc = { true }, url = "Beatdown%20Box%20Set"},
 [415]={id = 415, lang = { true }, fruc = { true }, url = "Starter%202000"},   
 [405]={id = 405, lang = { true }, fruc = { true }, url = "Battle%20Royale%20Box%20Set"},
@@ -519,9 +528,9 @@ site.sets = {
 [43] =nil,--Two-Headed Giant Promos
 [42] =nil,--Summer of Magic Promos
 [41] =nil,--Happy Holidays Promos
-[40] ={id =  40, lang = { true }, fruc = { true }, url = "Arena%20Promos"},
+--TODO [40] ={id =  40, lang = { true }, fruc = { true }, url = "Arena%20Promos"},
 [33] =nil,--Championships Prizes
-[32] ={id =  32, lang = { true }, fruc = { true }, url = "Pro%20Tour%20Promos"},--Pro Tour Promos
+--TODO [32] ={id =  32, lang = { true }, fruc = { true }, url = "Pro%20Tour%20Promos"},--Pro Tour Promos
 [31] ={id =  31, lang = { true }, fruc = { true }, url = "Grand%20Prix%20Promos"},--Grand Prix Promos
 [30] ={id =  30, lang = { true }, fruc = { true }, url = "FNM%20Promos"},
 --TODO: "APAC%20Lands" is Asian-Pacific subset of altArt, needs variant table
@@ -529,11 +538,11 @@ site.sets = {
 --TODO: "Guru%20Lands" is Asian-Pacific subset of altArt, needs variant table
 --[27] ={id =  27, lang = { true }, fruc = { true }, url = ""},--Alternate Art Lands
 [26] ={id =  26, lang = { true }, fruc = { true }, url = "Game%20Day%20Promos"},
-[25] ={id =  25, lang = { true }, fruc = { true }, url = "Judge%20Promos"},
+--TODO [25] ={id =  25, lang = { true }, fruc = { true }, url = "Judge%20Promos"},
 [24] ={id =  24, lang = { true }, fruc = { true }, url = "Champs%20Promos"},
 --TODO "WPN%20Promos" is subset of 23 Gateway & WPN Promos
 [23] ={id =  23, lang = { true }, fruc = { true }, url = "Gateway%20Promos"},
-[22] ={id =  22, lang = { true }, fruc = { true }, url = "Prerelease%20Cards"},
+--TODO [22] ={id =  22, lang = { true }, fruc = { true }, url = "Prerelease%20Cards"},
 --TODO "Release%20Event%20Cards" is subset of 21 Release & Launch Party Cards
 [21] ={id =  21, lang = { true }, fruc = { true }, url = "Launch%20Party%20Cards"},
 [20] ={id =  20, lang = { true }, fruc = { true }, url = "Magic%20Player%20Rewards"},
@@ -641,6 +650,18 @@ site.namereplace = {
 ["Swamp (299)"]							= "Swamp (1)",
 ["Swamp (300)"]							= "Swamp (2)",
 ["Swamp (301)"]							= "Swamp (3)",
+},
+[90]  = { -- Alpha
+["Forest (A)"]							= "Forest (1)",
+["Forest (B)"]							= "Forest (2)",
+["Island (A)"]							= "Island (1)",
+["Island (B)"]							= "Island (2)",
+["Mountain (A)"]						= "Mountain (1)",
+["Mountain (B)"]						= "Mountain (2)",
+["Plains (A)"]							= "Plains (1)",
+["Plains (B)"]							= "Plains (2)",
+["Swamp (A)"]							= "Swamp (1)",
+["Swamp (B)"]							= "Swamp (2)",
 },
 --expansion sets
 [802] = { -- Born of the Gods
@@ -753,9 +774,6 @@ site.namereplace = {
 [756] = { -- Conflux
 ["Scornful AEther-Lich"]				= "Scornful Æther-Lich"
 },
---[754] = { -- Shards of Alara
---["Homnculus Token"]						= "Homunculus Token"
---},
 [751] = { -- Shadowmoor
 ["AEthertow"]							= "Æthertow",
 ["Elemental Token (Red)"]				= "Elemental (4)",
@@ -821,7 +839,7 @@ site.namereplace = {
 ["Brothers Yamazaki (160a Sword)"]		= "Brothers Yamazaki (160a)",
 ["Brothers Yamazaki (160b Pike)"]		= "Brothers Yamazaki (160b)",
 },
-[580] = { -- Fifth DAwn
+[580] = { -- Fifth Dawn
 ["Fold into Aether"]					= "Fold into Æther"
 },
 [570] = { -- Darksteel
@@ -1112,20 +1130,48 @@ site.namereplace = {
 ["Aether Adept"]						= "Æther Adept",
 ["Aether Figment"]						= "Æther Figment",
 },
+[801] = {
+["Kongming, “Sleeping Dragon“"]			= "Kongming, “Sleeping Dragon”",
+["Lim-Dul's Vault"]						= "Lim-Dûl's Vault",
+["AEthermage's Touch"]					= "Æthermage's Touch",
+},
 [796] = { -- Modern Masters
 ["Aether Vial"]							= "Æther Vial",
 ["Aether Spellbomb"]					= "Æther Spellbomb",
 ["Aethersnipe"]							= "Æthersnipe",
 },
-[785] = { -- DD:Elspeth vs. Tezzeret
+[785] = { -- DD:Venser vs. Koth
 ["Aether Membrane"]						= "Æther Membrane",
+},
+[778] = { -- The Gathering Commander
+["AEthersnipe"]							= "Æthersnipe",
+["Jotun Grunt"]							= "Jötun Grunt",
+["Nezumi Graverobber"]					= "Nezumi Graverobber|Nighteyes the Desecrator",
 },
 [772] = { -- DD:Elspeth vs. Tezzeret
 ["Aether Spellbomb"]					= "Æther Spellbomb",
 },
+[771]  = { -- From the Vault: Relics
+["Aether Vial"]							= "Æther Vial",
+},
+[769] = { -- Archenemy
+["Aether Spellbomb"]					= "Æther Spellbomb",
+},
+[766] = { -- DD:Phyrexia vs. The Coalition 
+["Urza's Rage"]							= "Urza’s Rage",
+},
+[763] = { -- DD: Garruk vs. Liliana
+["Beast Token (3)"]						= "Beast (1)",
+["Beast Token (4)"]						= "Beast (2)",
+},
+[761] = { -- Planechase
+["The Aether Flues"]					= "The Æther Flues",
+},
+[755] = { -- DD: Jace vs. Chandra
+["Aethersnipe"]							= "Æthersnipe"
+},
 [600] = { -- Unhinged
---TODO "Ach Hans"
-["Ach! Hans, Run!"]						= '"Ach! Hans, Run!"',
+["Ach! Hans, Run!"]						= '“Ach! Hans, Run!”',
 ["Our Market Research..."]				= "Our Market Research Shows That Players Like Really Long Card Names So We Made this Card to Have the Absolute Longest Card Name Ever Elemental",
 --["Kill Destroy"]						= "Kill! Destroy!",
 ["Who|What/When|Where/Why"]				= "Who|What|When|Where|Why",
@@ -1136,10 +1182,47 @@ site.namereplace = {
 ["Mountain - Unhinged"]					= "Mountain",
 ["Forest - Unhinged"]					= "Forest",
 },
+[405] = { --  Battle Royale
+["Forest (101)"]						= "Forest (1)",
+["Forest (102)"]						= "Forest (2)",
+["Forest (103)"]						= "Forest (3)",
+["Forest (104)"]						= "Forest (4)",
+["Forest (105)"]						= "Forest (5)",
+["Forest (106)"]						= "Forest (6)",
+["Forest (107)"]						= "Forest (7)",
+["Forest (108)"]						= "Forest (8)",
+["Forest (109)"]						= "Forest (9)",
+["Island (110)"]						= "Island (1)",
+["Island (111)"]						= "Island (2)",
+["Island (112)"]						= "Island (3)",
+["Island (113)"]						= "Island (4)",
+["Island (114)"]						= "Island (5)",
+["Mountain (115)"]						= "Mountain (1)",
+["Mountain (116)"]						= "Mountain (2)",
+["Mountain (117)"]						= "Mountain (3)",
+["Mountain (118)"]						= "Mountain (4)",
+["Mountain (119)"]						= "Mountain (5)",
+["Mountain (120)"]						= "Mountain (6)",
+["Mountain (121)"]						= "Mountain (7)",
+["Mountain (122)"]						= "Mountain (8)",
+["Mountain (123)"]						= "Mountain (9)",
+["Plains (124)"]						= "Plains (1)",
+["Plains (125)"]						= "Plains (2)",
+["Plains (126)"]						= "Plains (3)",
+["Plains (127)"]						= "Plains (4)",
+["Plains (128)"]						= "Plains (5)",
+["Plains (129)"]						= "Plains (6)",
+["Plains (130)"]						= "Plains (7)",
+["Plains (131)"]						= "Plains (8)",
+["Plains (132)"]						= "Plains (9)",
+["Swamp (133)"]							= "Swamp (1)",
+["Swamp (134)"]							= "Swamp (2)",
+["Swamp (135)"]							= "Swamp (3)",
+["Swamp (135)"]							= "Swamp (4)",
+},
 [380] = { -- Portal Three Kingdoms
---TODO Pang Tong and Kongming (")
-["Pang Tong, “Young Phoenix”"]			= 'Pang Tong, "Young Phoenix"',
-["Kongming, “Sleeping Dragon”"]			= 'Kongming, "Sleeping Dragon"',
+["Pang Tong, “Young Phoenix“"]			= "Pang Tong, “Young Phoenix”",
+["Kongming, “Sleeping Dragon“"]			= "Kongming, “Sleeping Dragon”",
 },
 [320] = { -- Unglued
 ["B.F.M. (Big Furry Monster Left)"]		= "B.F.M. (Left)",
@@ -1212,6 +1295,41 @@ site.namereplace = {
 ["Urza's Tower (Mountains)"] 			= "Urza's Tower (3)",
 ["Urza's Tower (Shore)"] 				= "Urza's Tower (4)",
 },
+-- promo
+[30] = { -- Friday Night Magic
+["Human|Wolf Token"]					= "Human|Wolf",
+},
+[21]  = { -- Release & Launch Parties Promos
+["Ludevic's Test Subject"] 				= "Ludevic’s Test Subject|Ludevic’s Abomination",
+["Mondronen Shaman"] 					= "Mondronen Shaman|Tovolar’s Magehunter",
+},
+[20]  = { -- Magic Player Rewards
+["Beast Token (Darksteel)"] 			= "Beast (DST)",
+["Beast Token (Odyssey)"] 				= "Beast (ODY)",
+["Bear Token (Odyssey)"] 				= "Bear (ODY)",
+["Bear Token (Onslaught)"] 				= "Bear (ONS)",
+["Bird Token (Invasion)"] 				= "Bird",
+--["Counterspell"] 						= "Counterspell",
+["Demon Token (Mirrodin)"] 				= "Demon",
+["Dragon Token (Onslaught)"] 			= "Dragon",
+["Elephant Token (Odyssey)"] 			= "Elephant (ODY)",
+["Elephant Token (Invasion)"] 			= "Elephant (INV)",
+["Goblin Token (Legions)"] 				= "Goblin",
+["Goblin Soldier Token (Apocalypse)"] 	= "Goblin Soldier",
+["Insect Token (Onslaught)"] 			= "Insect",
+--["Lightning Bolt"] 					= "Lightning Bolt",
+["Myr Token (Mirrodin)"] 				= "Myr",
+["Pentavite Token (Mirrodin)"] 			= "Pentavite",
+["Rukh Token (8th)"] 					= "Rukh",
+["Saproling Token (Invasion)"] 			= "Saproling",
+["Sliver Token (Legions)"] 				= "Sliver",
+["Soldier Token (Onslaught)"] 			= "Soldier",
+["Spirit Token (Champions)"] 			= "Spirit (CHK)",
+["Spirit Token (Planeshift)"] 			= "Spirit (PLS)",
+["Squirrel Token (Odyssey)"] 			= "Squirrel",
+["Wurm Token (Odyssey)"] 				= "Wurm",
+["Zombie Token (Odyssey)"] 				= "Zombie",
+},
 } -- end table site.namereplace
 
 --[[- card variant tables.
@@ -1280,6 +1398,16 @@ override=true,
 ["Forest (249) - Full Art"]		= { "Forest"	, { false, false, false, 4    , false, false, false, false } },
 ["Forest (249)"]				= { "Forest"	, { false, false, false, false, false, false, false, "4a"  } },
 	},
+[10]  = { -- Junior Series
+["Elvish Champion"]				= { "Elvish Champion"	, { "E"	, false, "J" } },
+["Glorious Anthem"]				= { "Glorious Anthem"	, { "E"	, "U"  , "J" } },
+["Royal Assassin"]				= { "Royal Assassin"	, { "E"	, false, "J" } },
+["Sakura-Tribe Elder"]			= { "Sakura-Tribe Elder", { "E"	, "U"  , "J" } },
+["Shard Phoenix"]				= { "Shard Phoenix"		, { "E"	, "U"  , "J" } },
+["Slith Firewalker"]			= { "Slith Firewalker"	, { "E"	, false, "J" } },
+["Soltari Priest"]				= { "Soltari Priest"	, { "E"	, "U"  , "J" } },
+["Whirling Dervish"]			= { "Whirling Dervish"	, { "E"	, "U"  , "J" } },
+	},	
 } -- end table site.variants
 
 --[[- wrapper function for expected table 
@@ -1322,8 +1450,8 @@ function site.SetExpected()
 [180] = { namereplaced=15 },
 [140] = { namereplaced=15, dropped=2 },
 --[110] = { namereplaced=15},
-[100] = { pset={302-2}, dropped=2},-- 2 SOON
-[90]  = { pset={295-6}, dropped=6},-- 6 SOON
+[100] = { pset={LHpi.Data.sets[100].cardcount.reg-1}, dropped=1},-- 1 SOON
+[90]  = { pset={295-6}, dropped=12, namereplaced=8},-- 12 SOON
 -- Expansions
 [802] = { namereplaced=2},
 [800] = { namereplaced=3, dropped=1 },
@@ -1380,20 +1508,47 @@ function site.SetExpected()
 -- special sets
 [807] = { pset={ LHpi.Data.sets[807].cardcount.both+LHpi.Data.sets[807].cardcount.nontr }, failed={ 9 }, namereplaced=1 },--no tokens
 [805] = { foiltweaked=2, namereplaced=2 },
+[801] = { pset={ LHpi.Data.sets[801].cardcount.reg+LHpi.Data.sets[801].cardcount.overs }, failed={ LHpi.Data.sets[801].cardcount.overs }, dropped=LHpi.Data.sets[801].cardcount.overs-1, namereplaced=3 },
 [799] = { foiltweaked=2, pset={ 83-16 } },-- -16 basic lands, ((-2 (of 4) nonbasic lands)?)
 [798] = {pset={20}, dropped=1 }, 
 [796] = { namereplaced=3 },
 [794] = { pset={81-6}, dropped=6, foiltweaked=2},-- 6 SOON
+[790] = { foiltweaked=2},
+[787] = { pset={ LHpi.Data.sets[807].cardcount.reg+LHpi.Data.sets[787].cardcount.nontr-39-11 }, dropped= 11 },--11 SOON
 [785] = { pset={79}, namereplaced=1, foiltweaked=2 },
+[781] = { foiltweaked=2},
+[777] = { foiltweaked=2},
+[778] = { pset={ LHpi.Data.sets[778].cardcount.reg+LHpi.Data.sets[778].cardcount.overs }, failed={ LHpi.Data.sets[778].cardcount.overs }, namereplaced=3 },
 [772] = { pset={80}, namereplaced=1, foiltweaked=2 },
+[771] = { namereplaced=1},
+[769] = { pset={ LHpi.Data.sets[769].cardcount.reg+LHpi.Data.sets[769].cardcount.nontr }, namereplaced=1, dropped=2 },
+[768] = { foiltweaked=5},
+[766] = { foiltweaked=2, dropped=6, namereplaced=1 },
+[763] = { pset={66-3}, dropped=4, namereplaced=2, foiltweaked=2},--3 swamps SOON
+[761] = { pset={ LHpi.Data.sets[761].cardcount.reg+LHpi.Data.sets[761].cardcount.nontr-8 }, failed={ 5 }, namereplaced=1, dropped=28 },-- 5 fails are promos,28 SOON, 8 mountains missing
 [757] = { foiltweaked=2},
-[600] = { pset={141-1}, failed={1}, namereplaced=9, dropped=2, foiltweaked=1 },-- 2 SOON; "Ach! Hans, Run" 
+[755] = { namereplaced=1, foiltweaked=2},
+[740] = { dropped=2, foiltweaked=2},
+[600] = { namereplaced=9, dropped=1, foiltweaked=1 },-- 1 SOON 
 [440] = { pset={90-2}, foiltweaked=2, dropped=11 },-- 11 SOON, but only 2 Islands missing
-[380] = { pset={180-5-2}, failed={2}, namereplaced=2-2, dropped=5 },-- 5 SOON; Pang Tong and Kongming fail due to "-Problems
+[415] = { failed= { 3 }, dropped=30, foiltweaked=1},
+[405] = { pset={ 124 }, dropped=30, namereplaced=6 },
+[390] = { pset={ LHpi.Data.sets[390].cardcount.reg+1-4 },failed={ 1 }, dropped=4 },-- +1 Thorn Elemental
+[380] = { pset={180-4}, namereplaced=2, dropped=4 },-- 4 SOON
 [320] = { namereplaced=8 },
 [310] = { pset={165-10}, dropped=10, namereplaced=15-10},-- 10 SOON
 [260] = { pset={228-6-8}, dropped=8, namereplaced=27-8 },-- 8 SOON, -6 "DG" variant
 [200] = { namereplaced=12 },
+[70]  = { pset={ LHpi.Data.sets[70].cardcount.nontr-4 }, dropped=4 },--4 SOON
+-- promos
+[31]  = { pset={ LHpi.Data.sets[31].cardcount.reg }, failed={ 3 } },
+[30]  = { failed={ 3 }, namereplaced=1, foiltweaked=1, dropped=3 },--3 SOON
+[26]  = { pset={ 36 }, foiltweaked=17 },
+[24]  = { foiltweaked=5 },
+[23]  = { pset={ 33 }, failed={ 3 } },
+[21]  = { pset={ 23 }, namereplaced=2, dropped=2 },
+[20]  = { pset={ LHpi.Data.sets[20].cardcount.both+LHpi.Data.sets[20].cardcount.overs-10+1}, failed={ 2}, namereplaced=23, foiltweaked=8 },-- +1 Lightning Bolt
+[10]  = { pset={ 31-6 } },
 	}--end table site.expected
 end--function site.SetExpected()
 --EOF
