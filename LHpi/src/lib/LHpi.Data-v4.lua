@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 --[[ CHANGES
 v4
-added: 235,807,M15
+added: 235,807,M15,105,106
 fixed: 320,490,590,139,787,26,31,30,10,740,390
 added lots of TODO markers
 ]]
@@ -3326,6 +3326,16 @@ SpecialSets = nil,
 ["Urza's Tower (3)"] 			= { "Urza's Tower"			, { false, false, 3    , false } },--Mountains
 ["Urza's Tower (4)"] 			= { "Urza's Tower"			, { false, false, false, 4     } },--Shore
 	},
+},
+[106] = { name="Collectors’ Edition (International)",
+--TODO 106
+	--foil=
+	--cardcount={ reg=, tok=, nontr=, overs= },
+},
+[105] = { name="Collectors’ Edition (Domestic)",
+--TODO 105
+	--foil=
+	--cardcount={ reg=, tok=, nontr=, overs= },
 },
 [70] = { name="Vanguard",
 	foil="n",

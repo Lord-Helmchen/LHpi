@@ -31,6 +31,7 @@ dataver 4
 BuildUrl: added optional fields to urldetails luadoc
 new (optional) field: site.pagenumberregex
 wrap site.expected in site.SetExpected()
+add 105,106
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -522,6 +523,8 @@ site.sets = {
 --[225]={id = 225, lang = { [1]=true }, fruc = { false, true }, url = ""},--Introductory Two-Player Set
 --[201]={id = 201, lang = { [1]=false,[3]=true,[4]=true,[5]=true }, fruc = { false, true }, url = ""},--Renaissance
 [200]={id = 200, lang = { [1]=true }, fruc = { false, true }, url = "CHR"},--Chronicles
+--[106]={id = 106, lang = { [1]=true }, fruc = { true , true }, url = ""},--Collectors’ Edition (International)
+--[105]={id = 105, lang = { [1]=true }, fruc = { true , true }, url = ""},--Collectors’ Edition (Domestic)
 --[70] ={id =  70, lang = { [1]=true }, fruc = { false, true }, url = "VAN"},--Vanguard
 --[69] ={id =  69, lang = { [1]=true }, fruc = { false, true }, url = ""},--Box Topper Cards
 -- Promo Cards
