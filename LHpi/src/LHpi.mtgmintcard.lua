@@ -564,7 +564,8 @@ site.sets = {
 site.namereplace = {
 [808] = { -- M2015
 ["Aetherspouts(Ætherspouts)"]			= "Ætherspouts",
-["Ajani Emblem"]						= "Ajani Steadfast Emblem",
+["Emblem Ajani Token(13)"]				= "Ajani Steadfast Emblem",
+["Emblem Garruk Token(14)"]				= "Garruk, Apex Predator Emblem",
 },
 [797] = { -- M2014
 ["Elemental Token(7)"]					= "Elemental (7)",
@@ -693,7 +694,7 @@ site.namereplace = {
 [600] = { -- Unhinged
 ["Who|What/When|Where/Why"]				= "Who|What|When|Where|Why",
 ["“Ach! Hans, Run!“"]					= "“Ach! Hans, Run!”",
-["underscore"]							= "Unhinged Shapeshifter",
+["underscore"]							= "_____",
 },
 [490] = { -- Deckmasters
 ["Lim-Dul's High Guard"]				= "Lim-Dûl’s High Guard",
@@ -778,7 +779,7 @@ function site.SetExpected()
 	EXPECTTOKENS = true,
 --TODO reduce amount of hardcoded numbers
 -- Core sets
-[808] = {pset={ LHpi.Data.sets[808].cardcount.both-15, [3]=LHpi.Data.sets[808].cardcount.reg-15 } },-- -15 extra cards (nr. 270 - 284)
+[808] = { pset={ LHpi.Data.sets[808].cardcount.both-15, [9]=LHpi.Data.sets[808].cardcount.reg-15 }, failed={ 1, [9]=13}, namereplaced=7 },-- -15 extra cards (nr. 270 - 284), Beast Token missing Version nr in MA
 [797] = { pset={ [9]=262-13 }, failed={ [9]=13}, namereplaced=4 }, -- 13 tokens
 [788] = { pset={ [9]=249 }, failed={[9]=11} },-- fail SZH tokens
 [779] = { pset={ [9]=249 }, failed={[9]=7} },-- fail SZH tokens
@@ -820,7 +821,7 @@ function site.SetExpected()
 [750] = { pset={ [9]=150 } },-- no SZH tokens
 [730] = { pset={ [9]=301-1 }, failed={[9]=11}, dropped=2, namereplaced=4 },-- -1 is missing "Changeling Berserker" (SZH), fail SZH tokens
 [710] = { dropped=2 },
-[700] = { pset={ [9]=165-1 },dropped=2 }, -- -1:?
+[700] = { dropped=2 },
 [690] = { dropped=1 },
 [680] = { pset={ [9]=4 }, dropped=1 },
 [660] = { dropped=1 },

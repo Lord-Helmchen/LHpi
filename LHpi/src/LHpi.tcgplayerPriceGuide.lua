@@ -1352,6 +1352,11 @@ site.namereplace = {
  @field [parent=#site.variants] #table variant
 ]]
 site.variants = {
+[808] = { --M15 workarund
+override=false,
+["Beast (5)"] = { "Beast", {"*"} },
+["Beast (9)"] = { "Beast", {"*"} },
+},
 [762] = { --Zendikar
 override=true,
 ["Plains"] 						= { "Plains"	, { 1    , 2    , 3    , 4    , "1a" , "2a" , "3a" , "4a"  } },
@@ -1444,11 +1449,11 @@ function site.SetExpected()
 -- @field [parent=#site.expected] #boolean EXPECTTOKENS
 	EXPECTTOKENS = true,
 -- Core sets
-[808] = { dropped=2 }, -- 1 SOON, 1 Garruk the Slayer (oversized)
+[808] = { pset={LHpi.Data.sets[808].cardcount.both}, failed={ 2}, dropped=1, namereplaced=3 }, -- 1 SOON,2 Beast Tokens, 1 Garruk the Slayer (oversized)
 [797] = { failed={ 1 }, namereplaced=2 },
 [788] = { failed={ 1 } },
 [779] = { namereplaced=1 },
-[770] = { namereplaced=5, dropped=6 },-- 6 SOON
+[770] = { namereplaced=3, dropped=6 },-- 6 SOON
 [759] = { dropped=6 },
 [720] = { dropped=3+2 },-- 3 SOON
 [550] = { namereplaced=1 },
@@ -1469,8 +1474,8 @@ function site.SetExpected()
 [786] = { namereplaced=4 },
 [784] = { pset={161+1}, namereplaced=15 },-- +1 Checklist
 [782] = { pset={276+1}, namereplaced=26 },-- +1 Checklist
-[776] = { pset={ 175+4 }, namereplaced=1 },
---[775] = { namereplaced=4 },
+[776] = { failed={ 1 }, namereplaced=1 },-- 1 fail is Poison Counter
+[775] = { failed={ 1 } },-- -1:Poison Counter
 [773] = { failed={ 1 }, namereplaced=2 },-- 1 fail is Poison Counter
 [767] = { namereplaced=3 },
 [765] = { namereplaced=1 },
@@ -1527,8 +1532,6 @@ function site.SetExpected()
 [781] = { foiltweaked=2},
 [777] = { foiltweaked=2},
 [778] = { pset={ LHpi.Data.sets[778].cardcount.reg+LHpi.Data.sets[778].cardcount.overs }, failed={ LHpi.Data.sets[778].cardcount.overs }, namereplaced=3 },
-[776] = { failed= { 1} },-- -1:Poison Counter
-[775] = { failed= { 1} },-- -1:Poison Counter
 [772] = { pset={80}, namereplaced=1, foiltweaked=2 },
 [771] = { namereplaced=1},
 [769] = { pset={ LHpi.Data.sets[769].cardcount.reg+LHpi.Data.sets[769].cardcount.nontr }, namereplaced=1, dropped=2 },
@@ -1543,7 +1546,7 @@ function site.SetExpected()
 [440] = { foiltweaked=2 },
 [415] = { failed= { 3 }, dropped=30, foiltweaked=1},
 [405] = { pset={ 126 }, dropped=25, namereplaced=11 },
-[390] = { pset={ LHpi.Data.sets[390].cardcount.reg+1 },failed={ 1 }, dropped=2 },-- 2 SOON,  +1 Thorn Elemental
+[390] = { pset={ LHpi.Data.sets[390].cardcount.reg-2+1 },failed={ 1 }, dropped=2 },-- 2 SOON,  +1 Thorn Elemental
 [380] = { pset={180-4}, namereplaced=2, dropped=4 },-- 4 SOON
 [320] = { namereplaced=8 },
 [310] = { pset={165-10}, dropped=10, namereplaced=15-10},-- 10 SOON

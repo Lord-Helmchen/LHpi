@@ -926,6 +926,7 @@ site.namereplace = {
 [600] = { -- Unhinged
 ["First Come First Served"]				= "First Come, First Served",
 ["Our Market Research Shows ..."]		= "Our Market Research Shows That Players Like Really Long Card Names So We Made this Card to Have the Absolute Longest Card Name Ever Elemental",
+["Our Market Research Shows ?"]		= "Our Market Research Shows That Players Like Really Long Card Names So We Made this Card to Have the Absolute Longest Card Name Ever Elemental",
 ["Erase"]								= "Erase (Not the Urza’s Legacy One)",
 ["Who|What/When|Where/Why"]				= "Who|What|When|Where|Why",
 ["Yet Another Aether Vortex"]			= "Yet Another Æther Vortex",
@@ -1097,7 +1098,7 @@ function site.SetExpected()
 [150] = { namereplaced=2 },
 [120] = { namereplaced=3 },
 -- special sets
-[807] = { pset={ LHpi.Data.sets[807].cardcount.reg+LHpi.Data.sets[807].cardcount.nontr }, namereplaced=4 },--no tokens
+[807] = { pset={ LHpi.Data.sets[807].cardcount.reg+LHpi.Data.sets[807].cardcount.nontr }, namereplaced=3 },--no tokens
 [805] = { namereplaced=2 },
 [801] = { pset={ LHpi.Data.sets[801].cardcount.reg+LHpi.Data.sets[801].cardcount.overs }, failed={ LHpi.Data.sets[801].cardcount.overs }, namereplaced=2 },
 [796] = { namereplaced=5 },
