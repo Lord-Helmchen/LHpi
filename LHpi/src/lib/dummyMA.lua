@@ -157,7 +157,7 @@ end
 -- Set the price of foil M11 English Celestial Purge to $4.25
 -- ma.SetPrice(770, 1, "Celestial Purge", "", 0, 4.25)
 -- Set the regular and foil prices for all versions of M10 Russian Forests (using Russian card name)
--- ma.SetPrice(759, 2, "Лес", "*", 0.01, 0.1)
+-- ma.SetPrice(759, 2, "Ð›ÐµÑ�", "*", 0.01, 0.1)
 -- 
 -- @function [parent=#ma] SetPrice
 -- @param #number setid
@@ -170,12 +170,11 @@ end
 function ma.SetPrice(setid, langid, cardname, cardversion, regprice, foilprice)
 	local dummystring=string.format('ma.SetPrice: setid=%q  langid=%q  cardname=%-20q\tcardversion=%q\tregprice=%q\tfoilprice=%q',setid,langid,cardname,tostring(cardversion),regprice,foilprice)
 	print (dummystring)
-	--if cardversion == "*" then
-	--	return 4
-	--elseif
-	--	LHpi.Length(cardversion) == 1 then
-	--	return 1
-	--end
+	if cardversion == "*" then
+		return 4
+	elseif LHpi.Length then
+		return LHpi.Length(cardversion)
+	end
 	return 1 -- just always assume one price was set successfully
 end
 
@@ -617,8 +616,8 @@ function main()
 		OFFLINE = true,
 		SAVELOG = true,
 		SAVEHTML = false,
---		DEBUG = true,
---		DEBUGFOUND = true,
+		DEBUG = true,
+		DEBUGFOUND = true,
 --		DEBUGVARIANTS = true,
 --		SAVETABLE=true,
 	}
@@ -636,7 +635,7 @@ function main()
 	local script=scripts[1]
 
 --	dummy.fakesitescript()
---	dummy.loadscript(script.name,script.path,script.savepath)
+	dummy.loadscript(script.name,script.path,script.savepath)
 --	LHpi = dummy.loadlibonly(2.9,dummy.path,dummy.savepath)
 
 	-- force debug enviroment options
@@ -645,20 +644,21 @@ function main()
 
 	--now try to break the script :-)
 	local fakeimportfoil = "y"
-	local fakeimportlangs = { [1] = "Language" }
-	local fakeimportlangs = dummy.alllangs
+	local fakeimportlangs = { [1] = "eng" }
+--	local fakeimportlangs = { [9] = "szh" }
+--	local fakeimportlangs = dummy.alllangs
 	local fakeimportsets = { [0] = "fakeset"; }
---	local fakeimportsets = { [797] = "some set"; }
+	local fakeimportsets = { [808] = "some set"; }
 --	local fakeimportsets = { [220]="foo";[800]="bar";[0]="baz";}
-	local fakeimportsets = dummy.coresets
+--	local fakeimportsets = dummy.coresets
 --	local fakeimportsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 
 --	dummy.Data = LHpi.LoadData(2)
 --	LHpi.DoImport(fakeimportfoil, fakeimportlangs, fakeimportsets)
---	ImportPrice( fakeimportfoil, fakeimportlangs, fakeimportsets )
+	ImportPrice( fakeimportfoil, fakeimportlangs, fakeimportsets )
 --	print(LHpi.Tostring( "this is a string." ))
 --	print(LHpi.ByteRep("Zwölffüßler"))
-	dummy.performancetest(10,script,fakeimportfoil,fakeimportlangs,fakeimportsets,"time.log")
+--	dummy.performancetest(10,script,fakeimportfoil,fakeimportlangs,fakeimportsets,"time.log")
 
 	local dt = os.clock() - t1 
 	print(string.format("All this took %g seconds",dt))

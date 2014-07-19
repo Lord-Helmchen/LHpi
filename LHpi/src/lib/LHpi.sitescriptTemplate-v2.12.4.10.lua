@@ -31,7 +31,7 @@ dataver 4
 BuildUrl: added optional fields to urldetails luadoc
 new (optional) field: site.pagenumberregex
 wrap site.expected in site.SetExpected()
-add 105,106
+add missing sets
 ]]
 
 -- options that control the amount of feedback/logging done by the script

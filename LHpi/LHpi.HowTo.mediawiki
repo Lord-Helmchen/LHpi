@@ -710,7 +710,7 @@ To prevent difficult-to-find syntax errors, you might want to end each table fie
 Obviously, if you intend to actually run your sitescript, you need to download the corresponding library and data file versions.<br/>
 Unless otherwise noted, each library version (starting with 2.7) should be compatible with each data file version. You can for example change dataver upon release of a new card set by WotC, and keep libver at a library that you and your sitescript are comfortable with.<br/>
 It is usually a ''very good idea'' to use the '''ImportPrice''' fuction from the template version that matches the library version, and only incorporate changes you might have made to it into the the new function definition.<br/>
-If you want to be nice to others that might want to use your sitescript as example or as a starting point for their own sitescript, you could verify that the luadoc still comments match the ones in the template that uses the same library version.
+If you want to be nice to others that might want to use your sitescript as example or as a starting point for their own sitescript, you could verify that the luadoc comments still match the ones in the template that uses the same library version.
 =====2.6 to 2.7=====
 * The new control option <tt>LOGFOILTWEAK</tt> should be added below <tt>LOGNAMEREPLACE</tt>.
 * The new configuration <tt>dataver</tt> should be added below <tt>libver</tt>.
@@ -731,6 +731,11 @@ If you want to be nice to others that might want to use your sitescript as examp
 *boolean OPTIONS ("LHpi properties") have been reordered to better fit expected enuser needs, but this change is only cosmetically.
 *new SetPrice return value handling means you will need to check and adapt your site.expected.
 *new configuration scriptversion should be added above scriptname, and scriptname should probably include it.
+=====2.8 to 2.12=====
+* rename DEBUGSKIPFOUND -> DEBUGFOUND
+* rename STRICTCHECKEXPECTED -> STRICTEXPECTED 
+* site.variants subtables can have boolean field [code]override[/code]. If true, default variant table from LHpi.Data is ignored, otherwise both are merged.
+* table site.expected should be wrapped in function site.SetExpected(). see template for example. 
 ====releasing your sitescript====
 
 Here's a few non-obligatory suggestions if you want to share your (more or less?) finished sitescript
