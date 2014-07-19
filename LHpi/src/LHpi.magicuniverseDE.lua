@@ -72,7 +72,7 @@ STRICTEXPECTED = true
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
-OFFLINE = true
+--OFFLINE = true
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
@@ -933,6 +933,7 @@ function site.SetExpected()
 -- @field [parent=#site.expected] #boolean EXPECTTOKENS
 	EXPECTTOKENS = true,
 -- Core sets
+[808] = {pset={ LHpi.Data.sets[808].cardcount.reg-15, [3]=LHpi.Data.sets[808].cardcount.reg-15 } },-- -15 extra cards (nr. 270 - 284)
 [797] = { namereplaced=3 },
 [788] = { namereplaced=1 },
 [770] = { namereplaced=2 },
@@ -977,9 +978,10 @@ function site.SetExpected()
 [480] = { pset={ 350-20, [3]=350-20 }, dropped=1 },
 [450] = { pset={ 146-3, [3]=146-3 } },-- 3 alt art versions missing
 [430] = { pset={ 350-20, [3]=350-20 } },
+[330] = {pset={ LHpi.Data.sets[330].cardcount.reg-1, [3]=LHpi.Data.sets[330].cardcount.reg-1 }, dropped=1 },-- Angelic Chorus only (lp)
 [290] = { dropped=1 },
 [220] = { namereplaced=3 },
-[190] = { pset={ 383-15, [3]=383-15 }, dropped=1 },--3*5 lands
+[190] = { pset={ 383-3, [3]=383-3 }, dropped=1 },-- -3 plains
 [160] = { dropped=9 },
 [150] = { pset={ [5]=19 }, dropped=87 },
 [130] = { dropped=54 },

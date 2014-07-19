@@ -70,7 +70,7 @@ STRICTEXPECTED = true
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
-OFFLINE = true
+--OFFLINE = true
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
@@ -562,6 +562,10 @@ site.sets = {
  @field [parent=#site.namereplace] #string name
 ]]
 site.namereplace = {
+[808] = { -- M2015
+["Aetherspouts(Ætherspouts)"]			= "Ætherspouts",
+["Ajani Emblem"]						= "Ajani Steadfast Emblem",
+},
 [797] = { -- M2014
 ["Elemental Token(7)"]					= "Elemental (7)",
 ["Elemental Token (8)"]					= "Elemental (8)",
@@ -689,6 +693,7 @@ site.namereplace = {
 [600] = { -- Unhinged
 ["Who|What/When|Where/Why"]				= "Who|What|When|Where|Why",
 ["“Ach! Hans, Run!“"]					= "“Ach! Hans, Run!”",
+["underscore"]							= "Unhinged Shapeshifter",
 },
 [490] = { -- Deckmasters
 ["Lim-Dul's High Guard"]				= "Lim-Dûl’s High Guard",
@@ -773,6 +778,7 @@ function site.SetExpected()
 	EXPECTTOKENS = true,
 --TODO reduce amount of hardcoded numbers
 -- Core sets
+[808] = {pset={ LHpi.Data.sets[808].cardcount.both-15, [3]=LHpi.Data.sets[808].cardcount.reg-15 } },-- -15 extra cards (nr. 270 - 284)
 [797] = { pset={ [9]=262-13 }, failed={ [9]=13}, namereplaced=4 }, -- 13 tokens
 [788] = { pset={ [9]=249 }, failed={[9]=11} },-- fail SZH tokens
 [779] = { pset={ [9]=249 }, failed={[9]=7} },-- fail SZH tokens
@@ -814,7 +820,7 @@ function site.SetExpected()
 [750] = { pset={ [9]=150 } },-- no SZH tokens
 [730] = { pset={ [9]=301-1 }, failed={[9]=11}, dropped=2, namereplaced=4 },-- -1 is missing "Changeling Berserker" (SZH), fail SZH tokens
 [710] = { dropped=2 },
-[700] = { dropped=2 },
+[700] = { pset={ [9]=165-1 },dropped=2 }, -- -1:?
 [690] = { dropped=1 },
 [680] = { pset={ [9]=4 }, dropped=1 },
 [660] = { dropped=1 },
@@ -829,7 +835,7 @@ function site.SetExpected()
 [520] = { namereplaced=1, dropped=6 },
 [510] = { dropped=16 },
 [500] = { dropped=7 },
-[480] = { pset={ 350-20 }, 	dropped=29 },
+[480] = { pset={ 350-20 }, 	dropped=28 },
 [470] = { dropped=3, namereplaced=1 },
 [450] = { pset={ 146-3 }, dropped=23 },
 [430] = { dropped=96 },
@@ -837,7 +843,7 @@ function site.SetExpected()
 [410] = { pset={ 143-1 }, dropped=9 },
 [400] = { pset={ 350-20 }, dropped=13 },
 [370] = { dropped=9 },
-[350] = { dropped=11 },
+[350] = { dropped=9 },
 [330] = { pset={ 350-20 }, dropped=31 }, -- no lands
 [300] = { dropped=10 },
 [290] = { dropped=19 },
@@ -847,7 +853,7 @@ function site.SetExpected()
 [230] = { pset={ 350-21 }, dropped=67 },
 [220] = { dropped=10 },
 [210] = { dropped=6 },
-[190] = { pset={ 383-15 }, dropped=81 },-- no basic lands
+[190] = { pset={ 383-15 }, dropped=80 },-- no basic lands
 [170] = { dropped=18 },
 [160] = { dropped=8 },
 [150] = { dropped=22, namereplaced=1 },
@@ -870,7 +876,7 @@ function site.SetExpected()
 [768] = { pset={ 113-16 } },-- -16 basic lands
 [766] = { pset={LHpi.Data.sets[766].cardcount.reg+LHpi.Data.sets[766].cardcount.tok-1}, namereplaced=1},-- missing Foresst(71)
 [763] = { pset={ 66-12 }, namereplaced=2 },
-[600] = { pset={ 141-2 }, namereplaced=2 },--'Kill! Destroy!' and 'Super Secret Tech' missing
+[600] = { pset={ 141-2 }, namereplaced=3 },--'Kill! Destroy!' and 'Super Secret Tech' missing
 [490] = { pset={ 58-3 }, namereplaced=1, foiltweaked=1 },-- -3 premium
 [440] = { foiltweaked=2 },
 [340] = { pset={ 1} },

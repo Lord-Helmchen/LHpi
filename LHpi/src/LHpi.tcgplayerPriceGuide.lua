@@ -76,7 +76,7 @@ STRICTEXPECTED = true
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
-OFFLINE = true
+--OFFLINE = true
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
@@ -571,6 +571,11 @@ site.sets = {
  @field [parent=#site.namereplace] #string name
 ]]
 site.namereplace = {
+[808] = { --M2015
+["AEtherspouts"]						= "Ætherspouts",
+["Beast Token (Black)"]					= "Beast (5)",
+["Beast Token (Green)"]					= "Beast (9)",
+},
 [797] = { -- M2014
 ["Elemental Token (Jones)"]				= "Elemental (7)",
 ["Elemental Token (Nelson)"]			= "Elemental (8)",
@@ -581,7 +586,8 @@ site.namereplace = {
 },
 [770] = { -- M2011
 ["Aether Adept"]						= "Æther Adept",
-["Ooze Token"]							= "Ooze",
+["Ooze Token (1)"]						= "Ooze (5)",
+["Ooze Token (2)"]						= "Ooze (6)",
 },
 [550] = { -- 8th Edition
 ["Abyssal Specter-staging-test"]		= "Abyssal Specter",
@@ -746,9 +752,9 @@ site.namereplace = {
 ["Wurm Token (Lifelink)"]				= "Wurm (9)",
 },
 [767] = { -- Rise of the Eldazi
-["Eldrazi Spawn Token (1a)"]			= "Eldrazi Spawn (1a)",
-["Eldrazi Spawn Token (1b)"]			= "Eldrazi Spawn (1b)",
-["Eldrazi Spawn Token (1c)"]			= "Eldrazi Spawn (1c)",
+["Eldrazi Spawn Token (A)"]				= "Eldrazi Spawn (1a)",
+["Eldrazi Spawn Token (B)"]				= "Eldrazi Spawn (1b)",
+["Eldrazi Spawn Token (C)"]				= "Eldrazi Spawn (1c)",
 --["Plains - B"]							= "Plains (230)",
 --["Plains - C"]							= "Plains (231)",
 --["Plains - D"]							= "Plains (232)",
@@ -1125,6 +1131,7 @@ site.namereplace = {
 -- special sets
 [807] = { --Conspiracy
 ["AEther Tradewinds"]					= "Æther Tradewinds",
+["AEther Searcher"]						= "Æther Searcher",
 },
 [805] = { -- DD:Jace vs. Vraska
 ["Aether Adept"]						= "Æther Adept",
@@ -1437,10 +1444,11 @@ function site.SetExpected()
 -- @field [parent=#site.expected] #boolean EXPECTTOKENS
 	EXPECTTOKENS = true,
 -- Core sets
+[808] = { dropped=2 }, -- 1 SOON, 1 Garruk the Slayer (oversized)
 [797] = { failed={ 1 }, namereplaced=2 },
 [788] = { failed={ 1 } },
 [779] = { namereplaced=1 },
-[770] = { pset={255}, namereplaced=3, dropped=6 },-- 6 SOON
+[770] = { namereplaced=5, dropped=6 },-- 6 SOON
 [759] = { dropped=6 },
 [720] = { dropped=3+2 },-- 3 SOON
 [550] = { namereplaced=1 },
@@ -1451,7 +1459,7 @@ function site.SetExpected()
 [140] = { namereplaced=15, dropped=2 },
 --[110] = { namereplaced=15},
 [100] = { pset={LHpi.Data.sets[100].cardcount.reg-1}, dropped=1},-- 1 SOON
-[90]  = { pset={295-6}, dropped=12, namereplaced=8},-- 12 SOON
+[90]  = { pset={295-5}, dropped=11, namereplaced=8},-- 11 SOON
 -- Expansions
 [802] = { namereplaced=2},
 [800] = { namereplaced=3, dropped=1 },
@@ -1475,7 +1483,7 @@ function site.SetExpected()
 [730] = { namereplaced=3 },
 [710] = { namereplaced=1 },
 [700] = { namereplaced=2 },
-[680] = { pset={301-2}, dropped=2, namereplaced=3 },-- 2 SOON
+[680] = { namereplaced=3 },
 [670] = { namereplaced=3 },
 [660] = { namereplaced=2 },
 [650] = { namereplaced=1 },
@@ -1506,7 +1514,7 @@ function site.SetExpected()
 [120] = { namereplaced=17 },
 [130] = { namereplaced=17, dropped=1 },
 -- special sets
-[807] = { pset={ LHpi.Data.sets[807].cardcount.both+LHpi.Data.sets[807].cardcount.nontr }, failed={ 9 }, namereplaced=1 },--no tokens
+[807] = { pset={ LHpi.Data.sets[807].cardcount.both+LHpi.Data.sets[807].cardcount.nontr }, failed={ 9 }, namereplaced=2 },-- -9:no tokens in MA
 [805] = { foiltweaked=2, namereplaced=2 },
 [801] = { pset={ LHpi.Data.sets[801].cardcount.reg+LHpi.Data.sets[801].cardcount.overs }, failed={ LHpi.Data.sets[801].cardcount.overs }, dropped=LHpi.Data.sets[801].cardcount.overs-1, namereplaced=3 },
 [799] = { foiltweaked=2, pset={ 83-16 } },-- -16 basic lands, ((-2 (of 4) nonbasic lands)?)
@@ -1519,34 +1527,36 @@ function site.SetExpected()
 [781] = { foiltweaked=2},
 [777] = { foiltweaked=2},
 [778] = { pset={ LHpi.Data.sets[778].cardcount.reg+LHpi.Data.sets[778].cardcount.overs }, failed={ LHpi.Data.sets[778].cardcount.overs }, namereplaced=3 },
+[776] = { failed= { 1} },-- -1:Poison Counter
+[775] = { failed= { 1} },-- -1:Poison Counter
 [772] = { pset={80}, namereplaced=1, foiltweaked=2 },
 [771] = { namereplaced=1},
 [769] = { pset={ LHpi.Data.sets[769].cardcount.reg+LHpi.Data.sets[769].cardcount.nontr }, namereplaced=1, dropped=2 },
 [768] = { foiltweaked=5},
 [766] = { foiltweaked=2, dropped=6, namereplaced=1 },
-[763] = { pset={66-3}, dropped=4, namereplaced=2, foiltweaked=2},--3 swamps SOON
-[761] = { pset={ LHpi.Data.sets[761].cardcount.reg+LHpi.Data.sets[761].cardcount.nontr-8 }, failed={ 5 }, namereplaced=1, dropped=28 },-- 5 fails are promos,28 SOON, 8 mountains missing
+[763] = { dropped=1, namereplaced=2, foiltweaked=2},
+[761] = { pset={ LHpi.Data.sets[761].cardcount.reg+LHpi.Data.sets[761].cardcount.nontr-8 }, failed={ 5 }, namereplaced=1, dropped=24 },-- 5 fails are promos,24 SOON, 8 mountains missing
 [757] = { foiltweaked=2},
 [755] = { namereplaced=1, foiltweaked=2},
 [740] = { dropped=2, foiltweaked=2},
 [600] = { namereplaced=9, dropped=1, foiltweaked=1 },-- 1 SOON 
-[440] = { pset={90-2}, foiltweaked=2, dropped=11 },-- 11 SOON, but only 2 Islands missing
+[440] = { foiltweaked=2 },
 [415] = { failed= { 3 }, dropped=30, foiltweaked=1},
-[405] = { pset={ 124 }, dropped=30, namereplaced=6 },
-[390] = { pset={ LHpi.Data.sets[390].cardcount.reg+1-4 },failed={ 1 }, dropped=4 },-- +1 Thorn Elemental
+[405] = { pset={ 126 }, dropped=25, namereplaced=11 },
+[390] = { pset={ LHpi.Data.sets[390].cardcount.reg+1 },failed={ 1 }, dropped=2 },-- 2 SOON,  +1 Thorn Elemental
 [380] = { pset={180-4}, namereplaced=2, dropped=4 },-- 4 SOON
 [320] = { namereplaced=8 },
 [310] = { pset={165-10}, dropped=10, namereplaced=15-10},-- 10 SOON
-[260] = { pset={228-6-8}, dropped=8, namereplaced=27-8 },-- 8 SOON, -6 "DG" variant
+[260] = { pset={228-6-1}, dropped=1, namereplaced=27-1 },-- 1 SOON, -6 "DG" variant
 [200] = { namereplaced=12 },
-[70]  = { pset={ LHpi.Data.sets[70].cardcount.nontr-4 }, dropped=4 },--4 SOON
+[70]  = { pset={ LHpi.Data.sets[70].cardcount.nontr-3 }, dropped=3 },--3 SOON
 -- promos
-[31]  = { pset={ LHpi.Data.sets[31].cardcount.reg }, failed={ 3 } },
+[31]  = { pset={ LHpi.Data.sets[31].cardcount.reg }, failed={ 2 } },
 [30]  = { failed={ 3 }, namereplaced=1, foiltweaked=1, dropped=3 },--3 SOON
 [26]  = { pset={ 36 }, foiltweaked=17 },
 [24]  = { foiltweaked=5 },
 [23]  = { pset={ 33 }, failed={ 3 } },
-[21]  = { pset={ 23 }, namereplaced=2, dropped=2 },
+[21]  = { pset={ 24 }, namereplaced=2, dropped=1 },
 [20]  = { pset={ LHpi.Data.sets[20].cardcount.both+LHpi.Data.sets[20].cardcount.overs-10+1}, failed={ 2}, namereplaced=23, foiltweaked=8 },-- +1 Lightning Bolt
 [10]  = { pset={ 31-6 } },
 	}--end table site.expected

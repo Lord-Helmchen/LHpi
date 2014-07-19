@@ -66,7 +66,7 @@ STRICTEXPECTED = true
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
-OFFLINE = true
+--OFFLINE = true
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
@@ -900,6 +900,7 @@ site.namereplace = {
 -- specal sets
 [807] = { -- Conspiracy
 ["Aether Tradewinds"]					= "Æther Tradewinds",
+["Aether Searcher"]						= "Æther Searcher"
 },
 [805] = { --Duel Decks: Jace vs. Vraska
 ["Aether Adept (Meister des Äthers)"]	= "Æther Adept",
@@ -1096,7 +1097,7 @@ function site.SetExpected()
 [150] = { namereplaced=2 },
 [120] = { namereplaced=3 },
 -- special sets
-[807] = { pset={ LHpi.Data.sets[807].cardcount.reg+LHpi.Data.sets[807].cardcount.nontr }, namereplaced=2 },--no tokens
+[807] = { pset={ LHpi.Data.sets[807].cardcount.reg+LHpi.Data.sets[807].cardcount.nontr }, namereplaced=4 },--no tokens
 [805] = { namereplaced=2 },
 [801] = { pset={ LHpi.Data.sets[801].cardcount.reg+LHpi.Data.sets[801].cardcount.overs }, failed={ LHpi.Data.sets[801].cardcount.overs }, namereplaced=2 },
 [796] = { namereplaced=5 },
