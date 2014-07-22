@@ -27,11 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.12.4.12
-added 801,M15
-updated 180,791,806
-fixed site.langs
-synchronized with template
+2.13.5.13
+removed oversized handling from BCDPluginPre
 ]]
 
 -- options unique to this site
@@ -43,16 +40,16 @@ synchronized with template
 
 --- more detailed log; default false
 -- @field [parent=#global] #boolean VERBOSE
---VERBOSE = true
+VERBOSE = true
 --- also log dropped cards; default false
 -- @field [parent=#global] #boolean LOGDROPS
---LOGDROPS = true
+LOGDROPS = true
 --- also log namereplacements; default false
 -- @field [parent=#global] #boolean LOGNAMEREPLACE
---LOGNAMEREPLACE = true
+LOGNAMEREPLACE = true
 --- also log foiltweaking; default false
 -- @field [parent=#global] #boolean LOGFOILTWEAK
---LOGFOILTWEAK = true
+LOGFOILTWEAK = true
 
 -- options that control the script's behaviour.
 
@@ -64,7 +61,7 @@ synchronized with template
 
 --- also complain if drop,namereplace or foiltweak count differs; default false
 -- @field [parent=#global] #boolean STRICTEXPECTED
---STRICTEXPECTED = true
+STRICTEXPECTED = true
 
 --- log to seperate logfile instead of Magic Album.log;	default true
 -- @field [parent=#global] #boolean SAVELOG
@@ -76,7 +73,7 @@ synchronized with template
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
---SAVEHTML = true
+SAVEHTML = true
 
 --- save price table to file before importing to MA;	default false
 -- @field [parent=#global] #boolean SAVETABLE
@@ -96,13 +93,13 @@ synchronized with template
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.12"
+libver = "2.13"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
-dataver = "4"
+dataver = "5"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "12"
+scriptver = "13"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.magicuniverseDE-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -320,8 +317,8 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 			card.name = string.gsub( card.name , "%s*%(beta%)" , "" ) -- catch needlessly suffixed rawdata
 			card.name = string.gsub( card.name , "%(beta, " , "(") -- remove beta infix from condition descriptor
 		end
-	elseif setid == 801 then -- Commander
-		card.name = string.gsub(card.name,"%([Oo]versi?z?e?d?%.?%)","(oversized) (DROP)")
+--	elseif setid == 801 then -- Commander
+--		card.name = string.gsub(card.name,"%([Oo]versi?z?e?d?%.?%)","(oversized) (DROP)")
 	end -- if setid
 	
 	-- mark condition modifier suffixed cards to be dropped

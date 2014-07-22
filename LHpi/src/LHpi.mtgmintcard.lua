@@ -27,30 +27,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.12.4.12
-added 807,M15
-BuildUrl and tables changed for new site structure
-site.regex and ParseHtmlData changed for new raw format
-BCDPluginPre now handles "SZH (ENG)" card names
-added site.pagenumberregex
-updated all expected counts
-wrap site.expected in site.SetExpected()
+2.13.5.12
+removed oversized handling from BCDPluginPre
 ]]
 
 -- options that control the amount of feedback/logging done by the script
 
 --- more detailed log; default false
 -- @field [parent=#global] #boolean VERBOSE
---VERBOSE = true
+VERBOSE = true
 --- also log dropped cards; default false
 -- @field [parent=#global] #boolean LOGDROPS
---LOGDROPS = true
+LOGDROPS = true
 --- also log namereplacements; default false
 -- @field [parent=#global] #boolean LOGNAMEREPLACE
---LOGNAMEREPLACE = true
+LOGNAMEREPLACE = true
 --- also log foiltweaking; default false
 -- @field [parent=#global] #boolean LOGFOILTWEAK
---LOGFOILTWEAK = true
+LOGFOILTWEAK = true
 
 -- options that control the script's behaviour.
 
@@ -62,7 +56,7 @@ wrap site.expected in site.SetExpected()
 
 --- also complain if drop,namereplace or foiltweak count differs; default false
 -- @field [parent=#global] #boolean STRICTEXPECTED
---STRICTEXPECTED = true
+STRICTEXPECTED = true
 
 --- log to seperate logfile instead of Magic Album.log;	default true
 -- @field [parent=#global] #boolean SAVELOG
@@ -74,7 +68,7 @@ wrap site.expected in site.SetExpected()
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
---SAVEHTML = true
+SAVEHTML = true
 
 --- save price table to file before importing to MA;	default false
 -- @field [parent=#global] #boolean SAVETABLE
@@ -94,13 +88,13 @@ wrap site.expected in site.SetExpected()
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.12"
+libver = "2.13"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
-dataver = "4"
+dataver = "5"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "12"
+scriptver = "13"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.mtgmintcard-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -318,14 +312,14 @@ function site.BCDpluginPre ( card , setid , importfoil, importlangs )
 	card.name = string.gsub( card.name , " ships Sep 27" , "") -- Theros Prerelease suffix
 	card.name = string.gsub( card.name , " ships Jul 18" , "") -- M15 Prerelease suffix
 	
-	if setid == 801 or setid == 778 then -- Commander
-		card.name = string.gsub(card.name,"%([Oo]versized%)","(oversized) (DROP)")
-	elseif setid == 787 then -- Planechase
-		card.name = string.gsub(card.name ,"%s*%([Oo]versized%)" ,"" )
+--	if setid == 801 or setid == 778 then -- Commander
+--		card.name = string.gsub(card.name,"%([Oo]versized%)","(oversized) (DROP)")
+--	elseif setid == 787 then -- Planechase
+--		card.name = string.gsub(card.name ,"%s*%([Oo]versized%)" ,"" )
 	--elseif setid == 753 then
 	--	card.foil = true
 	-- taken care of by LHpi.Data.sets[753].foilonly
-	end
+--	end
 	
 	if card.lang[9] then
 		if string.find(card.name, "^[^%(%)]+$" ) then
@@ -863,7 +857,7 @@ function site.SetExpected()
 -- special sets
 [807] = { pset={ LHpi.Data.sets[807].cardcount.both+LHpi.Data.sets[807].cardcount.nontr }, failed={ 9 }, namereplaced=2 },--no tokens
 [805] = { namereplaced=2, foiltweaked=2, pset={ 89-1 } }, -- -1 token
-[801] = { pset={ LHpi.Data.sets[801].cardcount.reg+LHpi.Data.sets[801].cardcount.overs }, failed={ LHpi.Data.sets[801].cardcount.overs }, dropped=LHpi.Data.sets[801].cardcount.overs, namereplaced=2 },
+[801] = { pset={ LHpi.Data.sets[801].cardcount.reg+LHpi.Data.sets[801].cardcount.repl }, failed={ LHpi.Data.sets[801].cardcount.repl }, dropped=LHpi.Data.sets[801].cardcount.repl, namereplaced=2 },
 [796] = { namereplaced=6},
 [794] = { pset={ 81-12-1 } },-- -16 basic lands, -1 token
 [790] = { pset={ 91-16-1 } },-- -16 basic lands, -1 token
@@ -871,7 +865,7 @@ function site.SetExpected()
 [785] = { pset={ 79-2 } },-- -2 tokens
 [781] = { pset={ LHpi.Data.sets[781].cardcount.reg-1 }, foiltweaked=2 },
 [780] = { namereplaced=1},
-[778] = { pset={ LHpi.Data.sets[778].cardcount.reg-14 }, failed={ 1 }, dropped=LHpi.Data.sets[778].cardcount.overs },
+[778] = { pset={ LHpi.Data.sets[778].cardcount.reg-14 }, failed={ 1 }, dropped=LHpi.Data.sets[778].cardcount.repl },
 [772] = { pset={ 80-8-1 } },-- -8 basic lands, -1 token
 [769] = { pset={ 150+45 } },-- all 45 Schemes (nontraditional)
 [768] = { pset={ 113-16 } },-- -16 basic lands

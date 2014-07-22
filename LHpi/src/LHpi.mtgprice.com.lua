@@ -27,12 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.12.4.3
-site.regex,ParseHtmlData fixed for new site layout
-added JOU,DDM,CNS,M15, special sets
-synchronized with template
-some more of namereplacement for basic land variants
-fixed offline urls
+2.13.5.4
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -100,10 +95,10 @@ SAVEHTML = true
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.12"
+libver = "2.13"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
-dataver = "4"
+dataver = "5"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
 scriptver = "4"

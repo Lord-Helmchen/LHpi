@@ -27,26 +27,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.12.4.12
-added 801,807,M15
-updated expected 100,680,690,800
-synchronized with template
+2.13.5.12
 ]]
 
 -- options that control the amount of feedback/logging done by the script
 
 --- more detailed log; default false
 -- @field [parent=#global] #boolean VERBOSE
---VERBOSE = true
+VERBOSE = true
 --- also log dropped cards; default false
 -- @field [parent=#global] #boolean LOGDROPS
---LOGDROPS = true
+LOGDROPS = true
 --- also log namereplacements; default false
 -- @field [parent=#global] #boolean LOGNAMEREPLACE
---LOGNAMEREPLACE = true
+LOGNAMEREPLACE = true
 --- also log foiltweaking; default false
 -- @field [parent=#global] #boolean LOGFOILTWEAK
---LOGFOILTWEAK = true
+LOGFOILTWEAK = true
 
 -- options that control the script's behaviour.
 
@@ -58,7 +55,7 @@ synchronized with template
 
 --- also complain if drop,namereplace or foiltweak count differs; default false
 -- @field [parent=#global] #boolean STRICTEXPECTED
---STRICTEXPECTED = true
+STRICTEXPECTED = true
 
 --- log to seperate logfile instead of Magic Album.log;	default true
 -- @field [parent=#global] #boolean SAVELOG
@@ -70,7 +67,7 @@ synchronized with template
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
---SAVEHTML = true
+SAVEHTML = true
 
 --- save price table to file before importing to MA;	default false
 -- @field [parent=#global] #boolean SAVETABLE
@@ -90,10 +87,10 @@ synchronized with template
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.12"
+libver = "2.13"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
-dataver = "4"
+dataver = "5"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
 scriptver = "12"

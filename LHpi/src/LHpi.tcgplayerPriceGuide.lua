@@ -24,27 +24,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.12.4.12
-added most special and promo sets
-TODO-marked all others
-updated expected and namereplace tables
-synchronized with template
+2.13.5.13
+removed oversized handling from BCDPluginPre
 ]]
 
 -- options that control the amount of feedback/logging done by the script
 
 --- more detailed log; default false
 -- @field [parent=#global] #boolean VERBOSE
---VERBOSE = true
+VERBOSE = true
 --- also log dropped cards; default false
 -- @field [parent=#global] #boolean LOGDROPS
---LOGDROPS = true
+LOGDROPS = true
 --- also log namereplacements; default false
 -- @field [parent=#global] #boolean LOGNAMEREPLACE
---LOGNAMEREPLACE = true
+LOGNAMEREPLACE = true
 --- also log foiltweaking; default false
 -- @field [parent=#global] #boolean LOGFOILTWEAK
---LOGFOILTWEAK = true
+LOGFOILTWEAK = true
 
 -- options unique to this sitescript
 
@@ -68,7 +65,7 @@ copyprice = nil
 
 --- also complain if drop,namereplace or foiltweak count differs; default false
 -- @field [parent=#global] #boolean STRICTEXPECTED
---STRICTEXPECTED = true
+STRICTEXPECTED = true
 
 --- log to seperate logfile instead of Magic Album.log;	default true
 -- @field [parent=#global] #boolean SAVELOG
@@ -80,7 +77,7 @@ copyprice = nil
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
---SAVEHTML = true
+SAVEHTML = true
 
 --- save price table to file before importing to MA;	default false
 -- @field [parent=#global] #boolean SAVETABLE
@@ -100,13 +97,13 @@ copyprice = nil
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.12"
+libver = "2.13"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
-dataver = "4"
+dataver = "5"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "12"
+scriptver = "13"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.tcgplayerPriceGuide-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -290,11 +287,11 @@ function site.BCDpluginPre( card, setid, importfoil, importlangs )
 	card.name = string.gsub( card.name , "^(Staging Check.*)" , "(DROP) %1")
 	card.name = string.gsub( card.name , "^(RWN Testing.*)" , "(DROP) %1")
 	
-	if setid == 801 or setid == 778 then -- Commander
-		card.name = string.gsub(card.name,"[%s-]*[Oo]versized","(oversized) (DROP)")
-	elseif setid == 787 then -- Planechase
-		card.name = string.gsub(card.name ,"[%s-]*[Oo]versized" ,"" )
-	end
+--	if setid == 801 or setid == 778 then -- Commander
+--		card.name = string.gsub(card.name,"[%s-]*[Oo]versized","(oversized) (DROP)")
+--	elseif setid == 787 then -- Planechase
+--		card.name = string.gsub(card.name ,"[%s-]*[Oo]versized" ,"" )
+--	end
 	
 	return card
 end -- function site.BCDpluginPre
@@ -1521,7 +1518,7 @@ function site.SetExpected()
 -- special sets
 [807] = { pset={ LHpi.Data.sets[807].cardcount.both+LHpi.Data.sets[807].cardcount.nontr }, failed={ 9 }, namereplaced=2 },-- -9:no tokens in MA
 [805] = { foiltweaked=2, namereplaced=2 },
-[801] = { pset={ LHpi.Data.sets[801].cardcount.reg+LHpi.Data.sets[801].cardcount.overs }, failed={ LHpi.Data.sets[801].cardcount.overs }, dropped=LHpi.Data.sets[801].cardcount.overs-1, namereplaced=3 },
+[801] = { pset={ LHpi.Data.sets[801].cardcount.reg+LHpi.Data.sets[801].cardcount.repl }, failed={ LHpi.Data.sets[801].cardcount.repl }, dropped=LHpi.Data.sets[801].cardcount.repl-1, namereplaced=3 },
 [799] = { foiltweaked=2, pset={ 83-16 } },-- -16 basic lands, ((-2 (of 4) nonbasic lands)?)
 [798] = {pset={20}, dropped=1 }, 
 [796] = { namereplaced=3 },
@@ -1531,7 +1528,7 @@ function site.SetExpected()
 [785] = { pset={79}, namereplaced=1, foiltweaked=2 },
 [781] = { foiltweaked=2},
 [777] = { foiltweaked=2},
-[778] = { pset={ LHpi.Data.sets[778].cardcount.reg+LHpi.Data.sets[778].cardcount.overs }, failed={ LHpi.Data.sets[778].cardcount.overs }, namereplaced=3 },
+[778] = { pset={ LHpi.Data.sets[778].cardcount.reg+LHpi.Data.sets[778].cardcount.repl }, failed={ LHpi.Data.sets[778].cardcount.repl }, namereplaced=3 },
 [772] = { pset={80}, namereplaced=1, foiltweaked=2 },
 [771] = { namereplaced=1},
 [769] = { pset={ LHpi.Data.sets[769].cardcount.reg+LHpi.Data.sets[769].cardcount.nontr }, namereplaced=1, dropped=2 },
@@ -1560,7 +1557,7 @@ function site.SetExpected()
 [24]  = { foiltweaked=5 },
 [23]  = { pset={ 33 }, failed={ 3 } },
 [21]  = { pset={ 24 }, namereplaced=2, dropped=1 },
-[20]  = { pset={ LHpi.Data.sets[20].cardcount.both+LHpi.Data.sets[20].cardcount.overs-10+1}, failed={ 2}, namereplaced=23, foiltweaked=8 },-- +1 Lightning Bolt
+[20]  = { pset={ LHpi.Data.sets[20].cardcount.both+LHpi.Data.sets[20].cardcount.repl-10+1}, failed={ 2}, namereplaced=23, foiltweaked=8 },-- +1 Lightning Bolt
 [10]  = { pset={ 31-6 } },
 	}--end table site.expected
 end--function site.SetExpected()
