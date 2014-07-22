@@ -25,10 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-*execution timer in main()
-*global variables changed to dummy.*
-*new dummy.performancetest(repeats,script,impF,impL,impS,timefile)
-*more comfort, less code duplication
+optional object type parameter in ma.SetPrice
 ]]
 
 --[[- "main" function called by Magic Album; just display error and return.
@@ -150,6 +147,7 @@ end
 -- cardname is the name of the card in UTF-8 encoding. Magic Album tries to match the cardname first against the Oracle Name, then against the Name field.
 -- cardversion is the version of the card as it is shown in Magic Album. If set to "*" all versions of the card will be processed.
 -- regprice and foilprice are the numerical values. Pass zero if you do not know or do not want to set the value.
+-- objtype is an object type (1 for cards, 2 for tokens, 3 for nontraditional, 4 for inserts, 5 for replicas). This parameter is optional. Default value is 1.
 -- this function returns the number of modified cards.
 -- dummy: just prints request to stdout and return 1
 -- 
@@ -157,7 +155,7 @@ end
 -- Set the price of foil M11 English Celestial Purge to $4.25
 -- ma.SetPrice(770, 1, "Celestial Purge", "", 0, 4.25)
 -- Set the regular and foil prices for all versions of M10 Russian Forests (using Russian card name)
--- ma.SetPrice(759, 2, "Ð›ÐµÑ�", "*", 0.01, 0.1)
+-- ma.SetPrice(759, 2, "Лес", "*", 0.01, 0.1)
 -- 
 -- @function [parent=#ma] SetPrice
 -- @param #number setid
@@ -166,9 +164,13 @@ end
 -- @param #number cardversion	#string "" and #string "*" is also possible
 -- @param #number regprice 		#nil is also possible
 -- @param #number foilprice 	#nil is also possible
+-- @param #number objtype 		(optional) 0:all, 1:cards, 2:tokens, 3:nontraditional, 4:inserts, 5:replicas; default:0
 -- @return #number modifiednum
-function ma.SetPrice(setid, langid, cardname, cardversion, regprice, foilprice)
-	local dummystring=string.format('ma.SetPrice: setid=%q  langid=%q  cardname=%-20q\tcardversion=%q\tregprice=%q\tfoilprice=%q',setid,langid,cardname,tostring(cardversion),regprice,foilprice)
+function ma.SetPrice(setid, langid, cardname, cardversion, regprice, foilprice, objtype)
+	if not objtype then
+		objtype = 0
+	end
+	local dummystring=string.format('ma.SetPrice: setid=%q  langid=%q  cardname=%-20q\tcardversion=%q\tregprice=%q\tfoilprice=%q\tobjtype=%q',setid,langid,cardname,tostring(cardversion),tostring(regprice),tostring(foilprice),tostring(objtype))
 	print (dummystring)
 	if cardversion == "*" then
 		return 4
@@ -632,7 +634,7 @@ function main()
 		[7]={name="LHpi.mtgprice.com.lua",path=dummy.path,savepath=dummy.savepath},
 	}
 	--select a predefined script to be tested
-	local script=scripts[1]
+	local script=scripts[2]
 
 --	dummy.fakesitescript()
 	dummy.loadscript(script.name,script.path,script.savepath)
