@@ -25,14 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.12.4.10
-libver 2.12
-dataver 4
-BuildUrl: added optional fields to urldetails luadoc
-new (optional) field: site.pagenumberregex
-wrap site.expected in site.SetExpected()
-add missing sets
-]]
+2.13.5.11
+added EXPECTNONTRAD and EXPECTREPL options to site.expected]]
 
 -- options that control the amount of feedback/logging done by the script
 
@@ -91,13 +85,13 @@ add missing sets
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.12"
+libver = "2.13"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
-dataver = "4"
+dataver = "5"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "10"
+scriptver = "11"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.sitescriptTemplate-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -643,10 +637,19 @@ function site.SetExpected()
  @field #number foiltweaked		(optional) default 0
  ]]
 	site.expected = {
---- false:pset defaults to regular, true:pset defaults to regular+tokens instead
+--- pset defaults to LHpi.Data.sets[setid].cardcount.reg, if available and not set otherwise here.
+
+--- if EXPECTTOKENS is true, LHpi.Data.sets[setid].cardcount.tok is added to pset default.
 -- @field [parent=#site.expected] #boolean EXPECTTOKENS
 	EXPECTTOKENS = false,
+--- if EXPECTNONTRAD is true, LHpi.Data.sets[setid].cardcount.nontrad is added to pset default.
+-- @field [parent=#site.expected] #boolean EXPECTNONTRAD
+	EXPECTNONTRAD = false,
+--- if EXPECTREPL is true, LHpi.Data.sets[setid].cardcount.repl is added to pset default.
+-- @field [parent=#site.expected] #boolean EXPECTREPL
+	EXPECTREPL = false,
 -- -- Core sets
+--[808] = { pset={ LHpi.Data.sets[808].cardcount.reg+LHpi.Data.sets[808].cardcount.tok, nil, LHpi.Data.sets[808].cardcount.reg }, failed={ 0, nil, LHpi.Data.sets[808].cardcount.tok }, dropped=1 },
 --[788] = { pset={ 249+11, nil, 249 }, failed={ 0, nil, 11 }, dropped=0, namereplaced=1, foiltweaked=0 }, -- M2013
 	}--end table site.expected
 end--function site.SetExpected()

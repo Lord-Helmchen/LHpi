@@ -25,19 +25,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.12
-*BuildCardData
-** replace Simplified Chinese Basic Lands' names for variant checking if names[9]
-** improved card.drop logging
-** remove trailing 0s from collector numbers
-*MainImportCycle
-** try to log number of unneeded pages for each set (to help optimize LHpi.mtgmintcard.lua)
-*FillCardsetTable
-** now keeps card.names[langid] table if VERBOSE, since I cannot properly debug non-latin cards otherwise (SZH in LHpi.mtgmintcard.lua) 
-* DoImport
-** removed legacy conversion of STRICTCHECKEXPECTED to STRICTEXPECTED
-** removed legacy conversion of DEBUGSKIPFOUND to DEBUGFOUND
-** call site.SetExpected if CHECKEXPECTED
+2.13
+DoImport
+* finetune site.expected[setid].pset defaults according to site.expected.EXPECTTOKENS,site.expected.EXPECTNONTRAD and site.expected.EXPECTREPL
+* increased default dataver from 2 to 5
+SetPrice
+* look for special variant names "token", "nontrad", "replica" and transform them into object types for ma.SetPrice
 ]]
 
 --TODO count averaging events with counter attached to prices
@@ -46,7 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 local LHpi = {}
 ---	LHpi library version
 -- @field [parent=#LHpi] #string version
-LHpi.version = "2.12"
+LHpi.version = "2.13"
 
 --[[- "main" function called by Magic Album; just display error and return.
  Called by Magic Album to import prices. Parameters are passed from MA.
@@ -114,7 +107,7 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 	end -- if
 
 	if DEBUG and ((not dataver) or site.dataver == "" ) then error("undefined dataver!") end
-	if not dataver then dataver = "2" end
+	if not dataver then dataver = "5" end
 	---	LHpi static set data
 	--@field [parent=#LHpi] #table Data
 	LHpi.Data = LHpi.LoadData(dataver)
@@ -183,12 +176,22 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 			for lid,langbool in pairs (site.sets[sid].lang) do
 				if langbool then
 					if not site.expected[sid].pset[lid] then
+						local psetExpected
 						if ( LHpi.Data.sets[sid] and LHpi.Data.sets[sid].cardcount ) then
+							psetExpected = LHpi.Data.sets[sid].cardcount.reg or 0
 							if site.expected.EXPECTTOKENS then
-								site.expected[sid].pset[lid] = LHpi.Data.sets[sid].cardcount.reg + LHpi.Data.sets[sid].cardcount.tok 
-							else
-								site.expected[sid].pset[lid] = LHpi.Data.sets[sid].cardcount.reg
+							psetExpected = psetExpected + LHpi.Data.sets[sid].cardcount.tok or 0
+--								site.expected[sid].pset[lid] = LHpi.Data.sets[sid].cardcount.reg + LHpi.Data.sets[sid].cardcount.tok 
+--							else
+--								site.expected[sid].pset[lid] = LHpi.Data.sets[sid].cardcount.reg
 							end
+							if site.expected.EXPECTNONTRAD then
+								psetExpected = psetExpected + LHpi.Data.sets[sid].cardcount.nontrad or 0
+							end
+							if site.expected.EXPECTREPL then
+								psetExpected = psetExpected + LHpi.Data.sets[sid].cardcount.repl or 0
+							end
+							site.expected[sid].pset[lid] = psetExpected
 						else
 							site.expected[sid].pset[lid] = 0	
 						end
@@ -402,7 +405,7 @@ function LHpi.MainImportCycle( sourcelist , totalhtmlnum , importfoil , importla
 			LHpi.Log ( "Set " .. importsets[cSet.id] .. " imported." )
 			if VERBOSE then
 				if ( LHpi.Data.sets[sid] and LHpi.Data.sets[sid].cardcount ) then
-					LHpi.Log( string.format( "[%i] contains %4i cards (%4i regular, %4i tokens, %4i nontraditional, %4i oversized )", cSet.id, LHpi.Data.sets[sid].cardcount.both, LHpi.Data.sets[sid].cardcount.reg, LHpi.Data.sets[sid].cardcount.tok, LHpi.Data.sets[sid].cardcount.nontr or 0, LHpi.Data.sets[sid].cardcount.overs or 0 ) )
+					LHpi.Log( string.format( "[%i] contains %4i cards (%4i regular, %4i tokens, %4i nontraditional, %4i replica )", cSet.id, LHpi.Data.sets[sid].cardcount.both, LHpi.Data.sets[sid].cardcount.reg, LHpi.Data.sets[sid].cardcount.tok, LHpi.Data.sets[sid].cardcount.nontr or 0, LHpi.Data.sets[sid].cardcount.repl or 0 ) )
 				else
 					LHpi.Log( string.format( "[%i] contains unknown to LHpi number of cards.", cSet.id ) )
 				end
@@ -786,8 +789,7 @@ end -- function LHpi.GetSourceData
  @param #number setid		(see "..\Database\Sets.txt")
  @param #string importfoil	"y"|"n"|"o" passed from DoImport to drop unwanted cards
  @param #table importlangs	{ #number (langid)= #string, ... } passed from DoImport to drop unwanted cards
- @return #table		{ name= #string , drop= #boolean , lang= #table , (optional) names= #table , variant= #table , regprice= #table , foilprice= #table }
-  : card
+ @return #table		{ name= #string , drop= #boolean , lang= #table , (optional) names= #table , variant= #table , regprice= #table , foilprice= #table }  : card
  @return #number	0 or 1: namereplace event to be counted in LHpi.MainImportCycle
  @return #number	0 or 1: foiltweak event to be counted in LHpi.MainImportCycle
  
@@ -863,7 +865,7 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 	card.name = string.gsub( card.name , " / " , "|" )
 	card.name = string.gsub (card.name , "([%aäÄöÖüÜ]+)/([%aäÄöÖüÜ]+)" , "%1|%2" )
 	card.name = string.gsub( card.name , "´" , "'" )
-	card.name = string.gsub( card.name , '"' , "“" )
+--	card.name = string.gsub( card.name , '"' , "“" )
 	card.name = string.gsub( card.name , "^Unhinged Shapeshifter$" , "_____" )
 	
 	-- unify collector number suffix. must come before variant checking
@@ -898,6 +900,9 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 	if DEBUG then
 		LHpi.Log(card.name .. ":" .. LHpi.ByteRep(card.name) , 2 )
 	end
+	
+	-- unify Oversized suffix
+	card.name= string.gsub(cardname,"%-? ?%(?[Oo][Vv][Ee][Rr][Ss][Is][Zz][Ee][Dd]%)?$","(oversized)")
 
 	if site.namereplace[setid] and site.namereplace[setid][card.name] then
 		if LOGNAMEREPLACE or DEBUG then
@@ -907,7 +912,7 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 		namereplaced=1
 	end -- site.namereplace[setid]
 
-	-- foiltweak, should probably be after namereplace and before variants
+	-- foiltweak, should be after namereplace and before variants, to work with oversized foilonly commanders
 	if site.foiltweak[setid] and site.foiltweak[setid][card.name] then
 		if LOGFOILTWEAK or DEBUG then
 			LHpi.Log( string.format( "foiltweaked %s from %s to %s" ,card.name, tostring(card.foil), tostring(site.foiltweak[setid][card.name].foil) ), 1 )
@@ -928,6 +933,7 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 		return card
 	end--if card.drop
 	
+	-- unify basic land names
 	if sourcerow.names then
 		if sourcerow.names[3] then
 			-- replace German Basic Lands' name with English to avoid needing a duplicate variant table. 
@@ -955,8 +961,33 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 			card.name = string.gsub ( card.name , "^山脉$" , "Mountain" )
 			card.name = string.gsub ( card.name , "^树林$" , "Forest" )	
 		end--if sourcerow.names
+		-- TODO basic land names could probably need replacements for all languages
 	end
-	
+
+	-- This could show unwanted behaviour for multiple database objects with the same name in one set,
+	-- such as Oversized Commander Replica in the Commander sets. LHpi only has card.name as primary object identifier,
+	-- so objtype could be overwritten and we'd be back to averaging.
+	-- Instead, we will use the existing variant loops and make LHpi.SetPrice change the variant names
+	-- "Token", "Nontrad", "Replica" into explicit object type declaration.
+	-- As the API will default to 0 (search all object types), explicitely setting it will only rarely be required.
+--	-- ma database object type, after namereplacement, before removal of token pre-/suffix
+--	if sourcerow.objtype ~=nil then
+--		card.objtype = sourcerow.objtype
+--	elseif string.find (card.name , "[tT][oO][kK][eE][nN]" ) then
+--		card.objtype = 2
+--	elseif string.find(card.name,"%([Nn][Oo][Nn][Tt][Rr][Aa][Dd][Ii]?[Tt]?[Ii]?[Oo]?[Nn]?[Aa]?[Ll]?%.?%)") then
+--		card,objtype = 3
+--	elseif string.find(card.name,"%([Rr][Ee][Pp][Ll][Ii]?[Cc]?[Aa]?%.?%)") then
+--		card,objtype = 5
+--	elseif string.find(card.name,"%([Pp]lane%)") then
+--		card,objtype = 3
+--	elseif string.find(card.name,"%([Ss]cheme%)") then
+--		card,objtype = 3
+--	elseif string.find (card.name , "%([Oo]versi?z?e?e?d?%)" ) then
+--		card.objtype = 5
+--	end
+
+	-- variant checking must be after namereplacement, and should probably be before token pre-/suffix removal
 	if sourcerow.variant then -- keep site.ParseHtmlData preset variant
 		card.variant = sourcerow.variant
 	else
@@ -973,6 +1004,9 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 	end -- if sourcerow.variant
 	-- remove unparsed leftover variant numbers
 	card.name = string.gsub( card.name , "%(%d+%)" , "" )
+
+	-- oversized suffix removal, must come after variant checking
+	card.name = string.gsub(card.name,"%(oversized%)","")
 	
 	-- Token infix removal, must come after variant checking
 	-- This means that we sometimes have to namereplace the suffix away for variant tokens
@@ -1002,11 +1036,10 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 			card.name = string.gsub( card.name , "  +" , " " )
 		end
 	end
-
-	card.name = string.gsub( card.name , "^%s*(.-)%s*$" , "%1" ) --remove any leftover spaces from start and end of string
-		
-	--card.condition[lid] = "NONE"
 	
+	--card.condition[lid] = "NONE"
+
+	card.name = string.gsub( card.name , "^%s*(.-)%s*$" , "%1" ) --remove any leftover spaces from start and end of string	
 	card.regprice={}
 	card.foilprice={}
 	-- I would prefer to skip as many loops as possible if we're to discard the results anyway...
@@ -1373,6 +1406,7 @@ end -- function LHpi.MergeCardrows
 function LHpi.SetPrice(setid, name, card)
 	local psetcount = {}
 	local failcount = {}
+	local objtype
 	if card.variant and DEBUGVARIANTS then DEBUG = true end
 	if DEBUG then
 		LHpi.Log( string.format("LHpi.SetPrice\t setid is %i name is %s card is %s", setid, name, LHpi.Tostring(card) ) ,2)
@@ -1392,7 +1426,17 @@ function LHpi.SetPrice(setid, name, card)
 					LHpi.Log(string.format("varnr is %i varname is %s", varnr, tostring(varname) ) ,2)
 				end
 				if varname then
-					perlangretval = (perlangretval or 0) + ma.SetPrice(setid, lid, name, varname, card.regprice[lid][varname] or 0, card.foilprice[lid][varname] or 0 )
+					if string.find(varname,"[Tt][Oo][Kk][Ee][Nn]") then
+						objtype = 2
+						string.gsub(varname,"[Tt][Oo][Kk][Ee][Nn]","")
+					elseif string.find(varname,"[Nn][Oo][Nn][Tt][Rr][Aa][Dd]") then
+						objtype = 3
+						string.gsub(varname,"[Nn][Oo][Nn][Tt][Rr][Aa][Dd]","")
+					elseif string.find(varname,"[Rr][Ee][Pp][Ll][Ii][Cc][Aa]") then
+						objtype = 5
+						string.gsub(varname,"[Rr][Ee][Pp][Ll][Ii][Cc][Aa]","")					
+					end
+					perlangretval = (perlangretval or 0) + ma.SetPrice(setid, lid, name, varname, card.regprice[lid][varname] or 0, card.foilprice[lid][varname] or 0, objtype or 0 )
 				end -- if varname
 			end -- for varnr,varname
 		else -- no variant
