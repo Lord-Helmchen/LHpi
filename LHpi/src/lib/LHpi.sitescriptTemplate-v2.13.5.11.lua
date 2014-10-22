@@ -26,7 +26,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 --[[ CHANGES
 2.13.5.11
-added EXPECTNONTRAD and EXPECTREPL options to site.expected]]
+added EXPECTNONTRAD and EXPECTREPL options to site.expected
+added 809,810,811,812,813
+]]
 
 -- options that control the amount of feedback/logging done by the script
 
@@ -401,6 +403,7 @@ site.sets = {
 [100]={id = 100, lang = { [1]=true }, fruc = { false, true }, url = "LEB"},--Beta
 [90] ={id =  90, lang = { [1]=true }, fruc = { false, true }, url = "LEA"},--Alpha
 -- Expansions
+[813]={id = 813, lang = { [1]=true }, fruc = { true , true }, url = "KTK"},--Khans of Tarkir
 [806]={id = 806, lang = { [1]=true }, fruc = { true , true }, url = "JOU"},--Journey into Nyx
 [802]={id = 802, lang = { [1]=true }, fruc = { true , true }, url = "BNG"},--Born of the Gods
 [800]={id = 800, lang = { [1]=true }, fruc = { true , true }, url = "THS"},--Theros
@@ -467,6 +470,10 @@ site.sets = {
 [130]={id = 130, lang = { [1]=true }, fruc = { false, true }, url = "ATQ"},--Antiquities
 [120]={id = 120, lang = { [1]=true }, fruc = { false, true }, url = "ARN"},--Arabian Nights
 -- special sets
+--[812]={id=812, lang = { [1]=true }, fruc = { false, true }, url = ""},--Duel Decks: Speed vs. Cunning
+--[811]={id=811, lang = { [1]=true }, fruc = { true , false}, url = ""},--Magic 2015 Clash Pack
+--[810]={id=810, lang = { [1]=true }, fruc = { false, true }, url = ""},--Modern Event Deck 2014
+--[809]={id=809, lang = { [1]=true }, fruc = { true , false}, url = ""},--From the Vault: Annihilation
 --[807]={id=807, lang = { [1]=true }, fruc = { true , true }, url = ""},--Conspiracy
 --[805]={id=805, lang = { [1]=true }, fruc = { false, true }, url = "DDM"},--Duel Decks: Jace vs. Vraska
 --[804]={id=804, lang = { [1]=true }, fruc = { false, true }, url = ""},--Challenge Deck: Battle the Horde
