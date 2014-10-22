@@ -34,6 +34,7 @@ add oversized commanders to variant and foiltweak tables in [778],[801]
 [807] has 9 tokens
 ]]
 
+--TODO add "Token" pre-/suffix (?) to variant tables to enable objtype=2 in LHpi.BuildCardData
 --TODO param importsets and nil all others to save memory?
 
 local Data={}
@@ -3828,7 +3829,8 @@ Promos = nil,
 
 for sid,set in pairs(Data.sets) do
 	if set.cardcount then
-		set.cardcount.both = set.cardcount.reg + set.cardcount.tok
+		set.cardcount.both = set.cardcount.reg + (set.cardcount.tok or 0)
+		set.cardcount.all = set.cardcount.both + (set.cardcount.nontr or 0) + (set.cardcount.repl or 0)
 	end --if
 end -- for sid,count
 
