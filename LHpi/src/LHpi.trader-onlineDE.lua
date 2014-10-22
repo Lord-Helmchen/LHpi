@@ -349,7 +349,10 @@ function site.BCDpluginPre ( card , setid , importfoil, importlangs )
 	elseif setid == 150 or setid == 160 then
 		-- remove "ital." suffix from italian Legends and The Dark
 		card.name = string.gsub( card.name, ", ital%.$" , "" )
-	elseif setid == 801 or setid == 807 then --Commander 2013
+	elseif setid == 801
+	or setid == 807
+	or setid == 812
+	then
 print(LHpi.Tostring(card.name))
 		card.name=string.gsub(card.name, "%s*englisch$", "")
 		local _s,_e,nameeng,nameger = string.find(card.name, "(.+)%s*(%b())$")
@@ -358,7 +361,7 @@ print(LHpi.Tostring(card.name))
 			card.names[3]=string.gsub(nameger, "^%((.+)%)", "%1" )
 			card.name=card.names[1]
 		end--if nameeng,nameger
-	end--if setid
+	end-- if setid
 print(LHpi.Tostring(card.name) .. " : " .. LHpi.Tostring(card.names))
 	
 	-- mark condition modifier suffixed cards to be dropped
@@ -561,11 +564,20 @@ site.sets = {
  @field [parent=#site.namereplace] #string name
 ]]
 site.namereplace = {
+[808] = { --M2015
+["Token - Emblem Ajani (A)"]			= "Ajani Steadfast Emblem",
+["Token - Emblem Garruk (A)"]			= "Garruk, Apex Predator Emblem",
+["Aetherspouts"]						= "Ætherspouts",
+["Token - Beast (B)"]					= "Beast (5)",
+["Token - Beast (G)"]					= "Beast (9)",
+["Token - Bestie (B)"]					= "Bestie (5)",
+["Token - Bestie (G)"]					= "Bestie (9)",
+},
 [797] = { -- M2014
-["Token - Elemental (7) (R)"]				= "Elemental (7)",
-["Token - Elemental (8) (R)"]				= "Elemental (8)",
-["Token - Elementarwesen (7) (R)"]			= "Elementarwesen (7)",
-["Token - Elementarwesen (8) (R)"]			= "Elementarwesen (8)",
+["Token - Elemental (7) (R)"]			= "Elemental (7)",
+["Token - Elemental (8) (R)"]			= "Elemental (8)",
+["Token - Elementarwesen (7) (R)"]		= "Elementarwesen (7)",
+["Token - Elementarwesen (8) (R)"]		= "Elementarwesen (8)",
 },
 [779] = { -- M2012
 ["Aether Adept"]						= "Æther Adept",
@@ -634,6 +646,15 @@ site.namereplace = {
 ["Will-O-The-Wisp"] 					= "Will-O’-The-Wisp" 
 },
 -- Expansions
+[813] = { -- Khans of Tarkir
+["Token - Warrior (3) (W)"]			= "Warrior (3)",
+["Token - Warrior (4) (W)"]			= "Warrior (4)",
+["Token - Krieger (3) (W)"]			= "Krieger (3)",
+["Token - Krieger (4) (W)"]			= "Krieger (4)",
+["Token - Emblem Sarkhan (A)"]		= "Sarkhan, the Dragonspeaker Emblem",
+["Token - Emblem Sorin (A)"]		= "Sorin, Solemn Visitor Emblem",
+["Anführerin der Klinge"]			= "Anführer der Klinge",
+},
 [802] = { --Born of the Gods
 ["Brimaz' Vorhut"]						= "Vanguard of Brimaz",
 --["Brimaz' Vorhut"]						= "Brimaz’ Vorhut",
@@ -1034,6 +1055,7 @@ function site.SetExpected()
 -- @field [parent=#site.expected] #boolean EXPECTTOKENS
 	EXPECTTOKENS = true,
 -- Core sets
+[808] = {pset={ LHpi.Data.sets[808].cardcount.both-15, [3]=LHpi.Data.sets[808].cardcount.reg-15 }, failed={[3]=LHpi.Data.sets[808].cardcount.tok}, namereplaced=10 },-- -15 extra cards (nr. 270 - 284)
 [797] = { namereplaced=4 },
 [779] = { namereplaced=2 },
 [770] = { namereplaced=8 },
@@ -1049,6 +1071,7 @@ function site.SetExpected()
 [110] = { pset={ 302-7-9 }, namereplaced=1 }, -- 7 empty cards on page, 9 missing entirely
 [100] = { pset={ 250 } },
 -- Expansions
+[813] = { pset={ LHpi.Data.sets[813].cardcount.both-5, [3]=LHpi.Data.sets[813].cardcount.reg-5 }, failed={ [3]=LHpi.Data.sets[813].cardcount.tok}, namereplaced=10 },-- -5 Intro Deck variants
 [806] = { pset={ [3]=171-6 }, failed= { [3]=6 } }, -- -6 is tokens
 [802] = { namereplaced=6 },
 [800] = { namereplaced=8 },
@@ -1099,6 +1122,7 @@ function site.SetExpected()
 [150] = { namereplaced=2 },
 [120] = { namereplaced=3 },
 -- special sets
+[812] = { foiltweaked=2 },
 [807] = { pset={ LHpi.Data.sets[807].cardcount.both+LHpi.Data.sets[807].cardcount.nontr }, namereplaced=3 },
 [805] = { namereplaced=2 },
 [801] = { pset={ LHpi.Data.sets[801].cardcount.reg+LHpi.Data.sets[801].cardcount.repl }, failed={ LHpi.Data.sets[801].cardcount.repl }, namereplaced=2 },

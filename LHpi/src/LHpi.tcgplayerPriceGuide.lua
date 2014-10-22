@@ -673,6 +673,11 @@ site.namereplace = {
 ["Swamp (B)"]							= "Swamp (2)",
 },
 --expansion sets
+[813] = { -- Khans of Tarkir
+["Morph Reminder Card"]					= "Morph Token",
+["Warrior Token (Sword & Shield)"]		= "Warrior (3)",
+["Warrior Token (Pike)"]				= "Warrior (4)",
+},
 [802] = { -- Born of the Gods
 ["Bird Token (White)"]					= "Bird (1)",
 ["Bird Token (Blue)"]					= "Bird (4)",
@@ -1355,11 +1360,11 @@ site.namereplace = {
  @field [parent=#site.variants] #table variant
 ]]
 site.variants = {
-[808] = { --M15 workarund
-override=false,
-["Beast (5)"] = { "Beast", {"*"} },
-["Beast (9)"] = { "Beast", {"*"} },
-},
+--[808] = { --M15 workarund
+--override=false,
+--["Beast (5)"] = { "Beast", {"*"} },
+--["Beast (9)"] = { "Beast", {"*"} },
+--},
 [762] = { --Zendikar
 override=true,
 ["Plains"] 						= { "Plains"	, { 1    , 2    , 3    , 4    , "1a" , "2a" , "3a" , "4a"  } },
@@ -1452,7 +1457,7 @@ function site.SetExpected()
 -- @field [parent=#site.expected] #boolean EXPECTTOKENS
 	EXPECTTOKENS = true,
 -- Core sets
-[808] = { pset={LHpi.Data.sets[808].cardcount.both}, failed={ 2}, dropped=1, namereplaced=3 }, -- 1 SOON,2 Beast Tokens, 1 Garruk the Slayer (oversized)
+[808] = { pset={LHpi.Data.sets[808].cardcount.both}, dropped=1, namereplaced=3 }, -- 1 SOON (1 Garruk the Slayer (oversized))
 [797] = { failed={ 1 }, namereplaced=2 },
 [788] = { failed={ 1 } },
 [779] = { namereplaced=1 },
@@ -1469,6 +1474,7 @@ function site.SetExpected()
 [100] = { pset={LHpi.Data.sets[100].cardcount.reg-1}, dropped=1},-- 1 SOON
 [90]  = { pset={295-5}, dropped=11, namereplaced=8},-- 11 SOON
 -- Expansions
+[813] = { pset={LHpi.Data.sets[813].cardcount.both-5}, namereplaced=3 },-- -5 Intro Deck variants
 [802] = { namereplaced=2},
 [800] = { namereplaced=3, dropped=1 },
 [795] = { namereplaced=1, failed={ 1 } },
@@ -1522,6 +1528,8 @@ function site.SetExpected()
 [120] = { namereplaced=17 },
 [130] = { namereplaced=17, dropped=1 },
 -- special sets
+[812] = { pset={0} },
+[810] = { pset={0} },
 [807] = { pset={ LHpi.Data.sets[807].cardcount.both+LHpi.Data.sets[807].cardcount.nontr }, namereplaced=2 },
 [805] = { foiltweaked=2, namereplaced=2 },
 [801] = { pset={ LHpi.Data.sets[801].cardcount.reg+LHpi.Data.sets[801].cardcount.repl }, failed={ LHpi.Data.sets[801].cardcount.repl }, dropped=LHpi.Data.sets[801].cardcount.repl-1, namereplaced=3 },

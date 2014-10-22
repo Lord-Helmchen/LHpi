@@ -486,9 +486,9 @@ site.sets = {
 [130]={id = 130, lang = { true , [9]=false}, fruc = { false,true }, pages= 4, url = "atq"},
 [120]={id = 120, lang = { true , [9]=false}, fruc = { false,true }, pages= 3, url = "arn"},
 -- special sets
-[812]={id = 812, lang = { true , [9]=false}, fruc = { true , true }, pages= 4, url = "ddn"},--Duel Decks: Speed vs. Cunning
+[812]={id = 812, lang = { true , [9]=false}, fruc = { true , true }, pages= 3, url = "ddn"},--Duel Decks: Speed vs. Cunning
 [811]=nil,--Magic 2015 Clash Pack
-[810]={id = 810, lang = { true , [9]=false}, fruc = { false, true }, pages= 2, url = "mde"},--Modern Event Deck 2014
+[810]={id = 810, lang = { true , [9]=false}, fruc = { false, true }, pages= 1, url = "mde"},--Modern Event Deck 2014
 [809]={id = 809, lang = { true , [9]=false}, fruc = { true , false}, pages= 1, url = "v14"},--From the Vault: Annihilation
 [807]={id = 807, lang = { true , [9]=false}, fruc = { true , true }, pages= 8, url = "cns"},--Conspiracy
 [805]={id = 805, lang = { true , [9]=false}, fruc = { true , true }, pages= 3, url = "ddm"},--Duel Decks: Jace vs. Vraska
@@ -567,6 +567,8 @@ site.namereplace = {
 ["Aetherspouts(Ætherspouts)"]			= "Ætherspouts",
 ["Emblem Ajani Token(13)"]				= "Ajani Steadfast Emblem",
 ["Emblem Garruk Token(14)"]				= "Garruk, Apex Predator Emblem",
+["Beast Token(Black)(5)"]				= "Beast (5)",
+["Beast Token(Green)(9)"]				= "Beast (9)",
 },
 [797] = { -- M2014
 ["Elemental Token(7)"]					= "Elemental (7)",
@@ -584,6 +586,12 @@ site.namereplace = {
 ["Circle of Protection : Green"]		= "Circle of Protection: Green",
 ["Circle of Protection : Red"]			= "Circle of Protection: Red",
 ["Circle of Protection : White"]		= "Circle of Protection: White",
+},
+[813] = { --Khans of Tarkir
+["Warrior Token(3)"]					= "Warrior (3)",
+["Warrior Token(4)"]					= "Warrior (4)",
+["Emblem Sarkhan Token(12)"]			= "Sarkhan, the Dragonspeaker Emblem",
+["Emblem Sorin Token(13)"]				= "Sorin, Solemn Visitor Emblem",
 },
 [802] = { -- Born of the Gods
 ["Unravel the Æther (Unravel the Aether)"]	= "Unravel the Aether",
@@ -663,6 +671,10 @@ site.namereplace = {
 --["Dandân"]								= "Dandan",
 },
 -- special sets
+[810] = { --Modern Event Deck 2014
+["Myr Token|Spirit Token"]								= "Spirit Token|Myr Token",
+["Emblem Elspeth, Knight-Errant Token|Soldier Token"]	= "Soldier Token|Elspeth, Knight-Errant Emblem",
+},
 [807] = { --Conspiracy
 ["Æther Searcher(Aether Searcher)"]		= "Æther Searcher",
 },
@@ -780,8 +792,8 @@ function site.SetExpected()
 	EXPECTTOKENS = true,
 --TODO reduce amount of hardcoded numbers
 -- Core sets
-[808] = { pset={ LHpi.Data.sets[808].cardcount.both-15, [9]=LHpi.Data.sets[808].cardcount.reg-15 }, failed={ [9]=13}, namereplaced=7 },-- -15 extra cards (nr. 270 - 284),
-[797] = { pset={ [9]=262-13 }, failed={ [9]=13}, namereplaced=4 }, -- 13 tokens
+[808] = { pset={ LHpi.Data.sets[808].cardcount.both-15, [9]=LHpi.Data.sets[808].cardcount.reg-11 }, failed={ [9]=LHpi.Data.sets[808].cardcount.tok }, namereplaced=12 },-- -15 extra cards (nr. 270 - 284),
+[797] = { pset={ [9]=LHpi.Data.sets[797].cardcount.reg }, failed={ [9]=LHpi.Data.sets[797].cardcount.tok}, namereplaced=4 }, -- 13 tokens
 [788] = { pset={ [9]=249 }, failed={[9]=11} },-- fail SZH tokens
 [779] = { pset={ [9]=249 }, failed={[9]=7} },-- fail SZH tokens
 [770] = { namereplaced=4, pset={ [9]=249 }, failed={[9]=6} },-- fail SZH tokens
@@ -798,6 +810,7 @@ function site.SetExpected()
 [100] = { pset={ 302-19 } },
 [90]  = {namereplaced=4},
 -- Expansions
+[813] = {pset={ LHpi.Data.sets[813].cardcount.both-5, [9]=LHpi.Data.sets[813].cardcount.reg-5 }, failed={ [9]=LHpi.Data.sets[813].cardcount.tok}, namereplaced=8 },-- -5 Intro Deck variants
 [806] = {pset={[9]=165}, failed={[9]=6}},-- fail SZH tokens
 [802] = {namereplaced=8, pset={[9]=165}, failed={[9]=11}},-- fail SZH tokens
 [800] = {namereplaced=10, pset={[9]=249}, failed={[9]=11}},-- fail SZH tokens
@@ -863,6 +876,8 @@ function site.SetExpected()
 [130] = { dropped=7, namereplaced=1 },
 [120] = { dropped=11 },
 -- special sets
+[812] = { foiltweaked=2 },
+[810] = { namereplaced=2 },
 [807] = { pset={ LHpi.Data.sets[807].cardcount.both+LHpi.Data.sets[807].cardcount.nontr }, namereplaced=2 },
 [805] = { namereplaced=2, foiltweaked=2, pset={ 89-1 } }, -- -1 token
 [801] = { pset={ LHpi.Data.sets[801].cardcount.reg+LHpi.Data.sets[801].cardcount.repl }, failed={ LHpi.Data.sets[801].cardcount.repl }, dropped=LHpi.Data.sets[801].cardcount.repl, namereplaced=2 },

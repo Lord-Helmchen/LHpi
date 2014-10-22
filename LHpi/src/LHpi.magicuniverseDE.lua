@@ -561,7 +561,7 @@ site.sets = {
  @field [parent=#site.namereplace] #string name
 ]]
 site.namereplace = {
-[797] = { -- M2014
+[808] = { -- M20155
 ["Token - Beast (B)"] 					= "Beast (5)";
 ["Token - Beast (G)"] 					= "Beast (9)";
 ["Emblem - Ajani"]						= "Ajani Steadfast Emblem";
@@ -614,6 +614,13 @@ site.namereplace = {
 },
 [90] = { -- Alpha
 ["Time Walk (alpha, near mint)"]		= "Time Walk (alpha)(near mint)"
+},
+[813] = { --Khans of Tarkir
+["Token - Warrior (3) (W)"]				= "Warrior (3)",
+["Token - Warrior (4) (W)"]				= "Warrior (4)",
+["Token - Spirit Warrior (SPT)"]		= "Spirit Warrior",
+["Emblem: Sarkhan"]						= "Sarkhan, the Dragonspeaker Emblem",
+["Emblem: Sorin"]						= "Sorin, Solemn Visitor Emblem",
 },
 [806] = { -- Journey into Nyx
 ["Token - Snake (SPT)"]					= "Snake",
@@ -777,6 +784,9 @@ site.namereplace = {
 ["Ghazbán Ogre"]						= "Ghazban Ogre",
 },
 -- special sets
+[807] = {
+["Adventageous Proclamation"]			= "Advantageous Proclamation",
+},
 [801] = {
 ["Kongming, 'Sleeping Dragon'"]			= "Kongming, “Sleeping Dragon”",
 },
@@ -946,7 +956,7 @@ function site.SetExpected()
 -- @field [parent=#site.expected] #boolean EXPECTTOKENS
 	EXPECTTOKENS = true,
 -- Core sets
-[808] = {pset={ LHpi.Data.sets[808].cardcount.reg-15+LHpi.Data.sets[808].cardcount.tok, [3]=LHpi.Data.sets[808].cardcount.reg-15 }, failed={[3]=LHpi.Data.sets[808].cardcount.tok} },-- -15 extra cards (nr. 270 - 284)
+[808] = {pset={ LHpi.Data.sets[808].cardcount.both-15, [3]=LHpi.Data.sets[808].cardcount.reg-15 }, failed={[3]=LHpi.Data.sets[808].cardcount.tok}, namereplaced=4 },-- -15 extra cards (nr. 270 - 284)
 [797] = { namereplaced=3 },
 [788] = { namereplaced=1 },
 [770] = { namereplaced=2 },
@@ -961,6 +971,7 @@ function site.SetExpected()
 [100] = { pset={ 302-134 },	failed={ 7 }, dropped=352, namereplaced=1 },
 [90]  = { pset={ 295-61 }, dropped=293,},
 -- Expansions
+[813] = { pset={ LHpi.Data.sets[813].cardcount.both-5, [3]=LHpi.Data.sets[813].cardcount.reg-5 }, failed={ [3]=LHpi.Data.sets[813].cardcount.tok}, namereplaced=5 },-- -5 Intro Deck variants
 [806] = { pset={ [3]=165 }, failed={ [3]=6}, namereplaced=2 },--GER tokens 
 [802] = { namereplaced=4 },
 [800] = { namereplaced=4 },
@@ -999,6 +1010,7 @@ function site.SetExpected()
 [130] = { dropped=54 },
 [120] = { namereplaced=4 },
 -- special sets
+[807] = { pset={ LHpi.Data.sets[807].cardcount.all }, namereplaced=1},
 [801] = { pset={ LHpi.Data.sets[801].cardcount.reg+LHpi.Data.sets[801].cardcount.repl }, failed={ LHpi.Data.sets[801].cardcount.repl }, dropped=LHpi.Data.sets[801].cardcount.repl, namereplaced=1 },
 	}--end table site.expected
 site.expected[801].pset[3]=site.expected[801].pset[1]
