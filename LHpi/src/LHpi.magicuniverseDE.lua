@@ -999,7 +999,7 @@ function site.SetExpected()
 [130] = { dropped=54 },
 [120] = { namereplaced=4 },
 -- special sets
-[801] = { pset={ LHpi.Data.sets[801].cardcount.reg+LHpi.Data.sets[801].cardcount.overs }, failed={ LHpi.Data.sets[801].cardcount.overs }, dropped=LHpi.Data.sets[801].cardcount.overs, namereplaced=1 },
+[801] = { pset={ LHpi.Data.sets[801].cardcount.reg+LHpi.Data.sets[801].cardcount.repl }, failed={ LHpi.Data.sets[801].cardcount.repl }, dropped=LHpi.Data.sets[801].cardcount.repl, namereplaced=1 },
 	}--end table site.expected
 site.expected[801].pset[3]=site.expected[801].pset[1]
 site.expected[801].failed[3]=site.expected[801].failed[1]

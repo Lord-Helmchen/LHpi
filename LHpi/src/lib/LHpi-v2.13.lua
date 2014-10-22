@@ -902,7 +902,7 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 	end
 	
 	-- unify Oversized suffix
-	card.name= string.gsub(cardname,"%-? ?%(?[Oo][Vv][Ee][Rr][Ss][Is][Zz][Ee][Dd]%)?$","(oversized)")
+	card.name= string.gsub(card.name,"%-? ?%(?[Oo][Vv][Ee][Rr][Ss][Is][Zz][Ee][Dd]%)?$","(oversized)")
 
 	if site.namereplace[setid] and site.namereplace[setid][card.name] then
 		if LOGNAMEREPLACE or DEBUG then

@@ -1101,7 +1101,7 @@ function site.SetExpected()
 -- special sets
 [807] = { pset={ LHpi.Data.sets[807].cardcount.both+LHpi.Data.sets[807].cardcount.nontr }, namereplaced=3 },
 [805] = { namereplaced=2 },
-[801] = { pset={ LHpi.Data.sets[801].cardcount.reg+LHpi.Data.sets[801].cardcount.overs }, failed={ LHpi.Data.sets[801].cardcount.overs }, namereplaced=2 },
+[801] = { pset={ LHpi.Data.sets[801].cardcount.reg+LHpi.Data.sets[801].cardcount.repl }, failed={ LHpi.Data.sets[801].cardcount.repl }, namereplaced=2 },
 [796] = { namereplaced=5 },
 [794] = { foiltweaked=2 },
 [790] = { foiltweaked=2 },
