@@ -29,6 +29,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 DoImport
 * finetune site.expected[setid].pset defaults according to site.expected.EXPECTTOKENS,site.expected.EXPECTNONTRAD and site.expected.EXPECTREPL
 * increased default dataver from 2 to 5
+BuildCardData
+* set objtype = 2 for identified tokens and emblems. still needs work for tokens with multiple variants.
 SetPrice
 * look for special variant names "token", "nontrad", "replica" and transform them into object types for ma.SetPrice
 ]]
@@ -405,7 +407,7 @@ function LHpi.MainImportCycle( sourcelist , totalhtmlnum , importfoil , importla
 			LHpi.Log ( "Set " .. importsets[cSet.id] .. " imported." )
 			if VERBOSE then
 				if ( LHpi.Data.sets[sid] and LHpi.Data.sets[sid].cardcount ) then
-					LHpi.Log( string.format( "[%i] contains %4i cards (%4i regular, %4i tokens, %4i nontraditional, %4i replica )", cSet.id, LHpi.Data.sets[sid].cardcount.both, LHpi.Data.sets[sid].cardcount.reg, LHpi.Data.sets[sid].cardcount.tok, LHpi.Data.sets[sid].cardcount.nontr or 0, LHpi.Data.sets[sid].cardcount.repl or 0 ) )
+					LHpi.Log( string.format( "[%i] contains %4i cards (%4i regular, %4i tokens, %4i nontraditional, %4i replica )", cSet.id, LHpi.Data.sets[sid].cardcount.all, LHpi.Data.sets[sid].cardcount.reg, LHpi.Data.sets[sid].cardcount.tok, LHpi.Data.sets[sid].cardcount.nontr or 0, LHpi.Data.sets[sid].cardcount.repl or 0 ) )
 				else
 					LHpi.Log( string.format( "[%i] contains unknown to LHpi number of cards.", cSet.id ) )
 				end
@@ -1011,17 +1013,16 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 	-- Token infix removal, must come after variant checking
 	-- This means that we sometimes have to namereplace the suffix away for variant tokens
 	if string.find(card.name , "[tT][oO][kK][eE][nN]" ) then -- Token pre-/suffix and color suffix
-		card.name = string.gsub( card.name , "[tT][oO][kK][eE][nN]" , "" )
+		card.objtype = 2
+		card.name = string.gsub( card.name , " ?[tT][oO][kK][eE][nN][ %-]*" , "" )
 		card.name = string.gsub( card.name , "%((.*)White(.*)%)" , "(%1W%2)" )
 		card.name = string.gsub( card.name , "%((.*)Blue(.*)%)" , "(%1U%2)" )
 		card.name = string.gsub( card.name , "%((.*)Black(.*)%)" , "(%1B%2)" )
 		card.name = string.gsub( card.name , "%((.*)Red(.*)%)" , "(%1R%2)" )
 		card.name = string.gsub( card.name , "%((.*)Green(.*)%)" , "(%1G%2)" )
-		card.name = string.gsub( card.name , "^ %- " , "" )
 		card.name = string.gsub( card.name , "%([WUBRGCHTAM][/|]?[WUBRG]?%)" , "" )
 		card.name = string.gsub( card.name , "%(Art%)" , "" )
 		card.name = string.gsub( card.name , "%(Go?ld%)" , "" )
-		--card.name = string.gsub( card.name , "%(Gold%)" , "" )
 		card.name = string.gsub( card.name , "%(Multicolor%)" , "" )
 		card.name = string.gsub( card.name , "%(Spt%)" , "" )
 		card.name = string.gsub( card.name , "%(%)%s*$" , "" )
@@ -1029,11 +1030,25 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 	end
 	if string.find( card.name , "^Emblem" ) then -- Emblem prefix to suffix
 		if card.name == "Emblem of the Warmind" 
-		or card.name == "Emblem des Kriegerhirns" then
+		or card.name == "Emblem des Kriegerhirns"
+		or card.name == "Emblema del Guerrafondaio"
+		or card.name == "Emblema da Mente Belicosa"
+		or card.name == "Emblema de la Mente bélica"
+		or card.name == "Emblema receloso"
+		or card.name == "Emblema Nefasto"
+		then
 			-- do nothing
 		else
 			card.name = string.gsub( card.name , "Emblem[-: ]+([^\"]+)" , "%1 Emblem" )
 			card.name = string.gsub( card.name , "  +" , " " )
+		end
+	end
+	if string.find(card.name , "Emblem$") then -- set object type to "token"
+		if card.name == "Leering Emblem"
+		or card.name == "Schielendes Emblem" then
+			--do nothing
+		else
+			card.objtype = 2
 		end
 	end
 	
