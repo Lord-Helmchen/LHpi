@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 --[[ CHANGES
 2.13.5.13
+added 810,812,813
 removed oversized handling from BCDPluginPre
 ]]
 
@@ -402,6 +403,7 @@ site.sets = {
 [100]={id = 100, lang = { true }, fruc = { true }, url = "Beta%20Edition"},
 [90] ={id =  90, lang = { true }, fruc = { true }, url = "Alpha%20Edition"},
 -- Expansions
+[813]={id = 813, lang = { true }, fruc = { true }, url = "Khans%20of%20Tarkir"},--Khans of Tarkir
 [806]={id = 806, lang = { true }, fruc = { true }, url = "Journey%20into%20Nyx"},
 [802]={id = 802, lang = { true }, fruc = { true }, url = "Born%20of%20the%20Gods"},
 [800]={id = 800, lang = { true }, fruc = { true }, url = "Theros"},
@@ -468,6 +470,10 @@ site.sets = {
 [130]={id = 130, lang = { true }, fruc = { true }, url = "Antiquities"},
 [120]={id = 120, lang = { true }, fruc = { true }, url = "Arabian%20Nights"},
 -- special sets
+[812]={id=812, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Speed%20vs.%20Cunning"},--Duel Decks: Speed vs. Cunning
+--[811]=nil,--Magic 2015 Clash Pack
+[810]={id=810, lang = { true }, fruc = { true }, url = "Modern%20Event%20Deck"},--Modern Event Deck 2014
+--[809]=nil,--From the Vault: Annihilation
 [807]={id=807, lang = { true }, fruc = { true }, url = "Conspiracy"},--Conspiracy
 [805]={id=805, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Jace%20vs.%20Vraska"},--Duel Decks: Jace vs. Vraska
 [804]=nil,--Challenge Deck: Battle the Horde

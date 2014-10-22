@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 --[[ CHANGES
 2.13.5.4
+added 813
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -395,6 +396,7 @@ site.sets = {
 [100]={id = 100, lang = { [1]=true }, fruc = { false, true }, url = "Beta"},
 [90] ={id =  90, lang = { [1]=true }, fruc = { false, true }, url = "Alpha"},
 -- Expansions
+[813]={id = 813, lang = { [1]=true }, fruc = { true , true }, url = "Khans_of_Tarkir"},--Khans of Tarkir
 [806]={id = 806, lang = { [1]=true }, fruc = { true , true }, url = "Journey_Into_Nyx"},
 [802]={id = 802, lang = { [1]=true }, fruc = { true , true }, url = "Born_of_the_Gods"},
 [800]={id = 800, lang = { [1]=true }, fruc = { true , true }, url = "Theros"},
@@ -462,11 +464,15 @@ site.sets = {
 [130]={id = 130, lang = { [1]=true }, fruc = { false, true }, url = "Antiquities"},
 [120]={id = 120, lang = { [1]=true }, fruc = { false, true }, url = "Arabian_Nights"},
 -- special sets
---TODO FtV are foilonly. check all frucs
+--TODO FtV are foilonly. check all frucs!
+[812]=nil,--Duel Decks: Speed vs. Cunning
+[811]=nil,--Magic 2015 Clash Pack
+[810]=nil,--Modern Event Deck 2014
+[809]=nil,--From the Vault: Annihilation
 [807]={id = 807, lang = { [1]=true }, fruc = { true , true }, url = {"Conspiracy","Conspiracy_Schemes"} },--Conspiracy
 [805]={id = 805, lang = { [1]=true }, fruc = { true , true }, url = "Duel_Decks_Jace_vs_Vraska"},--Duel Decks: Jace vs. Vraska
---[804]=nil,--Challenge Deck: Battle the Horde
---[803]=nil,--Challenge Deck: Face the Hydra
+[804]=nil,--Challenge Deck: Battle the Horde
+[803]=nil,--Challenge Deck: Face the Hydra
 [801]={id = 801, lang = { [1]=true }, fruc = { true , true }, url = "C13"},--Commander 2013
 [799]={id = 799, lang = { [1]=true }, fruc = { true , true }, url = "DDL"},--Duel Decks: Heroes vs. Monsters
 [798]={id = 798, lang = { [1]=true }, fruc = { true , true }, url = "V13"},--From the Vault: Twenty
@@ -497,8 +503,8 @@ site.sets = {
 [755]={id = 755, lang = { [1]=true }, fruc = { true , true }, url = "Duel_Decks_Jace_vs_Chandra"},
 [753]={id = 753, lang = { [1]=true }, fruc = { true , true }, url = "From_the_Vault_Dragons"},
 [740]={id = 740, lang = { [1]=true }, fruc = { true , true }, url = "Duel_Decks_Elves_vs_Goblins"},
---[675]={id = 675, lang = { [1]=true }, fruc = { true , true }, url = ""},--Coldsnap Theme Decks
---[635]={id = 635, lang = { [1]=true }, fruc = { true , true }, url = ""},--Magic Encyclopedia
+[675]=nil,--Coldsnap Theme Decks
+[635]=nil,--Magic Encyclopedia
 [600]={id = 600, lang = { [1]=true }, fruc = { true , true }, url = "Unhinged"},--no foils on site
 [490]={id = 490, lang = { [1]=true }, fruc = { true , true }, url = "Deckmasters_Box_Set"},--Deckmaster --TODO foiltweak
 [440]={id = 440, lang = { [1]=true }, fruc = { true , true }, url = "Beatdown_Box_Set"},
@@ -506,15 +512,15 @@ site.sets = {
 [405]={id = 405, lang = { [1]=true }, fruc = { true , true }, url = "Battle_Royale_Box_Set"},
 [390]={id = 390, lang = { [1]=true }, fruc = { true , true }, url = "Starter_1999"},
 [380]={id = 380, lang = { [1]=true }, fruc = { true , true }, url = "Portal_Three_Kingdoms"},   
---[340]={id = 340, lang = { [1]=true }, fruc = { true , true }, url = "ATH"},--Anthologies
+[340]=nil,--Anthologies
 [320]={id = 320, lang = { [1]=true }, fruc = { true , true }, url = "Unglued"},
 [310]={id = 310, lang = { [1]=true }, fruc = { true , true }, url = "Portal_Second_Age"},   
 [260]={id = 260, lang = { [1]=true }, fruc = { true , true }, url = "Portal"},
 [225]={id = 225, lang = { [1]=true }, fruc = { true , true }, url = ""},--Introductory Two-Player Set
 [201]={id = 201, lang = { [1]=true }, fruc = { true , true }, url = ""},--Renaissance
 [200]={id = 200, lang = { [1]=true }, fruc = { true , true }, url = "Chronicles"},
---[70] ={id =  70, lang = { [1]=true }, fruc = { true , true }, url = "VAN"},--Vanguard
---[69] ={id =  69, lang = { [1]=true }, fruc = { true , true }, url = ""},--Box Topper Cards
+[70] =nil,--Vanguard
+[69] =nil,--Box Topper Cards
 -- Promo Cards
 --[50] ={id =  50, lang = { [1]=true }, fruc = { true , true }, url = ""},--Full Box Promotion
 --[45] ={id =  45, lang = { [1]=true }, fruc = { true , true }, url = ""},--Magic Premiere Shop

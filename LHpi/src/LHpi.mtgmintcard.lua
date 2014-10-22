@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 --[[ CHANGES
 2.13.5.12
+added 809,810,812,813
 removed oversized handling from BCDPluginPre
 updated cardcounts,etc
 ]]
@@ -418,6 +419,7 @@ site.sets = {
 [100]={id = 100, lang = { true , [9]=false}, fruc = { false,true }, pages=10, url = "leb"}, -- Beta
 [90] ={id =  90, lang = { true , [9]=false}, fruc = { false,true }, pages=10, url = "lea"}, -- Alpha 
  -- Expansions
+[813]={id = 813, lang = { true , [9]=true }, fruc = { true ,true }, pages=10, url = "ktk"},
 [806]={id = 806, lang = { true , [9]=true }, fruc = { true ,true }, pages= 6, url = "jou"},
 [802]={id = 802, lang = { true , [9]=true }, fruc = { true ,true }, pages= 6, url = "bng"},
 [800]={id = 800, lang = { true , [9]=true }, fruc = { true ,true }, pages= 9, url = "ths"},
@@ -484,6 +486,10 @@ site.sets = {
 [130]={id = 130, lang = { true , [9]=false}, fruc = { false,true }, pages= 4, url = "atq"},
 [120]={id = 120, lang = { true , [9]=false}, fruc = { false,true }, pages= 3, url = "arn"},
 -- special sets
+[812]={id = 812, lang = { true , [9]=false}, fruc = { true , true }, pages= 4, url = "ddn"},--Duel Decks: Speed vs. Cunning
+[811]=nil,--Magic 2015 Clash Pack
+[810]={id = 810, lang = { true , [9]=false}, fruc = { false, true }, pages= 2, url = "mde"},--Modern Event Deck 2014
+[809]={id = 809, lang = { true , [9]=false}, fruc = { true , false}, pages= 1, url = "v14"},--From the Vault: Annihilation
 [807]={id = 807, lang = { true , [9]=false}, fruc = { true , true }, pages= 8, url = "cns"},--Conspiracy
 [805]={id = 805, lang = { true , [9]=false}, fruc = { true , true }, pages= 3, url = "ddm"},--Duel Decks: Jace vs. Vraska
 --[804]=nil,--Challenge Deck: Battle the Horde

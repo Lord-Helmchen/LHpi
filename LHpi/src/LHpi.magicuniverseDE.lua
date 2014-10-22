@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 --[[ CHANGES
 2.13.5.13
+addded 807,813
 removed oversized handling from BCDPluginPre
 updated cardcounts,etc
 ]]
@@ -478,6 +479,7 @@ site.sets = {
 [100]={id = 100, lang = { true , [3]=false}, fruc = { false,true ,true ,true }, url = "Beta"}, 
 [90] ={id =  90, lang = { true , [3]=false}, fruc = { false,true ,true ,true }, url = "Beta"}, -- Alpha in Beta with "([Aa]lpha)" suffix
  -- Expansions
+[813]={id = 813, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Khans%20of%20Tarkir"},
 [806]={id = 806, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Journey%20into%20Nyx"},
 [802]={id = 802, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Born%20of%20the%20Gods"},
 [800]={id = 800, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Theros"},
@@ -545,6 +547,7 @@ site.sets = {
 [130]={id = 130, lang = { true , [3]=false}, fruc = { false,true ,true ,true }, url = "Antiquities"},
 [120]={id = 120, lang = { true , [3]=false}, fruc = { false,true ,true ,true }, url = "Arabian_Nights"},
 -- Special sets
+[807]={id = 807, lang = { true , [3]=false}, fruc = { false,true ,true ,true }, url = "Conspiracy"},
 [801]={id = 801, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Commander%202013"},
 -- other special and promo sets: sorting out the single page seems more trouble than it's worth
 } -- end table site.sets

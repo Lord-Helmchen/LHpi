@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 --[[ CHANGES
 2.13.5.13
+added 808,812,813
 updated cardcounts,etc
 ]]
 
@@ -446,7 +447,7 @@ site.frucs = {
 ]]
 site.sets = {
 -- Core Sets
---[808]={id = 808, lang = { true , [3]=true }, fruc = { true ,true }, url = "M15"}, 
+[808]={id = 808, lang = { true , [3]=true }, fruc = { true ,true }, url = "M15"}, 
 [797]={id = 797, lang = { true , [3]=true }, fruc = { true ,true }, url = "M14"}, 
 [788]={id = 788, lang = { true , [3]=true }, fruc = { true ,true }, url = "M13"}, 
 [779]={id = 779, lang = { true , [3]=true }, fruc = { true ,true }, url = "M12"}, 
@@ -466,11 +467,12 @@ site.sets = {
 [100]={id = 100, lang = { true , [3]=false}, fruc = { false,true }, url = "B%20"},
 [90] = nil, -- Alpha 
  -- Expansions
-[806]={id = 806, lang = { true , [3]=true }, fruc = { true, true }, url = "JOU"},
-[802]={id = 802, lang = { true , [3]=true }, fruc = { true, true }, url = "BNG"},
-[800]={id = 800, lang = { true , [3]=true }, fruc = { true, true }, url = "THS"},
-[795]={id = 795, lang = { true , [3]=true }, fruc = { true, true }, url = "DGM"},
-[793]={id = 793, lang = { true , [3]=true }, fruc = { true, true }, url = "GTC"},
+[813]={id = 813, lang = { true , [3]=true }, fruc = { true ,true }, url = "KTK"},--Khans of Tarkir
+[806]={id = 806, lang = { true , [3]=true }, fruc = { true ,true }, url = "JOU"},
+[802]={id = 802, lang = { true , [3]=true }, fruc = { true ,true }, url = "BNG"},
+[800]={id = 800, lang = { true , [3]=true }, fruc = { true ,true }, url = "THS"},
+[795]={id = 795, lang = { true , [3]=true }, fruc = { true ,true }, url = "DGM"},
+[793]={id = 793, lang = { true , [3]=true }, fruc = { true ,true }, url = "GTC"},
 [791]={id = 791, lang = { true , [3]=true }, fruc = { true ,true }, url = "RTR"},
 [786]={id = 786, lang = { true , [3]=true }, fruc = { true ,true }, url = "AVR"},
 [784]={id = 784, lang = { true , [3]=true }, fruc = { true ,true }, url = "DKA"}, 
@@ -532,6 +534,7 @@ site.sets = {
 [130]={id = 130, lang = { true , [3]=false }, fruc = { false,true }, url = "AQ"},
 [120]={id = 120, lang = { true , [3]=false }, fruc = { false,true }, url = "AN"},
 -- special sets
+[812]={id = 812, lang = { true , [3]=false}, fruc = { false,true }, url = "DDN"}, -- Duel Decks: Speed vs. Cunning
 [807]={id = 807, lang = { true , [3]=false}, fruc = { true ,true }, url = "CNS"},--Conspiracy
 [805]={id = 805, lang = { true , [3]=false}, fruc = { false,true }, url = "JVV"}, -- Duel Decks: Jace vs. Vaska
 [801]={id = 801, lang = { true , [3]=false}, fruc = { false,true }, url = "C13"},--Commander 2013
