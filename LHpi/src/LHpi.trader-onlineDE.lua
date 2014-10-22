@@ -27,7 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.13.5.12
+2.13.5.13
+updated cardcounts,etc
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -618,7 +619,7 @@ site.namereplace = {
 ["Will-O-The-Wisp"] 					= "Will-O’-The-Wisp",
 ["Kird der Menschenaffe"]				= "Kird, der Menschenaffe",
 ["Verformtes Artefakt|El-Hajjaj (Fehldruck)"]	= "Verformtes Artefakt",
-["Schilftroll|Manahaken (Fehldruck)"] 	= "Schilftroll",
+--["Schilftroll|Manahaken (Fehldruck)"] 	= "Schilftroll",
 ["Mons' plündernde Goblins"]			= "Mons's plündernde Goblins",
 ["El-Hajjaj"]							= "El-Hajjâj",
 },
@@ -1040,10 +1041,10 @@ function site.SetExpected()
 [360] = { namereplaced=5 },
 [250] = { namereplaced=4 },
 [180] = { namereplaced=5 },
-[140] = { pset={ [3]=306-1 }, failed= { [3]=1 }, namereplaced=6 },
+[140] = { pset={ [3]=306-2 }, failed= { [3]=2 }, namereplaced=5 },--fail 2 Fehldruck
 [139] = { namereplaced=2 },
 [110] = { pset={ 302-7-9 }, namereplaced=1 }, -- 7 empty cards on page, 9 missing entirely
-[100] = { pset={ 249 } },
+[100] = { pset={ 250 } },
 -- Expansions
 [806] = { pset={ [3]=171-6 }, failed= { [3]=6 } }, -- -6 is tokens
 [802] = { namereplaced=6 },
@@ -1064,8 +1065,8 @@ function site.SetExpected()
 [730] = { namereplaced=5 },
 [710] = { namereplaced=4 },
 [700] = { namereplaced=3 },
-[690] = { dropped=956, namereplaced=5 },
-[680] = { dropped=373, namereplaced=5 },
+[690] = { dropped=951, namereplaced=5 },
+[680] = { dropped=372, namereplaced=5 },
 [670] = { namereplaced=4 },
 [660] = { namereplaced=4 },
 [650] = { namereplaced=4 },
@@ -1095,7 +1096,7 @@ function site.SetExpected()
 [150] = { namereplaced=2 },
 [120] = { namereplaced=3 },
 -- special sets
-[807] = { pset={ LHpi.Data.sets[807].cardcount.reg+LHpi.Data.sets[807].cardcount.nontr }, namereplaced=3 },--no tokens
+[807] = { pset={ LHpi.Data.sets[807].cardcount.both+LHpi.Data.sets[807].cardcount.nontr }, namereplaced=3 },
 [805] = { namereplaced=2 },
 [801] = { pset={ LHpi.Data.sets[801].cardcount.reg+LHpi.Data.sets[801].cardcount.overs }, failed={ LHpi.Data.sets[801].cardcount.overs }, namereplaced=2 },
 [796] = { namereplaced=5 },

@@ -31,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 v5
 renamed Data.sets[setid].cardcount.overs to Data.sets[setid].cardcount.repl
 add oversized commanders to variant and foiltweak tables in [778],[801]
+[807] has 9 tokens
 ]]
 
 --TODO param importsets and nil all others to save memory?
@@ -2322,9 +2323,8 @@ Expansions = nil,
 -- @field [parent=#Data.sets] #table SpecialSets
 SpecialSets = nil,
 [807] = { name="Conspiracy",
---TODO [807] tokens
 	foil="y",
-	cardcount={ reg=197, tok=0, nontr=13, repl=0 },
+	cardcount={ reg=197, tok=9, nontr=13, repl=0 },
 },
 [805] = { name="Duel Decks: Jace vs. Vraska",
 	foil="n",

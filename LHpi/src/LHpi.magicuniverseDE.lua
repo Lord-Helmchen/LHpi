@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --[[ CHANGES
 2.13.5.13
 removed oversized handling from BCDPluginPre
+updated cardcounts,etc
 ]]
 
 -- options unique to this site
@@ -329,6 +330,8 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 	card.name = string.gsub( card.name , "%([lL][pP]%)$" , "%0 (DROP)" )
 	card.name = string.gsub( card.name , "%(light played[/%-|][Pp]layed%)" , "%0 (DROP)" )
 	card.name = string.gsub( card.name , "%([lL][pP]/[pP]%)$" , "%0 (DROP)" )
+	card.name = string.gsub( card.name , "%(played[/%-|]light played%)" , "%0 (DROP)" )
+	card.name = string.gsub( card.name , "%(played[/|]played%)$" , "%0 (DROP)" )
 	card.name = string.gsub( card.name , "%(played%)$" , "%0 (DROP)" )
 	card.name = string.gsub( card.name , "%([pP]%)$" , "%0 (DROP)" )
 	card.name = string.gsub( card.name , "%(poor%)$" , "%0 (DROP)" )
@@ -337,10 +340,9 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 	card.name = string.gsub( card.name , "signed%)$" , "%0 (DROP)" )
 	card.name = string.gsub( card.name , "signiert%)$" , "%0 (DROP)" )
 	card.name = string.gsub( card.name , "signiert!%)$" , "%0 (DROP)" )
+	card.name = string.gsub( card.name , "signiert!$" , "%0 (DROP)" )
 	card.name = string.gsub( card.name , "unterschrieben%)$" , "%0 (DROP)" )
 	card.name = string.gsub( card.name , "unterschrieben, excellent%)$" , "%0 (DROP)" )
-	card.name = string.gsub( card.name , "%(played[/%-|]light played%)" , "%0 (DROP)" )
-	card.name = string.gsub( card.name , "%(played[/|]played%)$" , "%0 (DROP)" )
 	card.name = string.gsub( card.name , "light played$" , "%0 (DROP)" )
 	card.name = string.gsub( card.name , "%(lp %- played%)" , "%0 (DROP)" )
 	card.name = string.gsub( card.name , "%(lp%) %(ia%)$" , "%0 (DROP)" )
@@ -371,6 +373,11 @@ function site.BCDpluginPost( card , setid, importfoil, importlangs )
 		if card.name == "Schilftroll (Fehldruck, deutsch)" then
 			card.lang = { [3]="GER" }
 			card.name = "Mana Barbs"
+		end
+		if string.find( card.name , "%(französisch%)") then
+			card.name = string.gsub( card.name , "$s*%(französisch%)%s*" , "" )
+			card.lang = { [4]="FRA" }
+			card.regprice = { [4] = card.regprice[1] }
 		end
 	elseif setid == 180 then -- 4th Edition
 		if card.name == "Warp Artifact (FEHLDRUCK)" then
@@ -551,6 +558,12 @@ site.sets = {
  @field [parent=#site.namereplace] #string name
 ]]
 site.namereplace = {
+[797] = { -- M2014
+["Token - Beast (B)"] 					= "Beast (5)";
+["Token - Beast (G)"] 					= "Beast (9)";
+["Emblem - Ajani"]						= "Ajani Steadfast Emblem";
+["Emblem - Garruk"]						= "Garruk, Apex Predator Emblem"
+},
 [797] = { -- M2014
 ["Token - Elemental (R) (7)"] 			= "Elemental (7)";
 ["Token - Elemental (R) (8)"] 			= "Elemental (8)";
@@ -747,7 +760,7 @@ site.namereplace = {
 },
 [500] = { -- Torment
 ["Chainers Edict"]						= "Chainer's Edict",
-["Caphalid Illusionist"]				= "Cephalid Illusionist"
+--["Caphalid Illusionist"]				= "Cephalid Illusionist"
 },
 [220] = { -- Alliances
 ["Lim-Dul's Vault"]						= "Lim-Dûl's Vault",
@@ -930,7 +943,7 @@ function site.SetExpected()
 -- @field [parent=#site.expected] #boolean EXPECTTOKENS
 	EXPECTTOKENS = true,
 -- Core sets
-[808] = {pset={ LHpi.Data.sets[808].cardcount.reg-15, [3]=LHpi.Data.sets[808].cardcount.reg-15 } },-- -15 extra cards (nr. 270 - 284)
+[808] = {pset={ LHpi.Data.sets[808].cardcount.reg-15+LHpi.Data.sets[808].cardcount.tok, [3]=LHpi.Data.sets[808].cardcount.reg-15 }, failed={[3]=LHpi.Data.sets[808].cardcount.tok} },-- -15 extra cards (nr. 270 - 284)
 [797] = { namereplaced=3 },
 [788] = { namereplaced=1 },
 [770] = { namereplaced=2 },
@@ -939,7 +952,7 @@ function site.SetExpected()
 [550] = { pset={ 357-19, [3]=357-19-2 }, failed={ [3]=2 } },
 [460] = { pset={ 350-130, [3]=350-130 } }, --no commons
 [180] = { pset={ 378-136-2, [3]=378-136-2 }, dropped=2, failed={[3]=1} }, --no commons
-[140] = { pset={ [3]=306-260 }, failed={ 2, [3]=1 }, dropped=199, namereplaced=4 },
+[140] = { pset={ [3]=306-260 }, failed={ 2, [3]=1 }, dropped=200, namereplaced=4 },
 [139] = { dropped=9, namereplaced=19 },
 [110] = { pset={ 302-24 }, dropped=106, namereplaced=1 },
 [100] = { pset={ 302-134 },	failed={ 7 }, dropped=352, namereplaced=1 },
@@ -950,7 +963,7 @@ function site.SetExpected()
 [800] = { namereplaced=4 },
 [795] = { pset={ [3]=157-1 }, failed ={ [3]=1} }, -- -1/fail is elemental token
 [793] = { namereplaced=1 },
-[791] = { failed={ 1 } },
+--[791] = { failed={ 1 } },
 [786] = { namereplaced=5 },
 [784] = { pset={ 161+1 }, failed={ [3]=1 }, namereplaced=27 },-- +1/fail is checklist
 [782] = { pset={ 276+1 }, failed={ [3]=1}, namereplaced=46 },-- +1/fail is checklist
@@ -971,11 +984,10 @@ function site.SetExpected()
 [570] = { dropped=1 },
 [560] = { pset={ 306-20, [3]=306-20 }, namereplaced=1 },
 [520] = { pset={ 350-20, [3]=350-20 }, dropped=3 },
-[500] = { namereplaced=2 },
+[500] = { namereplaced=1 },
 [480] = { pset={ 350-20, [3]=350-20 }, dropped=1 },
 [450] = { pset={ 146-3, [3]=146-3 } },-- 3 alt art versions missing
 [430] = { pset={ 350-20, [3]=350-20 } },
-[330] = {pset={ LHpi.Data.sets[330].cardcount.reg-1, [3]=LHpi.Data.sets[330].cardcount.reg-1 }, dropped=1 },-- Angelic Chorus only (lp)
 [290] = { dropped=1 },
 [220] = { namereplaced=3 },
 [190] = { pset={ 383-3, [3]=383-3 }, dropped=1 },-- -3 plains

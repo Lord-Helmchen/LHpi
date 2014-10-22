@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --[[ CHANGES
 2.13.5.12
 removed oversized handling from BCDPluginPre
+updated cardcounts,etc
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -463,9 +464,9 @@ site.sets = {
 [450]={id = 450, lang = { true , [9]=false}, fruc = { true ,true }, pages= 6, url = "pls"},
 [430]={id = 430, lang = { true , [9]=false}, fruc = { true ,true }, pages=15, url = "inv"}, -- SZH in site but not in MA
 [420]={id = 420, lang = { true , [9]=false}, fruc = { true ,true }, pages= 4, url = "pcy"},
-[410]={id = 410, lang = { true , [9]=false}, fruc = { true ,true }, pages= 6, url = "nms"},
+[410]={id = 410, lang = { true , [9]=false}, fruc = { true ,true }, pages= 5, url = "nms"},
 [400]={id = 400, lang = { true , [9]=false}, fruc = { true ,true }, pages=12, url = "mmq"},
-[370]={id = 370, lang = { true , [9]=false}, fruc = { true ,true }, pages= 6, url = "uds"},
+[370]={id = 370, lang = { true , [9]=false}, fruc = { true ,true }, pages= 5, url = "uds"},
 [350]={id = 350, lang = { true , [9]=false}, fruc = { true ,true }, pages= 6, url = "ulg"},
 [330]={id = 330, lang = { true , [9]=false}, fruc = { true ,true }, pages=13, url = "usg"},
 [300]={id = 300, lang = { true , [9]=false}, fruc = { false,true }, pages= 6, url = "exo"},
@@ -600,7 +601,7 @@ site.namereplace = {
 },
 [782] = { -- Innistrad
 ["Double-Sided Card Checklist"]			= "Checklist",
-["Curse of the Nightly Haunt"]			= "Curse of the Nightly Hunt",
+--["Curse of the Nightly Haunt"]			= "Curse of the Nightly Hunt",
 --["Alter's Reap"] 						= "Altar's Reap",
 --["Elder Cather"] 						= "Elder Cathar",
 --["Moldgraft Monstrosity"] 				= "Moldgraf Monstrosity",
@@ -773,20 +774,20 @@ function site.SetExpected()
 	EXPECTTOKENS = true,
 --TODO reduce amount of hardcoded numbers
 -- Core sets
-[808] = { pset={ LHpi.Data.sets[808].cardcount.both-15, [9]=LHpi.Data.sets[808].cardcount.reg-15 }, failed={ 1, [9]=13}, namereplaced=7 },-- -15 extra cards (nr. 270 - 284), Beast Token missing Version nr in MA
+[808] = { pset={ LHpi.Data.sets[808].cardcount.both-15, [9]=LHpi.Data.sets[808].cardcount.reg-15 }, failed={ [9]=13}, namereplaced=7 },-- -15 extra cards (nr. 270 - 284),
 [797] = { pset={ [9]=262-13 }, failed={ [9]=13}, namereplaced=4 }, -- 13 tokens
 [788] = { pset={ [9]=249 }, failed={[9]=11} },-- fail SZH tokens
 [779] = { pset={ [9]=249 }, failed={[9]=7} },-- fail SZH tokens
 [770] = { namereplaced=4, pset={ [9]=249 }, failed={[9]=6} },-- fail SZH tokens
-[759] = { pset={ [9]=249-20 }, failed={[9]=8}, dropped=8 },-- no SZH lands, fail SZH tokens
-[720] = { pset={ [9]=383-20 }, failed={[9]=6}, dropped=3 }, -- no SZH lands, fail SZH tokens	
+[759] = { pset={ [9]=249-20 }, failed={[9]=8}, dropped=9 },-- no SZH lands, fail SZH tokens
+[720] = { pset={ [9]=383-20 }, failed={[9]=6}, dropped=4 }, -- no SZH lands, fail SZH tokens	
 [630] = { pset={ 359-31 } },
 [550] = { pset={ 357-27 } },
 [460] = { pset={ 350-20 }, dropped=3 },
 [360] = { pset={ 350-20 }, dropped=17 },
-[250] = { pset={ 449-20 }, dropped=49 },
-[180] = { pset={ 378-15 }, dropped=82 },
-[140] = { pset={ 306-15 }, dropped=32 },
+[250] = { pset={ 449-20 }, dropped=46 },
+[180] = { pset={ 378-15 }, dropped=81 },
+[140] = { pset={ 306-15 }, dropped=31 },
 [110] = { dropped=1 },
 [100] = { pset={ 302-19 } },
 [90]  = {namereplaced=4},
@@ -798,64 +799,65 @@ function site.SetExpected()
 [793] = { pset={ [9]=249 }, failed={[9]=8} },-- fail SZH tokens
 [791] = { pset={ [9]=274 }, failed={[9]=12} },-- fail SZH tokens
 [786] = { pset={ 252-1, [9]=244-1 }, failed={[9]=8}, namereplaced=8 },-- missing 1 swamp, fail SZH tokens
-[784] = { pset={ [9]=158 }, failed={[9]=3} },-- fail SZH tokens
-[782] = { pset={ 276+1, [9]=264 }, failed={[9]=12}, namereplaced=15 },-- fail SZH tokens, +1 is Checklist
+[784] = { pset={ LHpi.Data.sets[784].cardcount.reg }, failed={[9]=3} },-- fail SZH tokens
+[782] = { pset={ 276+1, [9]=264 }, failed={[9]=12}, namereplaced=11 },-- fail SZH tokens, +1 is Checklist
 [776] = { pset={ [9]=175 }, failed={[9]=4} },-- fail SZH tokens
-[775] = { pset={160-1, [9]=155}, dropped=1 },-- no ENG zombie token, no SZH tokens
+[775] = { pset={160-1, [9]=155} },-- no ENG zombie token, no SZH tokens
 [773] = { namereplaced=4, pset={[9]=249+1}, failed={1, [9]=9} },-- fail SZH tokens
 [767] = { pset={ [9]=248 }, failed={[9]=7}, namereplaced=6 },-- fail SZH tokens
-[765] = { pset={ [9]=145 } },-- no SZH tokens
-[756] = { pset={ [9]=145 } },-- no SZH tokens
+[765] = { pset={ [9]=145 }, dropped=2 },-- no SZH tokens
 [762] = { pset={ [9]=249 } },-- no SZH tokens
 [758] = { pset={ [9]=145 }, failed={[9]=4} },-- fail SZH tokens
 [756] = { pset={ [9]=145 }, dropped=1 },-- no SZH tokens
-[754] = { pset={ [9]=249 }, failed={[9]=9}, namereplaced=1, dropped=2 },-- fail SZH tokens
-[752] = { pset={ [9]=180 }, failed={[9]=7} },-- fail SZH tokens
-[751] = { pset={ [9]=301-20 }, failed={[9]=12}, namereplaced=8 },-- fail SZH tokens, no SZH lands
+[754] = { pset={ [9]=249 }, failed={[9]=9}, namereplaced=1, dropped=1 },-- fail SZH tokens
+[752] = { pset={ [9]=180 }, failed={[9]=7}, dropped=1 },-- fail SZH tokens
+[751] = { pset={ [9]=301-20 }, failed={[9]=12}, namereplaced=8, dropped=1 },-- fail SZH tokens, no SZH lands
 [750] = { pset={ [9]=150 } },-- no SZH tokens
-[730] = { pset={ [9]=301-1 }, failed={[9]=11}, dropped=2, namereplaced=4 },-- -1 is missing "Changeling Berserker" (SZH), fail SZH tokens
-[710] = { dropped=2 },
-[700] = { dropped=2 },
+[730] = { pset={ [9]=301-1 }, failed={[9]=11}, dropped=3, namereplaced=4 },-- -1 is missing "Changeling Berserker" (SZH), fail SZH tokens
+[710] = { dropped=4 },
+[700] = { dropped=3 },
 [690] = { dropped=1 },
 [680] = { pset={ [9]=4 }, dropped=1 },
+[670] = { dropped=6 },
 [660] = { dropped=1 },
-[640] = { dropped=2 },
+[640] = { dropped=1 },
 [620] = { dropped=1 },
 [610] = { dropped=2, namereplaced=4 },
-[580] = { dropped=2 },
+[590] = { dropped=1 },
+[580] = { dropped=3 },
 [570] = { dropped=1 },
-[560] = { pset={ 306-20}, dropped=4 },
+[560] = { pset={ 306-20}, dropped=5 },
 [540] = { dropped=3 },
 [530] = { dropped=2 },
-[520] = { namereplaced=1, dropped=6 },
-[510] = { dropped=16 },
-[500] = { dropped=7 },
-[480] = { pset={ 350-20 }, 	dropped=28 },
-[470] = { dropped=3, namereplaced=1 },
+[520] = { namereplaced=1, dropped=10 },
+[510] = { dropped=15 },
+[500] = { dropped=6 },
+[480] = { pset={ 350-20 }, 	dropped=27 },
+[470] = { dropped=2, namereplaced=1 },
 [450] = { pset={ 146-3 }, dropped=23 },
 [430] = { dropped=96 },
 [420] = { pset={ 143-60 }, dropped=8 },
-[410] = { pset={ 143-1 }, dropped=9 },
-[400] = { pset={ 350-20 }, dropped=13 },
-[370] = { dropped=9 },
+[410] = { pset={ 143-1 }, dropped=8 },
+[400] = { pset={ 350-20 }, dropped=12 },
+[370] = { dropped=6 },
 [350] = { dropped=9 },
-[330] = { pset={ 350-20 }, dropped=31 }, -- no lands
+[330] = { pset={ 350-20 }, dropped=32 }, -- no lands
 [300] = { dropped=10 },
 [290] = { dropped=19 },
-[280] = { pset={ 350-20 }, dropped=53 },
+[280] = { pset={ 350-20 }, dropped=52 },
 [270] = { dropped=8 },
-[240] = { dropped=9 },
+[240] = { dropped=8 },
 [230] = { pset={ 350-21 }, dropped=67 },
 [220] = { dropped=10 },
 [210] = { dropped=6 },
-[190] = { pset={ 383-15 }, dropped=80 },-- no basic lands
+[190] = { pset={ 383-15 }, dropped=79 },-- no basic lands
 [170] = { dropped=18 },
-[160] = { dropped=8 },
+[160] = { dropped=7 },
 [150] = { dropped=22, namereplaced=1 },
 [130] = { dropped=7, namereplaced=1 },
-[120] = { dropped=12 },
+[120] = { dropped=11 },
 -- special sets
-[807] = { pset={ LHpi.Data.sets[807].cardcount.both+LHpi.Data.sets[807].cardcount.nontr }, failed={ 9 }, namereplaced=2 },--no tokens
+[807] = { pset={ LHpi.Data.sets[807].cardcount.both+LHpi.Data.sets[807].cardcount.nontr }, namereplaced=2 },
 [805] = { namereplaced=2, foiltweaked=2, pset={ 89-1 } }, -- -1 token
 [801] = { pset={ LHpi.Data.sets[801].cardcount.reg+LHpi.Data.sets[801].cardcount.repl }, failed={ LHpi.Data.sets[801].cardcount.repl }, dropped=LHpi.Data.sets[801].cardcount.repl, namereplaced=2 },
 [796] = { namereplaced=6},
@@ -875,8 +877,8 @@ function site.SetExpected()
 [490] = { pset={ 58-3 }, namereplaced=1, foiltweaked=1 },-- -3 premium
 [440] = { foiltweaked=2 },
 [340] = { pset={ 1} },
-[320] = { dropped=3, namereplaced=2 },
-[260] = { dropped=27, pset={228-20-13} },-- no(20) basic lands, no(13) "ST"/"GT" variants
+[320] = { dropped=2, namereplaced=2 },
+[260] = { dropped=26, pset={228-20-13} },-- no(20) basic lands, no(13) "ST"/"GT" variants
 [200] = { pset={ 125-1 } },-- "Wall of Shadows" missing
 [70]  = { pset={ LHpi.Data.sets[70].cardcount.nontr } }-- all 32 Characters (nontraditional)
 	}--end table site.expected
