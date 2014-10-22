@@ -3938,6 +3938,7 @@ Promos = nil,
 for sid,set in pairs(Data.sets) do
 	if set.cardcount then
 		set.cardcount.both = set.cardcount.reg + set.cardcount.tok
+		set.cardcount.all = set.cardcount.both + set.cardcount.nontr + set.cardcount.repl
 	end --if
 end -- for sid,count
 
