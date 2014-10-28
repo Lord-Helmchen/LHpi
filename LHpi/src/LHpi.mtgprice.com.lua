@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --[[ CHANGES
 2.13.5.4
 added 813
+fix 250,180 (except basic lands)
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -66,13 +67,17 @@ fairOrBest = "fair"
 -- @field [parent=#global] #boolean STRICTEXPECTED
 STRICTEXPECTED = true
 
+--- if true, exit with error on object type mismatch, else use object type 0 (all)
+-- @field [parent=#global] boolena STRICTOBJTYPE
+--STRICTOBJTYPE = true
+
 --- log to seperate logfile instead of Magic Album.log;	default true
 -- @field [parent=#global] #boolean SAVELOG
 --SAVELOG = false
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
---OFFLINE = true
+OFFLINE = true
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
@@ -253,10 +258,10 @@ function site.ParseHtmlData( foundstring , urldetails )
 --	local _start,_end,name = string.find(foundstring, '<a.->([^<]+)</a>' )
 --	local _start,_end,price = string.find( foundstring , '[$€]([%d.,]+)' )
 	local _start,_end,name,fairPrice,bestPrice = string.find(foundstring,"<a.->([^<]+)</a>%s*%b<>%b<>([$.,%-%d]+)%b<>%b<>([$.,%-%d]+)" )
-print(foundstring)
-print(name)
-print(fairPrice)
-print(bestPrice)
+--print(foundstring)
+--print(name)
+--print(fairPrice)
+--print(bestPrice)
 	local price
 	if fairOrBest == "best" then
 		price = bestPrice
@@ -273,7 +278,7 @@ print(bestPrice)
 	if DEBUG then
 		LHpi.Log( "site.ParseHtmlData\t returns" .. LHpi.Tostring(newCard) , 2 )
 	end
-print(LHpi.Tostring(newCard))	
+--print(LHpi.Tostring(newCard))	
 	return { newCard }
 end -- function site.ParseHtmlData
 
@@ -405,7 +410,7 @@ site.sets = {
 [791]={id = 791, lang = { [1]=true }, fruc = { true , true }, url = "Return_to_Ravnica"},
 [786]={id = 786, lang = { [1]=true }, fruc = { true , true }, url = "Avacyn_Restored"},
 [784]={id = 784, lang = { [1]=true }, fruc = { true , true }, url = "Dark_Ascension"},
-[782]={id = 782, lang = { [1]=true }, fruc = { true , true }, url = "Inistrad"},
+[782]={id = 782, lang = { [1]=true }, fruc = { true , true }, url = "Innistrad"},
 [776]={id = 776, lang = { [1]=true }, fruc = { true , true }, url = "New_Phyrexia"},
 [775]={id = 775, lang = { [1]=true }, fruc = { true , true }, url = "Mirrodin_Besieged"},
 [773]={id = 773, lang = { [1]=true }, fruc = { true , true }, url = "Scars_of_Mirrodin"},
@@ -732,6 +737,16 @@ site.namereplace = {
 ["Forest (2)"]			= "Forest (247)",
 ["Forest (3)"]			= "Forest (248)",
 ["Forest (4)"]			= "Forest (249)",
+["Razorfoot Grifin"]	= "Razorfoot Griffin",
+["Runeclaw Bears"]		= "Runeclaw Bear",
+},
+[250] = { -- 5th
+["Ghazban Ogre"]						= "Ghazbán Ogre",
+["Dandan"]								= "Dandân"
+},
+[180]={--4th
+["Junun Efreet"]						= "Junún Efreet",
+["El-Hajjaj"]							= "El-Hajjâj",
 },
 } -- end table site.namereplace
 
@@ -799,9 +814,36 @@ function site.SetExpected()
 --- false:pset defaults to regular, true:pset defaults to regular+tokens instead
 -- @field [parent=#site.expected] #boolean EXPECTTOKENS
 	EXPECTTOKENS = false,
--- -- Core sets
-[797] = { namereplaced=4*5 },
---TODO expect a lot of namereplacements
+--TODO expect a lot of namereplacements, for now just expect fails
+-- Core Sets
+[808] = { pset={ LHpi.Data.sets[808].cardcount.reg-20 } },
+[797] = { pset={ LHpi.Data.sets[797].cardcount.reg }, namereplaced=40 },
+[788] = { pset={ LHpi.Data.sets[788].cardcount.reg }, namereplaced=40 },
+[779] = { pset={ LHpi.Data.sets[779].cardcount.reg }, namereplaced=40 },
+[770] = { pset={ LHpi.Data.sets[770].cardcount.reg }, namereplaced=60 },
+[759] = { pset={ LHpi.Data.sets[759].cardcount.reg-20 }, namereplaced=4 },
+[720] = { pset={ LHpi.Data.sets[720].cardcount.reg-20 }, failed={ 5 } },
+[630] = { pset={ LHpi.Data.sets[630].cardcount.reg-20-9 }, failed={ 5 } },-- missing #s "S1" to "S9"
+[550] = { pset={ LHpi.Data.sets[550].cardcount.reg-20 }, failed={ 5 } },
+[460] = { pset={ LHpi.Data.sets[460].cardcount.reg-20 }, failed={ 5 } },
+[360] = { pset={ LHpi.Data.sets[360].cardcount.reg-20 }, failed={ 5 } },
+[250] = { pset={ LHpi.Data.sets[250].cardcount.reg-20 }, failed={ 5 } },
+[180] = { pset={ LHpi.Data.sets[180].cardcount.reg-20 }, failed={ 5 } },
+-- Expansions
+-- Special Sets
+-- Promos
+
+--[798] = { pset={0}},
+--[797] = { namereplaced=4*5 },
+--[790] = { pset={ LHpi.Data.sets[790].cardcount.reg-16 }, failed={ 4 }, foiltweaked=2 },
+--[773] = { pset={ LHpi.Data.sets[773].cardcount.reg-20 }, failed={ 5 } },
+--[757] = { pset={ LHpi.Data.sets[757].cardcount.reg-8 }, failed={ 2 } },
+--[440] = { pset={ LHpi.Data.sets[440].cardcount.reg-12 }, failed={ 4 }, foiltweaked=2 },
+--[560] = { pset={ LHpi.Data.sets[560].cardcount.reg-20 }, failed={ 5 } },
+--[807] = { pset={ LHpi.Data.sets[807].cardcount.reg+LHpi.Data.sets[807].cardcount.nontrad } },
+--[766] = { pset={ LHpi.Data.sets[766].cardcount.reg-6 }, failed={ 2 } },
+--[26]  = { pset={ 40 }, foiltweaked=22 },
+--[] = { pset={ LHpi.Data.sets[].cardcount.reg-20 }, failed={  } },
 	}--end table site.expected
 end--function site.SetExpected()
 --EOF

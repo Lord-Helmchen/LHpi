@@ -29,7 +29,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --[[ CHANGES
 2.13.5.13
 added 808,812,813
-updated cardcounts,etc
+add "Token" suffix to replacement names
+update site.expected
+fix 784,801,600
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -65,7 +67,7 @@ STRICTEXPECTED = true
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
---OFFLINE = true
+OFFLINE = true
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
@@ -325,9 +327,6 @@ function site.BCDpluginPre ( card , setid , importfoil, importlangs )
 		LHpi.Log( "site.BCDpluginPre got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
 	end
 	
-	--card.name = string.gsub( card.name , "\226\128\156" , '"')
-	--card.name = string.gsub( card.name , "Ae" , "Æ" )
-	
 	if setid == 690 then -- Timeshifted
 		if not (card.pluginData.fruc == "T") then
 			card.name = card.name .. "(DROP Time Spiral)"
@@ -353,7 +352,6 @@ function site.BCDpluginPre ( card , setid , importfoil, importlangs )
 	or setid == 807
 	or setid == 812
 	then
-print(LHpi.Tostring(card.name))
 		card.name=string.gsub(card.name, "%s*englisch$", "")
 		local _s,_e,nameeng,nameger = string.find(card.name, "(.+)%s*(%b())$")
 		if nameeng and nameger then
@@ -362,7 +360,6 @@ print(LHpi.Tostring(card.name))
 			card.name=card.names[1]
 		end--if nameeng,nameger
 	end-- if setid
-print(LHpi.Tostring(card.name) .. " : " .. LHpi.Tostring(card.names))
 	
 	-- mark condition modifier suffixed cards to be dropped
 	card.name = string.gsub( card.name , ", light played$" , "%0 (DROP)" )
@@ -568,16 +565,16 @@ site.namereplace = {
 ["Token - Emblem Ajani (A)"]			= "Ajani Steadfast Emblem",
 ["Token - Emblem Garruk (A)"]			= "Garruk, Apex Predator Emblem",
 ["Aetherspouts"]						= "Ætherspouts",
-["Token - Beast (B)"]					= "Beast (5)",
-["Token - Beast (G)"]					= "Beast (9)",
-["Token - Bestie (B)"]					= "Bestie (5)",
-["Token - Bestie (G)"]					= "Bestie (9)",
+["Token - Beast (B)"]					= "Beast Token (5)",
+["Token - Beast (G)"]					= "Beast Token (9)",
+["Token - Bestie (B)"]					= "Bestie Token (5)",
+["Token - Bestie (G)"]					= "Bestie Token (9)",
 },
 [797] = { -- M2014
-["Token - Elemental (7) (R)"]			= "Elemental (7)",
-["Token - Elemental (8) (R)"]			= "Elemental (8)",
-["Token - Elementarwesen (7) (R)"]		= "Elementarwesen (7)",
-["Token - Elementarwesen (8) (R)"]		= "Elementarwesen (8)",
+["Token - Elemental (7) (R)"]			= "Elemental Token (7)",
+["Token - Elemental (8) (R)"]			= "Elemental Token (8)",
+["Token - Elementarwesen (7) (R)"]		= "Elementarwesen Token (7)",
+["Token - Elementarwesen (8) (R)"]		= "Elementarwesen Token (8)",
 },
 [779] = { -- M2012
 ["Aether Adept"]						= "Æther Adept",
@@ -585,9 +582,9 @@ site.namereplace = {
 [770] = { -- M11
 ["Aether Adept"]						= "Æther Adept",
 ["Zyklop -Gladiator"]					= "Zyklop-Gladiator",
-["Token - Schlammwesen (G)"]			= "Ooze",
-["Token - Ooze (1) (G)"]				= "Ooze (6)",
-["Token - Ooze (2) (G)"]				= "Ooze (5)",
+["Token - Schlammwesen (G)"]			= "Ooze Token",
+["Token - Ooze (1) (G)"]				= "Ooze Token (6)",
+["Token - Ooze (2) (G)"]				= "Ooze Token (5)",
 },
 [720] = { -- 10th
 ["Elite-Infantrie der Goblins"] 		= "Elite-Infanterie der Goblins",
@@ -647,10 +644,10 @@ site.namereplace = {
 },
 -- Expansions
 [813] = { -- Khans of Tarkir
-["Token - Warrior (3) (W)"]			= "Warrior (3)",
-["Token - Warrior (4) (W)"]			= "Warrior (4)",
-["Token - Krieger (3) (W)"]			= "Krieger (3)",
-["Token - Krieger (4) (W)"]			= "Krieger (4)",
+["Token - Warrior (3) (W)"]			= "Warrior Token (3)",
+["Token - Warrior (4) (W)"]			= "Warrior Token (4)",
+["Token - Krieger (3) (W)"]			= "Krieger Token (3)",
+["Token - Krieger (4) (W)"]			= "Krieger Token (4)",
 ["Token - Emblem Sarkhan (A)"]		= "Sarkhan, the Dragonspeaker Emblem",
 ["Token - Emblem Sorin (A)"]		= "Sorin, Solemn Visitor Emblem",
 ["Anführerin der Klinge"]			= "Anführer der Klinge",
@@ -659,20 +656,20 @@ site.namereplace = {
 ["Brimaz' Vorhut"]						= "Vanguard of Brimaz",
 --["Brimaz' Vorhut"]						= "Brimaz’ Vorhut",
 ["Unravel the Aether"]					= "Unravel the Æther",
-["Token - Bird (W)"]					= "Bird (1)",
-["Token - Bird (U)"]					= "Bird (4)",
-["Token - Vogel (W)"]					= "Vogel (1)",
-["Token - Vogel (U)"]					= "Vogel (4)",
+["Token - Bird (W)"]					= "Bird Token (1)",
+["Token - Bird (U)"]					= "Bird Token (4)",
+["Token - Vogel (W)"]					= "Vogel Token (1)",
+["Token - Vogel (U)"]					= "Vogel Token (4)",
 },
 [800] = { -- Theros
 ["Mogis' Plünderer"]					= "Mogis’ Plünderer",
 --["Mogis' Plünderer"]					= "Mogis's Marauder",
-["Token - Soldier (R)"]					= "Soldier (7)",
-["Token - Soldier (2) (W)"]				= "Soldier (2)",
-["Token - Soldier (3) (W)"]				= "Soldier (3)",
-["Token - Soldat (R)"]					= "Soldat (7)",
-["Token - Soldat (2) (W)"]				= "Soldat (2)",
-["Token - Soldat (3) (W)"]				= "Soldat (3)",
+["Token - Soldier (R)"]					= "Soldier Token (7)",
+["Token - Soldier (2) (W)"]				= "Soldier Token (2)",
+["Token - Soldier (3) (W)"]				= "Soldier Token (3)",
+["Token - Soldat (R)"]					= "Soldat Token (7)",
+["Token - Soldat (2) (W)"]				= "Soldat Token (2)",
+["Token - Soldat (3) (W)"]				= "Soldat Token (3)",
 },
 [795] = { -- Dragon's Maze
 ["Aetherling"]							= "Ætherling",
@@ -682,17 +679,18 @@ site.namereplace = {
 ["Aetherize"]							= "Ætherize",
 },
 [786] = { -- Avacyn Restored
-["Token - Human (W)"]				= "Human (2)",
-["Token - Human (R)"]				= "Human (7)",
-["Token - Spirit (W)"]				= "Spirit (3)",
-["Token - Spirit (U)"]				= "Spirit (4)",
-["Token - Mensch (W)"]				= "Mensch (2)",
-["Token - Mensch (R)"]				= "Mensch (7)",
-["Token - Geist (W)"]				= "Geist (3)",
-["Token - Geist (U)"]				= "Geist (4)",
+["Token - Human (W)"]				= "Human Token (2)",
+["Token - Human (R)"]				= "Human Token (7)",
+["Token - Spirit (W)"]				= "Spirit Token (3)",
+["Token - Spirit (U)"]				= "Spirit Token (4)",
+["Token - Mensch (W)"]				= "Mensch Token (2)",
+["Token - Mensch (R)"]				= "Mensch Token (7)",
+["Token - Geist (W)"]				= "Geist Token (3)",
+["Token - Geist (U)"]				= "Geist Token (4)",
 },
 [784] = { -- Dark Ascension
 ["Mondrenner-Schamanin|Trovolars Zauberjägerin"]	= "Mondrenner-Schamanin|Tovolars Zauberjägerin",
+["Huntmaster of the Fells|Ravager of the Fells (Jagdmeister vom Kahlenberg|Verwüster vom Kahlenber"]	= "Huntmaster of the Fells|Ravager of the Fells",
 ["Checklist Card Dark Ascension"]		= "Checklist",
 ["Checklisten-Karte Dunkles Erwachen"]	= "Checklist",
 ["Séance)"]								= "Séance",
@@ -702,29 +700,29 @@ site.namereplace = {
 ["Ludevic's Test Subject|Ludevic's Abomniation"] = "Ludevic's Test Subject|Ludevic's Abomination",
 ["Checklist Card Innistrad"]			= "Checklist",
 ["Checklisten-Karte Innistrad"]			= "Checklist",
-["Token - Wolf (B)"]					= "Wolf (6)", 
-["Token - Wolf (G)"]					= "Wolf (12)", 
-["Token - Zombie (B)"]					= "Zombie",
+["Token - Wolf (B)"]					= "Wolf Token (6)", 
+["Token - Wolf (G)"]					= "Wolf Token (12)", 
+["Token - Zombie (B)"]					= "Zombie Token",
 },
 [776] = { -- New Phyrexia
 ["Arm with Aether"]						= "Arm with Æther"
 },
 [773] = { -- Scars of Mirrodin
-["Token - Poison Counter (C)"]				= "Poison Counter",
-["Token - Giftmarke (C)"]					= "Poison Counter",
-["Token - Wurm (Deathtouch) (A)"]			= "Wurm (8)",
-["Token - Wurm (Lifelink) (A)"]				= "Wurm (9)",
-["Token - Wurm (Token|Todesberührung) (A)"]		= "Wurm (8)",
-["Token - Wurm (Token|Lebensverknüpfung) (A)"]	= "Wurm (9)",
+["Token - Poison Counter (C)"]				= "Poison Counter Token",
+["Token - Giftmarke (C)"]					= "Poison Counter Token",
+["Token - Wurm (Deathtouch) (A)"]			= "Wurm Token (8)",
+["Token - Wurm (Lifelink) (A)"]				= "Wurm Token (9)",
+["Token - Wurm (Token|Todesberührung) (A)"]		= "Wurm Token (8)",
+["Token - Wurm (Token|Lebensverknüpfung) (A)"]	= "Wurm Token (9)",
 },
 [767] = { -- Rise of the Eldrazi
 ["Swamp (2340)"]						= "Swamp (240)",
-["Token - Eldrazi Spawn (C)"]			= "Eldrazi Spawn",
-["Token - Eldrazi, Ausgeburt (C)"]		= "Eldrazi, Ausgeburt",
+["Token - Eldrazi Spawn (C)"]			= "Eldrazi Spawn Token",
+["Token - Eldrazi, Ausgeburt (C)"]		= "Eldrazi, Ausgeburt Token",
 },
 [765] = { -- Worldwake
 ["Aether Tradewinds"]					= "Æther Tradewinds",
-["Elefant"]								= "Elefant ",
+["Elefant"]								= "Elefant (Token)",
 },
 [762] = { -- Zendikar
 ["Aether Figment"]						= "Æther Figment",
@@ -740,21 +738,21 @@ site.namereplace = {
 [751] = { -- Shadowmoor
 ["Aethertow"]							= "Æthertow",
 ["Mühsam erkämpfter Rum"]				= "Mühsam erkämpfter Ruhm",
-["Token - Elemental (R)"]				= "Elemental (4)",
-["Token - Elemental (H)"]				= "Elemental (9)",
-["Token - Elf Warrior (G)"]				= "Elf Warrior (5)",
-["Token - Elf Warrior (H)"]				= "Elf Warrior (12)",
-["Token - Elementarwesen (R)"]			= "Elementarwesen (4)",
-["Token - Elementarwesen (H)"]			= "Elementarwesen (9)",
-["Token - Elf, Krieger (G)"]			= "Elf, Krieger (5)",
-["Token - Elf, Krieger (H)"]			= "Elf, Krieger (12)",
+["Token - Elemental (R)"]				= "Elemental Token (4)",
+["Token - Elemental (H)"]				= "Elemental Token (9)",
+["Token - Elf Warrior (G)"]				= "Elf Warrior Token (5)",
+["Token - Elf Warrior (H)"]				= "Elf Warrior Token (12)",
+["Token - Elementarwesen (R)"]			= "Elementarwesen Token (4)",
+["Token - Elementarwesen (H)"]			= "Elementarwesen Token (9)",
+["Token - Elf, Krieger (G)"]			= "Elf, Krieger Token (5)",
+["Token - Elf, Krieger (H)"]			= "Elf, Krieger Token (12)",
 },
 [730] = { -- Lorwyn
 ["Aethersnipe"]							= "Æthersnipe",
-["Token - Elemental (W)"]				= "Elemental (2)",
-["Token - Elemental (G)"]				= "Elemental (8)",
-["Token - Elementarwesen (W)"]			= "Elementarwesen (2)",
-["Token - Elementarwesen (G)"]			= "Elementarwesen (8)",
+["Token - Elemental (W)"]				= "Elemental Token (2)",
+["Token - Elemental (G)"]				= "Elemental Token (8)",
+["Token - Elementarwesen (W)"]			= "Elementarwesen Token (2)",
+["Token - Elementarwesen (G)"]			= "Elementarwesen Token (8)",
 },
 [710] = { -- Future Sight
 ["Tarmogoyf, englisch"]					= "Tarmogoyf",
@@ -929,8 +927,10 @@ site.namereplace = {
 ["Aether Figment (Äthergespinst)"]		= "Æther Figment",
 },
 [801] = { -- Commander 2013
-["Kongming, “Sleeping Dragon“"]			= "Kongming, “Sleeping Dragon”",
+['Kongming, "Sleeping Dragon"']			= "Kongming, “Sleeping Dragon”",
 ["Aethermage's Touch"]					= "Æthermage's Touch",
+["Sek'Kuar, Deathkeeper"]				= "Sek’Kuar, Deathkeeper",
+["Jeleva, Nephalia's Scourge"]			 = "Jeleva, Nephalia’s Scourge",
 },
 [796] = { -- Modern Masters
 ["Aether Vial"]							= "Æther Vial",
@@ -948,11 +948,11 @@ site.namereplace = {
 [600] = { -- Unhinged
 ["First Come First Served"]				= "First Come, First Served",
 ["Our Market Research Shows ..."]		= "Our Market Research Shows That Players Like Really Long Card Names So We Made this Card to Have the Absolute Longest Card Name Ever Elemental",
-["Our Market Research Shows ?"]		= "Our Market Research Shows That Players Like Really Long Card Names So We Made this Card to Have the Absolute Longest Card Name Ever Elemental",
+["Our Market Research Shows ?"]			= "Our Market Research Shows That Players Like Really Long Card Names So We Made this Card to Have the Absolute Longest Card Name Ever Elemental",
 ["Erase"]								= "Erase (Not the Urza’s Legacy One)",
 ["Who|What/When|Where/Why"]				= "Who|What|When|Where|Why",
 ["Yet Another Aether Vortex"]			= "Yet Another Æther Vortex",
-["“Ach! Hans, Run!“"]					= "“Ach! Hans, Run!”",
+['"Ach! Hans, Run!"']					= "“Ach! Hans, Run!”",
 },
 [320] = { -- Unglued
 ["B.F.M. (Big Furry Monster) links"]	= "B.F.M. (Left)",
@@ -1060,7 +1060,7 @@ function site.SetExpected()
 [779] = { namereplaced=2 },
 [770] = { namereplaced=8 },
 [720] = { pset={ [3]=383-1+6 }, failed={ [3]=1 }, namereplaced=3 },
-[630] = { pset={ 359-9, [3]=352-2 }, namereplaced=2 },
+[630] = { pset={ 359-9, [3]=352-2 }, namereplaced=2 },-- missing #s "S1" to "S9"
 [550] = { pset={ 357-7, [3]=355-5 }, namereplaced=7 },
 [460] = { namereplaced=7 },
 [360] = { namereplaced=5 },
@@ -1069,16 +1069,16 @@ function site.SetExpected()
 [140] = { pset={ [3]=306-2 }, failed= { [3]=2 }, namereplaced=5 },--fail 2 Fehldruck
 [139] = { namereplaced=2 },
 [110] = { pset={ 302-7-9 }, namereplaced=1 }, -- 7 empty cards on page, 9 missing entirely
-[100] = { pset={ 250 } },
+[100] = { pset={ 245 } },
 -- Expansions
-[813] = { pset={ LHpi.Data.sets[813].cardcount.both-5, [3]=LHpi.Data.sets[813].cardcount.reg-5 }, failed={ [3]=LHpi.Data.sets[813].cardcount.tok}, namereplaced=10 },-- -5 Intro Deck variants
+[813] = { pset={ LHpi.Data.sets[813].cardcount.both-5, [3]=LHpi.Data.sets[813].cardcount.reg-5 }, failed={ 5, [3]=LHpi.Data.sets[813].cardcount.tok+5 }, namereplaced=10 },-- -5 Intro Deck variants
 [806] = { pset={ [3]=171-6 }, failed= { [3]=6 } }, -- -6 is tokens
 [802] = { namereplaced=6 },
 [800] = { namereplaced=8 },
 [795] = { pset={ [3]=157-1 }, failed= { [3]=1 }, namereplaced=1 }, -- -1 is token
 [793] = { namereplaced=1 },
 [786] = { namereplaced=8 },
-[784] = { pset={ 161+1 }, failed={ [3]=1 }, namereplaced=7 }, --+1 is Checklist
+[784] = { pset={ 161+1 }, failed={ [3]=1 }, namereplaced=8 }, --+1 is Checklist
 [782] = { pset={ 276+1 }, failed={ [3]=1 }, namereplaced=9 }, -- +1/fail is Checklist
 [776] = { namereplaced=2 },
 [773] = { failed={ 1, [3]=1 }, namereplaced=6 }, -- fail is Poison Counter
@@ -1088,11 +1088,11 @@ function site.SetExpected()
 [756] = { namereplaced=2 },
 [754] = { namereplaced=4 },
 [751] = { namereplaced=12 },
-[730] = { namereplaced=5 },
+[730] = { namereplaced=6 },
 [710] = { namereplaced=4 },
-[700] = { namereplaced=3 },
-[690] = { dropped=951, namereplaced=5 },
-[680] = { dropped=372, namereplaced=5 },
+[700] = { namereplaced=4 },
+[690] = { dropped=956, namereplaced=5 },
+[680] = { dropped=379, namereplaced=5 },
 [670] = { namereplaced=4 },
 [660] = { namereplaced=4 },
 [650] = { namereplaced=4 },
@@ -1108,7 +1108,7 @@ function site.SetExpected()
 [520] = { namereplaced=1 },
 [480] = { namereplaced=2 },
 [470] = { namereplaced=1 },
-[450] = { pset={ 146-3, [3]=146-3 } },-- 3 alt art versions missing
+[450] = { pset={ LHpi.Data.sets[450].cardcount.reg-3, [3]=LHpi.Data.sets[450].cardcount.reg-3 }, failed={ 3 } },-- 3 alt art versions missing
 [430] = { namereplaced=1 },
 [410] = { failed= { [3]=1 }, namereplaced = 5 },
 [370] = { namereplaced=2 },
@@ -1123,9 +1123,9 @@ function site.SetExpected()
 [120] = { namereplaced=3 },
 -- special sets
 [812] = { foiltweaked=2 },
-[807] = { pset={ LHpi.Data.sets[807].cardcount.both+LHpi.Data.sets[807].cardcount.nontr }, namereplaced=3 },
+[807] = { pset={ LHpi.Data.sets[807].cardcount.all }, namereplaced=3 },
 [805] = { namereplaced=2 },
-[801] = { pset={ LHpi.Data.sets[801].cardcount.reg+LHpi.Data.sets[801].cardcount.repl }, failed={ LHpi.Data.sets[801].cardcount.repl }, namereplaced=2 },
+[801] = { pset={ LHpi.Data.sets[801].cardcount.reg }, failed={ LHpi.Data.sets[801].cardcount.repl }, namereplaced=4 },
 [796] = { namereplaced=5 },
 [794] = { foiltweaked=2 },
 [790] = { foiltweaked=2 },
@@ -1135,7 +1135,7 @@ function site.SetExpected()
 [600] = { namereplaced=9, foiltweaked=1 },
 [320] = { namereplaced=6 },
 [310] = { namereplaced=2 },
-[260] = { pset={ 228-6-7,[3]=228-6-7 }, namereplaced=4 },-- no(6) DG, no(7) ST variants (also ma:no GER "DG")
+[260] = { pset={ 228-6-7,[3]=228-6-7 }, failed={ 6+7, [3]=7 }, namereplaced=4 },-- no(6) DG, no(7) ST variants (also ma:no GER "DG")
 [200] = { namereplaced=2 },
 	}--end table site.expected
 end--function site.SetExpected

@@ -161,7 +161,7 @@ end
 -- @param #number setid
 -- @param #number langid
 -- @param #string cardname
--- @param #number cardversion	#string "" and #string "*" is also possible
+-- @param #string cardversion	#string "" and #string "*" is also possible
 -- @param #number regprice 		#nil is also possible
 -- @param #number foilprice 	#nil is also possible
 -- @param #number objtype 		(optional) 0:all, 1:cards, 2:tokens, 3:nontraditional, 4:inserts, 5:replicas; default:0
@@ -170,7 +170,7 @@ function ma.SetPrice(setid, langid, cardname, cardversion, regprice, foilprice, 
 	if not objtype then
 		objtype = 0
 	end
-	local dummystring=string.format('ma.SetPrice: setid=%q  langid=%q  cardname=%-20q\tcardversion=%q\tregprice=%q\tfoilprice=%q\tobjtype=%q',setid,langid,cardname,tostring(cardversion),tostring(regprice),tostring(foilprice),tostring(objtype))
+	local dummystring=string.format('ma.SetPrice: setid=%q  langid=%q  cardname=%-30q\tcardversion=%q\tregprice=%q\tfoilprice=%q\tobjtype=%q',setid,langid,cardname,tostring(cardversion),tostring(regprice),tostring(foilprice),tostring(objtype))
 	print (dummystring)
 	if cardversion == "*" then
 		return 4
@@ -619,7 +619,7 @@ function main()
 		SAVELOG = true,
 		SAVEHTML = false,
 		DEBUG = true,
-		DEBUGFOUND = true,
+--		DEBUGFOUND = true,
 --		DEBUGVARIANTS = true,
 --		SAVETABLE=true,
 	}
@@ -634,7 +634,7 @@ function main()
 		[7]={name="LHpi.mtgprice.com.lua",path=dummy.path,savepath=dummy.savepath},
 	}
 	--select a predefined script to be tested
-	local script=scripts[2]
+	local script=scripts[1]
 
 --	dummy.fakesitescript()
 	dummy.loadscript(script.name,script.path,script.savepath)
@@ -650,7 +650,7 @@ function main()
 --	local fakeimportlangs = { [9] = "szh" }
 --	local fakeimportlangs = dummy.alllangs
 	local fakeimportsets = { [0] = "fakeset"; }
-	local fakeimportsets = { [808] = "some set"; }
+	local fakeimportsets = { [801] = "some set"; }
 --	local fakeimportsets = { [220]="foo";[800]="bar";[0]="baz";}
 --	local fakeimportsets = dummy.coresets
 --	local fakeimportsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )

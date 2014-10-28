@@ -27,10 +27,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.13.5.12
+2.13.5.13
 added 809,810,812,813
 removed oversized handling from BCDPluginPre
-updated cardcounts,etc
+add "Token" suffix to replacement names
+update site.expected
+fix 330,801,787,600
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -74,7 +76,7 @@ SAVEHTML = true
 
 --- save price table to file before importing to MA;	default false
 -- @field [parent=#global] #boolean SAVETABLE
---SAVETABLE = true
+SAVETABLE = true
 
 ---	log everything and exit on error; default false
 -- @field [parent=#global] #boolean DEBUG
@@ -309,19 +311,9 @@ function site.BCDpluginPre ( card , setid , importfoil, importlangs )
 	card.name = string.gsub( card.name , "\226\128\156" , '"' ) -- 0xe2 0x80 0x9c
 
 	card.name = string.gsub( card.name , "%(Chinese Version%)" , "" )	
--- @lib	card.name = string.gsub( card.name , " / " , "|" )
 
 	card.name = string.gsub( card.name , " ships Sep 27" , "") -- Theros Prerelease suffix
 	card.name = string.gsub( card.name , " ships Jul 18" , "") -- M15 Prerelease suffix
-	
---	if setid == 801 or setid == 778 then -- Commander
---		card.name = string.gsub(card.name,"%([Oo]versized%)","(oversized) (DROP)")
---	elseif setid == 787 then -- Planechase
---		card.name = string.gsub(card.name ,"%s*%([Oo]versized%)" ,"" )
-	--elseif setid == 753 then
-	--	card.foil = true
-	-- taken care of by LHpi.Data.sets[753].foilonly
---	end
 	
 	if card.lang[9] then
 		if string.find(card.name, "^[^%(%)]+$" ) then
@@ -470,7 +462,7 @@ site.sets = {
 [400]={id = 400, lang = { true , [9]=false}, fruc = { true ,true }, pages=12, url = "mmq"},
 [370]={id = 370, lang = { true , [9]=false}, fruc = { true ,true }, pages= 5, url = "uds"},
 [350]={id = 350, lang = { true , [9]=false}, fruc = { true ,true }, pages= 6, url = "ulg"},
-[330]={id = 330, lang = { true , [9]=false}, fruc = { true ,true }, pages=13, url = "usg"},
+[330]={id = 330, lang = { true , [9]=false}, fruc = { true ,true }, pages=12, url = "usg"},
 [300]={id = 300, lang = { true , [9]=false}, fruc = { false,true }, pages= 6, url = "exo"},
 [290]={id = 290, lang = { true , [9]=false}, fruc = { false,true }, pages= 6, url = "sth"},
 [280]={id = 280, lang = { true , [9]=false}, fruc = { false,true }, pages=13, url = "tmp"},
@@ -567,16 +559,16 @@ site.namereplace = {
 ["Aetherspouts(Ætherspouts)"]			= "Ætherspouts",
 ["Emblem Ajani Token(13)"]				= "Ajani Steadfast Emblem",
 ["Emblem Garruk Token(14)"]				= "Garruk, Apex Predator Emblem",
-["Beast Token(Black)(5)"]				= "Beast (5)",
-["Beast Token(Green)(9)"]				= "Beast (9)",
+["Beast Token(Black)(5)"]				= "Beast Token (5)",
+["Beast Token(Green)(9)"]				= "Beast Token (9)",
 },
 [797] = { -- M2014
-["Elemental Token(7)"]					= "Elemental (7)",
-["Elemental Token (8)"]					= "Elemental (8)",
+["Elemental Token(7)"]					= "Elemental Token (7)",
+["Elemental Token (8)"]					= "Elemental Token (8)",
 },
 [770] = { -- M11
-["Ooze Token 5/6"]						= "Ooze (6)",
-["Ooze Token 6/6 Textless"]				= "Ooze (5)",
+["Ooze Token 5/6"]						= "Ooze Token (6)",
+["Ooze Token 6/6 Textless"]				= "Ooze Token (5)",
 },
 [140] = { -- Revised Edition
 --["El-Hajjâj"]							= "El-Hajjaj",
@@ -588,30 +580,30 @@ site.namereplace = {
 ["Circle of Protection : White"]		= "Circle of Protection: White",
 },
 [813] = { --Khans of Tarkir
-["Warrior Token(3)"]					= "Warrior (3)",
-["Warrior Token(4)"]					= "Warrior (4)",
+["Warrior Token(3)"]					= "Warrior Token (3)",
+["Warrior Token(4)"]					= "Warrior Token (4)",
 ["Emblem Sarkhan Token(12)"]			= "Sarkhan, the Dragonspeaker Emblem",
 ["Emblem Sorin Token(13)"]				= "Sorin, Solemn Visitor Emblem",
 },
 [802] = { -- Born of the Gods
 ["Unravel the Æther (Unravel the Aether)"]	= "Unravel the Aether",
-["Bird Token(4)"]						= "Bird (4)",
-["Birds Token(1)"]						= "Bird (1)",
+["Bird Token(4)"]						= "Bird Token (4)",
+["Birds Token(1)"]						= "Bird Token (1)",
 },
 [800] = { -- Theros
 ["Warrior's Lesson"]					= "Warriors' Lesson",
-["Soldier Token(2)"]					= "Soldier (2)",
-["Soldier Token(3)"]					= "Soldier (3)",
-["Soldier Token(7)"]					= "Soldier (7)",
+["Soldier Token(2)"]					= "Soldier Token (2)",
+["Soldier Token(3)"]					= "Soldier Token (3)",
+["Soldier Token(7)"]					= "Soldier Token (7)",
 },
 [795] = { -- Dragon's Maze
 ["Aetherling (Ætherling)"]				= "Ætherling",
 },
 [786] = { -- Avacyn Restored
-["Spirit Token (White)"]				= "Spirit (3)",
-["Spirit Token (Blue)"]					= "Spirit (4)",
-["Human Token (White)"]					= "Human (2)",
-["Human Token (Red)"]					= "Human (7)",
+["Spirit Token (White)"]				= "Spirit Token (3)",
+["Spirit Token (Blue)"]					= "Spirit Token (4)",
+["Human Token (White)"]					= "Human Token (2)",
+["Human Token (Red)"]					= "Human Token (7)",
 },
 [782] = { -- Innistrad
 ["Double-Sided Card Checklist"]			= "Checklist",
@@ -619,33 +611,33 @@ site.namereplace = {
 --["Alter's Reap"] 						= "Altar's Reap",
 --["Elder Cather"] 						= "Elder Cathar",
 --["Moldgraft Monstrosity"] 				= "Moldgraf Monstrosity",
-["Zombie Token 7/12"]					= "Zombie (7)",
-["Zombie Token 8/12"]					= "Zombie (8)",
-["Zombie Token 9/12"]					= "Zombie (9)",
-["Black Wolf Token"]					= "Wolf (6)",
-["Green Wolf Token"]					= "Wolf (12)",
+["Zombie Token 7/12"]					= "Zombie Token (7)",
+["Zombie Token 8/12"]					= "Zombie Token (8)",
+["Zombie Token 9/12"]					= "Zombie Token (9)",
+["Black Wolf Token"]					= "Wolf Token (6)",
+["Green Wolf Token"]					= "Wolf Token (12)",
 },
 [773] = { -- Scars of Mirrodin
-["Wurm Token 8/9"]						= "Wurm (8)",
-["Wurm Token 9/9"]						= "Wurm (9)",
+["Wurm Token 8/9"]						= "Wurm Token (8)",
+["Wurm Token 9/9"]						= "Wurm Token (9)",
 },
 [767] = { -- Rise of the Eldrazi
-["Eldrazi Spawn Token (Aleksi Briclot)"] 		= "Eldrazi Spawn (1a)",
-["Eldrazi Spawn Token (Mark Tedin)"] 			= "Eldrazi Spawn (1b)",
-["Eldrazi Spawn Token (Veronique Meignaud)"]	= "Eldrazi Spawn (1c)",
+["Eldrazi Spawn Token (Aleksi Briclot)"] 		= "Eldrazi Spawn Token (1a)",
+["Eldrazi Spawn Token (Mark Tedin)"] 			= "Eldrazi Spawn Token (1b)",
+["Eldrazi Spawn Token (Veronique Meignaud)"]	= "Eldrazi Spawn Token (1c)",
 },
 [754] = { -- Shards of Alara
 ["Godsire Beast Token"]					= "Beast Token"
 },
 [751] = { -- Shadowmoor
-["Elf Warrior Token (Green)"]			= "Elf Warrior (5)",
-["Elf Warrior Token (Green & White)"]	= "Elf Warrior (12)",
-["Elemental Token (Red)"]				= "Elemental (4)",
-["Elemental Token (Black & Red)"]		= "Elemental (9)",
+["Elf Warrior Token (Green)"]			= "Elf Warrior Token (5)",
+["Elf Warrior Token (Green & White)"]	= "Elf Warrior Token (12)",
+["Elemental Token (Red)"]				= "Elemental Token (4)",
+["Elemental Token (Black & Red)"]		= "Elemental Token (9)",
 },
 [730] = { -- Lorwyn
-["Elemental Token (White)"]				= "Elemental (2)",
-["Elemental Token (Green)"]				= "Elemental (8)",
+["Elemental Token (White)"]				= "Elemental Token (2)",
+["Elemental Token (Green)"]				= "Elemental Token (8)",
 },
 --[690] = { -- Time Spiral Timeshifted
 --["XXValor"]								= "Valor",
@@ -684,7 +676,9 @@ site.namereplace = {
 },
 [801] = { -- Commander 2013
 ["Lim-Dûl’s Vault(Lim-Dul’s Vault)"]	= "Lim-Dûl’s Vault",
-["Kongming, “Sleeping Dragon“"]			= "Kongming, “Sleeping Dragon”",
+['Kongming, "Sleeping Dragon"']			= "Kongming, “Sleeping Dragon”",
+["Jeleva, Nephalia's Scourge"]			 = "Jeleva, Nephalia’s Scourge",
+["Jeleva, Nephalia's Scourge(oversized)"] = "Jeleva, Nephalia’s Scourge (oversized)",
 },
 [796] = { -- Modern Masters
 ["Aethersnipe (Æthersnipe)"]			= "Æthersnipe",
@@ -692,7 +686,7 @@ site.namereplace = {
 ["Aether Vial (Æther Vial)"]			= "Æther Vial",
 },
 [787] = { -- Planechase 2012 Edition
-["Chaotic AEther"]						= "Chaotic Æther",
+["Chaotic AEther (Oversized)"]			= "Chaotic Æther (oversized)",
 },
 [780] = { -- From the Vault: Legends
 ["Sharuum, the Hegemon"]				= "Sharuum the Hegemon",
@@ -701,12 +695,12 @@ site.namereplace = {
 ["Urza's Rage"]							= "Urza’s Rage",
 },
 [763] = { -- Duel Decks: Garruk vs. Liliana
-["Beast Token T1"]						= "Beast (1)",
-["Beast Token T2"]						= "Beast (2)",
+["Beast Token T1"]						= "Beast Token (1)",
+["Beast Token T2"]						= "Beast Token (2)",
 },
 [600] = { -- Unhinged
 ["Who|What/When|Where/Why"]				= "Who|What|When|Where|Why",
-["“Ach! Hans, Run!“"]					= "“Ach! Hans, Run!”",
+['"Ach! Hans, Run!"']					= "“Ach! Hans, Run!”",
 ["underscore"]							= "_____",
 },
 [490] = { -- Deckmasters
@@ -793,7 +787,7 @@ function site.SetExpected()
 --TODO reduce amount of hardcoded numbers
 -- Core sets
 [808] = { pset={ LHpi.Data.sets[808].cardcount.both-15, [9]=LHpi.Data.sets[808].cardcount.reg-11 }, failed={ [9]=LHpi.Data.sets[808].cardcount.tok }, namereplaced=12 },-- -15 extra cards (nr. 270 - 284),
-[797] = { pset={ [9]=LHpi.Data.sets[797].cardcount.reg }, failed={ [9]=LHpi.Data.sets[797].cardcount.tok}, namereplaced=4 }, -- 13 tokens
+[797] = { pset={ [9]=LHpi.Data.sets[797].cardcount.reg }, failed={ [9]=LHpi.Data.sets[797].cardcount.tok}, namereplaced=4 },
 [788] = { pset={ [9]=249 }, failed={[9]=11} },-- fail SZH tokens
 [779] = { pset={ [9]=249 }, failed={[9]=7} },-- fail SZH tokens
 [770] = { namereplaced=4, pset={ [9]=249 }, failed={[9]=6} },-- fail SZH tokens
@@ -805,62 +799,62 @@ function site.SetExpected()
 [360] = { pset={ 350-20 }, dropped=17 },
 [250] = { pset={ 449-20 }, dropped=46 },
 [180] = { pset={ 378-15 }, dropped=81 },
-[140] = { pset={ 306-15 }, dropped=31 },
+[140] = { pset={ 306-15 }, dropped=30 },
 [110] = { dropped=1 },
 [100] = { pset={ 302-19 } },
 [90]  = {namereplaced=4},
 -- Expansions
-[813] = {pset={ LHpi.Data.sets[813].cardcount.both-5, [9]=LHpi.Data.sets[813].cardcount.reg-5 }, failed={ [9]=LHpi.Data.sets[813].cardcount.tok}, namereplaced=8 },-- -5 Intro Deck variants
+[813] = {pset={ LHpi.Data.sets[813].cardcount.both-5, [9]=LHpi.Data.sets[813].cardcount.reg-5 }, failed={ 5, [9]=LHpi.Data.sets[813].cardcount.tok+5 }, namereplaced=8 },-- -5 Intro Deck variants
 [806] = {pset={[9]=165}, failed={[9]=6}},-- fail SZH tokens
 [802] = {namereplaced=8, pset={[9]=165}, failed={[9]=11}},-- fail SZH tokens
 [800] = {namereplaced=10, pset={[9]=249}, failed={[9]=11}},-- fail SZH tokens
 [795] = { namereplaced=4, pset={ [9]=156 }, failed={[9]=1} },-- fail SZH tokens
 [793] = { pset={ [9]=249 }, failed={[9]=8} },-- fail SZH tokens
 [791] = { pset={ [9]=274 }, failed={[9]=12} },-- fail SZH tokens
-[786] = { pset={ 252-1, [9]=244-1 }, failed={[9]=8}, namereplaced=8 },-- missing 1 swamp, fail SZH tokens
-[784] = { pset={ LHpi.Data.sets[784].cardcount.reg }, failed={[9]=3} },-- fail SZH tokens
-[782] = { pset={ 276+1, [9]=264 }, failed={[9]=12}, namereplaced=11 },-- fail SZH tokens, +1 is Checklist
+[786] = { pset={ 252-1, [9]=244-1 }, failed={1, [9]=LHpi.Data.sets[786].cardcount.tok+1}, namereplaced=8 },-- missing 1 swamp, fail SZH tokens
+[784] = { pset={ [9]=LHpi.Data.sets[784].cardcount.reg }, failed={[9]=3} },-- fail SZH tokens
+[782] = { pset={ LHpi.Data.sets[782].cardcount.both+1, [9]=LHpi.Data.sets[782].cardcount.reg }, failed={ [9]=LHpi.Data.sets[782].cardcount.tok }, namereplaced=11 },-- +1 is Checklist
 [776] = { pset={ [9]=175 }, failed={[9]=4} },-- fail SZH tokens
 [775] = { pset={160-1, [9]=155} },-- no ENG zombie token, no SZH tokens
-[773] = { namereplaced=4, pset={[9]=249+1}, failed={1, [9]=9} },-- fail SZH tokens
+[773] = { pset={[9]=LHpi.Data.sets[773].cardcount.reg }, namereplaced=4, failed={1, [9]=LHpi.Data.sets[773].cardcount.tok+1} },-- fail SZH tokens, +1 is Checklist
 [767] = { pset={ [9]=248 }, failed={[9]=7}, namereplaced=6 },-- fail SZH tokens
-[765] = { pset={ [9]=145 }, dropped=2 },-- no SZH tokens
-[762] = { pset={ [9]=249 } },-- no SZH tokens
+[765] = { pset={ [9]=145 } },-- no SZH tokens
+[762] = { pset={ [9]=249 }, dropped=1 },-- no SZH tokens
 [758] = { pset={ [9]=145 }, failed={[9]=4} },-- fail SZH tokens
-[756] = { pset={ [9]=145 }, dropped=1 },-- no SZH tokens
-[754] = { pset={ [9]=249 }, failed={[9]=9}, namereplaced=1, dropped=1 },-- fail SZH tokens
+[756] = { pset={ [9]=145 } },-- no SZH tokens
+[754] = { pset={ [9]=249 }, failed={[9]=9}, namereplaced=1 },-- fail SZH tokens
 [752] = { pset={ [9]=180 }, failed={[9]=7}, dropped=1 },-- fail SZH tokens
 [751] = { pset={ [9]=301-20 }, failed={[9]=12}, namereplaced=8, dropped=1 },-- fail SZH tokens, no SZH lands
 [750] = { pset={ [9]=150 } },-- no SZH tokens
-[730] = { pset={ [9]=301-1 }, failed={[9]=11}, dropped=3, namereplaced=4 },-- -1 is missing "Changeling Berserker" (SZH), fail SZH tokens
-[710] = { dropped=4 },
-[700] = { dropped=3 },
+[730] = { pset={ [9]=301-1 }, failed={[9]=11}, dropped=2, namereplaced=4 },-- -1 is missing "Changeling Berserker" (SZH), fail SZH tokens
+[710] = { dropped=3 },
+[700] = { dropped=2 },
 [690] = { dropped=1 },
-[680] = { pset={ [9]=4 }, dropped=1 },
-[670] = { dropped=6 },
+[680] = { pset={ [9]=5 }, dropped=1 },
+[670] = { dropped=3 },
 [660] = { dropped=1 },
 [640] = { dropped=1 },
 [620] = { dropped=1 },
 [610] = { dropped=2, namereplaced=4 },
-[590] = { dropped=1 },
+--[590] = { dropped=1 },
 [580] = { dropped=3 },
 [570] = { dropped=1 },
-[560] = { pset={ 306-20}, dropped=5 },
+[560] = { pset={ 306-20}, dropped=4 },
 [540] = { dropped=3 },
 [530] = { dropped=2 },
 [520] = { namereplaced=1, dropped=10 },
 [510] = { dropped=15 },
 [500] = { dropped=6 },
 [480] = { pset={ 350-20 }, 	dropped=27 },
-[470] = { dropped=2, namereplaced=1 },
-[450] = { pset={ 146-3 }, dropped=23 },
-[430] = { dropped=96 },
+[470] = { namereplaced=1, dropped=3 },
+[450] = { pset={ LHpi.Data.sets[450].cardcount.reg-3 }, failed={ 3 }, dropped=23 },-- no "Alt" variants
+[430] = { dropped=95 },
 [420] = { pset={ 143-60 }, dropped=8 },
-[410] = { pset={ 143-1 }, dropped=8 },
-[400] = { pset={ 350-20 }, dropped=12 },
-[370] = { dropped=6 },
+[410] = { pset={ 143-1 }, dropped=7 },
+[400] = { pset={ 350-20 }, dropped=16 },
+[370] = { dropped=4 },
 [350] = { dropped=9 },
-[330] = { pset={ 350-20 }, dropped=32 }, -- no lands
+[330] = { pset={ 350-20 }, dropped=30 }, -- no lands
 [300] = { dropped=10 },
 [290] = { dropped=19 },
 [280] = { pset={ 350-20 }, dropped=52 },
@@ -870,9 +864,9 @@ function site.SetExpected()
 [220] = { dropped=10 },
 [210] = { dropped=6 },
 [190] = { pset={ 383-15 }, dropped=79 },-- no basic lands
-[170] = { dropped=18 },
+[170] = { dropped=17 },
 [160] = { dropped=7 },
-[150] = { dropped=22, namereplaced=1 },
+[150] = { dropped=21, namereplaced=1 },
 [130] = { dropped=7, namereplaced=1 },
 [120] = { dropped=11 },
 -- special sets
@@ -880,26 +874,26 @@ function site.SetExpected()
 [810] = { namereplaced=2 },
 [807] = { pset={ LHpi.Data.sets[807].cardcount.both+LHpi.Data.sets[807].cardcount.nontr }, namereplaced=2 },
 [805] = { namereplaced=2, foiltweaked=2, pset={ 89-1 } }, -- -1 token
-[801] = { pset={ LHpi.Data.sets[801].cardcount.reg+LHpi.Data.sets[801].cardcount.repl }, failed={ LHpi.Data.sets[801].cardcount.repl }, dropped=LHpi.Data.sets[801].cardcount.repl, namereplaced=2 },
+[801] = { pset={ LHpi.Data.sets[801].cardcount.all }, foiltweaked=15, namereplaced=4 },
 [796] = { namereplaced=6},
 [794] = { pset={ 81-12-1 } },-- -16 basic lands, -1 token
 [790] = { pset={ 91-16-1 } },-- -16 basic lands, -1 token
 [787] = { pset={ LHpi.Data.sets[787].cardcount.reg-1+LHpi.Data.sets[787].cardcount.nontr }, namereplaced=1 },-- missing Pollenbright Wings 
 [785] = { pset={ 79-2 } },-- -2 tokens
-[781] = { pset={ LHpi.Data.sets[781].cardcount.reg-1 }, foiltweaked=2 },
+[781] = { pset={ LHpi.Data.sets[781].cardcount.reg-2 }, failed= { 1 }, foiltweaked=2 },
 [780] = { namereplaced=1},
-[778] = { pset={ LHpi.Data.sets[778].cardcount.reg-14 }, failed={ 1 }, dropped=LHpi.Data.sets[778].cardcount.repl },
+[778] = { pset={ LHpi.Data.sets[778].cardcount.all-14-1 }, failed={ LHpi.Data.sets[778].cardcount.repl-1 }, foiltweaked=LHpi.Data.sets[778].cardcount.repl },-- missing 14/15 regular Commanders and "Forgotten Cave"
 [772] = { pset={ 80-8-1 } },-- -8 basic lands, -1 token
 [769] = { pset={ 150+45 } },-- all 45 Schemes (nontraditional)
 [768] = { pset={ 113-16 } },-- -16 basic lands
-[766] = { pset={LHpi.Data.sets[766].cardcount.reg+LHpi.Data.sets[766].cardcount.tok-1}, namereplaced=1},-- missing Foresst(71)
-[763] = { pset={ 66-12 }, namereplaced=2 },
+[766] = { pset={LHpi.Data.sets[766].cardcount.all-1}, failed={1}, namereplaced=1},-- missing Forest(71)
+[763] = { pset={ 66-12 }, failed={ 3 }, namereplaced=2 },
 [600] = { pset={ 141-2 }, namereplaced=3 },--'Kill! Destroy!' and 'Super Secret Tech' missing
-[490] = { pset={ 58-3 }, namereplaced=1, foiltweaked=1 },-- -3 premium
+[490] = { pset={ LHpi.Data.sets[490].cardcount.reg-3 }, failed= {2}, namereplaced=1, foiltweaked=1 },-- -3 premium
 [440] = { foiltweaked=2 },
 [340] = { pset={ 1} },
 [320] = { dropped=2, namereplaced=2 },
-[260] = { dropped=26, pset={228-20-13} },-- no(20) basic lands, no(13) "ST"/"GT" variants
+[260] = { dropped=26, pset={LHpi.Data.sets[260].cardcount.reg-20-13}, failed={13} },-- no(20) basic lands, no(13) "ST"/"GT" variants
 [200] = { pset={ 125-1 } },-- "Wall of Shadows" missing
 [70]  = { pset={ LHpi.Data.sets[70].cardcount.nontr } }-- all 32 Characters (nontraditional)
 	}--end table site.expected
