@@ -198,10 +198,10 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 --								site.expected[sid].pset[lid] = LHpi.Data.sets[sid].cardcount.reg
 							end
 							if site.expected.EXPECTNONTRAD then
-								psetExpected = psetExpected + LHpi.Data.sets[sid].cardcount.nontrad or 0
+								psetExpected = psetExpected + (LHpi.Data.sets[sid].cardcount.nontrad or 0)
 							end
 							if site.expected.EXPECTREPL then
-								psetExpected = psetExpected + LHpi.Data.sets[sid].cardcount.repl or 0
+								psetExpected = psetExpected + (LHpi.Data.sets[sid].cardcount.repl or 0)
 							end
 							site.expected[sid].pset[lid] = psetExpected
 						else
