@@ -1593,6 +1593,7 @@ function site.SetExpected()
 [798] = { pset={20}, dropped=1 }, 
 [796] = { namereplaced=3 },
 [794] = { pset={ LHpi.Data.sets[794].cardcount.both-14 }, dropped=6, foiltweaked=2-2 },-- 6 SOON
+[792] = { pset={ LHpi.Data.sets[792].cardcount.reg } },
 [790] = { pset={ LHpi.Data.sets[790].cardcount.all-8 } },
 [787] = { pset={ LHpi.Data.sets[787].cardcount.all }, dropped=2 , namereplaced=1 },--2 SOON, both look wrong :)
 [785] = { pset={ LHpi.Data.sets[785].cardcount.both-5 }, namereplaced=1, foiltweaked=2-1 },

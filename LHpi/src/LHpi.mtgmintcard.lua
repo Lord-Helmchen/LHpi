@@ -888,7 +888,7 @@ function site.SetExpected()
 [810] = { namereplaced=2 },
 [807] = { pset={ LHpi.Data.sets[807].cardcount.both+LHpi.Data.sets[807].cardcount.nontr }, namereplaced=2 },
 [805] = { namereplaced=2, foiltweaked=2, pset={ 89-1 } }, -- -1 token
-[801] = { pset={ LHpi.Data.sets[801].cardcount.all }, foiltweaked=15, namereplaced=4 },
+[801] = { pset={ LHpi.Data.sets[801].cardcount.all-1 }, foiltweaked=15, namereplaced=4 },-- which one missing?
 [796] = { namereplaced=6},
 [794] = { pset={ 81-12-1 } },-- -16 basic lands, -1 token
 [790] = { pset={ 91-16-1 } },-- -16 basic lands, -1 token
