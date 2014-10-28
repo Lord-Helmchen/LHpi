@@ -30,6 +30,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 2.13.5.4
 added 813
 fix 250,180 (except basic lands)
+added EXPECTNONTRAD and EXPECTREPL options to site.expected
+add STRICTOBJTYPE option
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -77,7 +79,7 @@ STRICTEXPECTED = true
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
-OFFLINE = true
+--OFFLINE = true
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
@@ -91,7 +93,7 @@ SAVEHTML = true
 -- @field [parent=#global] #boolean DEBUG
 --DEBUG = true
 
----	log raw html data found by regex; default false 
+---	log raw html data found by regex; default false
 -- @field [parent=#global] #boolean DEBUGFOUND
 --DEBUGFOUND = true
 
@@ -301,7 +303,6 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 	end
 
 	card.name = string.gsub( card.name , "AE" , "Æ")
---	card.name = string.gsub( card.name , "Ae" , "Æ")
 
 	return card
 end -- function site.BCDpluginPre
@@ -811,9 +812,18 @@ function site.SetExpected()
  @field #number foiltweaked		(optional) default 0
  ]]
 	site.expected = {
---- false:pset defaults to regular, true:pset defaults to regular+tokens instead
+--- pset defaults to LHpi.Data.sets[setid].cardcount.reg, if available and not set otherwise here.
+--  LHpi.Data.sets[setid]cardcount has 6 fields you can use avoid hardcoded numbers here: { reg, tok, both, nontr, repl, all }.
+
+--- if EXPECTTOKENS is true, LHpi.Data.sets[setid].cardcount.tok is added to pset default.
 -- @field [parent=#site.expected] #boolean EXPECTTOKENS
 	EXPECTTOKENS = false,
+--- if EXPECTNONTRAD is true, LHpi.Data.sets[setid].cardcount.nontrad is added to pset default.
+-- @field [parent=#site.expected] #boolean EXPECTNONTRAD
+	EXPECTNONTRAD = true,
+--- if EXPECTREPL is true, LHpi.Data.sets[setid].cardcount.repl is added to pset default.
+-- @field [parent=#site.expected] #boolean EXPECTREPL
+	EXPECTREPL = true,
 --TODO expect a lot of namereplacements, for now just expect fails
 -- Core Sets
 [808] = { pset={ LHpi.Data.sets[808].cardcount.reg-20 } },

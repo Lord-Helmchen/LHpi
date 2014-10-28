@@ -33,6 +33,8 @@ removed oversized handling from BCDPluginPre
 add "Token" suffix to replacement names
 update site.expected
 fix 140,420,801
+added EXPECTNONTRAD and EXPECTREPL options to site.expected
+add STRICTOBJTYPE option
 ]]
 
 -- options unique to this site
@@ -67,13 +69,17 @@ LOGFOILTWEAK = true
 -- @field [parent=#global] #boolean STRICTEXPECTED
 STRICTEXPECTED = true
 
+--- if true, exit with error on object type mismatch, else use object type 0 (all)
+-- @field [parent=#global] boolena STRICTOBJTYPE
+STRICTOBJTYPE = true
+
 --- log to seperate logfile instead of Magic Album.log;	default true
 -- @field [parent=#global] #boolean SAVELOG
 --SAVELOG = false
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
-OFFLINE = true
+--OFFLINE = true
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
@@ -950,9 +956,18 @@ function site.SetExpected()
  @field #number foiltweaked		(optional) default 0
  ]]
 	site.expected = {
---- false:pset defaults to regular, true:pset defaults to regular+tokens instead
+--- pset defaults to LHpi.Data.sets[setid].cardcount.reg, if available and not set otherwise here.
+--  LHpi.Data.sets[setid]cardcount has 6 fields you can use avoid hardcoded numbers here: { reg, tok, both, nontr, repl, all }.
+
+--- if EXPECTTOKENS is true, LHpi.Data.sets[setid].cardcount.tok is added to pset default.
 -- @field [parent=#site.expected] #boolean EXPECTTOKENS
 	EXPECTTOKENS = true,
+--- if EXPECTNONTRAD is true, LHpi.Data.sets[setid].cardcount.nontrad is added to pset default.
+-- @field [parent=#site.expected] #boolean EXPECTNONTRAD
+	EXPECTNONTRAD = true,
+--- if EXPECTREPL is true, LHpi.Data.sets[setid].cardcount.repl is added to pset default.
+-- @field [parent=#site.expected] #boolean EXPECTREPL
+	EXPECTREPL = true,
 -- Core sets
 [808] = {pset={ LHpi.Data.sets[808].cardcount.both-15, [3]=LHpi.Data.sets[808].cardcount.reg-15 }, failed={[3]=LHpi.Data.sets[808].cardcount.tok}, namereplaced=4 },-- -15 extra cards (nr. 270 - 284)
 [797] = { namereplaced=3 },

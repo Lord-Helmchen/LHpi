@@ -33,6 +33,8 @@ removed oversized handling from BCDPluginPre
 add "Token" suffix to replacement names
 update site.expected
 fix 330,801,787,600
+added EXPECTNONTRAD and EXPECTREPL options to site.expected
+add STRICTOBJTYPE option
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -62,6 +64,10 @@ LOGFOILTWEAK = true
 -- @field [parent=#global] #boolean STRICTEXPECTED
 STRICTEXPECTED = true
 
+--- if true, exit with error on object type mismatch, else use object type 0 (all)
+-- @field [parent=#global] boolena STRICTOBJTYPE
+STRICTOBJTYPE = true
+
 --- log to seperate logfile instead of Magic Album.log;	default true
 -- @field [parent=#global] #boolean SAVELOG
 --SAVELOG = false
@@ -76,13 +82,13 @@ SAVEHTML = true
 
 --- save price table to file before importing to MA;	default false
 -- @field [parent=#global] #boolean SAVETABLE
-SAVETABLE = true
+--SAVETABLE = true
 
 ---	log everything and exit on error; default false
 -- @field [parent=#global] #boolean DEBUG
 --DEBUG = true
 
----	log raw html data found by regex; default false 
+---	log raw html data found by regex; default false
 -- @field [parent=#global] #boolean DEBUGFOUND
 --DEBUGFOUND = true
 
@@ -764,7 +770,6 @@ site.foiltweak = {
  @function [parent=#site] SetExpected
  @param nil
 ]]
-
 function site.SetExpected()
 --[[- table of expected results.
  as of script release. Used as sanity check during sitescript development and source of insanity afterwards ;-)
@@ -781,9 +786,18 @@ function site.SetExpected()
  @field #number foiltweaked		(optional) default 0
  ]]
 	site.expected = {
---- false:pset defaults to regular, true:pset defaults to regular+tokens instead
+--- pset defaults to LHpi.Data.sets[setid].cardcount.reg, if available and not set otherwise here.
+--  LHpi.Data.sets[setid]cardcount has 6 fields you can use avoid hardcoded numbers here: { reg, tok, both, nontr, repl, all }.
+
+--- if EXPECTTOKENS is true, LHpi.Data.sets[setid].cardcount.tok is added to pset default.
 -- @field [parent=#site.expected] #boolean EXPECTTOKENS
 	EXPECTTOKENS = true,
+--- if EXPECTNONTRAD is true, LHpi.Data.sets[setid].cardcount.nontrad is added to pset default.
+-- @field [parent=#site.expected] #boolean EXPECTNONTRAD
+	EXPECTNONTRAD = true,
+--- if EXPECTREPL is true, LHpi.Data.sets[setid].cardcount.repl is added to pset default.
+-- @field [parent=#site.expected] #boolean EXPECTREPL
+	EXPECTREPL = true,
 --TODO reduce amount of hardcoded numbers
 -- Core sets
 [808] = { pset={ LHpi.Data.sets[808].cardcount.both-15, [9]=LHpi.Data.sets[808].cardcount.reg-11 }, failed={ [9]=LHpi.Data.sets[808].cardcount.tok }, namereplaced=12 },-- -15 extra cards (nr. 270 - 284),
