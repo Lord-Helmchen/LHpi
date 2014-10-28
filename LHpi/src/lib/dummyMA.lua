@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 --[[ CHANGES
 optional object type parameter in ma.SetPrice
+add 801,803,804,805,806,807,808,809,810,811,812,813
 ]]
 
 --[[- "main" function called by Magic Album; just display error and return.
@@ -462,6 +463,14 @@ dummy.promosets = {
 
 --- @field [parent=#dummy] #table specialsets
 dummy.specialsets = {
+ [812] = "Duel Decks: Speed vs. Cunning";
+ [811] = "Magic 2015 Clash Pack";
+ [810] = "Modern Event Deck 2014";
+ [809] = "From the Vault: Annihilation";
+ [807] = "Conspiracy";
+ [805] = "Duel Decks: Jace vs. Vraska";
+ [804] = "Challenge Deck: Battle the Horde";
+ [803] = "Challenge Deck: Face the Hydra";
  [801] = "Commander 2013 Edition";
  [799] = "Duel Decks: Heroes vs. Monsters";
  [798] = "From the Vault: Twenty";
@@ -511,6 +520,8 @@ dummy.specialsets = {
 }
 --- @field [parent=#dummy] #table expansionsets
 dummy.expansionsets = {
+ [813] = "Khans of Tarkir";
+ [806] = "Journey into Nyx";
  [802] = "Born of the Gods";
  [800] = "Theros";
  [795] = "Dragon's Maze";
@@ -578,6 +589,7 @@ dummy.expansionsets = {
 }
 --- @field [parent=#dummy] #table coresets
 dummy.coresets = {
+ [801] = "Magic 2015";
  [797] = "Magic 2014";
  [788] = "Magic 2013";
  [779] = "Magic 2012";
@@ -634,7 +646,7 @@ function main()
 		[7]={name="LHpi.mtgprice.com.lua",path=dummy.path,savepath=dummy.savepath},
 	}
 	--select a predefined script to be tested
-	local script=scripts[1]
+	local script=scripts[2]
 
 --	dummy.fakesitescript()
 	dummy.loadscript(script.name,script.path,script.savepath)

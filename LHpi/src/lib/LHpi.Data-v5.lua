@@ -30,12 +30,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --[[ CHANGES
 v5
 renamed Data.sets[setid].cardcount.overs to Data.sets[setid].cardcount.repl
-add oversized commanders to variant and foiltweak tables in [778],[801]
-add Nontrad,Replica variants to 807,769,787,70,761,786,784,782,801,778,23,21,20
-[807] has 9 tokens
-added 809,810,811,812,813
 add "Token" suffix to variant tables to enable objtype=2 in LHpi.BuildCardData
-* fix cardcount, variant and/or foiltweak tables for 812,31,30,25,23,21,10
+add Nontrad,Replica variants to 807,769,787,70,761,786,784,782,801,778,23,21,20
+added 809,810,811,812,813
+fix cardcount, variant and/or foiltweak tables for 807,812,31,30,25,23,21,10
 ]]
 
 

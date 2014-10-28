@@ -5,6 +5,8 @@ It helps you to understand what you must/can define and how-to define it.
 
 Any remarks or feedbacks are welcome.
 
+To keep this page in in a non-LordHelchen-perspective, he will usually keep his edits to [[updating sitescripts to new library/template version]]. Make sure you read the sections appropriate for the LHpi version you are developing for. You could also incorporate changes mentioned in those sections into the rest of this page and then remove what is no longer needed.
+
 ===Properties===
 
 ====LHpi library version====
@@ -672,7 +674,7 @@ Parameter level is optional and if unset will default to 0; 1 is VERBOSE, 2 is D
 non-recursively counts table rows and returns the (first level) table length as number. For non-tables, length(nil)=length(false)=nil, otherwise 1.  In lua, length of a table t is defined to be any integer index n such that t[n] is not nil and t[n+1] is nil, which does not play nice with the table indices LHpi uses.
 =====Tostring=====
 <code>LHpi.Tostring(table)</code><br/>
-The native lua tostring function returns an internal identifier if called with a table. This functiion recursively returns a string representation of the table, in the form <code>{ [key]='value';... ;}</code>
+The native lua tostring function returns an internal identifier if called with a table. This function recursively returns a string representation of the table, in the form <code>{ [key]='value';... ;}</code>
 =====Logtable=====
 <code>LHpi.Logtable(table,name,loglevel)</code><br/>
 For large tables, LHpi.Tostring crashes ma. recursion too deep / out of memory ? This function LHpi.Tostring's and logs each row seperately.
@@ -735,7 +737,14 @@ If you want to be nice to others that might want to use your sitescript as examp
 * rename DEBUGSKIPFOUND -> DEBUGFOUND
 * rename STRICTCHECKEXPECTED -> STRICTEXPECTED 
 * site.variants subtables can have boolean field [code]override[/code]. If true, default variant table from LHpi.Data is ignored, otherwise both are merged.
-* table site.expected should be wrapped in function site.SetExpected(). see template for example. 
+* table site.expected should be wrapped in function site.SetExpected(). see template for example.
+=====2.12 to 2.13=====
+* in addition to site.expected.EXPECTTOKENS, you can set the new options site.expected.EXPECTNONTRAD and site.expected.EXPECTREPL to match the default expectations to what kind of cards the site offers to reduce hardcoded numbers.
+* take note that Tokens, Replicas (Oversized Commanders), Nontraditionals (Conspiracies, Schemes,Planes), Inserts (Double-sided checklists) need object type to be set. In most cases this should already be done by the library, but you may need to use namereplacement or variant tables to set card type suffixes or variants.
+* If you had BuildCardDataPlugins remove "(oversized)" and similar suffixes, you should probably let the library handle those to find the right object type.
+* use Data version 5 or later, as previous variant tables did not include object type variants.
+* to debug object type merging, you can set the new option STRICTOBJTYPE.
+
 ====releasing your sitescript====
 
 Here's a few non-obligatory suggestions if you want to share your (more or less?) finished sitescript
