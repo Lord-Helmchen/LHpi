@@ -25,10 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.13.5.11
-added EXPECTNONTRAD and EXPECTREPL options to site.expected
-added 809,810,811,812,813
-add STRICTOBJTYPE option
+2.14.5.12
+new function site.ReadFilenameOptions
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -92,13 +90,13 @@ add STRICTOBJTYPE option
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.13"
+libver = "2.14"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
 dataver = "5"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "11"
+scriptver = "12"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.sitescriptTemplate-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -193,6 +191,15 @@ function ImportPrice( importfoil , importlangs , importsets )
 	LHpi.DoImport (importfoil , importlangs , importsets)
 	ma.Log( "End of Lua script " .. scriptname )
 end -- function ImportPrice
+
+--[[- Process script filename options.
+ Sitescript-side part of the Filename Option feature. Allows to determine the sitescript's filename at runtime.
+ Probably nothing to be done here, but the function _must_ be defined for LHpi library version >= 2.14.
+ 
+ @function [parent=#site] ReadFilenameOptions
+]]
+function site.ReadFilenameOptions()
+end--function site.ReadFilenameOptions
 
 --[[-  build source url/filename.
  Has to be done in sitescript since url structure is site specific.

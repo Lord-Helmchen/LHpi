@@ -25,18 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.13
-DoImport
-* finetune site.expected[setid].pset defaults according to site.expected.EXPECTTOKENS,site.expected.EXPECTNONTRAD and site.expected.EXPECTREPL
-* increased default dataver from 2 to 5
-BuildCardData
-* set card.object type
-FillCardsetTable
-* also fill with objtype
-MergeCardrows
-* merge objtypes
-SetPrice
-* look for special variant names "token", "nontrad", "replica", "insert" and transform them into object types for ma.SetPrice
+2.14
+new LHpi.ReadFilenameOptions
 ]]
 
 --TODO configure via extension scriptname.OPTION.lua for:
@@ -107,6 +97,10 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 	if not site.frucs then site.frucs = {} end
 	if DEBUG and ((not site.regex) or site.regex == "" ) then error("undefined site.regex!") end
 	if not site.regex then site.regex = "" end
+	site.scriptFilename, site.filenameOptions = LHpi.ReadFilename()
+print(tostring(site.scriptFilename))
+print(LHpi.Tostring(site.filenameOptions))
+error("break")
 	if not scriptname then
 	--- should always be similar to the sitescript filename !
 	-- @field [parent=#global] #string scriptname
@@ -126,6 +120,32 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 	-- read user supplied parameters and modify site.sets table
 	local supImportfoil,supImportlangs, supImportsets = LHpi.ProcessUserParams( importfoil , importlangs , importsets )
 	-- set sensible defaults or throw error on missing sitescript fields or functions
+	if not site.BuildUrl then
+		function site.BuildUrl( setid,langid,frucid,offline )
+			local errormsg = "sitescript " .. scriptname .. ": function site.BuildUrl not implemented!" 
+			ma.Log( "!!critical error: " .. errormsg )
+			error( errormsg )
+		end	-- function
+	end -- if
+	if not site.ParseHtmlData then
+		function site.ParseHtmlData( foundstring )
+			local errormsg = "sitescript " .. scriptname .. ": function site.ParseHtmlData not implemented!" 
+			ma.Log( "!!critical error: " .. errormsg )
+			error( errormsg )
+		end	-- function
+	end -- if
+	-- Don't need to define defaults here as long as BuildCardData checks for their existence before calling them.	
+	--	if not site.BCDpluginPre then
+	--		function site.BCDpluginPre ( card , setid )
+	--			return card
+	--		end -- function
+	--	end -- if
+	--	if not site.BCDpluginPost then
+	--		function site.BCDpluginPost( card , setid )
+	--			card.pluginData = nil
+	--			return card
+	--		end -- function
+	--	end -- if
 	if not savepath then
 	--- savepath for OFFLINE (read) and SAVEHTML,SAVETABLE (write). must point to an existing directory relative to MA's root.
 	-- @field [parent=#global] #string savepath
@@ -215,32 +235,6 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 			end -- for
 		end -- for sid,_setname
 	end -- if CHECKEXPECTED
-	if not site.BuildUrl then
-		function site.BuildUrl( setid,langid,frucid,offline )
-			local errormsg = "sitescript " .. scriptname .. ": function site.BuildUrl not implemented!" 
-			ma.Log( "!!critical error: " .. errormsg )
-			error( errormsg )
-		end	-- function
-	end -- if
-	if not site.ParseHtmlData then
-		function site.ParseHtmlData( foundstring )
-			local errormsg = "sitescript " .. scriptname .. ": function site.ParseHtmlData not implemented!" 
-			ma.Log( "!!critical error: " .. errormsg )
-			error( errormsg )
-		end	-- function
-	end -- if
-	-- Don't need to define defaults here as long as BuildCardData checks for their existence before calling them.	
-	--	if not site.BCDpluginPre then
-	--		function site.BCDpluginPre ( card , setid )
-	--			return card
-	--		end -- function
-	--	end -- if
-	--	if not site.BCDpluginPost then
-	--		function site.BCDpluginPost( card , setid )
-	--			card.pluginData = nil
-	--			return card
-	--		end -- function
-	--	end -- if
 	
 	-- build sourceList of urls/files to fetch
 	local sourceList, sourceCount = LHpi.ListSources( supImportfoil , supImportlangs , supImportsets )
@@ -548,6 +542,62 @@ function LHpi.LoadData( version )
 	LHpi.Log( "LHpi.Data is ready to use." )
 	return Data
 end--function LHpi.LoadData
+
+--[[- determine the sitescript's filename and parse special options.
+ returns both the filename and a table of parsed options.
+ 
+ @function [parent=#LHpi] ReadFilename
+ @return #string filename
+ @return #table fnOptions { name= #string, #string (optionname)= #string , ... } 
+ ]]
+function LHpi.ReadFilename()
+	if not site.ReadFilenameOptions then
+		local errormsg = "Function site.ReadFilenameOptions not implemented in sitescript. See log for details!" 
+		ma.Log( "!!critical error: " .. errormsg )
+		if DEBUG then
+			error( errormsg )
+		else
+			LHpi.Log("Function site.ReadFilenameOptions not implemented in sitescript.")
+			LHpi.Log("Filename Option feature will not work. savepath and logfilename will use default values.")
+			LHpi.Log("Compare your sitescript to the template if you're unsure what to do.")
+			print("foo1")
+			return "LHpi.unknownSitescript", { }
+		end--if DEBUG
+	end
+
+	local info = debug.getinfo(1,'S');
+	print("source(\"1\") is " .. info.source);
+	local info = debug.getinfo(2,'S');
+	print("source(\"2\") is " .. info.source);
+	local info = debug.getinfo(3,'S');
+	print("source(\"3\") is " .. info.source);
+
+	local info = debug.getinfo(site.ReadFilenameOptions,'S');
+	print("source(\"site.ReadFilenameOptions\") is " .. info.source);
+
+	local _s,_e,fname = string.find(info.source,"([^\\/]+)$")
+	print(_s, _e, fname)
+	local parts = {}
+    for p in string.gfind(fname, "%.(%a+)%.") do
+      table.insert(parts, p)
+    end
+	print(LHpi.Tostring(parts))
+--	print("found:"..tostring(string.gsub(info.source,"^@.-[^\/].+")))
+--	ma.PutFile("LHpi.scriptfilename.tmp" , "true", 0 )
+--		local folderwritable = ma.GetFile( savepath .. "testfolderwritable" )
+--		if not folderwritable then
+--			SAVEHTML = false
+--			SAVETABLE = false
+--			LHpi.Log( "failed to write file to savepath " .. savepath .. ". Disabling SAVEHTML and SAVETABLE" )
+--			if DEBUG then
+--				error( "failed to write file to savepath " .. savepath .. "!" )
+--				--print( "failed to write file to savepath " .. savepath .. ". Disabling SAVEHTML and SAVETABLE" )
+--			end
+--		end -- if not folderwritable
+	
+	
+	return fname, fnOptions
+end--function LHpi.ReadFilenameOptions
 
 --[[- read MA suplied parameters and configure script instance.
  returns shortened versions of the ma supplied global parameters

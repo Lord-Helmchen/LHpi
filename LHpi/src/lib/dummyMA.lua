@@ -336,6 +336,7 @@ function dummy.fakesitescript()
 	} }
 	
 	function site.BuildUrl() return { ["fakeURL"] ={} } end
+	function site.ReadFilenameOptions() end
 end--function dummy.fakesitescript
 
 --[[- merge up to four tables.
@@ -378,7 +379,7 @@ function dummy.forceEnv(env)
 	OFFLINE = env.OFFLINE
 	SAVELOG = env.SAVELOG
 	SAVEHTML = dummy.envSAVEHTML
-	DEBUG = env.DEBUG
+--	DEBUG = env.DEBUG
 	DEBUGFOUND = env.DEBUGFOUND
 	DEBUGVARIANTS = env.DEBUGVARIANTS
 	SAVETABLE = env.SAVETABLE
@@ -646,11 +647,12 @@ function main()
 		[7]={name="LHpi.mtgprice.com.lua",path=dummy.path,savepath=dummy.savepath},
 	}
 	--select a predefined script to be tested
-	local script=scripts[2]
+--	local script=scripts[8]
+	local script = { name="lib\\LHpi.sitescriptDummy.com-v2.14.5.99.FOO.lua",path=dummy.path,savepath=dummy.savepath }
 
 --	dummy.fakesitescript()
 	dummy.loadscript(script.name,script.path,script.savepath)
---	LHpi = dummy.loadlibonly(2.9,dummy.path,dummy.savepath)
+--	LHpi = dummy.loadlibonly(2.14,dummy.path,dummy.savepath)
 
 	-- force debug enviroment options
 	dummy.forceEnv(dummy.env)
@@ -667,6 +669,7 @@ function main()
 --	local fakeimportsets = dummy.coresets
 --	local fakeimportsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 
+--	LHpi.ReadFilenameOptions()
 --	dummy.Data = LHpi.LoadData(2)
 --	LHpi.DoImport(fakeimportfoil, fakeimportlangs, fakeimportsets)
 	ImportPrice( fakeimportfoil, fakeimportlangs, fakeimportsets )
