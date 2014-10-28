@@ -30,10 +30,20 @@ DoImport
 * finetune site.expected[setid].pset defaults according to site.expected.EXPECTTOKENS,site.expected.EXPECTNONTRAD and site.expected.EXPECTREPL
 * increased default dataver from 2 to 5
 BuildCardData
-* set objtype = 2 for identified tokens and emblems. still needs work for tokens with multiple variants.
+* set card.object type
+FillCardsetTable
+* also fill with objtype
+MergeCardrows
+* merge objtypes
 SetPrice
-* look for special variant names "token", "nontrad", "replica" and transform them into object types for ma.SetPrice
+* look for special variant names "token", "nontrad", "replica", "insert" and transform them into object types for ma.SetPrice
 ]]
+
+--TODO configure via extension scriptname.OPTION.lua for:
+-- magicuniverse: stammkundenpreis
+-- mtgprice: low/fair
+-- tcgplayer: low/mid/high
+-- mkm
 
 --TODO count averaging events with counter attached to prices
 --TODO nil unneeded Data.sets[sid] to save memory?
@@ -246,6 +256,9 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 		totalcountstring = totalcountstring .. string.format( "%i set, %i failed %s cards\t", totalcount.pset[lid], totalcount.failed[lid], lang )
 	end -- for
 	LHpi.Log( string.format ( "Total counted : " .. totalcountstring .. "; %i dropped, %i namereplaced and %i foiltweaked.", totalcount.dropped, totalcount.namereplaced, totalcount.foiltweaked ) )
+	if DEBUG then
+		print( string.format ( "Total counted : " .. totalcountstring .. "; %i dropped, %i namereplaced and %i foiltweaked.", totalcount.dropped, totalcount.namereplaced, totalcount.foiltweaked ) )
+	end
 	if CHECKEXPECTED then
 		local totalexpected = {pset={},failed={},dropped=0,namereplaced=0,foiltweaked=0}
 		for lid,_lang in pairs(supImportlangs) do
@@ -268,6 +281,9 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 			totalexpectedstring = totalexpectedstring .. string.format( "%i set, %i failed %s cards\t", totalexpected.pset[lid], totalexpected.failed[lid], lang )
 		end -- for
 		LHpi.Log( string.format( "Total expected: " .. totalexpectedstring .. "; %i dropped, %i namereplaced and %i foiltweaked.", totalexpected.dropped, totalexpected.namereplaced, totalexpected.foiltweaked ) )
+		if DEBUG then
+			print( string.format( "Total expected: " .. totalexpectedstring .. "; %i dropped, %i namereplaced and %i foiltweaked.", totalexpected.dropped, totalexpected.namereplaced, totalexpected.foiltweaked ) )
+		end
 		LHpi.Log( string.format( "count differs in %i sets: %s", LHpi.Length(setcountdiffers),LHpi.Tostring(setcountdiffers) ), 1 )
 	end -- if CHECKEXPECTED	
 end
@@ -386,6 +402,7 @@ function LHpi.MainImportCycle( sourcelist , totalhtmlnum , importfoil , importla
 				LHpi.Log( msg , 1 )
 			end
 			if SAVETABLE then
+				LHpi.Log(string.format("Saving Cardset Table for set %s to %s",sid, savepath))
 				LHpi.SaveCSV( sid, cardsetTable , savepath )
 			end
 			-- Set the price
@@ -791,7 +808,7 @@ end -- function LHpi.GetSourceData
  @param #number setid		(see "..\Database\Sets.txt")
  @param #string importfoil	"y"|"n"|"o" passed from DoImport to drop unwanted cards
  @param #table importlangs	{ #number (langid)= #string, ... } passed from DoImport to drop unwanted cards
- @return #table		{ name= #string , drop= #boolean , lang= #table , (optional) names= #table , variant= #table , regprice= #table , foilprice= #table }  : card
+ @return #table		{ name= #string , drop= #boolean , lang= #table , (optional) names= #table , variant= #table , regprice= #table , foilprice= #table , objtype= #number }  : card
  @return #number	0 or 1: namereplace event to be counted in LHpi.MainImportCycle
  @return #number	0 or 1: foiltweak event to be counted in LHpi.MainImportCycle
  
@@ -802,6 +819,7 @@ end -- function LHpi.GetSourceData
  @return #table card.variant	: table of variant names { #number= #string , ... }, nil if single-versioned card
  @return #table card.regprice	: { #number (langid)= #number , ... } nonfoil prices by language, subtables if variant
  @return #table card.foilprice	: { #number (langid)= #number , ... }    foil prices by language, subtables if variant
+ @return #table card.objtype	: 0:all, 1:card, 2:token, 3:nontraditional, 4:insert, 5:replica; table if variant
  ]]
 function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 	local card = { names = {} , lang = {} }
@@ -903,9 +921,6 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 		LHpi.Log(card.name .. ":" .. LHpi.ByteRep(card.name) , 2 )
 	end
 	
-	-- unify Oversized suffix
-	card.name= string.gsub(card.name,"%-? ?%(?[Oo][Vv][Ee][Rr][Ss][Is][Zz][Ee][Dd]%)?$","(oversized)")
-
 	if site.namereplace[setid] and site.namereplace[setid][card.name] then
 		if LOGNAMEREPLACE or DEBUG then
 			LHpi.Log( string.format( "namereplaced %s to %s" ,card.name, site.namereplace[setid][card.name] ), 1 )
@@ -913,6 +928,9 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 		card.name = site.namereplace[setid][card.name]
 		namereplaced=1
 	end -- site.namereplace[setid]
+
+	-- unify Oversized suffix
+	card.name= string.gsub(card.name,"[ %-%(]*[Oo][Vv][Ee][Rr][Ss]%.?[Ii]?[Zz]?[Ee]?[Dd]?%)?$"," (oversized)")
 
 	-- foiltweak, should be after namereplace and before variants, to work with oversized foilonly commanders
 	if site.foiltweak[setid] and site.foiltweak[setid][card.name] then
@@ -966,28 +984,47 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 		-- TODO basic land names could probably need replacements for all languages
 	end
 
+	-- ma database object type, after namereplacement and before variant, but removal of token and other objtype pre-/suffix after variant
+	-- We need to make sure we distinguish regular vs. oversized, so by default objtype=1 is required.
 	-- This could show unwanted behaviour for multiple database objects with the same name in one set,
 	-- such as Oversized Commander Replica in the Commander sets. LHpi only has card.name as primary object identifier,
 	-- so objtype could be overwritten and we'd be back to averaging.
-	-- Instead, we will use the existing variant loops and make LHpi.SetPrice change the variant names
-	-- "Token", "Nontrad", "Replica" into explicit object type declaration.
-	-- As the API will default to 0 (search all object types), explicitely setting it will only rarely be required.
---	-- ma database object type, after namereplacement, before removal of token pre-/suffix
---	if sourcerow.objtype ~=nil then
---		card.objtype = sourcerow.objtype
---	elseif string.find (card.name , "[tT][oO][kK][eE][nN]" ) then
+	-- Instead we'll use the existing variant loops and set the variant names "Token", "Nontrad", "Replica" via variant tables.  
+	-- LHpi.SetPrice will then change these variants into explicit object type declaration.
+	local objtype = nil
+	if sourcerow.objtype ~=nil then
+		objtype = sourcerow.objtype
+	-- Token and Emblems are handled below
+--	elseif string.find (card.name, "[tT][oO][kK][eE][nN]" ) then
 --		card.objtype = 2
---	elseif string.find(card.name,"%([Nn][Oo][Nn][Tt][Rr][Aa][Dd][Ii]?[Tt]?[Ii]?[Oo]?[Nn]?[Aa]?[Ll]?%.?%)") then
---		card,objtype = 3
---	elseif string.find(card.name,"%([Rr][Ee][Pp][Ll][Ii]?[Cc]?[Aa]?%.?%)") then
---		card,objtype = 5
---	elseif string.find(card.name,"%([Pp]lane%)") then
---		card,objtype = 3
---	elseif string.find(card.name,"%([Ss]cheme%)") then
---		card,objtype = 3
---	elseif string.find (card.name , "%([Oo]versi?z?e?e?d?%)" ) then
---		card.objtype = 5
---	end
+	elseif string.find(card.name, "%([Nn][Oo][Nn][Tt][Rr][Aa][Dd]%.?[Ii]?[Tt]?[Ii]?[Oo]?[Nn]?[Aa]?[Ll]?%)") then
+		objtype = 3
+	elseif string.find(card.name, "%([Ii][Nn][Ss]%.?[Ee]?[Rr]?[Tt]?%)") then
+		objtype = 4
+	elseif string.find(card.name, "%([Rr][Ee][Pp][Ll]%.?[Ii]?[Cc]?[Aa]?%)") then
+		objtype = 5
+	elseif string.find(card.name, "%([Pp]lane%)") then
+		objtype = 3
+	elseif string.find(card.name, "%([Ss]cheme%)") then
+		objtype = 3
+	elseif string.find(card.name, "%([Co]onspiracy%)") then
+		objtype = 3
+	elseif string.find (card.name , "%([Oo]versized%)$" ) then
+		if setid == 778 -- Commander
+			or setid == 792 -- Commander's Arsenal
+			or setid == 801 -- Commander 2013
+		then
+			objtype = 5
+		elseif setid == 761 -- Planechase
+			or setid == 769 -- Archenemy
+			or setid == 787 -- Planechase 2012 Edition
+			or setid == 807 -- Conspiracy
+		then
+			objtype = 3
+		end-- if setid
+	else
+		objtype = 1
+	end--if string.find
 
 	-- variant checking must be after namereplacement, and should probably be before token pre-/suffix removal
 	if sourcerow.variant then -- keep site.ParseHtmlData preset variant
@@ -1006,14 +1043,12 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 	end -- if sourcerow.variant
 	-- remove unparsed leftover variant numbers
 	card.name = string.gsub( card.name , "%(%d+%)" , "" )
-
-	-- oversized suffix removal, must come after variant checking
-	card.name = string.gsub(card.name,"%(oversized%)","")
+	card.name = string.gsub(card.name," *%([Oo]versized%)$","")
 	
 	-- Token infix removal, must come after variant checking
-	-- This means that we sometimes have to namereplace the suffix away for variant tokens
+	-- For object type detection, variant tables need to keep/set "Token" suffix.
 	if string.find(card.name , "[tT][oO][kK][eE][nN]" ) then -- Token pre-/suffix and color suffix
-		card.objtype = 2
+		objtype = 2
 		card.name = string.gsub( card.name , " ?[tT][oO][kK][eE][nN][ %-]*" , "" )
 		card.name = string.gsub( card.name , "%((.*)White(.*)%)" , "(%1W%2)" )
 		card.name = string.gsub( card.name , "%((.*)Blue(.*)%)" , "(%1U%2)" )
@@ -1024,7 +1059,7 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 		card.name = string.gsub( card.name , "%(Art%)" , "" )
 		card.name = string.gsub( card.name , "%(Go?ld%)" , "" )
 		card.name = string.gsub( card.name , "%(Multicolor%)" , "" )
-		card.name = string.gsub( card.name , "%(Spt%)" , "" )
+		card.name = string.gsub( card.name , "%([Sp][Pp][Tt]%)" , "" )
 		card.name = string.gsub( card.name , "%(%)%s*$" , "" )
 		card.name = string.gsub( card.name , "  +" , " " )
 	end
@@ -1048,13 +1083,31 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 		or card.name == "Schielendes Emblem" then
 			--do nothing
 		else
-			card.objtype = 2
+			objtype = 2
 		end
 	end
 	
 	--card.condition[lid] = "NONE"
 
 	card.name = string.gsub( card.name , "^%s*(.-)%s*$" , "%1" ) --remove any leftover spaces from start and end of string	
+	--set card.objtype
+	if card.variant then
+		if DEBUG then
+			LHpi.Log( "VARIANTS objtype : " .. LHpi.Tostring(card.variant) , 2 )
+		end
+		card.objtype = {}
+		for varnr,varname in pairs(card.variant) do
+			if DEBUG then
+				LHpi.Log( string.format("VARIANTS\tvarnr is %i varname is %s", varnr, tostring(varname) ) , 2 )
+			end
+			if varname then
+				card.objtype[varname] = objtype
+			end -- if varname
+		end -- for varname,varnr
+	else -- not card.variant
+		card.objtype = objtype
+	end -- set objtype
+	
 	card.regprice={}
 	card.foilprice={}
 	-- I would prefer to skip as many loops as possible if we're to discard the results anyway...
@@ -1141,7 +1194,7 @@ end -- function LHpi.BuildCardData
  calls LHpi.MergeCardrows
  
  @function [parent=#LHpi] FillCardsetTable
- @param #table card		single tablerow from BuildCardData: { name= #string , drop = #boolean , lang= #table , (optional) names= #table , variant= #table , regprice= #table , foilprice= #table }
+ @param #table card		single tablerow from BuildCardData: { name= #string , drop = #boolean , lang= #table , (optional) names= #table , variant= #table , regprice= #table , foilprice= #table , objtype= #number }
  @return #number	0 if new row, -1 to -9 if severe conflict
  @return #string	conflict description
  @return modifies global #table cardsetTable
@@ -1150,7 +1203,7 @@ function LHpi.FillCardsetTable( card )
 	if DEBUG then
 		LHpi.Log("FillCardsetTable\t with " .. LHpi.Tostring( card ) , 2 )
 	end
-	local newCardrow = { variant = card.variant , regprice = card.regprice , foilprice = card.foilprice , lang=card.lang }
+	local newCardrow = { variant = card.variant , regprice = card.regprice , foilprice = card.foilprice , lang=card.lang , objtype=card.objtype}
 	if VERBOSE or DEBUG then
 		newCardrow.names=card.names
 	end
@@ -1191,9 +1244,13 @@ function LHpi.FillCardsetTable( card )
 			-- this is severe and should never ever happen
 			if VERBOSE then
 				LHpi.Log ("!!! " .. card.name .. ": FillCardsetTable\t conflict variant vs not variant" ,2)
+				LHpi.Log ("oldCardrow.variant is:" .. LHpi.Tostring(oldCardrow.variant))
+				LHpi.Log ("newCardrow.variant is:" .. LHpi.Tostring(newCardrow.variant))
 			end
-			if DEBUG then 
-				error( "FillCardsetTable conflict: " .. LHpi.Tostring(oldCardrow.variant) .. " vs " .. LHpi.Tostring(newCardrow.variant) .. " !" )
+			if DEBUG then
+--				print("oldCardrow.variant is:" .. LHpi.Tostring(oldCardrow.variant))
+--				print("newCardrow.variant is:" .. LHpi.Tostring(newCardrow.variant))
+				error( "FillCardsetTable conflict in " .. card.name .. " : " .. LHpi.Tostring(oldCardrow.variant) .. " vs " .. LHpi.Tostring(newCardrow.variant) .. " !" )
 			end
 			return -9,"variant state differs"
 		end -- if oldCardrow.variant and newCardrow.variant
@@ -1230,11 +1287,11 @@ end -- function LHpi.FillCardsetTable()
  @function [parent=#LHpi] MergeCardrows
  @param #string name	only needed for readable log
  @param #table langs	{ #number= #string , ... }
- @param #table oldRow	{ lang= #table, (optional) variant= #table , regprice= #table , foilprice= #table , (optional) names= #table } (from cardsetTable[card.name] )
- @param #table newRow	{ lang= #table, (optional) variant= #table , regprice= #table , foilprice= #table , (optional) names= #table }
+ @param #table oldRow	{ lang= #table, (optional) variant= #table , regprice= #table , foilprice= #table , (optional) names= #table , objtype=#number } (from cardsetTable[card.name] )
+ @param #table newRow	{ lang= #table, (optional) variant= #table , regprice= #table , foilprice= #table , (optional) names= #table , objtype=#number }
  @param #table variants (optional) { #number = #string , ... }
  @return #number	0 if all ok, number of conflicts otherwise
- @return #table		{ lang= #table, (optional) variant= #table , regprice= #table , foilprice= #table , (optional) names= #table } merged cardrow to fill into cardsetTable
+ @return #table		{ lang= #table, (optional) variant= #table , regprice= #table , foilprice= #table , (optional) names= #table , objtype=#number } merged cardrow to fill into cardsetTable
  @return #table		{ reg= #table { #number (langid)= #string , ... } , foil= { #number (langid)= #string , ... } } conflict description
 ]]
 function LHpi.MergeCardrows ( name, langs,  oldRow , newRow , variants )
@@ -1242,14 +1299,15 @@ function LHpi.MergeCardrows ( name, langs,  oldRow , newRow , variants )
 --for mathematically correct averaging, need to attach a counter to averaged prices
 --then on next averaging, do 
 --if counter then newaverage=(oldaverage*(counter+1) + newprice) / (counter+2)
-	local mergedRow = { regprice = {} , foilprice = {} }
-	local conflictdesc = {reg = {} , foil = {} }
+	local mergedRow = { regprice = {} , foilprice = {} , objtype = nil }
+	local conflictdesc = {reg = {} , foil = {} , type = {} }
 	local conflictcount=0
 	if variants then
+		mergedRow.objtype = {}
 		--build temporary cardrows holding a single variant and recursively call LHpi.MergeCardrows again
 		for varnr,varname in pairs(variants) do
-			local oldVarrow = { regprice = {}, foilprice = {} }
-			local newVarrow = { regprice = {}, foilprice = {} }
+			local oldVarrow = { regprice = {}, foilprice = {} , objtype = {} }
+			local newVarrow = { regprice = {}, foilprice = {} , objtype = {} }
 			if not oldRow.regprice then oldRow.regprice={} end
 			if not newRow.regprice then newRow.regprice={} end
 			if not oldRow.foilprice then oldRow.foilprice={} end
@@ -1264,6 +1322,10 @@ function LHpi.MergeCardrows ( name, langs,  oldRow , newRow , variants )
 				oldVarrow.foilprice[lid] = oldRow.foilprice[lid][varname]
 				newVarrow.foilprice[lid] = newRow.foilprice[lid][varname]
 			end --for lid,_lang
+			if not oldRow.objtype then oldRow.objtype={} end
+			if not newRow.objtype then newRow.objtype={} end
+			oldVarrow.objtype = oldRow.objtype[varname]
+			newVarrow.objtype = newRow.objtype[varname]
 			local varConflictcount, mergedVarrow, varconflictdesc = LHpi.MergeCardrows ( name .. "[" .. varnr .. "]" , langs , oldVarrow, newVarrow, nil)
 			conflictcount = conflictcount + varConflictcount
 			for lid,_lang in pairs(langs) do
@@ -1274,6 +1336,7 @@ function LHpi.MergeCardrows ( name, langs,  oldRow , newRow , variants )
 				conflictdesc.reg[lid]=( conflictdesc.reg[lid] or "" ) .. "[" .. varnr .. "]" ..  varconflictdesc.reg[lid]
 				conflictdesc.foil[lid]=( conflictdesc.foil[lid] or "" ) .. "[" .. varnr .. "]" ..  varconflictdesc.foil[lid]
 			end -- for lid,_langs
+			mergedRow.objtype[varname] = mergedVarrow.objtype
 --			conflictdesc.reg = ( conflictdesc.reg or "" ) .. "[" .. varnr .. "]" ..  varconflictdesc.reg
 --			conflictdesc.foil = ( conflictdesc.foil or "" ) .. "[" .. varnr .. "]" ..  varconflictdesc.foil
 		end -- for varnr,varname 
@@ -1394,6 +1457,29 @@ function LHpi.MergeCardrows ( name, langs,  oldRow , newRow , variants )
 				end-- if oldRow
 			end--for lid,_lang
 		end--if: done merging foilprices
+		--check/merge objtype
+		if oldRow.objtype == newRow.objtype then
+			mergedRow.objtype = oldRow.objtype
+			conflictdesc.type="ok:equal"
+		elseif oldRow.objtype and not newRow.objtype then
+			mergedRow.objtype = oldRow.objtype
+			conflictdesc.type="ok:old"
+		elseif newRow.objtype and not oldRow.objtype then
+			mergedRow.objtype = newRow.objtype
+			conflictdesc.type="ok:new"
+		else
+			conflictcount=conflictcount+1
+			conflictdesc.type="mismatch:" .. tostring(oldRow.objtype) .. " vs " .. tostring(newRow.objtype)
+			LHpi.Log( string.format("card \"%s\" objtype mismatch: old is %i but new is %i !", name, oldRow.objtype, newRow.objtype) )
+			if STRICTOBJTYPE then
+				error( string.format("card \"%s\" objtype mismatch: old is %i but new is %i !", name, oldRow.objtype, newRow.objtype) )
+			else
+				mergedRow.objtype = 0
+			end
+		end
+		if DEBUG then
+			LHpi.Log("merged objtype to " .. LHpi.Tostring(mergedRow.objtype))
+		end
 	end -- if variants
 	
 	mergedRow.names = {}
@@ -1405,7 +1491,6 @@ function LHpi.MergeCardrows ( name, langs,  oldRow , newRow , variants )
 	if mergedRow.names == {} then mergedRow.names = nil end
 	mergedRow.lang = langs
 	mergedRow.variant = variants
-
 	return conflictcount,mergedRow,conflictdesc
 end -- function LHpi.MergeCardrows
 
@@ -1414,14 +1499,13 @@ end -- function LHpi.MergeCardrows
  @function [parent=#LHpi] SetPrice
  @param	#number setid	(see "Database\Sets.txt")
  @param #string name	card name MA will try to match to Oracle Name, then localized Name
- @param #table card		{ lang= #table, (optional) variant= #table , regprice= #table , foilprice= #table } card data from cardsetTable
+ @param #table card		{ lang= #table, (optional) variant= #table , regprice= #table , foilprice= #table , objtype=#table } card data from cardsetTable
  @return #table { #number (langid)= #number , ... } sum of ma.SetPrice return values
  @return #table { #number (langid)= #number , ... } count ma.SetPrice returns 0 events
 ]]
 function LHpi.SetPrice(setid, name, card)
 	local psetcount = {}
 	local failcount = {}
-	local objtype
 	if card.variant and DEBUGVARIANTS then DEBUG = true end
 	if DEBUG then
 		LHpi.Log( string.format("LHpi.SetPrice\t setid is %i name is %s card is %s", setid, name, LHpi.Tostring(card) ) ,2)
@@ -1437,25 +1521,30 @@ function LHpi.SetPrice(setid, name, card)
 			if not card.regprice[lid] then card.regprice[lid] = {} end
 			if not card.foilprice[lid] then card.foilprice[lid] = {} end
 			for varnr, varname in pairs(card.variant) do
+				local realvarname = varname
 				if DEBUG then
-					LHpi.Log(string.format("varnr is %i varname is %s", varnr, tostring(varname) ) ,2)
+					LHpi.Log(string.format("varnr is %i varname is %q", varnr, tostring(varname) ) ,2)
 				end
 				if varname then
 					if string.find(varname,"[Tt][Oo][Kk][Ee][Nn]") then
-						objtype = 2
-						string.gsub(varname,"[Tt][Oo][Kk][Ee][Nn]","")
+						card.objtype[varname] = 2
+						realvarname = string.gsub(realvarname,"[Tt][Oo][Kk][Ee][Nn]","")
 					elseif string.find(varname,"[Nn][Oo][Nn][Tt][Rr][Aa][Dd]") then
-						objtype = 3
-						string.gsub(varname,"[Nn][Oo][Nn][Tt][Rr][Aa][Dd]","")
+						card.objtype[varname] = 3
+						realvarname = string.gsub(realvarname,"[Nn][Oo][Nn][Tt][Rr][Aa][Dd]","")
+					elseif string.find(varname,"[Ii][Nn][Ss][Ee][Rr][Tt]") then
+						card.objtype[varname] = 4
+						realvarname = string.gsub(realvarname,"[Ii][Nn][Ss][Ee][Rr][Tt]","")
 					elseif string.find(varname,"[Rr][Ee][Pp][Ll][Ii][Cc][Aa]") then
-						objtype = 5
-						string.gsub(varname,"[Rr][Ee][Pp][Ll][Ii][Cc][Aa]","")					
-					end
-					perlangretval = (perlangretval or 0) + ma.SetPrice(setid, lid, name, varname, card.regprice[lid][varname] or 0, card.foilprice[lid][varname] or 0, objtype or 0 )
+						card.objtype[varname] = 5
+						realvarname = string.gsub(realvarname,"[Rr][Ee][Pp][Ll][Ii][Cc][Aa]","")
+					else
+					end-- if string.find
+					perlangretval = (perlangretval or 0) + ma.SetPrice(setid, lid, name, realvarname, card.regprice[lid][varname] or 0, card.foilprice[lid][varname] or 0, card.objtype[varname] or 0 )
 				end -- if varname
 			end -- for varnr,varname
 		else -- no variant
-			perlangretval = ma.SetPrice(setid, lid, name, "", card.regprice[lid] or 0, card.foilprice[lid] or 0)
+			perlangretval = ma.SetPrice(setid, lid, name, "", card.regprice[lid] or 0, card.foilprice[lid] or 0, card.objtype or 0)
 		end -- if card.variant
 		
 		-- count ma.SetPrice retval and log potential problems
@@ -1464,22 +1553,22 @@ function LHpi.SetPrice(setid, name, card)
 		if card.variant then
 			--expected = LHpi.Length(card.variant)
 			for _varnr, varname in pairs(card.variant) do
-				if varname then expected = (expected or 0) + 1 end
+				if varname~=nil then expected = (expected or 0) + 1 end
 			end
 		else
 			expected = 1		
 		end
 		if perlangretval == expected then
 			if DEBUG then
-				LHpi.Log( string.format("LHpi.SetPrice\t name \"%s\" version \"%s\" set to %s/%s non/foil %s times for laguage %s", name, LHpi.Tostring(card.variant), LHpi.Tostring(card.regprice[lid]), LHpi.Tostring(card.foilprice[lid]), tostring(perlangretval), lang ) ,2)
+				LHpi.Log( string.format("LHpi.SetPrice \"%s\" version %q objtype %s set to %s/%s non/foil %s times for laguage %s", name, LHpi.Tostring(card.variant), LHpi.Tostring(card.objtype), LHpi.Tostring(card.regprice[lid]), LHpi.Tostring(card.foilprice[lid]), tostring(perlangretval), lang ) ,2)
 			end
 		else
 			failcount[lid] = math.abs(expected - (perlangretval or 0) )
 			if VERBOSE or DEBUG then
 				if perlangretval == 0 or (not perlangretval) then
-					LHpi.Log( string.format("! LHpi.SetPrice \"%s\" for language %s with n/f price %s/%s not ( %s times) set",name, lang, LHpi.Tostring(card.regprice[lid]), LHpi.Tostring(card.foilprice[lid]), tostring(perlangretval) ) ,1)
+					LHpi.Log( string.format("! LHpi.SetPrice \"%s\" (object type %s) for language %s with n/f price %s/%s not ( %s times) set",name, LHpi.Tostring(card.objtype), lang, LHpi.Tostring(card.regprice[lid]), LHpi.Tostring(card.foilprice[lid]), tostring(perlangretval) ) ,1)
 				else
-					LHpi.Log( string.format("! LHpi.SetPrice \"%s\" for language %s returned unexpected retval \"%s\"; expected was %i", name, lang, tostring(perlangretval), expected ) , 1 )
+					LHpi.Log( string.format("! LHpi.SetPrice \"%s\" (object type %s) for language %s returned unexpected retval \"%s\"; expected was %i", name, LHpi.Tostring(card.objtype), lang, tostring(perlangretval), expected ) , 1 )
 				end
 				if DEBUG then
 					LHpi.Log(LHpi.Tostring(card.names), 1 )
@@ -1508,6 +1597,8 @@ function LHpi.SaveCSV( setid , tbl , path )
 	for name,card in pairs(cardsetTable) do
 		for lid,lang in pairs(card.lang) do
 			lang=LHpi.Data.languages[lid].full
+			if not card.regprice then card.regprice={} end
+			if not card.foilprice then card.foilprice={} end
 			if card.variant then
 				if not card.regprice[lid] then card.regprice[lid] = {} end
 				if not card.foilprice[lid] then card.foilprice[lid] = {} end

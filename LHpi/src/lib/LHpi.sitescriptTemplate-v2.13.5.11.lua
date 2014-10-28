@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 2.13.5.11
 added EXPECTNONTRAD and EXPECTREPL options to site.expected
 added 809,810,811,812,813
+add STRICTOBJTYPE option
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -56,6 +57,10 @@ added 809,810,811,812,813
 --- also complain if drop,namereplace or foiltweak count differs; default false
 -- @field [parent=#global] #boolean STRICTEXPECTED
 --STRICTEXPECTED = true
+
+--- if true, exit with error on object type mismatch, else use object type 0 (all)
+-- @field [parent=#global] boolena STRICTOBJTYPE
+--STRICTOBJTYPE = true
 
 --- log to seperate logfile instead of Magic Album.log;	default true
 -- @field [parent=#global] #boolean SAVELOG
@@ -645,6 +650,7 @@ function site.SetExpected()
  ]]
 	site.expected = {
 --- pset defaults to LHpi.Data.sets[setid].cardcount.reg, if available and not set otherwise here.
+--  LHpi.Data.sets[setid]cardcount has 6 fields you can use avoid hardcoded numbers here: { reg, tok, both, nontr, repl, all }.
 
 --- if EXPECTTOKENS is true, LHpi.Data.sets[setid].cardcount.tok is added to pset default.
 -- @field [parent=#site.expected] #boolean EXPECTTOKENS
