@@ -657,10 +657,10 @@ function site.SetExpected()
 	EXPECTTOKENS = false,
 --- if EXPECTNONTRAD is true, LHpi.Data.sets[setid].cardcount.nontrad is added to pset default.
 -- @field [parent=#site.expected] #boolean EXPECTNONTRAD
-	EXPECTNONTRAD = false,
+	EXPECTNONTRAD = true,
 --- if EXPECTREPL is true, LHpi.Data.sets[setid].cardcount.repl is added to pset default.
 -- @field [parent=#site.expected] #boolean EXPECTREPL
-	EXPECTREPL = false,
+	EXPECTREPL = true,
 -- -- Core sets
 --[808] = { pset={ LHpi.Data.sets[808].cardcount.reg+LHpi.Data.sets[808].cardcount.tok, nil, LHpi.Data.sets[808].cardcount.reg }, failed={ 0, nil, LHpi.Data.sets[808].cardcount.tok }, dropped=1 },
 --[788] = { pset={ 249+11, nil, 249 }, failed={ 0, nil, 11 }, dropped=0, namereplaced=1, foiltweaked=0 }, -- M2013
