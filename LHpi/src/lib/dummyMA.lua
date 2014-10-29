@@ -664,7 +664,7 @@ function main()
 --	local fakeimportlangs = { [9] = "szh" }
 --	local fakeimportlangs = dummy.alllangs
 	local fakeimportsets = { [0] = "fakeset"; }
-	local fakeimportsets = { [801] = "some set"; }
+	local fakeimportsets = { [808] = "some set"; }
 --	local fakeimportsets = { [220]="foo";[800]="bar";[0]="baz";}
 --	local fakeimportsets = dummy.coresets
 --	local fakeimportsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )

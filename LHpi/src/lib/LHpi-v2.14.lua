@@ -26,14 +26,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 --[[ CHANGES
 2.14
-new LHpi.ReadFilenameOptions
+new LHpi.ReadFilenameOptions()
+* scriptname is autodetected
+* logfile name no longer suffixed with version numbers (unless script filename is)
+* uppercase infixes ("Filename Options") are passed to sitescript for initialization
+* default savepath does not include "Filename Option" infixes
 ]]
 
---TODO configure via extension scriptname.OPTION.lua for:
--- magicuniverse: stammkundenpreis
--- mtgprice: low/fair
--- tcgplayer: low/mid/high
--- mkm
 
 --TODO count averaging events with counter attached to prices
 --TODO nil unneeded Data.sets[sid] to save memory?
@@ -41,7 +40,7 @@ new LHpi.ReadFilenameOptions
 local LHpi = {}
 ---	LHpi library version
 -- @field [parent=#LHpi] #string version
-LHpi.version = "2.13"
+LHpi.version = "2.14"
 
 --[[- "main" function called by Magic Album; just display error and return.
  Called by Magic Album to import prices. Parameters are passed from MA.
@@ -72,6 +71,24 @@ end -- function ImportPrice
 ]]
 
 function LHpi.DoImport (importfoil , importlangs , importsets)
+	-- detect sitescript filename and filename options
+	local scriptFilename, filenameOptions = LHpi.ReadFilename()
+	--- should always be similar to the sitescript filename !
+	-- @field [parent=#global] #string scriptname
+	if not scriptname then
+		if scriptFilename then
+			scriptname = scriptFilename
+		else
+			local _s,_e,myname = string.find( ( ma.GetFile( "Magic Album.log" ) or "" ) , "Starting Lua script .-([^\\]+%.lua)$" )
+			if myname and myname ~= "" then
+				scriptname = myname
+			else -- use hardcoded scriptname as fallback
+				scriptname = "LHpi.UNKNOWN_SITESCRIPT-v" .. LHpi.version .. ".lua"
+			end--if myname
+		end--if scriptFilename
+	end --if not scriptname
+	site.ReadFilenameOptions(scriptFilename, filenameOptions)
+	
 	--default values for feedback options
 	if VERBOSE==nil then VERBOSE = false end
 	if LOGDROPS==nil then LOGDROPS = false end
@@ -89,30 +106,16 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 	if SAVETABLE==nil then SAVETABLE = false end
 	-- create empty dummy fields for undefined sitescript fields to allow graceful exit
 	if not site then site = {} end
-	if DEBUG and ((not site.langs) or (not next(site.langs)) ) then error("undefined site.langs!") end
+	if DEBUG and ((not site.langs) or (not next(site.langs)) ) then error("sitescript " .. scriptname .. ": undefined site.langs!") end
 	if not site.langs then site.langs = {} end
-	if DEBUG and ((not site.sets) or (not next(site.sets)) ) then error("undefined site.sets!") end
+	if DEBUG and ((not site.sets) or (not next(site.sets)) ) then error("sitescript " .. scriptname .. ": undefined site.sets!") end
 	if not site.sets then site.sets = {} end
-	if DEBUG and ((not site.frucs) or (not next(site.frucs)) ) then error("undefined site.frucs!") end
+	if DEBUG and ((not site.frucs) or (not next(site.frucs)) ) then error("sitescript " .. scriptname .. ": undefined site.frucs!") end
 	if not site.frucs then site.frucs = {} end
-	if DEBUG and ((not site.regex) or site.regex == "" ) then error("undefined site.regex!") end
+	if DEBUG and ((not site.regex) or site.regex == "" ) then error("sitescript " .. scriptname .. ": undefined site.regex!") end
 	if not site.regex then site.regex = "" end
-	site.scriptFilename, site.filenameOptions = LHpi.ReadFilename()
-print(tostring(site.scriptFilename))
-print(LHpi.Tostring(site.filenameOptions))
-error("break")
-	if not scriptname then
-	--- should always be similar to the sitescript filename !
-	-- @field [parent=#global] #string scriptname
-		local _s,_e,myname = string.find( ( ma.GetFile( "Magic Album.log" ) or "" ) , "Starting Lua script .-([^\\]+%.lua)$" )
-		if myname and myname ~= "" then
-			scriptname = myname
-		else -- use hardcoded scriptname as fallback
-			scriptname = "LHpi.SITESCRIPT_NAME_NOT_SET-v" .. LHpi.version .. ".lua"
-		end
-	end -- if
 
-	if DEBUG and ((not dataver) or site.dataver == "" ) then error("undefined dataver!") end
+	if DEBUG and ((not dataver) or site.dataver == "" ) then error("sitescript " .. scriptname .. ": undefined dataver!") end
 	if not dataver then dataver = "5" end
 	---	LHpi static set data
 	--@field [parent=#LHpi] #table Data
@@ -147,9 +150,14 @@ error("break")
 	--		end -- function
 	--	end -- if
 	if not savepath then
-	--- savepath for OFFLINE (read) and SAVEHTML,SAVETABLE (write). must point to an existing directory relative to MA's root.
-	-- @field [parent=#global] #string savepath
-		savepath = "Prices\\" .. string.gsub( scriptname , "%-?v?[%d%.]*%.lua$" , "" ) .. "\\"
+		--- savepath for OFFLINE (read) and SAVEHTML,SAVETABLE (write). must point to an existing directory relative to MA's root.
+		-- By default, this is the scriptname without Filename Options, version numbers and ".lua" extension  
+		-- @field [parent=#global] #string savepath
+		savepath = "Prices\\" .. scriptname .. "\\"
+		for _i,opt in pairs(filenameOptions) do
+			savepath = string.gsub(savepath,"%."..opt.."%.",".")
+		end--for
+		savepath = string.gsub( savepath , "%-?v?[%d%.]*%.lua\\$" , "" )
 	end -- if
 	if SAVEHTML or SAVETABLE then
 		ma.PutFile(savepath .. "testfolderwritable" , "true", 0 )
@@ -159,8 +167,8 @@ error("break")
 			SAVETABLE = false
 			LHpi.Log( "failed to write file to savepath " .. savepath .. ". Disabling SAVEHTML and SAVETABLE" )
 			if DEBUG then
-				error( "failed to write file to savepath " .. savepath .. "!" )
 				--print( "failed to write file to savepath " .. savepath .. ". Disabling SAVEHTML and SAVETABLE" )
+				error( "failed to write file to savepath " .. savepath .. "!" )
 			end
 		end -- if not folderwritable
 	end -- if SAVEHTML
@@ -191,9 +199,19 @@ error("break")
 	end -- for
 	if not site.condprio then site.condprio={ [0] = "NONE" } end
 	if CHECKEXPECTED then
-		if site.SetExpected then --if as legacy wrapping --TODO remove on next library version
-			site.SetExpected() -- new way to set site.expected table
-		end--legacy wrapping
+		if not site.SetExpected then
+			function site.SetExpected()
+				local errormsg = "sitescript " .. scriptname .. ": function site.SetExpected not implemented!" 
+				if DEBUG then
+					ma.Log( "!!critical error: " .. errormsg )
+					error( errormsg )
+				end
+				LHpi.Log(errormsg)
+				LHpi.Log("site.expected will only contain default values.")
+				LHpi.Log("Compare your sitescript to the template if you're unsure what to do.")
+			end-- function
+		end--if
+		site.SetExpected() -- new way to set site.expected table
 		if not site.expected then site.expected = {} end
 		for sid,_setname in pairs(supImportsets) do
 			if not site.expected[sid] then
@@ -213,9 +231,6 @@ error("break")
 							psetExpected = LHpi.Data.sets[sid].cardcount.reg or 0
 							if site.expected.EXPECTTOKENS then
 							psetExpected = psetExpected + LHpi.Data.sets[sid].cardcount.tok or 0
---								site.expected[sid].pset[lid] = LHpi.Data.sets[sid].cardcount.reg + LHpi.Data.sets[sid].cardcount.tok 
---							else
---								site.expected[sid].pset[lid] = LHpi.Data.sets[sid].cardcount.reg
 							end
 							if site.expected.EXPECTNONTRAD then
 								psetExpected = psetExpected + (LHpi.Data.sets[sid].cardcount.nontrad or 0)
@@ -544,60 +559,50 @@ function LHpi.LoadData( version )
 end--function LHpi.LoadData
 
 --[[- determine the sitescript's filename and parse special options.
- returns both the filename and a table of parsed options.
- 
+ Also allows to reconfigure the sitescript by parsing uppercase infixes ("Filename Options") in the filename.
+ for example LHpi.sitescriptTemplate-v2.14.5.13.OPTION.lua would find { "OPTION" } here.
+  
  @function [parent=#LHpi] ReadFilename
- @return #string filename
- @return #table fnOptions { name= #string, #string (optionname)= #string , ... } 
+ @return #string fname
+ @return #table fnOptions { #string , ... }
  ]]
 function LHpi.ReadFilename()
 	if not site.ReadFilenameOptions then
-		local errormsg = "Function site.ReadFilenameOptions not implemented in sitescript. See log for details!" 
-		ma.Log( "!!critical error: " .. errormsg )
+		local errormsg = "Function site.ReadFilenameOptions not implemented in sitescript."
+		LHpi.Log(errormsg)
 		if DEBUG then
+			ma.Log( "!!critical error: " .. errormsg )
 			error( errormsg )
-		else
-			LHpi.Log("Function site.ReadFilenameOptions not implemented in sitescript.")
-			LHpi.Log("Filename Option feature will not work. savepath and logfilename will use default values.")
-			LHpi.Log("Compare your sitescript to the template if you're unsure what to do.")
-			print("foo1")
-			return "LHpi.unknownSitescript", { }
 		end--if DEBUG
+		LHpi.Log("Filename Option feature will not work. scriptname and savepath will use default values.")
+		LHpi.Log("Compare your sitescript to the template if you're unsure what to do.")
+		return "LHpi.unknownSitescript.lua", { }
+	end--if not site.ReadFilenameOptions
+
+	if DEBUG then
+		local info = debug.getinfo(1,'S');
+		print("source(\"1\") is " .. info.source);
+		local info = debug.getinfo(2,'S');
+		print("source(\"2\") is " .. info.source);
+		local info = debug.getinfo(3,'S');
+		print("source(\"3\") is " .. info.source);
+		local info = debug.getinfo(4,'S');
+		print("source(\"4\") is " .. info.source);
 	end
-
-	local info = debug.getinfo(1,'S');
-	print("source(\"1\") is " .. info.source);
-	local info = debug.getinfo(2,'S');
-	print("source(\"2\") is " .. info.source);
-	local info = debug.getinfo(3,'S');
-	print("source(\"3\") is " .. info.source);
-
+	
 	local info = debug.getinfo(site.ReadFilenameOptions,'S');
-	print("source(\"site.ReadFilenameOptions\") is " .. info.source);
-
+	--print("source(\"site.ReadFilenameOptions\") is " .. info.source);
 	local _s,_e,fname = string.find(info.source,"([^\\/]+)$")
-	print(_s, _e, fname)
-	local parts = {}
-    for p in string.gfind(fname, "%.(%a+)%.") do
-      table.insert(parts, p)
-    end
-	print(LHpi.Tostring(parts))
---	print("found:"..tostring(string.gsub(info.source,"^@.-[^\/].+")))
---	ma.PutFile("LHpi.scriptfilename.tmp" , "true", 0 )
---		local folderwritable = ma.GetFile( savepath .. "testfolderwritable" )
---		if not folderwritable then
---			SAVEHTML = false
---			SAVETABLE = false
---			LHpi.Log( "failed to write file to savepath " .. savepath .. ". Disabling SAVEHTML and SAVETABLE" )
---			if DEBUG then
---				error( "failed to write file to savepath " .. savepath .. "!" )
---				--print( "failed to write file to savepath " .. savepath .. ". Disabling SAVEHTML and SAVETABLE" )
---			end
---		end -- if not folderwritable
-	
-	
-	return fname, fnOptions
-end--function LHpi.ReadFilenameOptions
+	local fnopts= {}
+	for p in string.gfind(fname, "%.(%u+)%.") do
+		table.insert(fnopts, p)
+		--fname=string.gsub(fname,"%."..p.."%.",".")-- nice to know it works, but not what we want
+	end--for
+	if DEBUG then
+		print("returning from function ReadFilename", fname, LHpi.Tostring(fnopts))
+	end
+	return fname, fnopts
+end--function LHpi.ReadFilename
 
 --[[- read MA suplied parameters and configure script instance.
  returns shortened versions of the ma supplied global parameters
