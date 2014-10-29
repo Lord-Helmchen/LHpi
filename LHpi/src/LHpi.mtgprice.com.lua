@@ -27,11 +27,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.13.5.4
-added 813
-fix 250,180 (except basic lands)
-added EXPECTNONTRAD and EXPECTREPL options to site.expected
-add STRICTOBJTYPE option
+2.14.5.5
+new function site.ReadFilenameOptions
+let LHpi set scriptname
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -70,7 +68,7 @@ fairOrBest = "fair"
 STRICTEXPECTED = true
 
 --- if true, exit with error on object type mismatch, else use object type 0 (all)
--- @field [parent=#global] boolena STRICTOBJTYPE
+-- @field [parent=#global] #boolean STRICTOBJTYPE
 --STRICTOBJTYPE = true
 
 --- log to seperate logfile instead of Magic Album.log;	default true
@@ -103,16 +101,13 @@ SAVEHTML = true
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.13"
+libver = "2.14"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
 dataver = "5"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "4"
---- should be similar to the script's filename. Used for loging and savepath.
--- @field [parent=#global] #string scriptname
-scriptname = "LHpi.mtgprice.com-v" .. libver .. "." .. dataver .. "" .. scriptver .. ".lua"
+scriptver = "5"
 
 ---	LHpi library
 -- will be loaded by ImportPrice
@@ -152,7 +147,7 @@ site.encoding="utf-8"
 ]]
 function ImportPrice( importfoil , importlangs , importsets )
 	if SAVELOG~=false then
-		ma.Log( "Check " .. scriptname .. ".log for detailed information" )
+		ma.Log( "Check LHpi and/or sitescript log for detailed information" )
 	end
 	ma.SetProgress( "Loading LHpi library", 0 )
 	do -- load LHpi library from external file
@@ -191,6 +186,31 @@ function ImportPrice( importfoil , importlangs , importsets )
 	LHpi.DoImport (importfoil , importlangs , importsets)
 	ma.Log( "End of Lua script " .. scriptname )
 end -- function ImportPrice
+
+--[[- Process script filename options.
+ Sitescript-side part of the Filename Option feature. Allows to determine the sitescript's filename at runtime.
+ Also reconfigures the sitescript by parsing uppercase infixes in the filename. for example
+ LHpi.sitescriptTemplate-v2.14.5.13.OPTION.lua would receive { "OPTION" } here.
+ Probably nothing to be done here, but the function _must_ be defined for LHpi library version >= 2.14.
+ 
+ @function [parent=#site] ReadFilenameOptions
+]]
+function site.ReadFilenameOptions(scriptFilename, filenameOptions)
+	if DEBUG then
+		print(string.format("This is %s version %s.%s.%s .",scriptname,libver,dataver,scriptver))
+		print("FilenameOptions=" .. LHpi.Tostring(filenameOptions))
+	end
+	LHpi.Log(string.format("This is %s version %s.%s.%s .",scriptname,libver,dataver,scriptver))
+	--reverse option table
+	local fnopts = {}
+    for _i,o in ipairs(filenameOptions) do
+      fnopts[o] = true
+    end
+    --check for Filename Options and act accordingly
+    if fnopts["DIE"] then
+    	error(string.format("%s was killed by Filename Option \"DIE\"",scriptFilename))
+    end
+end--function site.ReadFilenameOptions
 
 --[[-  build source url/filename.
  Has to be done in sitescript since url structure is site specific.

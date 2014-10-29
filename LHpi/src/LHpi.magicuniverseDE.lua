@@ -27,20 +27,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.13.5.13
-addded 807,813
-removed oversized handling from BCDPluginPre
-add "Token" suffix to replacement names
-update site.expected
-fix 140,420,801
-added EXPECTNONTRAD and EXPECTREPL options to site.expected
-add STRICTOBJTYPE option
+2.14.5.14
+new function site.ReadFilenameOptions
+let LHpi set scriptname
+STAMMKUNDE (90% price for recurring customer) now handled by Filename Option
 ]]
-
--- options unique to this site
---- for magicuniverse.de, parse 10% lower Stammkunden-Preis instead of default price (the one sent to the Warenkorb)
--- @field #boolean STAMMKUNDE
---local STAMMKUNDE = true
 
 -- options that control the amount of feedback/logging done by the script
 
@@ -70,7 +61,7 @@ LOGFOILTWEAK = true
 STRICTEXPECTED = true
 
 --- if true, exit with error on object type mismatch, else use object type 0 (all)
--- @field [parent=#global] boolena STRICTOBJTYPE
+-- @field [parent=#global] #boolean STRICTOBJTYPE
 STRICTOBJTYPE = true
 
 --- log to seperate logfile instead of Magic Album.log;	default true
@@ -103,20 +94,13 @@ SAVEHTML = true
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.13"
+libver = "2.14"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
 dataver = "5"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "13"
---- should be similar to the script's filename. Used for loging and savepath.
--- @field [parent=#global] #string scriptname
-scriptname = "LHpi.magicuniverseDE-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
---- savepath for OFFLINE (read) and SAVEHTML (write). must point to an existing directory relative to MA's root.
--- set by LHpi lib unless specified here.
--- @field [parent=#global] #string savepath
---savepath = "Prices\\" .. string.gsub( scriptname , "%-?v?[%d%.]*%.lua$" , "" ) .. "\\"
+scriptver = "14"
 
 ---	LHpi library
 -- will be loaded by ImportPrice
@@ -156,7 +140,7 @@ site.encoding = "cp1252"
 ]]
 function ImportPrice( importfoil , importlangs , importsets )
 	if SAVELOG~=false then
-		ma.Log( "Check " .. scriptname .. ".log for detailed information" )
+		ma.Log( "Check LHpi and/or sitescript log for detailed information" )
 	end
 	ma.SetProgress( "Loading LHpi library", 0 )
 	do -- load LHpi library from external file
@@ -195,6 +179,32 @@ function ImportPrice( importfoil , importlangs , importsets )
 	LHpi.DoImport (importfoil , importlangs , importsets)
 	ma.Log( "End of Lua script " .. scriptname )
 end -- function ImportPrice
+
+--[[- Process script filename options.
+ Sitescript-side part of the Filename Option feature. Allows to determine the sitescript's filename at runtime.
+ Also reconfigures the sitescript by parsing uppercase infixes in the filename. for example
+ LHpi.sitescriptTemplate-v2.14.5.13.OPTION.lua would receive { "OPTION" } here.
+ Probably nothing to be done here, but the function _must_ be defined for LHpi library version >= 2.14.
+ 
+ @function [parent=#site] ReadFilenameOptions
+]]
+function site.ReadFilenameOptions(scriptFilename, filenameOptions)
+	if DEBUG then
+		print(string.format("This is %s version %s.%s.%s .",scriptname,libver,dataver,scriptver))
+		print("FilenameOptions=" .. LHpi.Tostring(filenameOptions))
+	end
+	LHpi.Log(string.format("This is %s version %s.%s.%s .",scriptname,libver,dataver,scriptver))
+	--reverse option table
+	local fnopts = {}
+    for _i,o in ipairs(filenameOptions) do
+      fnopts[o] = true
+    end
+    --check for Filename Options and act accordingly
+    if fnopts["STAMMKUNDE"] then
+    	site.STAMMKUNDE = true
+    	LHpi.Log("\"STAMMKUNDE\" Filename Option recognized: will parse 10% lower Stammkunden-Preis instead of default price.")
+    end
+end--function site.ReadFilenameOptions
 
 --[[-  build source url/filename.
  Has to be done in sitescript since url structure is site specific.
@@ -269,11 +279,11 @@ function site.ParseHtmlData( foundstring , urldetails )
 		nameG = nil
 	end
 	local price = nil
-	if not STAMMKUNDE then
-		local _start,_end,lprice = string.find( foundstring , 'name="preis" value="([%d.,]+)"' )
+	if site.STAMMKUNDE then
+		local _start,_end,lprice = string.find( foundstring , '<a href="rabatt.php" target="_blank"  class="linkblack"> %(([%d.,]+) &euro;%)' )
 		price=lprice
 	else
-		local _start,_end,lprice = string.find( foundstring , '<a href="rabatt.php" target="_blank"  class="linkblack"> %(([%d.,]+) &euro;%)' )
+		local _start,_end,lprice = string.find( foundstring , 'name="preis" value="([%d.,]+)"' )
 		price=lprice
 	end
 	price = string.gsub(price , "[,.]" , "" )
