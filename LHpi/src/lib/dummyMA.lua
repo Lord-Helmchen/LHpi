@@ -379,7 +379,7 @@ function dummy.forceEnv(env)
 	OFFLINE = env.OFFLINE
 	SAVELOG = env.SAVELOG
 	SAVEHTML = dummy.envSAVEHTML
---	DEBUG = env.DEBUG
+	DEBUG = env.DEBUG
 	DEBUGFOUND = env.DEBUGFOUND
 	DEBUGVARIANTS = env.DEBUGVARIANTS
 	SAVETABLE = env.SAVETABLE
@@ -632,7 +632,7 @@ function main()
 		SAVELOG = true,
 		SAVEHTML = false,
 		DEBUG = true,
---		DEBUGFOUND = true,
+		DEBUGFOUND = true,
 --		DEBUGVARIANTS = true,
 --		SAVETABLE=true,
 	}
@@ -645,13 +645,14 @@ function main()
 		[5]={name="\\MTG Mint Card.lua",path=dummy.savepath,savepath=dummy.savepath},
 		[6]={name="\\Import Prices.lua",path=dummy.savepath,savepath=dummy.savepath},
 		[7]={name="LHpi.mtgprice.com.lua",path=dummy.path,savepath=dummy.savepath},
+		[8]={name="lib\\LHpi.sitescriptDummy.com-v2.14.5.99.FOO.lua",path=dummy.path,savepath=dummy.savepath },
+		[9]={name="LHpi.tcgplayerPriceGuide.LOW.COPYGER.lua",path=dummy.path,savepath=dummy.savepath},
 	}
 	--select a predefined script to be tested
---	local script=scripts[8]
-	local script = { name="lib\\LHpi.sitescriptDummy.com-v2.14.5.99.FOO.lua",path=dummy.path,savepath=dummy.savepath }
+	local script=scripts[9]
+	dummy.loadscript(script.name,script.path,script.savepath)
 
 --	dummy.fakesitescript()
-	dummy.loadscript(script.name,script.path,script.savepath)
 --	LHpi = dummy.loadlibonly(2.14,dummy.path,dummy.savepath)
 
 	-- force debug enviroment options

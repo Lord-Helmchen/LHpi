@@ -201,7 +201,7 @@ function site.ReadFilenameOptions(scriptFilename, filenameOptions)
     end
     --check for Filename Options and act accordingly
     if fnopts["STAMMKUNDE"] then
-    	site.STAMMKUNDE = true
+    	STAMMKUNDE = true
     	LHpi.Log("\"STAMMKUNDE\" Filename Option recognized: will parse 10% lower Stammkunden-Preis instead of default price.")
     end
 end--function site.ReadFilenameOptions
@@ -279,7 +279,7 @@ function site.ParseHtmlData( foundstring , urldetails )
 		nameG = nil
 	end
 	local price = nil
-	if site.STAMMKUNDE then
+	if STAMMKUNDE then
 		local _start,_end,lprice = string.find( foundstring , '<a href="rabatt.php" target="_blank"  class="linkblack"> %(([%d.,]+) &euro;%)' )
 		price=lprice
 	else

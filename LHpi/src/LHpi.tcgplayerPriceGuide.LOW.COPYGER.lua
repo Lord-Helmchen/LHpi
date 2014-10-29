@@ -188,12 +188,6 @@ function site.ReadFilenameOptions(scriptFilename, filenameOptions)
 		print("FilenameOptions=" .. LHpi.Tostring(filenameOptions))
 	end
 	LHpi.Log(string.format("This is %s version %s.%s.%s .",scriptname,libver,dataver,scriptver))
-	if LHpi.version ~= libver then
-		error(string.format("LHpi library file is not version %s",libver))
-	end
-	if LHpi.Data.version ~= dataver then
-		error(string.format("LHpi data file is not version %s",dataver))	
-	end
 	--reverse option table
 	local fnopts = {}
 	for _i,o in ipairs(filenameOptions) do
@@ -203,8 +197,8 @@ function site.ReadFilenameOptions(scriptFilename, filenameOptions)
 	--- choose column (HIgh/MEdium/LOw) to import from
 	--@field [parent=#global] #number himelo
 	himelo = 2
-	if fnopts["MEDIUM"] then
-		LHpi.Log("\"MEDIUM\" Filename Option recognized. Will not check for \"HIGH\" or \"LOW\".")
+	if fnopts["MED"] then
+		LHpi.Log("\"MED\" Filename Option recognized. Will not check for \"HIGH\" or \"LOW\".")
 		-- do nothing, but skip check for "HIGH" and "LOW"
 	elseif fnopts["LOW"] then
 		LHpi.Log("\"LOW\" Filename Option recognized. Will not check for \"HIGH\".")
@@ -226,7 +220,7 @@ function site.ReadFilenameOptions(scriptFilename, filenameOptions)
 			LHpi.Log(string.format("%q Filename Option recognized. Will copy all prices to %s cards.","COPY"..lang.abbr,lang.full))
 		end
 	end--for lid
-	
+	error("break")
 end--function site.ReadFilenameOptions
 
 --[[-  build source url/filename.

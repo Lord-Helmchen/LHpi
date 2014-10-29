@@ -68,11 +68,13 @@ end -- function ImportPrice
  @param #string importfoil	"Y"|"N"|"O"
  @param #table importlangs	{ #number (langid)= #string , ... }
  @param #table importsets	{ #number (setid)= #string , ... }
+ @param #string message		to be sent to logfile one it's available
 ]]
 
-function LHpi.DoImport (importfoil , importlangs , importsets)
+function LHpi.DoImport (importfoil , importlangs , importsets, loglaterFromImportPrice)
+	if DEBUG==nil then DEBUG = false end
 	-- detect sitescript filename and filename options
-	local scriptFilename, filenameOptions = LHpi.ReadFilename()
+	local scriptFilename, filenameOptions, loglaterFromReadFilename = LHpi.ReadFilename()
 	--- should always be similar to the sitescript filename !
 	-- @field [parent=#global] #string scriptname
 	if not scriptname then
@@ -87,6 +89,16 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 			end--if myname
 		end--if scriptFilename
 	end --if not scriptname
+	-- This is the earliest step where we want to use LHpi.Log(), as we haven't known the scriptname yet.
+	--LHpi.Log( "\239\187\191LHpi library loaded and executed successfully" , 0 , nil , 0 ) -- add unicode BOM to beginning of logfile
+	LHpi.Log( "LHpi library " .. LHpi.version .. " loaded and executed successfully." , 0 , nil , 0 )--begin new logfile
+	if loglaterFromImportPrice then	LHpi.Log(loglaterFromImportPrice) end
+	if loglaterFromReadFilename then LHpi.Log(loglaterFromReadFilename) end
+	if DEBUG and ((not dataver) or site.dataver == "" ) then error("sitescript " .. scriptname .. ": undefined dataver!") end
+	if not dataver then dataver = "6" end
+	---	LHpi static set data
+	--@field [parent=#LHpi] #table Data
+	LHpi.Data = LHpi.LoadData(dataver)
 	site.ReadFilenameOptions(scriptFilename, filenameOptions)
 	
 	--default values for feedback options
@@ -97,7 +109,6 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 	-- default values for behaviour options
 	if CHECKEXPECTED==nil then CHECKEXPECTED = true end
 	if STRICTEXPECTED==nil then STRICTEXPECTED = false end
-	if DEBUG==nil then DEBUG = false end
 	if DEBUGFOUND==nil then DEBUGFOUND = false end
 	if DEBUGVARIANTS==nil then DEBUGVARIANTS = false end
 	if OFFLINE==nil then OFFLINE = false end
@@ -115,11 +126,6 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 	if DEBUG and ((not site.regex) or site.regex == "" ) then error("sitescript " .. scriptname .. ": undefined site.regex!") end
 	if not site.regex then site.regex = "" end
 
-	if DEBUG and ((not dataver) or site.dataver == "" ) then error("sitescript " .. scriptname .. ": undefined dataver!") end
-	if not dataver then dataver = "5" end
-	---	LHpi static set data
-	--@field [parent=#LHpi] #table Data
-	LHpi.Data = LHpi.LoadData(dataver)
 	-- read user supplied parameters and modify site.sets table
 	local supImportfoil,supImportlangs, supImportsets = LHpi.ProcessUserParams( importfoil , importlangs , importsets )
 	-- set sensible defaults or throw error on missing sitescript fields or functions
@@ -157,7 +163,7 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 		for _i,opt in pairs(filenameOptions) do
 			savepath = string.gsub(savepath,"%."..opt.."%.",".")
 		end--for
-		savepath = string.gsub( savepath , "%-?v?[%d%.]*%.lua\\$" , "" )
+		savepath = string.gsub( savepath , "%-?v?[%d%.]*%.lua\\$" , "\\" )
 	end -- if
 	if SAVEHTML or SAVETABLE then
 		ma.PutFile(savepath .. "testfolderwritable" , "true", 0 )
@@ -565,18 +571,19 @@ end--function LHpi.LoadData
  @function [parent=#LHpi] ReadFilename
  @return #string fname
  @return #table fnOptions { #string , ... }
+ @return #string loglater	scriptname (and thus logfile name) not set yet
  ]]
 function LHpi.ReadFilename()
 	if not site.ReadFilenameOptions then
 		local errormsg = "Function site.ReadFilenameOptions not implemented in sitescript."
-		LHpi.Log(errormsg)
+		local loglater = errormsg
 		if DEBUG then
 			ma.Log( "!!critical error: " .. errormsg )
 			error( errormsg )
 		end--if DEBUG
-		LHpi.Log("Filename Option feature will not work. scriptname and savepath will use default values.")
-		LHpi.Log("Compare your sitescript to the template if you're unsure what to do.")
-		return "LHpi.unknownSitescript.lua", { }
+		loglater = loglater .. "\nFilename Option feature will not work. scriptname and savepath will use default values."
+		loglater = loglater .. "\nCompare your sitescript to the template if you're unsure what to do."
+		return "LHpi.unknownSitescript.lua", { }, loglater
 	end--if not site.ReadFilenameOptions
 
 	if DEBUG then
@@ -593,15 +600,25 @@ function LHpi.ReadFilename()
 	local info = debug.getinfo(site.ReadFilenameOptions,'S');
 	--print("source(\"site.ReadFilenameOptions\") is " .. info.source);
 	local _s,_e,fname = string.find(info.source,"([^\\/]+)$")
+	local name = string.gsub(fname,"^=%(loads?t?r?i?n?g?%)","")
 	local fnopts= {}
-	for p in string.gfind(fname, "%.(%u+)%.") do
+--	for p in string.gfind(fname, "%.(%u+)%.") do
+	while string.find(fname, "%.(%u+)%.") do
+		local _s,_e,p = string.find(fname,"%.(%u+)%.")
+--print(p)
 		table.insert(fnopts, p)
-		--fname=string.gsub(fname,"%."..p.."%.",".")-- nice to know it works, but not what we want
-	end--for
+--print(string.gsub(fname,"%."..p.."%.","."))
+	fname=string.gsub(fname,"%."..p.."%.",".")
+--print(fname)
+	end--while
 	if DEBUG then
-		print("returning from function ReadFilename", fname, LHpi.Tostring(fnopts))
+		print("returning from function ReadFilename", name, LHpi.Tostring(fnopts))
 	end
-	return fname, fnopts
+--	error("break")
+	
+	print(LHpi.Tostring(arg))
+	
+	return name, fnopts
 end--function LHpi.ReadFilename
 
 --[[- read MA suplied parameters and configure script instance.
@@ -1784,6 +1801,9 @@ end -- function LHpi.Toutf8
  @param #number a		(optional) 0 to overwrite, default is append
 ]]
 function LHpi.Log( str , l , f , a )
+	if str == nil then
+		error("Trying to log nil")
+	end
 	local loglevel = l or 0
 	local apnd = a or 1
 	local logfile = "Prices\\LHpi.log" -- fallback if global #string scriptname is missing
@@ -1884,7 +1904,6 @@ function LHpi.Logtable( tbl , str , l )
 	end
 end -- function LHpi.Logtable
 
---LHpi.Log( "\239\187\191LHpi library loaded and executed successfully" , 0 , nil , 0 ) -- add unicode BOM to beginning of logfile
-LHpi.Log( "LHpi library " .. LHpi.version .. " loaded and executed successfully." , 0 , nil , 0 )
+ma.Log("LHpi library " .. LHpi.version .. " loaded and executed successfully.")
 return LHpi
 --EOF

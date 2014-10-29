@@ -42,7 +42,7 @@ fix cardcount, variant and/or foiltweak tables for 807,812,31,30,25,23,21,10
 local Data={}
 ---	data file version
 -- @field [parent=#Data] #string version
-Data.version = "5"
+Data.version = "6"
 
 --[[- "main" function called by Magic Album; just display error and return.
  Called by Magic Album to import prices. Parameters are passed from MA.
@@ -4224,7 +4224,6 @@ for sid,set in pairs(Data.sets) do
 	end --if
 end -- for sid,count
 
---LHpi.Log( "LHpi.Data loaded and executed successfully." , 0 , nil , 0 )
-ma.Log( "LHpi.Data loaded and executed successfully." , 0 , nil , 0 )
+ma.Log( "LHpi.Data loaded and executed successfully." )
 return Data
 --EOF
