@@ -731,6 +731,8 @@ function LHpi.GetSourceData( url , details ) --
 			LHpi.Log( "!! GetFile failed for " .. savepath .. url )
 			return nil
 		end
+	elseif details.oauth then -- we need to build a AOuth request and probably send it via https
+		error("oauth request not implemented yet")
 	else -- get htmldata from online source
 		LHpi.Log( "Fetching http://" .. url )
 		htmldata = ma.GetUrl( "http://" .. url )
