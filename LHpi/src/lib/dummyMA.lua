@@ -25,8 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-optional object type parameter in ma.SetPrice
-add 801,803,804,805,806,807,808,809,810,811,812,813
+added 814
+fixed dummy.forceEnv
 ]]
 
 --[[- "main" function called by Magic Album; just display error and return.
@@ -196,7 +196,7 @@ end
 
 --- table to hold dummyMA additional functions
 -- @type dummy
-local dummy={}
+dummy={}
 ---	dummy version
 -- @field [parent=#dummy] #string version
 dummy.version = "0.4"
@@ -377,7 +377,7 @@ function dummy.forceEnv(env)
 	STRICTEXPECTED = env.STRICTEXPECTED
 	OFFLINE = env.OFFLINE
 	SAVELOG = env.SAVELOG
-	SAVEHTML = dummy.envSAVEHTML
+	SAVEHTML = env.SAVEHTML
 	DEBUG = env.DEBUG
 	DEBUGFOUND = env.DEBUGFOUND
 	DEBUGVARIANTS = env.DEBUGVARIANTS
@@ -407,6 +407,72 @@ function dummy.performancetest(repeats,script,impF,impL,impS,timefile)
 		ma.PutFile(timefile,string.format("\nrun %2i: %3.3g seconds",run,dt),1)
 	end--for run
 end--function dummy.performancetest
+
+--[[- compare dummy's set tables with Prices/Database/sets.txt
+
+ @function [parent=#dummy] CompareDummySets
+ @param #string mapath	path to MA
+ @param #number libver
+]]
+function dummy.CompareDummySets(mapath,libver)
+	local LHpi = dummy.loadlibonly(libver or 2.14,dummy.path,dummy.savepath)
+	local setsTxt = ma.GetFile(mapath.."\\Database\\Sets.txt")
+	setsTxt= setsTxt:gsub( "^\239\187\191" , "" )
+	--local s,e,firstline = string.find(setsTxt,"([^\n]+)")
+	--print(LHpi.ByteRep(firstline))
+	local dummySets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
+	local revDummySets = {}
+	for sid,name in pairs(dummySets) do
+		revDummySets[name] = sid
+	end--for id,name
+	local missing = {}
+	for sid,name in string.gmatch( setsTxt, "(%d+)%s+([^\n]+)\n") do
+		--print( string.format("sid %3i : %s",sid,name) )
+		if revDummySets[name] then
+			print(string.format("found %3i : %q",sid,name) )
+		else
+			table.insert(missing,{ id=sid, name=name})
+		end
+	end
+	print("sets from Database/Sets.txt missing in dummy:")
+	for i,set in pairs(missing) do
+		print(string.format("[%3i] = %q;",set.id,set.name) )
+	end
+end--function CompareSetlist 
+
+--[[- compare LHpi.Data.sets with Prices/Database/sets.txt
+
+ @function [parent=#dummy] CompareDataSets
+ @param #string mapath	path to MA
+ @param #number libver
+ @param #number dataver
+]]
+function dummy.CompareDataSets(mapath)
+	local LHpi = dummy.loadlibonly(libver or 2.14,dummy.path,dummy.savepath)
+	local Data = LHpi.LoadData(dataver or 5)
+	local setsTxt = ma.GetFile(mapath.."\\Database\\Sets.txt")
+	setsTxt= setsTxt:gsub( "^\239\187\191" , "" )
+	
+	--local s,e,firstline = string.find(setsTxt,"([^\n]+)")
+	--print(LHpi.ByteRep(firstline))
+	local revDummySets = {}
+	for sid,set in pairs(Data.sets) do
+		revDummySets[Data.sets[sid].name] = sid
+	end--for id,name
+	local missing = {}
+	for sid,name in string.gmatch( setsTxt, "(%d+)%s+([^\n]+)\n") do
+		--print( string.format("sid %3i : %s",sid,name) )
+		if revDummySets[name] then
+			print(string.format("found %3i : %q",sid,name) )
+		else
+			table.insert(missing,{ id=sid, name=name})
+		end
+	end
+	print("sets from Database/Sets.txt missing in LHpi.Data:")
+	for i,set in pairs(missing) do
+		print(string.format("[%3i] = %q;",set.id,set.name) )
+	end
+end--function CompareDataSets
 
 --- @field [parent=#dummy] #table alllangs
 dummy.alllangs = {
@@ -463,6 +529,7 @@ dummy.promosets = {
 
 --- @field [parent=#dummy] #table specialsets
 dummy.specialsets = {
+ [814] = "Commander 2014 Edition"; 
  [812] = "Duel Decks: Speed vs. Cunning";
  [811] = "Magic 2015 Clash Pack";
  [810] = "Modern Event Deck 2014";
@@ -476,7 +543,7 @@ dummy.specialsets = {
  [798] = "From the Vault: Twenty";
  [796] = "Modern Masters";
  [794] = "Duel Decks: Sorin vs. Tibalt";
- [792] = "Commander's Arsenal";
+ [792] = "Commander’s Arsenal";
  [790] = "Duel Decks: Izzet vs. Golgari";
  [789] = "From the Vault: Realms";
  [787] = "Planechase 2012 Edition";
@@ -501,7 +568,8 @@ dummy.specialsets = {
  [753] = "From the Vault: Dragons";
  [740] = "Duel Decks: Elves vs. Goblins";
  [675] = "Coldsnap Theme Decks";
- [635] = "Magic Encyclopedia";
+ [636] = "Salvat 2011";
+ [635] = "Salvat Magic Encyclopedia";
  [600] = "Unhinged";
  [490] = "Deckmasters";
  [440] = "Beatdown";
@@ -513,10 +581,14 @@ dummy.specialsets = {
  [320] = "Unglued";
  [310] = "Portal Second Age";
  [260] = "Portal";
+ [235] = "Multiverse Gift Box";
  [225] = "Introductory Two-Player Set";
  [201] = "Renaissance";
  [200] = "Chronicles";
+ [106] = "Collectors’ Edition (International)";
+ [105] = "Collectors’ Edition (Domestic)";
  [70]  = "Vanguard";
+ [69]  = "Box Topper Cards";
 }
 --- @field [parent=#dummy] #table expansionsets
 dummy.expansionsets = {
@@ -524,7 +596,7 @@ dummy.expansionsets = {
  [806] = "Journey into Nyx";
  [802] = "Born of the Gods";
  [800] = "Theros";
- [795] = "Dragon's Maze";
+ [795] = "Dragon’s Maze";
  [793] = "Gatecrash";
  [791] = "Return to Ravnica";
  [786] = "Avacyn Restored";
@@ -569,9 +641,9 @@ dummy.expansionsets = {
  [420] = "Prophecy";
  [410] = "Nemesis";
  [400] = "Mercadian Masques";
- [370] = "Urza's Destiny";
- [350] = "Urza's Legacy";
- [330] = "Urza's Saga";
+ [370] = "Urza’s Destiny";
+ [350] = "Urza’s Legacy";
+ [330] = "Urza’s Saga";
  [300] = "Exodus";
  [290] = "Stronghold";
  [280] = "Tempest";
@@ -589,7 +661,7 @@ dummy.expansionsets = {
 }
 --- @field [parent=#dummy] #table coresets
 dummy.coresets = {
- [801] = "Magic 2015";
+ [808] = "Magic 2015";
  [797] = "Magic 2014";
  [788] = "Magic 2013";
  [779] = "Magic 2012";
@@ -602,8 +674,10 @@ dummy.coresets = {
  [360] = "6th Edition";
  [250] = "5th Edition";
  [180] = "4th Edition";
+ [179] = "4th Edition (FBB)";
+ [141] = "Revised Edition (Summer Magic)";
  [140] = "Revised Edition";
- [139] = "Revised Edition (Limited)";
+ [139] = "Revised Edition (FBB)"; --"Revised Limited", "Foreign Black Border"
  [110] = "Unlimited";
  [100] = "Beta";
  [90]  = "Alpha";
@@ -647,7 +721,7 @@ function main()
 		[8]={name="LHpi.magickartenmarktDE.lua",path=dummy.path,savepath=dummy.savepath},
 	}
 	--select a predefined script to be tested
-	local script=scripts[1]
+	local script=scripts[8]
 
 --	dummy.fakesitescript()
 	dummy.loadscript(script.name,script.path,script.savepath)
@@ -663,17 +737,19 @@ function main()
 --	local fakeimportlangs = { [9] = "szh" }
 --	local fakeimportlangs = dummy.alllangs
 	local fakeimportsets = { [0] = "fakeset"; }
-	local fakeimportsets = { [801] = "some set"; }
+	local fakeimportsets = { [808] = "some set"; }
 --	local fakeimportsets = { [220]="foo";[800]="bar";[0]="baz";}
 --	local fakeimportsets = dummy.coresets
 --	local fakeimportsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 
 --	dummy.Data = LHpi.LoadData(2)
 --	LHpi.DoImport(fakeimportfoil, fakeimportlangs, fakeimportsets)
-	ImportPrice( fakeimportfoil, fakeimportlangs, fakeimportsets )
+--	ImportPrice( fakeimportfoil, fakeimportlangs, fakeimportsets )
 --	print(LHpi.Tostring( "this is a string." ))
 --	print(LHpi.ByteRep("Zwölffüßler"))
 --	dummy.performancetest(10,script,fakeimportfoil,fakeimportlangs,fakeimportsets,"time.log")
+	dummy.CompareDummySets(dummy.savepath.."\\..",2.14)
+	dummy.CompareDataSets(dummy.savepath.."\\..",2.14,5)
 
 	local dt = os.clock() - t1 
 	print(string.format("All this took %g seconds",dt))

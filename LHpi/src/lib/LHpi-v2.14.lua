@@ -45,7 +45,7 @@ GetSourceData converts url to filename if OFFLINE
 local LHpi = {}
 ---	LHpi library version
 -- @field [parent=#LHpi] #string version
-LHpi.version = "2.13"
+LHpi.version = "2.14"
 
 --[[- "main" function called by Magic Album; just display error and return.
  Called by Magic Album to import prices. Parameters are passed from MA.
@@ -724,20 +724,22 @@ function LHpi.GetSourceData( url , details ) --
 	end
 	if details.isfile then -- get htmldata from local source
 		LHpi.Log( "Loading " .. url )
-		sourcedata = ma.GetFile( savepath .. url )
+		sourcedata = ma.GetFile( savepath or "" .. url )
 		if not sourcedata then
-			LHpi.Log( "!! GetFile failed for " .. savepath .. url )
+			LHpi.Log( "!! GetFile failed for " .. savepath or "" .. url )
 			return nil
 		end
 	elseif details.oauth then -- we need to build a AOuth request and probably send it via https
 		LHpi.Log("calling sitescript to fetch OAuth protected ressources from " .. url )
-		if site.getSourceDataFromOAuth then
-			sourcedata = site.getSourceDataFromOAuth( url )
+		local status
+		if site.FetchSourceDataFromOAuth then
+			sourcedata, status = site.FetchSourceDataFromOAuth( url )
 		else
 			error("oauth request not implemented yet")
 		end
 		if not sourcedata then
-			LHpi.Log( "!! site.getSourceDataFromOAuth failed for " .. url )
+			LHpi.Log( "!! site.FetchSourceDataFromOAuth failed for " .. url )
+			LHpi.Log("server response " .. status )
 			return nil
 		end		
 	else -- get htmldata from online source
@@ -752,8 +754,8 @@ function LHpi.GetSourceData( url , details ) --
 	
 	if SAVEHTML and not OFFLINE then
 		url = string.gsub(url, '[/\\:%*%?<>|"]', "_")
-		LHpi.Log( "Saving source html to file: \"" .. savepath .. url .. "\"" )
-		ma.PutFile( savepath .. url , sourcedata )
+		LHpi.Log( "Saving source html to file: \"" .. savepath or "" .. url .. "\"" )
+		ma.PutFile( savepath or "" .. url , sourcedata )
 	end -- if SAVEHTML
 	
 	if VERBOSE and site.resultregex then
@@ -1752,6 +1754,8 @@ end -- function LHpi.Toutf8
  @param #number a		(optional) 0 to overwrite, default is append
 ]]
 function LHpi.Log( str , l , f , a )
+--TODO let Log filter out VERBOSE and DEBUG lines by loglevel param to save 
+--if DEBUG then Log() end loops
 	local loglevel = l or 0
 	local apnd = a or 1
 	local logfile = "Prices\\LHpi.log" -- fallback if global #string scriptname is missing
@@ -1778,7 +1782,9 @@ function LHpi.Log( str , l , f , a )
 	if loglevel < 0 then
 		ma.Log( "LHpi:" .. str )
 	else
-		str = "\n" .. str
+		if apnd ~= 0 then
+			str = "\n" .. str
+		end
 		ma.PutFile( logfile , str , apnd )
 	end
 end -- function LHpi.Log

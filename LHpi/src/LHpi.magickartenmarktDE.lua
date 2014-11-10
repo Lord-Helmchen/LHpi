@@ -89,7 +89,7 @@ DEBUG = true
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.13"
+libver = "2.14"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
 dataver = "5"
@@ -118,7 +118,8 @@ site={}
 --[[- regex matches shall include all info about a single card that one html-file has,
  i.e. "*CARDNAME*FOILSTATUS*PRICE*".
  it will be chopped into its parts by site.ParseHtmlData later. 
- @field [parent=#site] #string regex ]]
+ @field [parent=#site] #string regex
+]]
 --site.regex = ''
 
 --- resultregex can be used to display in the Log how many card the source file claims to contain
@@ -186,37 +187,55 @@ function ImportPrice( importfoil , importlangs , importsets )
 		LHpi.Log(loglater)
 	end -- do load LHpi library
 	collectgarbage() -- we now have LHpi table with all its functions inside, let's clear LHpilib and execlib() from memory
-	LHpi.Log( "LHpi lib is ready to use.\n" )
-	site.InitScript() -- keep site-specific stuff out of ImportPrice
+	LHpi.Log( "LHpi lib is ready to use." )
+	site.Initialize() -- keep site-specific stuff out of ImportPrice
 	LHpi.DoImport (importfoil , importlangs , importsets)
 	ma.Log( "End of Lua script " .. scriptname )
 end -- function ImportPrice
 
-function site.InitScript()
+--[[- prepare script
+ Do stuff here that needs to be done between loading the Library and calling LHpi.DoImport.
+ At this point, LHpi's functions are avalable, but default values for missing fields have not yet been set.
+ 
+ for LHpi.mkm, we need to configure and prepare the oauth client.
+ @function [parent=#site] Initialize
+]]
+function site.Initialize()
 --TODO generalize library (c)path
 	package.path = 'D:\\Magic - The Gathering\\LHpi.git\\LHpi\\src\\lib\\ext\\?.lua;' .. package.path
 	package.cpath= 'D:\\Magic - The Gathering\\LHpi.git\\LHpi\\src\\lib\\bin\\?.dll;' .. package.cpath
 	--print(package.path.."\n"..package.cpath)
-	local json = require ("dkjson")
+	Json = require ("dkjson")
+	---@field [parent=#site] #table oauth
 	site.oauth = {}
 	site.oauth.client, site.oauth.params = site.PrepareOAuth()
---	site.OAuthTest( site.oauth.params )
---	OFFLINE = false
-	local expansionlist = site.getExpansionList()
-	
-	error("Ende")
+	--site.OAuthTest( site.oauth.params )
+	--local oldsavepath = savepath
+	--if not savepath then savepath="src\\lib\\" end
+	local expansionList = site.FetchExpansionList()
+	site.ParseExpansions(expansionList, site.oauth.params.responseFormat )
+	--savepath = oldsavepath
 end
 
+--[[- sets all oauth raleted options and prepares the oauth-client.
+ideally, tokens/secrets should be read from a file instead of being hardcoded.
+
+ @function [parent=#site] PrepareOAuth
+ @return client			OAuth instance
+ @return #table params	oauth parameters
+]]
 function site.PrepareOAuth()
+	--sandbox = true
 	local mkmexample = false
 	local widgetonly = true
 	--print("require starts now")
 	OAuth = require "OAuth"
 	--TODO local mkmtokens = require "mkmtokens"
+	-- tokens/secrets should be read from an external file
 	
 	local params = {
-		responseFormat = "xml",
---		responseFormat = "json",
+		--responseFormat = "xml",
+		responseFormat = "json",
 		oauth_version = "1.0",
 		oauth_consumer_key = "zFtb7cIpfgkknFlf", -- MKM "App Token"
 		oauth_token = "", -- public resource: the oauth_token parameter in the Authorization header is empty 
@@ -230,7 +249,7 @@ function site.PrepareOAuth()
 	end
 	if sandbox then
 		local params = {
-	--		responseFormat = "xml",
+			--responseFormat = "xml",
 			responseFormat = "json",
 			oauth_version = "1.0",
 			oauth_consumer_key = "OoPQCj8ANLIC1pQB", -- MKM "App Token"
@@ -255,91 +274,138 @@ function site.PrepareOAuth()
 			oauth_timestamp = "1407917892",
 			oauth_nonce = "53eb1f44909d6",
 			url = "https://www.mkmapi.eu/ws/v1.1/account",
-			responseFormat = "xml",
 		}
 	end
 	local client = OAuth.new(params.oauth_consumer_key, params.appSecret )
-	client.SetToken( client, params.oauth_token )
-	client.SetTokenSecret(client, params.accessTokenSecret)
+	--client.SetToken( client, params.oauth_token )
+	client:SetToken( params.oauth_token )
+	--client.SetTokenSecret(client, params.accessTokenSecret)
+	client:SetTokenSecret( params.accessTokenSecret)
 
-	print("OAuth prepared")
+	LHpi.Log("OAuth prepared")
 	return client, params
 end--function PrepareOAuth
 
--- url should be string
---params, client should not be known to lib 
-function site.getSourceDataFromOAuth( url )
-	url = string.gsub(url,"1.1","1.1/output."..site.oauth.params.responseFormat)
+--[[- construct, sign and send/receive OAuth requests
+ Done in sitescript to keep library dependencies low, as this is currently the only sitescript that uses OAuth.
+ Library should not need to know about OAuth, so only url is passed from LHpi.GetSourceData,
+ which calls this function when url.oauth==true and not OFFLINE.
+ An OAuth-client has to be present in site.oauth.client (and should have been prepard by site.PrepareOAuth).
+
+ @function [parent=#site] FetchSourceDataFromOAuth
+ @param #string url
+ @return #string body		source data in xml or json format
+ @return #string status		http(s) status code and response
+]]
+function site.FetchSourceDataFromOAuth( url, details )
 	if DEBUG then
-		print("site.getSourceDataFromOAuth started for url " .. url )
+		print("site.FetchSourceDataFromOAuth started for url " .. url )
+		url = "https://" .. url
 		print("BuildRequest:")
-		local headers, arguments, post_body = site.oauth.client.BuildRequest( site.oauth.client, "GET", url )
+		--local headers, arguments, post_body = site.oauth.client.BuildRequest( site.oauth.client, "GET", url )
+		local headers, arguments, post_body = site.oauth.client:BuildRequest( "GET", url )
 		print("headers=", LHpi.Tostring(headers))
 		print("arguments=", LHpi.Tostring(arguments))
 		print("post_body=", LHpi.Tostring(post_body))
 		--error("stopped before actually contacting the server")
 		print("PerformRequest:")
 	end
-	local code, headers, statusline, body = site.oauth.client.PerformRequest( site.oauth.client, "GET", url )
+	--local code, headers, status, body = site.oauth.client.PerformRequest( site.oauth.client, "GET", url )
+	local code, headers, status, body = site.oauth.client:PerformRequest( "GET", url )
 	if code == 200 or code == 204 then
-		print("statusline=", LHpi.Tostring(statusline))
-		return body
+		print("status=", LHpi.Tostring(status))
+	--TODO HTTP/1.1 404 Not Found
+	-- and other non-ok codes
 	else
 		print("code=" .. LHpi.Tostring(code))
 		print("headers=", LHpi.Tostring(headers))
-		print("statusline=", LHpi.Tostring(statusline))
+		print("status=", LHpi.Tostring(status))
 		print("body=", LHpi.Tostring(body))
-		error (LHpi.Tostring(statusline))
-		return nil
+		--error (LHpi.Tostring(statusline))
 	end
-end--function site.getSourceDataFromOAuth
+		return body, status
+end--function site.FetchSourceDataFromOAuth
 
-function site.getExpansionList()
+--[[- fetch list of expansions from mkmapi
+ @function [parent=#site] FetchExpansionList
+ @return #string list		List of expansions, in xml or json format
+]]
+function site.FetchExpansionList()
 	local xmldata
-	local oldsavepath = savepath
-	if not savepath then savepath="src\\lib\\" end
-	local format = site.oauth.params.responseFormat or "json"
-	local filepath = savepath .. "mkm-expansions." .. format
-	print("filepath = " .. tostring(filepath))
- 	--local url = "https://sandbox.mkmapi.eu/ws/v1.1/expansion/1"
-	local url = "https://www.mkmapi.eu/ws/v1.1/expansion/1"
-	--local url = "https://www.mkmapi.eu/ws/v1.1/output."..format.."/expansion/1" -- format inserted in site.getSourceDataFromOAuth
-	urldetails={ oauth=true }
-	if OFFLINE then
-		urldetails.isfile=true
-	end
+	local format = site.oauth.params.responseFormat or "xml"
+	local url = "www.mkmapi.eu/ws/v1.1"
+ 	if sandbox then
+ 		url = "sandbox.mkmapi.eu/ws/v1.1"
+ 	end
+	url = url .. "/output." .. format .. "/expansion/1"
+	local urldetails={ oauth=true }
 	xmldata = LHpi.GetSourceData ( url , urldetails )
-	
---	if OFFLINE then
---		if ma then
---			xmldata = ma.GetFile(filepath)
---		else
---		    local handle = io.open(filepath,"r")
---		    if handle then
---		    	local temp = io.input()	-- save current file
---		       	io.input( handle )		-- open a new current file
---				xmldata = io.read( "*all" )
---				io.input():close()		-- close current file
---				io.input(temp)			-- restore previous current file
---			end
---		end--if ma
---	else
---		xmldata = site.getSourceDataFromOAuth(url)
---		if ma then 
---			ma.PutFile( filepath , xmldata )
---		else
---			local handle = io.open(filepath,"w")	-- get file handle in new file mode
---			local temp = io.output()	-- save current file
---			io.output( handle )			-- open a new current file
---			io.write( xmldata )	
---			io.output():close()			-- close current file
---	    	io.output(temp)				-- restore previous current file
---		end--if ma
---	end--if OFFLINE
-	savepath = oldsavepath
 	return xmldata
 end--function
 
+--[[- Parse list of expansions and prepare a site.sets template
+ @function [parent=#site] ParseExpansionList
+ @param #string list		List of expansions, as returned from site.FetchExpansionList
+ @param #string format	"xml" or "json"
+ @return nil, but saves to file
+]]
+function site.ParseExpansions(list,format)
+	if not dummy then error("ParseExpansions needs to be run from dummyMA!") end
+	local file = "setsTemplate.txt"
+	local expansions
+	if format == "json" then
+		expansions = Json.decode(list).expansion
+	else
+		error("nothing here for xml yet")
+	end
+	local setcats = { "coresets", "expansionsets", "specialsets", "promosets" }
+	--local setNames = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
+	LHpi.Log("-- ".. file,0,file,0)
+	for _,setcat in ipairs(setcats) do
+--		print("setcat",setcat)
+		local setNames = dummy[setcat]
+		local revSets = {}
+		for id,name in pairs(setNames) do
+			revSets[name] = id
+		end--for id,name
+		local sets,sortSets = {},{}
+--print("expansions",LHpi.Tostring(expansions))
+--print("setnames",LHpi.Tostring(setNames))
+		for i,expansion in pairs(expansions) do
+			if revSets[expansion.name] then
+				--print("found", expansion.name)
+				local id = revSets[expansion.name]
+				sets[id] = { id = id , name = expansion.name, url= tostring(expansion.idExpansion) }
+				table.insert(sortSets,id)
+				expansions[i]=nil
+			else
+				--print("not", expansion.name)
+			end--if revSets
+		end--for i,expansion
+--print("sets",LHpi.Tostring(sets))
+		table.sort(sortSets, function(a, b) return a > b end)
+		LHpi.Log("site.sets = {",0,file )
+		LHpi.Log("-- ".. setcat ,0,file)
+		for i,sid in ipairs(sortSets) do
+			local string = string.format("[%i]={id=%3i, lang={ true }, fruc={ true }, url=\"%s\",--%s",sid,sid,sets[sid].url,sets[sid].name)
+			print(string)
+			LHpi.Log(string, 0,file )
+		end--for i,sid
+	end--for setcat
+		LHpi.Log("-- unknown" ,0,file)
+		for i,expansion in pairs(expansions) do
+			local string = string.format("[%i]={id=%3i, lang={ true }, fruc={ true }, url=\"%s\",--%s",0,0,expansion.idExpansion,expansion.name)
+			print(string)
+			LHpi.Log(string, 0,file )
+		end--for i,sid
+
+	LHpi.Log("\t}\n--end table site.sets",0,file)
+end
+
+--[[- test OAuth implementation
+ @function [parent=#site] OAuthTest
+ @param #table params
+]]
 function site.OAuthTest( params )
 	print("site.OAuthTest started")
 	print(LHpi.Tostring(params))
@@ -397,17 +463,21 @@ function site.OAuthTest( params )
 		params.oauth_nonce = nil
 	end
 	local client = OAuth.new(params.oauth_consumer_key, params.appSecret, {} )
-	client.SetToken( client, params.oauth_token )
-	client.SetTokenSecret(client, params.accessTokenSecret)
+	--client.SetToken( client, params.oauth_token )
+	client:SetToken( params.oauth_token )
+	--client.SetTokenSecret(client, params.accessTokenSecret)
+	client:SetTokenSecret( params.accessTokenSecret)
 	print("BuildRequest:")
-	local headers, arguments, post_body = client.BuildRequest( client, "GET", params.url, args )
+	--local headers, arguments, post_body = client.BuildRequest( client, "GET", params.url, args )
+	local headers, arguments, post_body = client:BuildRequest( "GET", params.url, args )
 	print("headers=", LHpi.Tostring(headers))
 	print("arguments=", LHpi.Tostring(arguments))
 	print("post_body=", LHpi.Tostring(post_body))
 
 	error("stopped before actually contacting the server")
 	print("PerformRequest:")
-	local response_code, response_headers, response_status_line, response_body = client.PerformRequest( client, "GET", params.url, args )
+	--local response_code, response_headers, response_status_line, response_body = client.PerformRequest( client, "GET", params.url, args )
+	local response_code, response_headers, response_status_line, response_body = client.PerformRequest( "GET", params.url, args )
 	print("code=" .. LHpi.Tostring(response_code))
 	print("headers=", LHpi.Tostring(response_headers))
 	print("status_line=", LHpi.Tostring(response_status_line))
@@ -430,26 +500,18 @@ end--function OAuthTest
  @return #table { #string (url)= #table { isfile= #boolean, (optional) foilonly= #boolean, (optional) setid= #number, (optional) langid= #number, (optional) frucid= #number } , ... }
 ]]
 function site.BuildUrl( setid,langid,frucid,offline )
-	
 	-- Only build the baseURL and set oauth flag. This way, we keep the urls human-readably and non-random
 	-- so we can store the files and retrieve them later in OFFLINE mode.
-	-- LHpi.GetSourceData needs a third mode to construct, sign and send/receive OAuth requests, triggered by the flag.
-	
-	-- tokens/secrets should be read from an external file
-	-- to minimize dependencies of the lib, oauth=true should defer requests to the sitescript,
-	-- which will need a function for the lib to call in LHpi.GetSourceData 
+	-- LHpi.GetSourceData calls site.FetchSourceDataFromOAuth to construct, sign and send/receive OAuth requests, triggered by the flag.
 	local container = {}
-	local url = "www.mkmapi.eu/ws/v1.1/expansion/1/"
-	--local url = "sandbox.mkmapi.eu/ws/v1.1/expansion/1/"
-	url = url + site.setprefix
---	if offline then
---		url = savepath .. string.gsub( url, "%?", "_" )  .. ".html"
---		container[url] = { isfile = true}
---	else
---		url = "https://" .. site.domain .. url
+	local url = "www.mkmapi.eu/ws/v1.1"
+	if sandbox then
+		url = "sandbox.mkmapi.eu/ws/v1.1"
+	end
+	local format = site.oauth.params.responseFormat or "xml"
+	url = url .. "/output." .. format .. "/expansion/1"
+	url = url .. "/" .. site.setprefix
 		container[url] = { oauth=true }
---	end -- if offline 
-
 	return container
 end -- function site.BuildUrl
 
@@ -556,7 +618,7 @@ end -- function site.BuildUrl
 ]]
 site.langs = {
 	[1] = {id=1, full = "English", 	abbr="ENG", url="" },
-	[3] = {id=3, full = "German", 	abbr="GER", url="" },
+--	[3] = {id=3, full = "German", 	abbr="GER", url="" },
 }
 
 --[[- table of available rarities.
@@ -572,10 +634,9 @@ site.langs = {
  @field [parent=#site.frucs] #boolean isnonfoil
  @field [parent=#site.langs] #string url	infix for site.BuildUrl
 ]]
---site.frucs = {
---	[1]= { id=1, name="Foil"	, isfoil=true , isnonfoil=false, url="foil" },
---	[2]= { id=2, name="nonFoil"	, isfoil=false, isnonfoil=true , url="regular" },
---}
+site.frucs = {
+	[1]= { id=1, name="api", url="" },
+}
 
 --[[- table of available sets.
  List alls sets that the site has prices for,
@@ -824,7 +885,6 @@ site.foiltweak = {
  This allows to read LHpi.Data.sets[setid].cardcount tables for less hardcoded numbers. 
 
  @function [parent=#site] SetExpected
- @param nil
 ]]
 function site.SetExpected()
 --[[- table of expected results.
