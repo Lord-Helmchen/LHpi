@@ -1,21 +1,9 @@
+print("OAuth.lua start")
 local Base64 = require "base64"
-local Crypto
-local core
-local isLuaNode
-local unescape
-
-if process then
-	Crypto = require "luanode.crypto"
-	core = require "OAuth.coreLuaNode"
-	unescape = require "luanode.querystring".url_decode
-	isLuaNode = true
-else
-	Crypto = require "crypto"
-	core = require "OAuth.coreLuaSocket"
-	unescape = require "socket.url".unescape
-	isLuaNode = false
-end
-
+local Crypto = require "crypto"
+local core = require "OAuth.coreLuaSocket"
+unescape = require "socket.url".unescape
+isLuaNode = false
 
 local table, string, os, print = table, string, os, print
 local error, assert = error, assert
@@ -152,8 +140,10 @@ function Sign(self, httpMethod, baseUri, arguments, oauth_token_secret, authReal
 	
 	-- Base64 encode it
 	local hmac_b64 = Base64.encode(hmac_binary)
-		
-	local oauth_signature = oauth_encode(hmac_b64)
+	
+	--local oauth_signature = oauth_encode(hmac_b64)
+	-- for MKM, DON'T urlencode the signature
+	local oauth_signature = hmac_b64
 	
 	local oauth_headers
 	-- Build the 'Authorization' header if the provider supports it
@@ -525,6 +515,18 @@ function BuildRequest(self, method, url, arguments, headers)
 	}
 	local arguments_is_table = (type(arguments) == "table")
 	if arguments_is_table then
+		-- recycle nonce and timestamp from arguments (for testing)
+		if arguments.nonce then
+			print("nonce" .. arguments.nonce)
+			args.oauth_nonce = arguments.nonce
+			arguments.nonce = nil
+		end
+		if arguments.timestamp then
+			print("timestamp" .. arguments.timestamp)
+			args.oauth_timestamp = arguments.timestamp
+			arguments.timestamp = nil
+		end
+		--end recycle nonce
 		args = merge(args, arguments)
 	end
 	args.oauth_token = (arguments_is_table and arguments.oauth_token) or self.m_oauth_token or error("no oauth_token")
@@ -534,7 +536,9 @@ function BuildRequest(self, method, url, arguments, headers)
 	end
 	args.oauth_token_secret = nil	-- this is never sent
 	
-	local oauth_signature, post_body, authHeader = self:Sign(method, url, args, oauth_token_secret)
+	--need to add "realm="..url to auth header
+	--local oauth_signature, post_body, authHeader = self:Sign(method, url, args, oauth_token_secret)
+	local oauth_signature, post_body, authHeader = self:Sign(method, url, args, oauth_token_secret, url)
 	local headers = merge({}, headers)
 	if self.m_supportsAuthHeader then
 		headers["Authorization"] = authHeader
