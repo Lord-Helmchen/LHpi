@@ -431,7 +431,6 @@ end--function OAuthTest
 ]]
 function site.BuildUrl( setid,langid,frucid,offline )
 	
-	
 	-- Only build the baseURL and set oauth flag. This way, we keep the urls human-readably and non-random
 	-- so we can store the files and retrieve them later in OFFLINE mode.
 	-- LHpi.GetSourceData needs a third mode to construct, sign and send/receive OAuth requests, triggered by the flag.
