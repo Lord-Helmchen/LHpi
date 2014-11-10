@@ -25,10 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.13.5.11
-added EXPECTNONTRAD and EXPECTREPL options to site.expected
-added 809,810,811,812,813
-add STRICTOBJTYPE option
+2.14.5.12
+removed url to filename changes that are done by the library if OFFLINE 
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -92,13 +90,13 @@ add STRICTOBJTYPE option
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.13"
+libver = "2.14"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
 dataver = "5"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "11"
+scriptver = "12"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.sitescriptTemplate-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -207,7 +205,7 @@ end -- function ImportPrice
  @param #number langid		see site.langs
  @param #number frucid		see site.frucs
  @param #boolean offline	(can be nil) use local file instead of url
- @return #table { #string (url)= #table { isfile= #boolean, (optional) foilonly= #boolean, (optional) setid= #number, (optional) langid= #number, (optional) frucid= #number } , ... }
+ @return #table { #string (url)= #table { isfile= #boolean, (optional) oauth= #boolean, (optional) foilonly= #boolean, (optional) setid= #number, (optional) langid= #number, (optional) frucid= #number } , ... }
 ]]
 --function site.BuildUrl( setid,langid,frucid,offline )
 --	site.domain = "www.example.com"
@@ -219,6 +217,11 @@ end -- function ImportPrice
 --	
 --	local container = {}
 --	local url = site.domain .. site.file .. site.setprefix .. site.sets[setid].url .. site.langprefix .. site.langs[langid].url .. site.frucprefix .. site.frucs[frucid].url .. site.suffix
+--	--LHpi.GetDourceData already does:
+--	--	if OFFLINE then
+--	--		url = string.gsub(url, '[/\\:%*%?<>|"]', "_")
+--	--		details.isfile = true
+--	--	end
 --	if offline then
 --		string.gsub( url, "%?", "_" )
 --		string.gsub( url, "/", "_" )
@@ -226,7 +229,7 @@ end -- function ImportPrice
 --	else
 --		container[url] = {}
 --	end -- if offline 
---	
+--
 --	if site.frucs[frucid].isfoil and not site.frucs[frucid].isnonfoil then
 --		container[url].foilonly = true
 --	end--if
@@ -255,7 +258,7 @@ end -- function ImportPrice
  
  @function [parent=#site] ParseHtmlData
  @param #string foundstring		one occurence of siteregex from raw html data
- @param #table urldetails		{ isfile= #boolean , setid= #number, langid= #number, frucid= #number , foilonly= #boolean }
+ @param #table urldetails		{ isfile= #boolean, oauth= #boolean, setid= #number, langid= #number, frucid= #number , foilonly= #boolean }
  @return #table { #number= #table { names= #table { #number (langid)= #string , ... }, price= #number , foil= #boolean , ... } , ... } 
 ]]
 --function site.ParseHtmlData( foundstring , urldetails )

@@ -135,8 +135,6 @@ site={}
 --- @field #string encoding		default "cp1252"
 --site.encoding="cp1252"
 
-local OAuth = require "OAuth"
-
 --[[- "main" function.
  called by Magic Album to import prices. Parameters are passed from MA.
  
@@ -188,24 +186,233 @@ function ImportPrice( importfoil , importlangs , importsets )
 		LHpi.Log(loglater)
 	end -- do load LHpi library
 	collectgarbage() -- we now have LHpi table with all its functions inside, let's clear LHpilib and execlib() from memory
-	LHpi.Log( "LHpi lib is ready to use." )
-	site.PrepareOAuth()
+	LHpi.Log( "LHpi lib is ready to use.\n" )
+	site.InitScript() -- keep site-specific stuff out of ImportPrice
 	LHpi.DoImport (importfoil , importlangs , importsets)
 	ma.Log( "End of Lua script " .. scriptname )
 end -- function ImportPrice
 
+function site.InitScript()
+--TODO generalize library (c)path
+	package.path = 'D:\\Magic - The Gathering\\LHpi.git\\LHpi\\src\\lib\\ext\\?.lua;' .. package.path
+	package.cpath= 'D:\\Magic - The Gathering\\LHpi.git\\LHpi\\src\\lib\\bin\\?.dll;' .. package.cpath
+	--print(package.path.."\n"..package.cpath)
+	local json = require ("dkjson")
+	site.oauth = {}
+	site.oauth.client, site.oauth.params = site.PrepareOAuth()
+--	site.OAuthTest( site.oauth.params )
+--	OFFLINE = false
+	local expansionlist = site.getExpansionList()
+	
+	error("Ende")
+end
+
 function site.PrepareOAuth()
-	-- GET https://www.mkmapi.eu/ws/v1.1/expansion/1 -- get list of all expansions for MtG
-	-- GET https://www.mkmapi.eu/ws/v1.1/expansion/1/Born%20of%20the%20Gods -- get all single cards for expansion
-	realm = nil --  request url
-	oauth_version="1.0"
-	oauth_timestamp = nil -- dynamic
-	oath_nonce = nil --dynamic
-	oauth_consumer_key="zFtb7cIpfgkknFlf" -- MKM "App Token"
-	oauth_token="fdYLsAa0yUEEkxvHiKABovSy397bt22S" -- MKM "Access Token"
-	oauth_signature_method="HMAC-SHA1"
-    oauth_signature = nil -- compiled for each request
+	local mkmexample = false
+	local widgetonly = true
+	--print("require starts now")
+	OAuth = require "OAuth"
+	--TODO local mkmtokens = require "mkmtokens"
+	
+	local params = {
+		responseFormat = "xml",
+--		responseFormat = "json",
+		oauth_version = "1.0",
+		oauth_consumer_key = "zFtb7cIpfgkknFlf", -- MKM "App Token"
+		oauth_token = "", -- public resource: the oauth_token parameter in the Authorization header is empty 
+		oauth_signature_method = "HMAC-SHA1",
+		appSecret = "qu1kSFihbGmz6fSveNWmKVQ5KDmCj4J8", -- MKM "App Secret"
+		accessTokenSecret = "",
+	}
+	if not widgetonly then
+		params.oauth_token = "fdYLsAa0yUEEkxvHiKABovSy397bt22S" -- MKM "Access Token"
+		params.accessTokenSecret = "qsWAYhLaOPLlwm2MixBhplCvXa5Zsmci" -- MKM "Access Token Secret"
+	end
+	if sandbox then
+		local params = {
+	--		responseFormat = "xml",
+			responseFormat = "json",
+			oauth_version = "1.0",
+			oauth_consumer_key = "OoPQCj8ANLIC1pQB", -- MKM "App Token"
+			oauth_token = "", -- public resource: the oauth_token parameter in the Authorization header is empty 
+			oauth_signature_method = "HMAC-SHA1",
+			appSecret = "157EcRurGiey8Z0qZF7dN86xODMoCFq3", -- MKM "App Secret"
+			accessTokenSecret = "",
+		}
+		if not widgetonly then
+			params.oauth_token = "dQ7Dx0qwI1DedOcIwmxORRSl33wfwGJq" -- MKM "Access Token"
+			params.accessTokenSecret = "2X5ez81iQUSq8Ld0pRG3eARIQHk3z1tX" -- MKM "Access Token Secret"
+		end
+	end--if sandox
+	if mkmexample then
+		params = { -- set to values from example at https://www.mkmapi.eu/ws/documentation/API:Auth_OAuthHeader
+			oauth_version = "1.0",
+			oauth_signature_method = "HMAC-SHA1",
+			oauth_consumer_key = "bfaD9xOU0SXBhtBP",
+			appSecret = "pChvrpp6AEOEwxBIIUBOvWcRG3X9xL4Y",
+			oauth_token = "lBY1xptUJ7ZJSK01x4fNwzw8kAe5b10Q",
+			accessTokenSecret = "hc1wJAOX02pGGJK2uAv1ZOiwS7I9Tpoe",
+			oauth_timestamp = "1407917892",
+			oauth_nonce = "53eb1f44909d6",
+			url = "https://www.mkmapi.eu/ws/v1.1/account",
+			responseFormat = "xml",
+		}
+	end
+	local client = OAuth.new(params.oauth_consumer_key, params.appSecret )
+	client.SetToken( client, params.oauth_token )
+	client.SetTokenSecret(client, params.accessTokenSecret)
+
+	print("OAuth prepared")
+	return client, params
 end--function PrepareOAuth
+
+-- url should be string
+--params, client should not be known to lib 
+function site.getSourceDataFromOAuth( url )
+	url = string.gsub(url,"1.1","1.1/output."..site.oauth.params.responseFormat)
+	if DEBUG then
+		print("site.getSourceDataFromOAuth started for url " .. url )
+		print("BuildRequest:")
+		local headers, arguments, post_body = site.oauth.client.BuildRequest( site.oauth.client, "GET", url )
+		print("headers=", LHpi.Tostring(headers))
+		print("arguments=", LHpi.Tostring(arguments))
+		print("post_body=", LHpi.Tostring(post_body))
+		--error("stopped before actually contacting the server")
+		print("PerformRequest:")
+	end
+	local code, headers, statusline, body = site.oauth.client.PerformRequest( site.oauth.client, "GET", url )
+	if code == 200 or code == 204 then
+		print("statusline=", LHpi.Tostring(statusline))
+		return body
+	else
+		print("code=" .. LHpi.Tostring(code))
+		print("headers=", LHpi.Tostring(headers))
+		print("statusline=", LHpi.Tostring(statusline))
+		print("body=", LHpi.Tostring(body))
+		error (LHpi.Tostring(statusline))
+		return nil
+	end
+end--function site.getSourceDataFromOAuth
+
+function site.getExpansionList()
+	local xmldata
+	local oldsavepath = savepath
+	if not savepath then savepath="src\\lib\\" end
+	local format = site.oauth.params.responseFormat or "json"
+	local filepath = savepath .. "mkm-expansions." .. format
+	print("filepath = " .. tostring(filepath))
+ 	--local url = "https://sandbox.mkmapi.eu/ws/v1.1/expansion/1"
+	local url = "https://www.mkmapi.eu/ws/v1.1/expansion/1"
+	--local url = "https://www.mkmapi.eu/ws/v1.1/output."..format.."/expansion/1" -- format inserted in site.getSourceDataFromOAuth
+	urldetails={ oauth=true }
+	if OFFLINE then
+		urldetails.isfile=true
+	end
+	xmldata = LHpi.GetSourceData ( url , urldetails )
+	
+--	if OFFLINE then
+--		if ma then
+--			xmldata = ma.GetFile(filepath)
+--		else
+--		    local handle = io.open(filepath,"r")
+--		    if handle then
+--		    	local temp = io.input()	-- save current file
+--		       	io.input( handle )		-- open a new current file
+--				xmldata = io.read( "*all" )
+--				io.input():close()		-- close current file
+--				io.input(temp)			-- restore previous current file
+--			end
+--		end--if ma
+--	else
+--		xmldata = site.getSourceDataFromOAuth(url)
+--		if ma then 
+--			ma.PutFile( filepath , xmldata )
+--		else
+--			local handle = io.open(filepath,"w")	-- get file handle in new file mode
+--			local temp = io.output()	-- save current file
+--			io.output( handle )			-- open a new current file
+--			io.write( xmldata )	
+--			io.output():close()			-- close current file
+--	    	io.output(temp)				-- restore previous current file
+--		end--if ma
+--	end--if OFFLINE
+	savepath = oldsavepath
+	return xmldata
+end--function
+
+function site.OAuthTest( params )
+	print("site.OAuthTest started")
+	print(LHpi.Tostring(params))
+
+	-- "manual" Authorization header construction
+	local Crypto = require "crypto"
+	local Base64 = require "base64"
+	--
+	-- Like URL-encoding, but following OAuth's specific semantics
+	local function oauth_encode(val)
+		return val:gsub('[^-._~a-zA-Z0-9]', function(letter)
+			return string.format("%%%02x", letter:byte()):upper()
+		end)
+	end
+
+	params.oauth_timestamp = params.oauth_timestamp or tostring(os.time())
+	params.oauth_nonce = params.oauth_nonce or Crypto.hmac.digest("sha1", tostring(math.random()) .. "random" .. tostring(os.time()), "keyyyy")
+
+	local baseString = "GET&" .. oauth_encode( params.url ) .. "&"
+	print(baseString)
+	local paramString = "oauth_consumer_key=" .. oauth_encode(params.oauth_consumer_key) .. "&"
+					..	"oauth_nonce=" .. oauth_encode(params.oauth_nonce) .. "&"
+					..	"oauth_signature_method=" .. oauth_encode(params.oauth_signature_method) .. "&"
+					..	"oauth_timestamp=" .. oauth_encode(params.oauth_timestamp) .. "&"
+					..	"oauth_token=" .. oauth_encode(params.oauth_token) .. "&"
+					..	"oauth_version=" .. oauth_encode(params.oauth_version) .. ""
+	paramString = oauth_encode(paramString)
+	print(paramString)
+	baseString = baseString .. paramString
+	print(baseString)
+	local signingKey = oauth_encode(params.appSecret) .. "&" .. oauth_encode(params.accessTokenSecret)
+	print(signingKey)--ok until here
+	local rawSignature = Crypto.hmac.digest("sha1", baseString, signingKey, true)
+	print(rawSignature)
+	local signature = Base64.encode( rawSignature )
+	print(signature)
+	local authString = "Authorization: Oauth "
+		..	"realm=\"" .. params.url .. "\", "
+		..	"oauth_consumer_key=\"" .. oauth_encode(params.oauth_consumer_key) .. "\", "
+		..	"oauth_nonce=\"" .. oauth_encode(params.oauth_nonce) .. "\", "
+		..	"oauth_signature_method=\"" .. oauth_encode(params.oauth_signature_method) .. "\", "
+		..	"oauth_timestamp=\"" .. oauth_encode(params.oauth_timestamp) .. "\", "
+		..	"oauth_token=\"" .. oauth_encode(params.oauth_token) .. "\", "
+		..	"oauth_version=\"" .. oauth_encode(params.oauth_version) .. "\", "
+		..  "oauth_signature=\"" .. signature .. "\""
+	print(authString)
+
+	-- OAuth library use
+	local OAuth = require "OAuth"
+	--print(LHpi.Tostring(params))
+	local args
+	if params.oauth_timestamp and params.oauth_nonce then
+		args = { timestamp = params.oauth_timestamp, nonce = params.oauth_nonce }
+		params.oauth_timestamp = nil
+		params.oauth_nonce = nil
+	end
+	local client = OAuth.new(params.oauth_consumer_key, params.appSecret, {} )
+	client.SetToken( client, params.oauth_token )
+	client.SetTokenSecret(client, params.accessTokenSecret)
+	print("BuildRequest:")
+	local headers, arguments, post_body = client.BuildRequest( client, "GET", params.url, args )
+	print("headers=", LHpi.Tostring(headers))
+	print("arguments=", LHpi.Tostring(arguments))
+	print("post_body=", LHpi.Tostring(post_body))
+
+	error("stopped before actually contacting the server")
+	print("PerformRequest:")
+	local response_code, response_headers, response_status_line, response_body = client.PerformRequest( client, "GET", params.url, args )
+	print("code=" .. LHpi.Tostring(response_code))
+	print("headers=", LHpi.Tostring(response_headers))
+	print("status_line=", LHpi.Tostring(response_status_line))
+	print("body=", LHpi.Tostring(response_body))
+end--function OAuthTest
 
 --[[-  build source url/filename.
  Has to be done in sitescript since url structure is site specific.
@@ -233,15 +440,16 @@ function site.BuildUrl( setid,langid,frucid,offline )
 	-- to minimize dependencies of the lib, oauth=true should defer requests to the sitescript,
 	-- which will need a function for the lib to call in LHpi.GetSourceData 
 	local container = {}
-	local requestURL = "https://www.mkmapi.eu/ws/v1.1/expansion/1/"
-	requestURL = requestURL + site.setprefix
-	if offline then
-		url = savepath .. string.gsub( url, "%?", "_" )  .. ".html"
-		container[url] = { isfile = true}
-	else
-		url = "https://" .. site.domain .. url
+	local url = "www.mkmapi.eu/ws/v1.1/expansion/1/"
+	--local url = "sandbox.mkmapi.eu/ws/v1.1/expansion/1/"
+	url = url + site.setprefix
+--	if offline then
+--		url = savepath .. string.gsub( url, "%?", "_" )  .. ".html"
+--		container[url] = { isfile = true}
+--	else
+--		url = "https://" .. site.domain .. url
 		container[url] = { oauth=true }
-	end -- if offline 
+--	end -- if offline 
 
 	return container
 end -- function site.BuildUrl
