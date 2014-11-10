@@ -68,8 +68,8 @@ function ma.GetUrl(url)
 	print("dummy.GetUrl called for " .. url)
 	local host,file = string.match(url, "http://([^/]+)/(.+)" )
 --	try {
---		require "luasocket"
---		local c = assert(socket.connect(host, 80))
+--		Socket =require "luasocket"
+--		local c = assert(Socket.connect(host, 80))
 --		c:send("GET " .. file .. " HTTP/1.0\r\n\r\n")
 --		c:close()
 --	}
@@ -268,7 +268,7 @@ function dummy.loadscript(scriptname,path,savepath)
 	do
 		local scriptfile = ma.GetFile( path .. scriptname )
 		if not scriptfile then
-			error( "script " .. scriptname .. " not found." )
+			error( "script " .. scriptname .. " not found at " .. path .. "." )
 		else
 			scriptfile = string.gsub( scriptfile , "^\239\187\191" , "" ) -- remove unicode BOM (0xEF, 0xBB, 0xBF) for files tainted by it :)
 			if _VERSION == "Lua 5.1" then
@@ -288,11 +288,11 @@ function dummy.loadscript(scriptname,path,savepath)
 					scriptfile = string.gsub(scriptfile,'savepath = "src','savepath = "' .. savepath)
 				end
 				--patch library loading to patch paths in library
-				scriptfile = string.gsub( scriptfile, "local execlib,errormsg=load",
+				scriptfile = string.gsub( scriptfile, "local execlib,errormsg ?= ?load",
 							'LHpilib=string.gsub(LHpilib,"Prices\\\\","'..path..'") local execlib,errormsg=load' )
 				if savepath~="" then
 					savepath = string.gsub(savepath, "\\", "\\\\" )
-					scriptfile = string.gsub( scriptfile, "local execlib,errormsg=load",
+					scriptfile = string.gsub( scriptfile, "local execlib,errormsg ?= ?load",
 								'LHpilib=string.gsub(LHpilib,"savepath = \\\"src","savepath = \\\"'..savepath..'\") local execlib,errormsg=load' )
 				end
 			end--if path
@@ -644,13 +644,14 @@ function main()
 		[5]={name="\\MTG Mint Card.lua",path=dummy.savepath,savepath=dummy.savepath},
 		[6]={name="\\Import Prices.lua",path=dummy.savepath,savepath=dummy.savepath},
 		[7]={name="LHpi.mtgprice.com.lua",path=dummy.path,savepath=dummy.savepath},
+		[8]={name="LHpi.magickartenmarktDE.lua",path=dummy.path,savepath=dummy.savepath},
 	}
 	--select a predefined script to be tested
-	local script=scripts[2]
+	local script=scripts[1]
 
 --	dummy.fakesitescript()
 	dummy.loadscript(script.name,script.path,script.savepath)
---	LHpi = dummy.loadlibonly(2.9,dummy.path,dummy.savepath)
+--	LHpi = dummy.loadlibonly(2.14,dummy.path,dummy.savepath)
 
 	-- force debug enviroment options
 	dummy.forceEnv(dummy.env)

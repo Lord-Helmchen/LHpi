@@ -24,30 +24,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.13.5.13
-added 810,812,813
-removed oversized handling from BCDPluginPre
-add STRICTOBJTYPE option
-fix 100,170,801,787,600,380,10,23
-add "Token" suffix to replacement names
-update site.expected
-added EXPECTNONTRAD and EXPECTREPL options to site.expected
+2.14.5.14
+removed url to filename changes that are done by the library if OFFLINE 
 ]]
 
 -- options that control the amount of feedback/logging done by the script
 
 --- more detailed log; default false
 -- @field [parent=#global] #boolean VERBOSE
---VERBOSE = true
+VERBOSE = true
 --- also log dropped cards; default false
 -- @field [parent=#global] #boolean LOGDROPS
---LOGDROPS = true
+LOGDROPS = true
 --- also log namereplacements; default false
 -- @field [parent=#global] #boolean LOGNAMEREPLACE
---LOGNAMEREPLACE = true
+LOGNAMEREPLACE = true
 --- also log foiltweaking; default false
 -- @field [parent=#global] #boolean LOGFOILTWEAK
---LOGFOILTWEAK = true
+LOGFOILTWEAK = true
 
 -- options unique to this sitescript
 
@@ -59,7 +53,7 @@ himelo = 3
 -- no additional sanity checks will be performed for non-Englisch cards
 --@field [parent=#global] #table copyprice
 copyprice = nil
---copyprice = { [3]=true }
+copyprice = { [3]=true }
 
 -- options that control the script's behaviour.
 
@@ -71,11 +65,11 @@ copyprice = nil
 
 --- also complain if drop,namereplace or foiltweak count differs; default false
 -- @field [parent=#global] #boolean STRICTEXPECTED
---STRICTEXPECTED = true
+STRICTEXPECTED = true
 
 --- if true, exit with error on object type mismatch, else use object type 0 (all)
 -- @field [parent=#global] boolena STRICTOBJTYPE
---STRICTOBJTYPE = true
+STRICTOBJTYPE = true
 
 --- log to seperate logfile instead of Magic Album.log;	default true
 -- @field [parent=#global] #boolean SAVELOG
@@ -87,7 +81,7 @@ copyprice = nil
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
---SAVEHTML = true
+SAVEHTML = true
 
 --- save price table to file before importing to MA;	default false
 -- @field [parent=#global] #boolean SAVETABLE
@@ -107,13 +101,13 @@ copyprice = nil
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.13"
+libver = "2.14"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
 dataver = "5"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "13"
+scriptver = "14"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.tcgplayerPriceGuide-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -215,13 +209,13 @@ function site.BuildUrl( setid,langid,frucid,offline )
 	
 	local container = {}
 	local url = site.domain .. site.file .. site.setprefix .. site.sets[setid].url
-	if offline then
-		url = string.gsub( url, "%?", "_" )
-		url = string.gsub( url, "/", "_" )
-		container[url] = { isfile = true}
-	else
+--	if offline then
+--		url = string.gsub( url, "%?", "_" )
+--		url = string.gsub( url, "/", "_" )
+--		container[url] = { isfile = true}
+--	else
 		container[url] = {}
-	end -- if offline 
+--	end -- if offline 
 	if LHpi.Data.sets[setid].foilonly then
 		container[url].foilonly = true
 	else

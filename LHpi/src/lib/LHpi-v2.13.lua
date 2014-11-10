@@ -25,18 +25,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.13
-DoImport
-* finetune site.expected[setid].pset defaults according to site.expected.EXPECTTOKENS,site.expected.EXPECTNONTRAD and site.expected.EXPECTREPL
-* increased default dataver from 2 to 5
-BuildCardData
-* set card.object type
-FillCardsetTable
-* also fill with objtype
-MergeCardrows
-* merge objtypes
-SetPrice
-* look for special variant names "token", "nontrad", "replica", "insert" and transform them into object types for ma.SetPrice
+2.14
+GetSourceData split into GetSourceData and ParseSourceData.
+this change is completely transparent to existing sitescripts, but having GetSourceData seperated allows to use it from the sitescript for special cases.
+LHpi.GetSourceData( sourceurl,urldetails ) now returns #string sourcedata
+LHpi.ParseSourceData( sourcedata,sourceurl,urldetails ) does the parsing previously done by GetSourceData and returns the #table sourceTable
+GetSourceData converts url to filename if OFFLINE
 ]]
 
 --TODO configure via extension scriptname.OPTION.lua for:
@@ -341,7 +335,8 @@ function LHpi.MainImportCycle( sourcelist , totalhtmlnum , importfoil , importla
 					_s,_e,pagenr=string.find(sourceurl, site.pagenumberregex )
 					if pagenr then pagenr=tonumber(pagenr) end
 				end
-				local sourceTable = LHpi.GetSourceData( sourceurl,urldetails )
+				local sourcedata = LHpi.GetSourceData( sourceurl,urldetails )
+				local sourceTable = LHpi.ParseSourceData( sourcedata,sourceurl,urldetails )
 				-- process found data and fill cardsetTable
 				if sourceTable then
 					for _,row in pairs(sourceTable) do
@@ -711,60 +706,87 @@ function LHpi.ListSources ( importfoil , importlangs , importsets )
 	return urls, urlcount
 end -- function LHpi.ListSources
 
---[[- construct url/filename and build sourceTable.
- fetch a page/file and return a table with all entries found therein
- Calls site.ParseHtmlData from sitescript.
+--[[- construct url/filename fetch the contents
+ fetch a page/file and return a string with the fetched content.
+ Initial Parsing and calls to site.ParseHtmlData are then done by LHpi.ParseSourceData.
 
  @function [parent=#LHpi] GetSourceData
  @param #string url		source location (url or filename)
- @param #table details	{ setid= #number, langid= #number, frucid= #number, isfile= #boolean }
- @return #table	{ #number= #table { names= #table { #number (langid)= #string , ... }, price= #number , foil= #boolean , ... } , ... } (OR nil instead of empty table.)
-  : with entries as supplied by site.ParseHtmData.
+ @param #table details	{ setid= #number, langid= #number, frucid= #number, isfile= #boolean, oauth= #boolean }
+ @return #string sourcedata
 ]]
 function LHpi.GetSourceData( url , details ) -- 
-	local htmldata = nil -- declare here for right scope
+	local sourcedata = nil -- declare here for right scope
+	local details = details or {}
+	if OFFLINE then
+		url = string.gsub(url, '[/\\:%*%?<>|"]', "_")
+		details.isfile = true
+	end
 	if details.isfile then -- get htmldata from local source
 		LHpi.Log( "Loading " .. url )
-		url = string.gsub(url, "?", "_")
-		htmldata = ma.GetFile( savepath .. url )
-		if not htmldata then
+		sourcedata = ma.GetFile( savepath .. url )
+		if not sourcedata then
 			LHpi.Log( "!! GetFile failed for " .. savepath .. url )
 			return nil
 		end
 	elseif details.oauth then -- we need to build a AOuth request and probably send it via https
-		error("oauth request not implemented yet")
+		LHpi.Log("calling sitescript to fetch OAuth protected ressources from " .. url )
+		if site.getSourceDataFromOAuth then
+			sourcedata = site.getSourceDataFromOAuth( url )
+		else
+			error("oauth request not implemented yet")
+		end
+		if not sourcedata then
+			LHpi.Log( "!! site.getSourceDataFromOAuth failed for " .. url )
+			return nil
+		end		
 	else -- get htmldata from online source
 		LHpi.Log( "Fetching http://" .. url )
-		htmldata = ma.GetUrl( "http://" .. url )
+		sourcedata = ma.GetUrl( "http://" .. url )
 		if DEBUG then LHpi.Log("fetched remote file.") end
-		if not htmldata then
+		if not sourcedata then
 			LHpi.Log( "!! GetUrl failed for " .. url )
 			return nil
 		end
 	end -- if details.isfile
 	
 	if SAVEHTML and not OFFLINE then
-		url = string.gsub(url, "/", "_")
-		url = string.gsub(url, "%?", "_")
+		url = string.gsub(url, '[/\\:%*%?<>|"]', "_")
 		LHpi.Log( "Saving source html to file: \"" .. savepath .. url .. "\"" )
-		ma.PutFile( savepath .. url , htmldata )
+		ma.PutFile( savepath .. url , sourcedata )
 	end -- if SAVEHTML
 	
 	if VERBOSE and site.resultregex then
-		local _s,_e,results = string.find( htmldata, site.resultregex )
+		local _s,_e,results = string.find( sourcedata, site.resultregex )
 		LHpi.Log( "html source data claims to contain " .. tostring(results) .. " cards." )
 	end
-	
+
+	return sourcedata
+end -- function LHpi.GetSourceData
+
+--[[- build sourceTable from (html) sourcedata
+ get a string with a page's or file's contents (from LHpi.GetSourceData) and return a table with all entries found therein.
+ Calls site.ParseHtmlData from sitescript.
+ sourceurl, urldetails are also passed, so the split from GetSourceData is transparent to sitescripts.
+
+ @function [parent=#LHpi] ParseSourceData
+ @param #string sourcedata		source file contents
+ @param #string url		source location (url or filename)
+ @param #table details	{ setid= #number, langid= #number, frucid= #number, isfile= #boolean, oauth= #boolean }
+ @return #table	{ #number= #table { names= #table { #number (langid)= #string , ... }, price= #number , foil= #boolean , ... } , ... } (OR nil instead of empty table.)
+  : with entries as supplied by site.ParseHtmData.
+]]
+function LHpi.ParseSourceData( sourcedata,sourceurl,urldetails )
 	local sourceTable = {}
-	for foundstring in string.gmatch( htmldata , site.regex) do
+	for foundstring in string.gmatch( sourcedata , site.regex) do
 		if DEBUGFOUND then
 			LHpi.Log( "FOUND : " .. foundstring )
 		end
-		for _datanum,foundData in next, site.ParseHtmlData(foundstring , details ) do
+		for _datanum,foundData in next, site.ParseHtmlData(foundstring , urldetails ) do
 			-- divide price by 100 again (see site.ParseHtmlData in sitescript for reason)
 			-- do some initial input sanitizing: "_" to " "; remove spaces from start and end of string
 			for lid,_cName in pairs( foundData.names ) do
-				if details.setid == 600 then
+				if urldetails.setid == 600 then
 					foundData.names[lid] = string.gsub( foundData.names[lid], "^_+$" , "Unhinged Shapeshifter" )
 				end
 				foundData.price[lid] = ( foundData.price[lid] or 0 ) / 100
@@ -787,7 +809,7 @@ function LHpi.GetSourceData( url , details ) --
 			end
 		end--for _datanum,foundData
 	end -- for foundstring
-	htmldata = nil 	-- potentially large htmldata now ready for garbage collector
+	sourcedata = nil 	-- potentially large htmldata now ready for garbage collector
 	collectgarbage()
 	if DEBUG then
 		LHpi.Logtable( sourceTable , "sourceTable" , 2 )
@@ -796,8 +818,7 @@ function LHpi.GetSourceData( url , details ) --
 		return nil
 	end
 	return sourceTable
-end -- function LHpi.GetSourceData
-
+end--function LHpi.ParseSourceData
 
 --[[- construct card data.
  constructs card data for one card entry found in htmldata.
@@ -806,7 +827,7 @@ end -- function LHpi.GetSourceData
  additional data can be passed from site.ParseHtmlData to site.BCDpluginName and/or site.BCDpluginCard via pluginData field.
  
  @function [parent=#LHpi] BuildCardData
- @param #table sourcerow	from sourceTable, returned from GetSourceData 
+ @param #table sourcerow	from sourceTable, returned from ParseSourceData
  @param #number setid		(see "..\Database\Sets.txt")
  @param #string importfoil	"y"|"n"|"o" passed from DoImport to drop unwanted cards
  @param #table importlangs	{ #number (langid)= #string, ... } passed from DoImport to drop unwanted cards
