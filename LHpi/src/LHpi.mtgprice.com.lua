@@ -27,11 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.13.5.4
-added 813
-fix 250,180 (except basic lands)
-added EXPECTNONTRAD and EXPECTREPL options to site.expected
-add STRICTOBJTYPE option
+2.13.6.5
+added 814
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -106,10 +103,10 @@ fairOrBest = "fair"
 libver = "2.13"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
-dataver = "5"
+dataver = "6"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "4"
+scriptver = "5"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.mtgprice.com-v" .. libver .. "." .. dataver .. "" .. scriptver .. ".lua"
@@ -470,20 +467,21 @@ site.sets = {
 [130]={id = 130, lang = { [1]=true }, fruc = { false, true }, url = "Antiquities"},
 [120]={id = 120, lang = { [1]=true }, fruc = { false, true }, url = "Arabian_Nights"},
 -- special sets
+--[814]={id = 814, lang = { [1]=true }, fruc = { false, true }, url = "Commander_2014"},--Commander 2014
 --TODO FtV are foilonly. check all frucs!
 [812]=nil,--Duel Decks: Speed vs. Cunning
 [811]=nil,--Magic 2015 Clash Pack
 [810]=nil,--Modern Event Deck 2014
-[809]=nil,--From the Vault: Annihilation
+[809]={id = 798, lang = { [1]=true }, fruc = { false, true }, url = "From_the_Vault_Annihilation"},--From the Vault: Annihilation
 [807]={id = 807, lang = { [1]=true }, fruc = { true , true }, url = {"Conspiracy","Conspiracy_Schemes"} },--Conspiracy
-[805]={id = 805, lang = { [1]=true }, fruc = { true , true }, url = "Duel_Decks_Jace_vs_Vraska"},--Duel Decks: Jace vs. Vraska
+[805]={id = 805, lang = { [1]=true }, fruc = { false, true }, url = "Duel_Decks_Jace_vs_Vraska"},--Duel Decks: Jace vs. Vraska
 [804]=nil,--Challenge Deck: Battle the Horde
 [803]=nil,--Challenge Deck: Face the Hydra
-[801]={id = 801, lang = { [1]=true }, fruc = { true , true }, url = "C13"},--Commander 2013
-[799]={id = 799, lang = { [1]=true }, fruc = { true , true }, url = "DDL"},--Duel Decks: Heroes vs. Monsters
-[798]={id = 798, lang = { [1]=true }, fruc = { true , true }, url = "V13"},--From the Vault: Twenty
+[801]={id = 801, lang = { [1]=true }, fruc = { false, true }, url = "Commander_2013"},--Commander 2013
+[799]={id = 799, lang = { [1]=true }, fruc = { false, true }, url = "Duel_Decks_Heroes_vs_Monsters"},--Duel Decks: Heroes vs. Monsters
+[798]={id = 798, lang = { [1]=true }, fruc = { false, true }, url = "From_the_Vault_Twenty"},--From the Vault: Twenty
 [796]={id = 796, lang = { [1]=true }, fruc = { true , true }, url = "Modern_Masters"},
-[794]={id = 794, lang = { [1]=true }, fruc = { true , true }, url = "DDK"},--Duel Decks: Sorin vs. Tibalt
+[794]={id = 794, lang = { [1]=true }, fruc = { false, true }, url = "Duel_Decks_Sorin_vs_Tibalt"},--Duel Decks: Sorin vs. Tibalt
 [792]={id = 792, lang = { [1]=true }, fruc = { true , true }, url = "Commanders_Arsenal"},
 [790]={id = 790, lang = { [1]=true }, fruc = { true , true }, url = "Duel_Decks_Izzet_vs_Golgari"},
 [789]={id = 789, lang = { [1]=true }, fruc = { true , true }, url = "From_the_Vault_Realms"},
@@ -538,16 +536,14 @@ site.sets = {
 [32] ={id =  32, lang = { [1]=true }, fruc = { true , true }, url = "Pro_Tour"},
 [31] ={id =  31, lang = { [1]=true }, fruc = { true , true }, url = "Grand_Prix"},
 [30] ={id =  30, lang = { [1]=true }, fruc = { true , true }, url = "Friday_Night_Magic"},
--- subsets of 27: "Euro_Land_Program" , "Guru" , "Asia Pacific Land Program"
---[27] ={id =  27, lang = { [1]=true }, fruc = { true , true }, url = ""},--Alternate Art Lands
+[27] ={id =  27, lang = { [1]=true }, fruc = { false, true }, url = { "Euro_Land_Program", "Guru", "Asia Pacific Land Program" } },--Alternate Art Lands
 [26] ={id =  26, lang = { [1]=true }, fruc = { true , true }, url = "Game_Day"},
 [25] ={id =  25, lang = { [1]=true }, fruc = { true , true }, url = "Judge_Gift_Program"},
 --TODO half of the cards are foilonly
 [24] ={id =  24, lang = { [1]=true }, fruc = { true , true }, url = "Champs"},
 [23] ={id =  23, lang = { [1]=true }, fruc = { true , true }, url = "Gateway"},--Gateway & WPN Promos
 [22] ={id =  22, lang = { [1]=true }, fruc = { true , true }, url = "Prerelease_Events"},
-----TODO Release_Events is subset of 21
-[21] ={id =  21, lang = { [1]=true }, fruc = { true , true }, url = "Launch_Parties"},--Release & Launch Party Cards
+[21] ={id =  21, lang = { [1]=true }, fruc = { true , true }, url = { "Release_Events", "Launch_Parties" } },--Release & Launch Party Cards
 [20] ={id =  20, lang = { [1]=true }, fruc = { true , true }, url = "Player_Rewards"},--Magic Player Rewards
 --[15] ={id =  15, lang = { [1]=true }, fruc = {  }, url = ""},--Convention Promos
 --[12] ={id =  12, lang = { [1]=true }, fruc = {  }, url = ""},--Hobby Japan Commemorative Cards

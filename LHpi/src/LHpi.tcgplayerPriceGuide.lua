@@ -24,14 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.13.5.13
-added 810,812,813
-removed oversized handling from BCDPluginPre
-add STRICTOBJTYPE option
-fix 100,170,801,787,600,380,10,23
-add "Token" suffix to replacement names
-update site.expected
-added EXPECTNONTRAD and EXPECTREPL options to site.expected
+2.13.5.14
+added 814
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -110,10 +104,10 @@ copyprice = nil
 libver = "2.13"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
-dataver = "5"
+dataver = "6"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "13"
+scriptver = "14"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.tcgplayerPriceGuide-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -473,6 +467,7 @@ site.sets = {
 [130]={id = 130, lang = { true }, fruc = { true }, url = "Antiquities"},
 [120]={id = 120, lang = { true }, fruc = { true }, url = "Arabian%20Nights"},
 -- special sets
+[814]={id=814, lang = { true }, fruc = { true }, url = "Commander%202014"},
 [812]={id=812, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Speed%20vs.%20Cunning"},--Duel Decks: Speed vs. Cunning
 --[811]=nil,--Magic 2015 Clash Pack
 [810]={id=810, lang = { true }, fruc = { true }, url = "Modern%20Event%20Deck"},--Modern Event Deck 2014

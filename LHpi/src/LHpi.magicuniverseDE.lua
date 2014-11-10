@@ -27,14 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.13.5.13
-addded 807,813
-removed oversized handling from BCDPluginPre
-add "Token" suffix to replacement names
-update site.expected
-fix 140,420,801
-added EXPECTNONTRAD and EXPECTREPL options to site.expected
-add STRICTOBJTYPE option
+2.13.5.14
+addded 813
 ]]
 
 -- options unique to this site
@@ -106,10 +100,10 @@ add STRICTOBJTYPE option
 libver = "2.13"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
-dataver = "5"
+dataver = "6"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "13"
+scriptver = "14"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.magicuniverseDE-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -554,6 +548,7 @@ site.sets = {
 [130]={id = 130, lang = { true , [3]=false}, fruc = { false,true ,true ,true }, url = "Antiquities"},
 [120]={id = 120, lang = { true , [3]=false}, fruc = { false,true ,true ,true }, url = "Arabian_Nights"},
 -- Special sets
+[814]={id = 814, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Commander%202014"},
 [807]={id = 807, lang = { true , [3]=false}, fruc = { false,true ,true ,true }, url = "Conspiracy"},
 [801]={id = 801, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Commander%202013"},
 -- other special and promo sets: sorting out the single page seems more trouble than it's worth

@@ -25,8 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-optional object type parameter in ma.SetPrice
-add 801,803,804,805,806,807,808,809,810,811,812,813
+add 814
 ]]
 
 --[[- "main" function called by Magic Album; just display error and return.
@@ -268,7 +267,7 @@ function dummy.loadscript(scriptname,path,savepath)
 	do
 		local scriptfile = ma.GetFile( path .. scriptname )
 		if not scriptfile then
-			error( "script " .. scriptname .. " not found." )
+			error( "script " .. scriptname .. " not found at " .. path .. "." )
 		else
 			scriptfile = string.gsub( scriptfile , "^\239\187\191" , "" ) -- remove unicode BOM (0xEF, 0xBB, 0xBF) for files tainted by it :)
 			if _VERSION == "Lua 5.1" then
@@ -288,11 +287,11 @@ function dummy.loadscript(scriptname,path,savepath)
 					scriptfile = string.gsub(scriptfile,'savepath = "src','savepath = "' .. savepath)
 				end
 				--patch library loading to patch paths in library
-				scriptfile = string.gsub( scriptfile, "local execlib,errormsg=load",
+				scriptfile = string.gsub( scriptfile, "local execlib,errormsg ?= ?load",
 							'LHpilib=string.gsub(LHpilib,"Prices\\\\","'..path..'") local execlib,errormsg=load' )
 				if savepath~="" then
 					savepath = string.gsub(savepath, "\\", "\\\\" )
-					scriptfile = string.gsub( scriptfile, "local execlib,errormsg=load",
+					scriptfile = string.gsub( scriptfile, "local execlib,errormsg ?= ?load",
 								'LHpilib=string.gsub(LHpilib,"savepath = \\\"src","savepath = \\\"'..savepath..'\") local execlib,errormsg=load' )
 				end
 			end--if path
@@ -463,6 +462,7 @@ dummy.promosets = {
 
 --- @field [parent=#dummy] #table specialsets
 dummy.specialsets = {
+ [814] = "Commander 2014 Edition";
  [812] = "Duel Decks: Speed vs. Cunning";
  [811] = "Magic 2015 Clash Pack";
  [810] = "Modern Event Deck 2014";
@@ -650,7 +650,7 @@ function main()
 
 --	dummy.fakesitescript()
 	dummy.loadscript(script.name,script.path,script.savepath)
---	LHpi = dummy.loadlibonly(2.9,dummy.path,dummy.savepath)
+--	LHpi = dummy.loadlibonly(2.13,dummy.path,dummy.savepath)
 
 	-- force debug enviroment options
 	dummy.forceEnv(dummy.env)

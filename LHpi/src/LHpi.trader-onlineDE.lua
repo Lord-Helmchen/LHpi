@@ -27,13 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.13.5.13
-added 808,812,813
-add "Token" suffix to replacement names
-update site.expected
-fix 784,801,600
-added EXPECTNONTRAD and EXPECTREPL options to site.expected
-add STRICTOBJTYPE option
+2.13.6.13
+added 814
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -100,10 +95,10 @@ add STRICTOBJTYPE option
 libver = "2.13"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
-dataver = "5"
+dataver = "6"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "12"
+scriptver = "13"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.trader-onlineDE-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -540,6 +535,7 @@ site.sets = {
 [130]={id = 130, lang = { true , [3]=false }, fruc = { false,true }, url = "AQ"},
 [120]={id = 120, lang = { true , [3]=false }, fruc = { false,true }, url = "AN"},
 -- special sets
+--[814]={id = 814, lang = { true , [3]=false}, fruc = { false,true }, url = "C14"},--Commander 2014
 [812]={id = 812, lang = { true , [3]=false}, fruc = { false,true }, url = "DDN"}, -- Duel Decks: Speed vs. Cunning
 [807]={id = 807, lang = { true , [3]=false}, fruc = { true ,true }, url = "CNS"},--Conspiracy
 [805]={id = 805, lang = { true , [3]=false}, fruc = { false,true }, url = "JVV"}, -- Duel Decks: Jace vs. Vaska

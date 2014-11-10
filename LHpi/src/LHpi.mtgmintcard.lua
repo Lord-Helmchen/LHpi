@@ -27,14 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.13.5.13
-added 809,810,812,813
-removed oversized handling from BCDPluginPre
-add "Token" suffix to replacement names
-update site.expected
-fix 330,801,787,600
-added EXPECTNONTRAD and EXPECTREPL options to site.expected
-add STRICTOBJTYPE option
+2.13.6.14
+added 814
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -101,10 +95,10 @@ add STRICTOBJTYPE option
 libver = "2.13"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
-dataver = "5"
+dataver = "6"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "13"
+scriptver = "14"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.mtgmintcard-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -484,6 +478,7 @@ site.sets = {
 [130]={id = 130, lang = { true , [9]=false}, fruc = { false,true }, pages= 4, url = "atq"},
 [120]={id = 120, lang = { true , [9]=false}, fruc = { false,true }, pages= 3, url = "arn"},
 -- special sets
+[814]={id = 814, lang = { true , [9]=false}, fruc = { true , true }, pages=12, url = "c14"},--Commander 2014 Edition
 [812]={id = 812, lang = { true , [9]=false}, fruc = { true , true }, pages= 3, url = "ddn"},--Duel Decks: Speed vs. Cunning
 [811]=nil,--Magic 2015 Clash Pack
 [810]={id = 810, lang = { true , [9]=false}, fruc = { false, true }, pages= 1, url = "mde"},--Modern Event Deck 2014
