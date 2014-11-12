@@ -326,8 +326,9 @@ end -- function site.BCDpluginPost
 -- tables
 -------------------------------------------------------------------------------------------------------------
 
---- Define the three price columns. This table is unique to this sitescript.
--- @field [parent=#site] #table himelo
+--[[- Define the three price columns. This table is unique to this sitescript.
+-- @type site.himelo
+]]
 site.himelo = { "high" , "medium" , "low" }
 
 --[[- table of (supported) languages.

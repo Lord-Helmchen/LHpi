@@ -2397,7 +2397,7 @@ Expansions = nil,
 --- not really a seperate subtable, just a bookmark for quick navigation in eclipse.
 -- @field [parent=#Data.sets] #table SpecialSets
 SpecialSets = nil,
-[814] = {},--TODO 814
+[814] = { name="Commander 2014"},--TODO 814
 [812] = { name="Duel Decks: Speed vs. Cunning",
 	foil="n",
 	cardcount={ reg=81, tok=1, nontr=0, repl=0},
@@ -3906,7 +3906,7 @@ Promos = nil,
 --	variants={
 --	},
 },
-[40] = { name="Arena/Colosseo Promos",
+[40] = { name="Arena/Colosseo Leagues Promos",
 --TODO [40]
 --	foil="",
 --	cardcount={ reg=0, tok=0, nontr=0, repl=0 }, 
@@ -4040,7 +4040,7 @@ Promos = nil,
 ["Monstrous Hound"]					= { foil = false},
 	},
 },
-[21] = { name="Release & Launch Party Promos",
+[21] = { name="Release & Launch Parties Promos",
 	foilonly=true,
 	cardcount={ reg=40, tok=1, nontr=6, repl=6 },
 	variants={
@@ -4215,7 +4215,7 @@ Promos = nil,
 ["same (2)"]		= { "samefromData"		, { false, "two" } },
 	},
 },
-	
+--[999] = { name="catchall for mkm download" },	
 }-- end table Data.sets
 
 for sid,set in pairs(Data.sets) do

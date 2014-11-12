@@ -442,19 +442,20 @@ function LHpi.MainImportCycle( sourcelist , totalhtmlnum , importfoil , importla
 					end
 					if not allgood then
 						LHpi.Log( string.format( ":-( persetcount for %s (id %i) differs from expected. ", importsets[sid], sid ) , 1)
-						table.insert( setcountdiffers , sid , importsets[sid] )
+						--table.insert( setcountdiffers , sid , importsets[sid] )
+						setcountdiffers[sid] = importsets[sid]
 						if VERBOSE then
 							local setcountstring = ""
 							for lid,lang in pairs (importlangs) do
-								if cSet.lang[lid] then
+								if cSet.lang[lid] or (persetcount.pset[lid]~=0) then
 									setcountstring = setcountstring .. string.format( " %3i set & %3i failed %8s cards ;", persetcount.pset[lid], persetcount.failed[lid], lang )
 								end -- if
 							end -- for
 							LHpi.Log( string.format ( ":-( counted :" .. setcountstring .. " %3i dropped, %3i namereplaced and %3i foiltweaked.", persetcount.dropped, persetcount.namereplaced, persetcount.foiltweaked ) , 1 )
 							local setexpectedstring = ""
 							for lid,lang in pairs (importlangs) do
-								if cSet.lang[lid] then
-									setexpectedstring = setexpectedstring .. string.format( " %3i set & %3i failed %8s cards ;", site.expected[sid].pset[lid], site.expected[sid].failed[lid], lang )
+								if cSet.lang[lid] or (persetcount.pset[lid]~=0) then
+									setexpectedstring = setexpectedstring .. string.format( " %3i set & %3i failed %8s cards ;", site.expected[sid].pset[lid] or 0, site.expected[sid].failed[lid] or 0, lang )
 								end -- if
 							end -- for
 							LHpi.Log( string.format ( ":-( expected:" .. setexpectedstring .. " %3i dropped, %3i namereplaced and %3i foiltweaked.", site.expected[sid].dropped or 0 , site.expected[sid].namereplaced or 0, site.expected[sid].foiltweaked or 0 ) , 1 )
@@ -668,22 +669,8 @@ function LHpi.ListSources ( importfoil , importlangs , importsets )
 								urldetails.langid=lid
 								urldetails.frucid=fid
 								if DEBUG then
---									urldetails.lang=site.langs[lid].url
---									urldetails.fruc=site.frucs[fid]
 									LHpi.Log( "site.BuildUrl is " .. LHpi.Tostring( url ) , 2 )
 								end
---								--this should not be needed anymore, as ProcessUserParams has set unwanted frucs to false in site.sets
---								if importfoil == "n" and url.foilonly then
---									if VERBOSE then
---										LHpi.Log( "unwanted foilonly url dropped" , 2 )
---									end
---									if DEBUG then
---										error( "unwanted foilonly url dropped. should not be reached anymore!")
---									end
---								else -- add url to list
---									urls[sid][url] = urldetails
---								end
---								--so we can unconditionally add the freshly generated url
 								urls[sid][url] = urldetails
 							end -- for url
 						elseif DEBUG then
@@ -724,9 +711,9 @@ function LHpi.GetSourceData( url , details ) --
 	end
 	if details.isfile then -- get htmldata from local source
 		LHpi.Log( "Loading " .. url )
-		sourcedata = ma.GetFile( savepath or "" .. url )
+		sourcedata = ma.GetFile( (savepath or "") .. url )
 		if not sourcedata then
-			LHpi.Log( "!! GetFile failed for " .. savepath or "" .. url )
+			LHpi.Log( "!! GetFile failed for " .. (savepath or "") .. url )
 			return nil
 		end
 	elseif details.oauth then -- we need to build a AOuth request and probably send it via https
@@ -737,7 +724,7 @@ function LHpi.GetSourceData( url , details ) --
 		else
 			error("oauth request not implemented yet")
 		end
-		if not sourcedata then
+		if not sourcedata or sourcedata == "" then
 			LHpi.Log( "!! site.FetchSourceDataFromOAuth failed for " .. url )
 			LHpi.Log("server response " .. status )
 			return nil
@@ -751,11 +738,10 @@ function LHpi.GetSourceData( url , details ) --
 			return nil
 		end
 	end -- if details.isfile
-	
 	if SAVEHTML and not OFFLINE then
 		url = string.gsub(url, '[/\\:%*%?<>|"]', "_")
-		LHpi.Log( "Saving source html to file: \"" .. savepath or "" .. url .. "\"" )
-		ma.PutFile( savepath or "" .. url , sourcedata )
+		LHpi.Log( "Saving source html to file: \"" .. (savepath or "") .. url .. "\"" )
+		ma.PutFile( (savepath or "") .. url , sourcedata , 0 )
 	end -- if SAVEHTML
 	
 	if VERBOSE and site.resultregex then
@@ -779,6 +765,9 @@ end -- function LHpi.GetSourceData
   : with entries as supplied by site.ParseHtmData.
 ]]
 function LHpi.ParseSourceData( sourcedata,sourceurl,urldetails )
+	if not sourcedata then
+		return nil
+	end
 	local sourceTable = {}
 	for foundstring in string.gmatch( sourcedata , site.regex) do
 		if DEBUGFOUND then
@@ -1388,8 +1377,8 @@ function LHpi.MergeCardrows ( name, langs,  oldRow , newRow , variants )
 								LHpi.Log("!! conflicting regprice in lang [" .. LHpi.Data.languages[lid].abbr .. "]" , 1 )
 								LHpi.Log("oldRow: " .. LHpi.Tostring(oldRow))
 								LHpi.Log("newRow: " .. LHpi.Tostring(newRow))
-								print("conflict " .. conflictdesc.reg[lid])
-								--error("conflict " .. conflictdesc.reg[lid])
+								print(string.format("conflict in card %s lang %s: %s (reg)", name,LHpi.Data.languages[lid].abbr,conflictdesc.reg[lid]) )
+								--error(string.format("conflict in card %s lang %s: %s (reg)", name,LHpi.Data.languages[lid].abbr,conflictdesc.reg[lid]) )
 							end--if DEBUG
 						end--if equals
 					else
@@ -1407,37 +1396,6 @@ function LHpi.MergeCardrows ( name, langs,  oldRow , newRow , variants )
 					end--if DEBUG
 				end-- if oldRow
 			end--for lid,_lang
---old merge algorithm:
---			if not oldRow.regprice then oldRow.regprice={} end
---			if not newRow.regprice then newRow.regprice={} end
---			for lid,_lang in pairs(langs) do
---				if 		newRow.regprice[lid] == oldRow.regprice[lid]
---				or	newRow.regprice[lid] and not oldRow.regprice[lid]
---				or	oldRow.regprice[lid] and not newRow.regprice[lid]
---				then
---					mergedRow.regprice[lid] = oldRow.regprice[lid] or newRow.regprice[lid]
---					conflictdesc.reg = "ok:keep equal"
---				elseif newRow.regprice[lid] == 0 then
---					mergedRow.regprice[lid] = oldRow.regprice[lid]
---					conflictdesc.reg = "ok:zero/notzero"
---				elseif oldRow.regprice[lid] == 0 then
---					mergedRow.regprice[lid] = newRow.regprice[lid]
---					conflictdesc.reg = "ok:notzero/zero"
---				else -- newCardrow.regprice ~= oldCardrow.regprice
---					conflictdesc.reg = "!!:regprice[" .. lid .. "]"
---					mergedRow.regprice[lid] = (oldRow.regprice[lid] + newRow.regprice[lid]) * 0.5
---					if VERBOSE then
---						LHpi.Log(string.format("averaging conflicting %s regprice[%s] %g and %g to %g", name, LHpi.Data.languages[lid].abbr, oldRow.regprice[lid], newRow.regprice[lid], mergedRow.regprice[lid] ) , 1 )
---					end
---					if DEBUG then
---						LHpi.Log("!! conflicting regprice in lang [" .. LHpi.Data.languages[lid].abbr .. "]" , 1 )
---						LHpi.Log("oldRow: " .. LHpi.Tostring(oldRow))
---						LHpi.Log("newRow: " .. LHpi.Tostring(newRow))
---						print("conflict " .. conflictdesc.reg)
---						--error("conflict " .. conflictdesc.reg)
---					end
---				end -- if newRow.regprice[lid] == oldRow.regprice[lid]
---			end -- for lid,lang
 		end--if: done merging regprices
 		
 		if oldRow.foilprice or newRow.foilprice then
@@ -1462,8 +1420,8 @@ function LHpi.MergeCardrows ( name, langs,  oldRow , newRow , variants )
 								LHpi.Log("!! conflicting foilprice in lang [" .. LHpi.Data.languages[lid].abbr .. "]" , 1 )
 								LHpi.Log("oldRow: " .. LHpi.Tostring(oldRow))
 								LHpi.Log("newRow: " .. LHpi.Tostring(newRow))
-								print("conflict " .. conflictdesc.foil[lid])
-								--error("conflict " .. conflictdesc.foil[lid])
+								print(string.format("conflict in card %s lang %s: %s (foil)", name,LHpi.Data.languages[lid].abbr,conflictdesc.reg[lid]) )
+								--error(string.format("conflict in card %s lang %s: %s (foil)", name,LHpi.Data.languages[lid].abbr,conflictdesc.reg[lid]) )
 							end--if DEBUG
 						end--if equals
 					else

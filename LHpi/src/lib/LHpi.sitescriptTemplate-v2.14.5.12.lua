@@ -269,6 +269,7 @@ end -- function ImportPrice
 --	local foundPrice = 0
 --	local foundFoil = false
 --	--then assemble the new card data
+--	foundprice = string.gsub(foundprice , "[,.]" , "" ) -- return price as integer
 --	local newCard= { names=foundNames , price=foundPrice , foil=foundFoil }
 --	
 --	--wrap (all) the card(s) into a container table

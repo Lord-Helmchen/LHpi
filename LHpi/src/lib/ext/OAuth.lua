@@ -66,7 +66,7 @@ end
 
 --
 -- Like URL-encoding, but following OAuth's specific semantics
-local function oauth_encode(val)
+function oauth_encode(val)
 	return val:gsub('[^-._~a-zA-Z0-9]', function(letter)
 		return string.format("%%%02x", letter:byte()):upper()
 	end)

@@ -29,6 +29,8 @@ added 814
 fixed dummy.forceEnv
 ]]
 
+--TODO make most dummy functions local
+
 --[[- "main" function called by Magic Album; just display error and return.
  Called by Magic Album to import prices. Parameters are passed from MA.
  We don't want to call the dummy from within MA.
@@ -65,8 +67,9 @@ end
 -- @param #string url
 -- @return #string webpage OR nil instead on error
 function ma.GetUrl(url)
-	print("dummy.GetUrl called for " .. url)
+	print("dummy: GetUrl called for " .. url)
 	local host,file = string.match(url, "http://([^/]+)/(.+)" )
+	--TODO use luasockets for real
 --	try {
 --		Socket =require "luasocket"
 --		local c = assert(Socket.connect(host, 80))
@@ -89,12 +92,12 @@ end
 -- @param #string filepath
 -- @return #string file OR nil instead on error
 function ma.GetFile(filepath)
-	print("dummy.GetFile called for " .. filepath)
-    local handle = io.open(filepath,"r")
-    local file = nil
+	print(string.format("ma.GetFile(%s)", filepath) )
+	local handle = io.open(filepath,"r")
+	local file = nil
     if handle then
-    	local temp = io.input()	-- save current file
-       	io.input( handle )		-- open a new current file
+		local temp = io.input()	-- save current file
+		io.input( handle )		-- open a new current file
 		file = io.read( "*all" )
 		io.input():close()		-- close current file
 		io.input(temp)			-- restore previous current file
@@ -115,7 +118,9 @@ end
 -- @param #string data
 -- @param #number append nil or 0 for overwrite
 function ma.PutFile(filepath, data, append)
-	--print("dummy.PutFile called for " .. filepath)
+	if not string.find(filepath,"log") then
+		print(string.format("ma.PutFile(%s ,DATA, append=%q)",filepath, tostring(append) ) )
+	end
 	local a = append or 0
 	local handle
 	if append == 0 then
@@ -199,7 +204,7 @@ end
 dummy={}
 ---	dummy version
 -- @field [parent=#dummy] #string version
-dummy.version = "0.4"
+dummy.version = "0.5"
 
 --[[- loads LHpi library for testing.
 @function [parent=#dummy] loadlibonly
@@ -324,7 +329,7 @@ function dummy.fakesitescript()
 	site.sets= { [0]={id=0,lang={true},fruc={true},url="bar"} }
 	site.frucs={ {id=1,name="fruc",isfoil=true,isnonfoil=true,url="baz"} }
 	site.regex="none"
-	dataver=2
+	dataver=5
 	scriptname="LHpi.fakescript.lua"
 	site.variants= { [0]= {
 		["site"]			= { "inSiteOnly"		, { "one", "two" } },
@@ -346,6 +351,7 @@ end--function dummy.fakesitescript
 @param #table tvier (optional)
 @return #table
 ]]
+--TODO move mergetables from dummy to LHpi.helpers once library loads by require
 function dummy.mergetables (teins,tzwei,tdrei,tvier)
 	for k,v in pairs(tzwei) do 
 		teins[k] = v
@@ -388,7 +394,7 @@ function dummy.forceEnv(env)
 end--function dummy.forceEnv
 
 --[[- run and time sitescript multiple times.
-@function [parent=#dummy] performancetest
+@function [parent=#dummy] TestPerformance
 @param #number repeats
 @param #table script
 @param #table impF
@@ -396,7 +402,7 @@ end--function dummy.forceEnv
 @param #table impS
 @param #string timefile (optional) default:"time.log"
 ]]
-function dummy.performancetest(repeats,script,impF,impL,impS,timefile)
+function dummy.TestPerformance(repeats,script,impF,impL,impS,timefile)
 	timefile = timefile or "time.log"
 	for run=1, repeats do
 		local t1 = os.clock()
@@ -408,8 +414,8 @@ function dummy.performancetest(repeats,script,impF,impL,impS,timefile)
 	end--for run
 end--function dummy.performancetest
 
---[[- compare dummy's set tables with Prices/Database/sets.txt
-
+--[[- compare dummy's set tables with Prices/Database/Sets.txt.
+Before using this function, you need to convert Sets.txt from UCS-2 to UTF-8.
  @function [parent=#dummy] CompareDummySets
  @param #string mapath	path to MA
  @param #number libver
@@ -429,18 +435,20 @@ function dummy.CompareDummySets(mapath,libver)
 	for sid,name in string.gmatch( setsTxt, "(%d+)%s+([^\n]+)\n") do
 		--print( string.format("sid %3i : %s",sid,name) )
 		if revDummySets[name] then
-			print(string.format("found %3i : %q",sid,name) )
+			--print(string.format("found %3i : %q",sid,name) )
 		else
 			table.insert(missing,{ id=sid, name=name})
 		end
 	end
-	print("sets from Database/Sets.txt missing in dummy:")
+	print(#missing .. " sets from Database/Sets.txt missing in dummy:")
 	for i,set in pairs(missing) do
 		print(string.format("[%3i] = %q;",set.id,set.name) )
 	end
 end--function CompareSetlist 
 
---[[- compare LHpi.Data.sets with Prices/Database/sets.txt
+--[[- compare LHpi.Data.sets with Prices/Database/Sets.txt
+Before using this function, you need to convert Sets.txt from UCS-2 to UTF-8.
+
 
  @function [parent=#dummy] CompareDataSets
  @param #string mapath	path to MA
@@ -463,12 +471,12 @@ function dummy.CompareDataSets(mapath)
 	for sid,name in string.gmatch( setsTxt, "(%d+)%s+([^\n]+)\n") do
 		--print( string.format("sid %3i : %s",sid,name) )
 		if revDummySets[name] then
-			print(string.format("found %3i : %q",sid,name) )
+			--print(string.format("found %3i : %q",sid,name) )
 		else
 			table.insert(missing,{ id=sid, name=name})
 		end
 	end
-	print("sets from Database/Sets.txt missing in LHpi.Data:")
+	print(#missing .. " sets from Database/Sets.txt missing in LHpi.Data:")
 	for i,set in pairs(missing) do
 		print(string.format("[%3i] = %q;",set.id,set.name) )
 	end
@@ -694,7 +702,9 @@ function main()
 	dummy.path="src\\"
 	--don't keep a seperate dev savepath, though
 	dummy.savepath = "src\\..\\..\\..\\Magic Album\\Prices"
-	dummy.env={--set debug enviroment options
+	--package.path = 'src\\lib\\ext\\?.lua;' .. package.path
+	--package.cpath= 'src\\lib\\bin\\?.dll;' .. package.cpath
+	dummy.env={--define debug enviroment options
 		VERBOSE = true,
 		LOGDROPS = true,
 		LOGNAMEREPLACE = true,
@@ -702,15 +712,17 @@ function main()
 		CHECKEXPECTED = true,
 		STRICTEXPECTED = true,
 		OFFLINE = true,
+--		OFFLINE = false,
 		SAVELOG = true,
-		SAVEHTML = false,
-		DEBUG = true,
+		SAVEHTML = true,
+--		SAVEHTML = false,
+--		DEBUG = true,
 --		DEBUGFOUND = true,
 --		DEBUGVARIANTS = true,
 --		SAVETABLE=true,
 	}
 	local scripts={
-		[0]={name="lib\\LHpi.sitescriptTemplate-v2.9.2.1.lua",path=dummy.path,savepath=dummy.savepath},
+		[0]={name="lib\\LHpi.sitescriptTemplate-v2.14.5.12.lua",path=dummy.path,savepath=dummy.savepath},
 		[1]={name="LHpi.mtgmintcard.lua",path=dummy.path,savepath=dummy.savepath},
 		[2]={name="LHpi.magicuniverseDE.lua",path=dummy.path,savepath=dummy.savepath},
 		[3]={name="LHpi.trader-onlineDE.lua",path=dummy.path,savepath=dummy.savepath},
@@ -720,36 +732,42 @@ function main()
 		[7]={name="LHpi.mtgprice.com.lua",path=dummy.path,savepath=dummy.savepath},
 		[8]={name="LHpi.magickartenmarktDE.lua",path=dummy.path,savepath=dummy.savepath},
 	}
-	--select a predefined script to be tested
-	local script=scripts[8]
-
+	-- select a predefined script to be tested
 --	dummy.fakesitescript()
+	local script=scripts[8]
 	dummy.loadscript(script.name,script.path,script.savepath)
---	LHpi = dummy.loadlibonly(2.14,dummy.path,dummy.savepath)
+
+	-- only load library (and Data)
+--	local LHpi = dummy.loadlibonly(2.14,dummy.path,dummy.savepath)
+--	local Data = LHpi.LoadData(2)
 
 	-- force debug enviroment options
 	dummy.forceEnv(dummy.env)
---	print("dummy says: script loaded.")
+	print("dummy says: script loaded.")
 
-	--now try to break the script :-)
-	local fakeimportfoil = "y"
-	local fakeimportlangs = { [1] = "eng" }
---	local fakeimportlangs = { [9] = "szh" }
---	local fakeimportlangs = dummy.alllangs
-	local fakeimportsets = { [0] = "fakeset"; }
-	local fakeimportsets = { [808] = "some set"; }
---	local fakeimportsets = { [220]="foo";[800]="bar";[0]="baz";}
---	local fakeimportsets = dummy.coresets
---	local fakeimportsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
+	local importfoil = "y"
+	local importlangs = { [1] = "eng" }
+--	local importlangs = { [9] = "szh" }
+--	local importlangs = dummy.alllangs
+--	local importsets = { [0] = "fakeset"; }
+--	local importsets = { [640] = "some set"; }
+	local importsets = { [808]="catchall" }
+--	local importsets = { [220]="foo";[800]="bar";[0]="baz";}
+--	local importsets = dummy.coresets
+--	local importsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 
---	dummy.Data = LHpi.LoadData(2)
---	LHpi.DoImport(fakeimportfoil, fakeimportlangs, fakeimportsets)
---	ImportPrice( fakeimportfoil, fakeimportlangs, fakeimportsets )
+	-- now try to break the script :-)
+--	LHpi.DoImport(importfoil, importlangs, importsets)
+	ImportPrice( importfoil, importlangs, importsets )
+
+	-- demo LHpi helper functions:
 --	print(LHpi.Tostring( "this is a string." ))
 --	print(LHpi.ByteRep("Zwölffüßler"))
---	dummy.performancetest(10,script,fakeimportfoil,fakeimportlangs,fakeimportsets,"time.log")
-	dummy.CompareDummySets(dummy.savepath.."\\..",2.14)
-	dummy.CompareDataSets(dummy.savepath.."\\..",2.14,5)
+
+	-- utility functions from dummy:
+--	TestPerformance(10,script,importfoil,importlangs,importsets,"time.log")
+--	dummy.CompareDummySets(dummy.savepath.."\\..",2.14)
+--	dummy.CompareDataSets(dummy.savepath.."\\..",2.14,5)
 
 	local dt = os.clock() - t1 
 	print(string.format("All this took %g seconds",dt))
