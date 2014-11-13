@@ -26,6 +26,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
+migrate to other sitescripts:
+*Initialize()
+*site.priceTypes Table and local global option
 
 ]]
 
@@ -50,20 +53,27 @@ LOGFOILTWEAK = true
 -- @field [parent=#global] #boolean CHECKEXPECTED
 --CHECKEXPECTED = false
 
---- choose between available price types, see table priceGuide and magiccardmarket.eu help
--- if not set, defaults to 5 "AVG" prices
--- @field [parent=#site] #number priceToUse
+--- choose between available price types; defaults to 5 ("AVG" prices).
+-- see table site.priceTypes for available options
+-- @field #number priceToUse
 local priceToUse=5--use AVG
 
-local responseFormat = "json" -- can be hardcoded, as we need json anyways to read the tokenfile :)
+--local mkmtokenfile = "mkmtokens.example"
+--local mkmtokenfile = "mkmtokens.sandbox"
+local mkmtokenfile = "mkmtokens.DarkHelmet"
+
+--  Don't change anything below this line unless you know what you're doing :-) --
+
+--- choose how the site sends the requested data.
+-- mkm api offers json and xml format. Only json parsing is implemented yet,
+-- and we need json anyways to read the mkm token file :)
+-- @field #string responseFormat	"json" or "xml"
+local responseFormat = "json"
+
+---
 local mkmexample = false
 local widgetonly = true
 local sandbox = false
-local mkmtokenfile = "mkmtokens.example"
---local mkmtokenfile = "mkmtokens.sandbox"
---local mkmtokenfile = "mkmtokens.DarkHelmet"
-
---  Don't change anything below this line unless you know what you're doing :-) --
 
 --- also complain if drop,namereplace or foiltweak count differs; default false
 -- @field [parent=#global] #boolean STRICTEXPECTED
@@ -79,7 +89,7 @@ STRICTOBJTYPE = true
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
---OFFLINE = true
+OFFLINE = true
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
@@ -91,7 +101,7 @@ STRICTOBJTYPE = true
 
 ---	log everything and exit on error; default false
 -- @field [parent=#global] #boolean DEBUG
-DEBUG = true
+--DEBUG = true
 
 ---	log raw html data found by regex; default false
 -- @field [parent=#global] #boolean DEBUGFOUND
@@ -112,7 +122,7 @@ dataver = "5"
 scriptver = "2"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
-scriptname = "LHpi.magickartenmarktDE-v".. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
+scriptname = "LHpi.magickartenmarkt-v".. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
 --- savepath for OFFLINE (read) and SAVEHTML (write). must point to an existing directory relative to MA's root.
 -- set by LHpi lib unless specified here.
 -- @field [parent=#global] #string savepath
@@ -163,8 +173,12 @@ site.encoding="utf8"
  @param #table importsets	{ #number (setid)= #string , ... }
 	-- parameter passed from Magic Album
 	-- array of sets the script should import, represented as pairs { #number = #string } (see "Database\Sets.txt").
+ @param #table scriptmode { #boolean listsets, boolean checksets, ... }
+	-- nil if called by Magic Album
+	-- will be passed to site.Initialize to trigger nonstandard modes of operation	
 ]]
-function ImportPrice( importfoil , importlangs , importsets )
+function ImportPrice( importfoil , importlangs , importsets , scriptmode)
+	scriptmode = scriptmode or {}
 	if SAVELOG~=false then
 		ma.Log( "Check " .. scriptname .. ".log for detailed information" )
 	end
@@ -202,7 +216,7 @@ function ImportPrice( importfoil , importlangs , importsets )
 	end -- do load LHpi library
 	collectgarbage() -- we now have LHpi table with all its functions inside, let's clear LHpilib and execlib() from memory
 	LHpi.Log( "LHpi lib is ready to use." )
-	site.Initialize() -- keep site-specific stuff out of ImportPrice
+	site.Initialize( scriptmode ) -- keep site-specific stuff out of ImportPrice
 	LHpi.DoImport (importfoil , importlangs , importsets)
 	ma.Log( "End of Lua script " .. scriptname )
 end -- function ImportPrice
@@ -212,28 +226,64 @@ end -- function ImportPrice
  At this point, LHpi's functions are avalable, but default values for missing fields have not yet been set.
  
  for LHpi.mkm, we need to configure and prepare the oauth client.
+@param #table mode { #boolean listsets, boolean checksets, ... }
+	-- nil if called by Magic Album
+	-- testOAuth	tests the OAuth implementation
+	-- checksets	compares site.sets with setlist from dummyMA
+	-- getsets		fetches available expansions from server and saves a site.sets template.
  @function [parent=#site] Initialize
 ]]
-function site.Initialize()
---TODO generalize library (c)path
-	package.path = 'Prices\\lib\\ext\\?.lua;' .. package.path
-	package.cpath= 'Prices\\lib\\bin\\?.dll;' .. package.cpath
-	--print(package.path.."\n"..package.cpath)
-	OAuth = require "OAuth"
+function site.Initialize( mode )
+	if not require then
+		LHpi.Log("trying to work around Magic Album lua sandbox limitations...")
+		--emulate require(modname) using dofile
+		local packagePath = 'Prices\\lib\\ext\\'
+		require = function (fname)
+			local donefile
+			donefile = dofile( packagePath .. fname .. ".lua" )
+			return donefile
+		end-- function require
+	else
+		package.path = 'Prices\\lib\\ext\\?.lua;' .. package.path
+		package.cpath= 'Prices\\lib\\bin\\?.dll;' .. package.cpath
+		--print(package.path.."\n"..package.cpath)
+	end
+	if mode.json then
+		responseFormat = "json"
+	elseif mode.xml then
+		responseFormat = "xml"
+	end 
+	if not responseFormat then responseFormat = "json" end
 	if responseFormat == "json" then
 		Json = require ("dkjson")
 	elseif responseFormat == "xml" then
---		Xml = require "luaxml"
+		error("xml parsing not implemented yet")
+		--Xml = require "luaxml"
 	end
-	---@field [parent=#site] #table oauth
-	site.oauth = {}
-	site.oauth.client, site.oauth.params = site.PrepareOAuth()
-
-	--site.OAuthTest( site.oauth.params )
-	--local expansionList = site.FetchExpansionList()
-	--site.ParseExpansions(expansionList )
-	--site.CompareSiteSets()
-	error("break")
+	if OFFLINE then
+		--skip OAuth preparation
+		--when launched from ma, dll loading is not possible.
+	else 
+		OAuth = require "OAuth"
+		---@field [parent=#site] #table oauth
+		site.oauth = {}
+		site.oauth.client, site.oauth.params = site.PrepareOAuth()
+	end
+	if mode.testOAuth then
+		site.OAuthTest( site.oauth.params )
+	end
+	if mode.checksets then
+		site.CompareSiteSets()
+	end
+	if mode.getsets then
+		local expansionList = site.FetchExpansionList()
+		site.ParseExpansions(expansionList )
+	end
+	--create an empty file to hold missorted cards
+	-- that is, the mkm expansion does not match the MA set
+		LHpi.Log("site.sets = {",0,"missorted."..responseFormat,0 )
+		site.settweak = site.settweak or {}
+	--error("break")
 end
 
 
@@ -561,13 +611,13 @@ end -- function site.BuildUrl
  @return #table newCard.lang		(optional) will override LHpi.buildCardData generated values.
  @return #boolean newCard.drop		(optional) will override LHpi.buildCardData generated values.
  @return #table newCard.variant		(optional) will override LHpi.buildCardData generated values.
- @return #table newCard.regprice	(optional) will override LHpi.buildCardData generated values.
- @return #table newCard.foilprice 	(optional) will override LHpi.buildCardData generated values.
+ @return #number or #table newCard.regprice		(optional) will override LHpi.buildCardData generated values. #number or #table { [#number langid]= #number,...}
+ @return #number or #table newCard.foilprice 	(optional) will override LHpi.buildCardData generated values. #number or #table { [#number langid]= #number,...}
  
  @function [parent=#site] ParseHtmlData
  @param #string foundstring		one occurence of siteregex from raw html data
  @param #table urldetails		{ isfile= #boolean , setid= #number, langid= #number, frucid= #number , foilonly= #boolean }
- @return #table { #number= #table { names= #table { #number (langid)= #string , ... }, price= #number , foil= #boolean , ... } , ... } 
+ @return #table { #number= #table { names= #table { #number (langid)= #string , ... }, price= #number or #table { [#number langid]= #number,...} , foil= #boolean , ... } , ... } 
 ]]
 function site.ParseHtmlData( foundstring , urldetails )
 	local priceType = site.priceTypes[priceToUse] or "AVG"
@@ -577,20 +627,26 @@ function site.ParseHtmlData( foundstring , urldetails )
 	else
 		error("nothing here for xml yet")
 	end
-	local newCard = { names = {}, price = {}, pluginData={} }
-	local newFoilCard = { names = {}, price = {}, pluginData={} }
+	local newCard = 	{ names = {}, lang={}, price = {}, pluginData={} }
+	local newFoilCard = { names = {}, lang={}, price = {}, pluginData={} }
 	newCard.foil = false
+	newFoilCard.foil=true
 	local regprice  = string.gsub( product.priceGuide[priceType] , "[,.]" , "" ) --nonfoil price, use AVG by default
 	local foilprice = string.gsub( product.priceGuide["LOWFOIL"] , "[,.]" , "" ) --foil price
-	newFoilCard.foil=true
+	-- could just set name to productNamw[1].productName, as productName reflects mkm ui langs, not card langs		
 	for i,prodName in pairs(product.name) do
 		local langid = site.mapLangs[prodName.languageName] or error("unknown MKM language")
 		newCard.names[langid] = prodName.productName
 		newFoilCard.names[langid] = prodName.productName
-		--newCard.lang[langid] = LHpi.Data.languages[langid].abbr -- done by LHpi
-		newCard.price[langid]= regprice
-		newFoilCard.price[langid]= foilprice
+		--newCard.price[langid]= regprice
+		--newFoilCard.price[langid]= foilprice
 	end--for i,prodName
+	for lid,lang in pairs(site.sets[urldetails.setid].lang) do
+		newCard.lang[lid] = LHpi.Data.languages[lid].abbr
+		newFoilCard.lang[lid] = LHpi.Data.languages[lid].abbr
+	end
+	newCard.price=tonumber(regprice)
+	newFoilCard.price=tonumber(foilprice)
 	local pluginData = { rarity=product.rarity, collectNr=product.number, set=product.expansion }
 	newCard.pluginData = pluginData
 	newFoilCard.pluginData = pluginData
@@ -623,9 +679,8 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 		end
 	elseif "Token" == card.pluginData.rarity then
 		if card.pluginData.collectNr then
-			card.name = string.gsub( card.name,"%([%a]+ %d/?%d?%)","("..card.pluginData.collectNr..")" )
+			card.name = string.gsub( card.name, "%(.+%)", "("..card.pluginData.collectNr..")" )
 			card.name = string.gsub( card.name,"%(T(%d+)%)","(%1)")
-			card.name = string.gsub( card.name, "%(Artifact%)","")
 		end
 	end--if "Land" else "Token"
 	if setid == 680 then --Time Spiral
@@ -666,14 +721,22 @@ end -- function site.BCDpluginPre
  @return #table			modified card is passed back for further processing
  			{ name= #string , drop= #boolean, lang= #table , (optional) names= #table , variant= (#table or nil), regprice= #table , foilprice= #table }
 ]]
---function site.BCDpluginPost( card , setid , importfoil, importlangs )
---	if DEBUG then
---		LHpi.Log( "site.BCDpluginPost got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
---	end
---
---	card.pluginData=nil
---	return card
---end -- function site.BCDpluginPost
+function site.BCDpluginPost( card , setid , importfoil, importlangs )
+	if DEBUG then
+		LHpi.Log( "site.BCDpluginPost got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
+	end
+	if site.settweak[setid] and site.settweak[setid][card.name] then
+		if LOGSETTWEAK or DEBUG then
+			LHpi.Log( string.format( "settweak saved %s with new set %s" ,card.name, site.settweak[setid][card.name] ), 1 )
+		end
+		card.name = card.name .. "(DROP settweaked to" .. site.settweak[setid][card.name] .. ")"
+		settweaked=1
+	end -- site.settweak[setid]
+
+	
+	card.pluginData=nil
+	return card
+end -- function site.BCDpluginPost
 
 -------------------------------------------------------------------------------------------------------------
 -- tables
@@ -692,20 +755,21 @@ site.priceTypes = {	--Price guide entity
 }
 
 --[[- Map MKM langs to MA langs
+commented out langs that are not available as mkm site localization
  @field [parent=#site] #table mapLangs	{ #string langName = #number MAlangid, ... }
 ]]
 site.mapLangs = {
 	["English"]				=  1,
-	["Russian"]				=  2,
+--	["Russian"]				=  2,
 	["German"]				=  3,
 	["French"]				=  4,
 	["Italian"]				=  5,
-	["Portuguese"]			=  6,
+--	["Portuguese"]			=  6,
 	["Spanish"]				=  7,
-	["Japanese"]			=  8,
-	["Simplified Chinese"]	=  9,
-	["Traditional Chinese"]	= 10,
-	["Korean"]				= 11,
+--	["Japanese"]			=  8,
+--	["Simplified Chinese"]	=  9,
+--	["Traditional Chinese"]	= 10,
+--	["Korean"]				= 11,
 --	["Hebrew"]				= 12,
 --	["Arabic"]				= 13,
 --	["Latin"]				= 14,
@@ -759,7 +823,7 @@ site.frucs = {
 	[1]= { id=1, name="api", url="" },
 }
 
-local all = { true,[2]=true,[3]=true,[4]=true,[5]=true,[6]=true,[7]=true,[8]=true,[9]=true,[10]=true,[11]=true }
+local all = { "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR",[12]="HEB",[13]="ARA",[14]="LAT",[15]="SAN",[16]="GRC" }
 --[[- table of available sets.
  List alls sets that the site has prices for,
  and defines which frucs and languages are available for the set.
@@ -776,26 +840,26 @@ local all = { true,[2]=true,[3]=true,[4]=true,[5]=true,[6]=true,[7]=true,[8]=tru
 ]]
 site.sets = {
 -- coresets
-[808]={id=808, lang=all, fruc={ true }, url="Magic%202015"},--Magic 2015
-[797]={id=797, lang=all, fruc={ true }, url="Magic%202014"},--Magic 2014
-[788]={id=788, lang=all, fruc={ true }, url="Magic%202013"},--Magic 2013
-[779]={id=779, lang=all, fruc={ true }, url="Magic%202012"},--Magic 2012
-[770]={id=770, lang=all, fruc={ true }, url="Magic%202011"},--Magic 2011
-[759]={id=759, lang=all, fruc={ true }, url="Magic%202010"},--Magic 2010
-[720]={id=720, lang=all, fruc={ true }, url="Tenth%20Edition"},--Tenth Edition
+[808]={id=808, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Magic%202015"},--Magic 2015
+[797]={id=797, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Magic%202014"},--Magic 2014
+[788]={id=788, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Magic%202013"},--Magic 2013
+[779]={id=779, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT" }, fruc={ true }, url="Magic%202012"},--Magic 2012
+[770]={id=770, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT" }, fruc={ true }, url="Magic%202011"},--Magic 2011
+[759]={id=759, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Magic%202010"},--Magic 2010
+[720]={id=720, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Tenth%20Edition"},--Tenth Edition
 [630]={id=630, lang=all, fruc={ true }, url="Ninth%20Edition"},--Ninth Edition
-[550]={id=550, lang=all, fruc={ true }, url="Eighth%20Edition"},--Eighth Edition
-[460]={id=460, lang=all, fruc={ true }, url="Seventh%20Edition"},--Seventh Edition
-[360]={id=360, lang=all, fruc={ true }, url="Sixth%20Edition"},--Sixth Edition
-[250]={id=250, lang=all, fruc={ true }, url="Fifth%20Edition"},--Fifth Edition
-[180]={id=180, lang=all, fruc={ true }, url="Fourth%20Edition"},--Fourth Edition
-[179]={id=179, lang=all, fruc={ true }, url="Fourth%20Edition:%20Black%20Bordered"},--Fourth Edition: Black Bordered
-[141]={id=141, lang=all, fruc={ true }, url="Summer%20Magic"},--Summer Magic
-[140]={id=140, lang=all, fruc={ true }, url={ "Revised", "Foreign%20White%20Bordered"} },--Revised, Foreign White Bordered = Revised Unlimited
-[139]={id=139, lang={ false,[3]=true,[4]=true,[5]=true }, fruc={ true }, url="Foreign%20Black%20Bordered"},--Foreign Black Bordered = Revised Limited
-[110]={id=110, lang={ true }, fruc={ true }, url="Unlimited"},--Unlimited
-[100]={id=100, lang={ true }, fruc={ true }, url="Beta"},--Beta
-[90] ={id= 90, lang={ true }, fruc={ true }, url="Alpha"},--Alpha
+[550]={id=550, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Eighth%20Edition"},--Eighth Edition
+[460]={id=460, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Seventh%20Edition"},--Seventh Edition
+[360]={id=360, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Sixth%20Edition"},--Sixth Edition
+[250]={id=250, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Fifth%20Edition"},--Fifth Edition
+[180]={id=180, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Fourth%20Edition"},--Fourth Edition
+[179]={id=179, lang={ [6] = true, [8]=true }, fruc={ true }, url="Fourth%20Edition:%20Black%20Bordered"},--Fourth Edition: Black Bordered
+[141]={id=141, lang={ "ENG" }, fruc={ true }, url="Summer%20Magic"},--Summer Magic
+[140]={id=140, lang=all, fruc={ true }, url={ "Revised", "Foreign%20White%20Bordered"} },--Revised; Foreign White Bordered = Revised Unlimited
+[139]={id=139, lang={ [3]=true,[4]=true,[5]=true }, fruc={ true }, url="Foreign%20Black%20Bordered"},--Foreign Black Bordered = Revised Limited
+[110]={id=110, lang={ "ENG" }, fruc={ true }, url="Unlimited"},--Unlimited
+[100]={id=100, lang={ "ENG" }, fruc={ true }, url="Beta"},--Beta
+[90] ={id= 90, lang={ "ENG" }, fruc={ true }, url="Alpha"},--Alpha
 -- expansionsets
 [813]={id=813, lang=all, fruc={ true }, url="Khans%20of%20Tarkir"},--Khans of Tarkir
 [806]={id=806, lang=all, fruc={ true }, url="Journey%20into%20Nyx"},--Journey into Nyx
@@ -861,7 +925,7 @@ site.sets = {
 [170]={id=170, lang=all, fruc={ true }, url="Fallen%20Empires"},--Fallen Empires
 [160]={id=160, lang=all, fruc={ true }, url="The%20Dark"},--The Dark
 [150]={id=150, lang=all, fruc={ true }, url="Legends"},--Legends
-[130]={id=130, lang=all, fruc={ true }, url="Antiquities"},--Antiquities
+[130]={id=130, lang={ true }, fruc={ true }, url="Antiquities"},--Antiquities
 [120]={id=120, lang=all, fruc={ true }, url="Arabian%20Nights"},--Arabian Nights
 -- specialsets
 --[0]={id=  0, lang=all, fruc={ true }, url="Duel%20Decks:%20Anthology"},--Duel Decks: Anthology
@@ -934,6 +998,14 @@ site.sets = {
 [40] ={id= 40, lang=all, fruc={ true }, url="Arena%20League%20Promos"},--Arena League Promos
 --[ 33] = "Championships Prizes";
 --[ 32] = "Pro Tour Promos";
+[0]={id=  0, lang=all, fruc={ true }, url="Pro%20Tour%201996:%20Mark%20Justice"},--Pro Tour 1996: Mark Justice
+[0]={id=  0, lang=all, fruc={ true }, url="Pro%20Tour%201996:%20Michael%20Locanto"},--Pro Tour 1996: Michael Locanto
+[0]={id=  0, lang=all, fruc={ true }, url="Pro%20Tour%201996:%20Bertrand%20Lestree"},--Pro Tour 1996: Bertrand Lestree
+[0]={id=  0, lang=all, fruc={ true }, url="Pro%20Tour%201996:%20Preston%20Poulter"},--Pro Tour 1996: Preston Poulter
+[0]={id=  0, lang=all, fruc={ true }, url="Pro%20Tour%201996:%20Eric%20Tam"},--Pro Tour 1996: Eric Tam
+[0]={id=  0, lang=all, fruc={ true }, url="Pro%20Tour%201996:%20Shawn%20Regnier"},--Pro Tour 1996: Shawn Regnier
+[0]={id=  0, lang=all, fruc={ true }, url="Pro%20Tour%201996:%20George%20Baxter"},--Pro Tour 1996: George Baxter
+[0]={id=  0, lang=all, fruc={ true }, url="Pro%20Tour%201996:%20Leon%20Lindback"},--Pro Tour 1996: Leon Lindback
 --[ 31] = "Grand Prix Promos";
 [30] ={id= 30, lang=all, fruc={ true }, url="Friday%20Night%20Magic%20Promos"},--Friday Night Magic Promos
 [27] ={id= 27, lang=all, fruc={ true }, url={ "APAC%20Lands", "Guru%20Lands", "Euro%20Lands" } },--Alternate Art Lands: APAC Lands, Guru Lands, Euro Lands
@@ -947,58 +1019,34 @@ site.sets = {
 [21] ={id= 21, lang=all, fruc={ true }, url="Release%20Promos"},--Release Promos
 [20] ={id= 20, lang=all, fruc={ true }, url="Player%20Rewards%20Promos"},--Player Rewards Promos
 --[ 15] = "Convention Promos";
-[0]={id=  0, lang=all, fruc={ true }, url="San%20Diego%20Comic-Con%202013%20Promos"},--San Diego Comic-Con 2013 Promos
-[0]={id=  0, lang=all, fruc={ true }, url="San%20Diego%20Comic-Con%202014%20Promos"},--San Diego Comic-Con 2014 Promos
+[15]= {id= 15, lang=all, fruc={ true }, url="San%20Diego%20Comic-Con%202013%20Promos", --San Diego Comic-Con 2013 Promos
+											"San%20Diego%20Comic-Con%202014%20Promos"},--San Diego Comic-Con 2014 Promos
 [12] ={id= 12, lang=all, fruc={ true }, url="Hobby%20Japan%20Commemorative%20Promos"},--Hobby Japan Commemorative Promos
 --[ 11] = "Redemption Program Cards";
-[10] ={id= 10, lang=all, fruc={ true }, url="Junior%20Series%20Promos"},--Junior Series Promos
-[0]={id=  0, lang=all, fruc={ true }, url="Junior%20Super%20Series%20Promos"},--Junior Super Series Promos
-[0]={id=  0, lang=all, fruc={ true }, url="Japan%20Junior%20Tournament%20Promos"},--Japan Junior Tournament Promos
---[  9] = "Video Game Promos";
-[0]={id=  0, lang=all, fruc={ true }, url="Duels%20of%20the%20Planeswalkers%20Promos"},--Duels of the Planeswalkers Promos
---[  8] = "Stores Promos";
-[0]={id=  0, lang=all, fruc={ true }, url="Walmart%20Promos"},--Walmart Promos
---[  7] = "Magazine Inserts";
-[0]={id=  0, lang=all, fruc={ true }, url="The%20Duelist%20Promos"},--The Duelist Promos
---[  6] = "Comic Inserts";
---[  5] = "Book Inserts";
-[0]={id=  0, lang=all, fruc={ true }, url="Harper%20Prism%20Promos"},--Harper Prism Promos
+[10] ={id= 10, lang=all, fruc={ true }, url="Junior%20Series%20Promos",--Junior Series Promos
+											"Junior%20Super%20Series%20Promos",--Junior Super Series Promos
+											"Japan%20Junior%20Tournament%20Promos",--Japan Junior Tournament Promos
+											"Magic%20Scholarship%20Series%20Promos"},--Magic Scholarship Series Promos
+[9]=  {id=  9, lang=all, fruc={ true }, url= -- "Video Game Promos";
+											"Duels%20of%20the%20Planeswalkers%20Promos",--Duels of the Planeswalkers Promos
+											"Oversized%206x9%20Promos"},--Oversized 6x9 Promos
+[8]=  {id=  8, lang=all, fruc={ true }, url= -- "Stores Promos";
+											"Walmart%20Promos"},--Walmart Promos
+[7]=  {id=  7, lang=all, fruc={ true }, url= -- "Magazine Inserts"
+											"The%20Duelist%20Promos",--The Duelist Promos
+											"Oversized%206x9%20Promos",--Oversized 6x9 Promos
+											"CardZ%20Promos",--CardZ Promos
+											"TopDeck%20Promos"},--TopDeck Promos
+[6]=  {id=  6, lang=all, fruc={ true }, url=-- "Comic Inserts"
+											"Armada%20Comics",--Armada Comics
+											"Dengeki%20Maoh%20Promos",--Dengeki Maoh Promos
+											"IDW%20Promos"},--IDW Promos
+[5]=  {id=  5, lang=all, fruc={ true }, url="Harper%20Prism%20Promos"},--Harper Prism Promos = "Book Inserts"
 --[  4] = "Ultra Rare Cards";
 [2]  ={id=  2, lang=all, fruc={ true }, url="DCI%20Promos"},--DCI Promos
 -- unknown
-[0]={id=  0, lang=all, fruc={ true }, url="TopDeck%20Promos"},--TopDeck Promos
-[0]={id=  0, lang=all, fruc={ true }, url="CardZ%20Promos"},--CardZ Promos
-[0]={id=  0, lang=all, fruc={ true }, url="Magic%20Scholarship%20Series%20Promos"},--Magic Scholarship Series Promos
-[0]={id=  0, lang=all, fruc={ true }, url="Dengeki%20Maoh%20Promos"},--Dengeki Maoh Promos
-[0]={id=  0, lang=all, fruc={ true }, url="IDW%20Promos"},--IDW Promos
 [0]={id=  0, lang=all, fruc={ true }, url="Promos"},--Promos
-[0]={id=  0, lang=all, fruc={ true }, url="Revista%20Serra%20Promos"},--Revista Serra Promos
-[0]={id=  0, lang=all, fruc={ true }, url="Filler%20Cards"},--Filler Cards
-[0]={id=  0, lang=all, fruc={ true }, url="TokyoMTG%20Products"},--TokyoMTG Products
-[0]={id=  0, lang=all, fruc={ true }, url="Mystic%20Shop%20Products"},--Mystic Shop Products
-[0]={id=  0, lang=all, fruc={ true }, url="Armada%20Comics"},--Armada Comics
-[0]={id=  0, lang=all, fruc={ true }, url="Blank%20Cards"},--Blank Cards
-[0]={id=  0, lang=all, fruc={ true }, url="Ultra-Pro%20Puzzle%20Cards"},--Ultra-Pro Puzzle Cards
-[0]={id=  0, lang=all, fruc={ true }, url="Oversized%206x9%20Promos"},--Oversized 6x9 Promos
 [0]={id=  0, lang=all, fruc={ true }, url="Simplified%20Chinese%20Alternate%20Art%20Cards"},--Simplified Chinese Alternate Art Cards
-[0]={id=  0, lang=all, fruc={ true }, url="JingHe%20Age:%202002%20Tokens"},--JingHe Age: 2002 Tokens
-[0]={id=  0, lang=all, fruc={ true }, url="JingHe%20Age:%20MtG%2010th%20Anniversary%20Tokens"},--JingHe Age: MtG 10th Anniversary Tokens
-[0]={id=  0, lang=all, fruc={ true }, url="2005%20Player%20Cards"},--2005 Player Cards
-[0]={id=  0, lang=all, fruc={ true }, url="2006%20Player%20Cards"},--2006 Player Cards
-[0]={id=  0, lang=all, fruc={ true }, url="2007%20Player%20Cards"},--2007 Player Cards
-[0]={id=  0, lang=all, fruc={ true }, url="Starcity%20Games:%20Commemorative%20Tokens"},--Starcity Games: Commemorative Tokens
-[0]={id=  0, lang=all, fruc={ true }, url="Starcity%20Games:%20Creature%20Collection"},--Starcity Games: Creature Collection
-[0]={id=  0, lang=all, fruc={ true }, url="Starcity%20Games:%20Justin%20Treadway%20Tokens"},--Starcity Games: Justin Treadway Tokens
-[0]={id=  0, lang=all, fruc={ true }, url="Starcity%20Games:%20Kristen%20Plescow%20Tokens"},--Starcity Games: Kristen Plescow Tokens
-[0]={id=  0, lang=all, fruc={ true }, url="Starcity%20Games:%20Token%20Series%20One"},--Starcity Games: Token Series One
-[0]={id=  0, lang=all, fruc={ true }, url="Pro%20Tour%201996:%20Mark%20Justice"},--Pro Tour 1996: Mark Justice
-[0]={id=  0, lang=all, fruc={ true }, url="Pro%20Tour%201996:%20Michael%20Locanto"},--Pro Tour 1996: Michael Locanto
-[0]={id=  0, lang=all, fruc={ true }, url="Pro%20Tour%201996:%20Bertrand%20Lestree"},--Pro Tour 1996: Bertrand Lestree
-[0]={id=  0, lang=all, fruc={ true }, url="Pro%20Tour%201996:%20Preston%20Poulter"},--Pro Tour 1996: Preston Poulter
-[0]={id=  0, lang=all, fruc={ true }, url="Pro%20Tour%201996:%20Eric%20Tam"},--Pro Tour 1996: Eric Tam
-[0]={id=  0, lang=all, fruc={ true }, url="Pro%20Tour%201996:%20Shawn%20Regnier"},--Pro Tour 1996: Shawn Regnier
-[0]={id=  0, lang=all, fruc={ true }, url="Pro%20Tour%201996:%20George%20Baxter"},--Pro Tour 1996: George Baxter
-[0]={id=  0, lang=all, fruc={ true }, url="Pro%20Tour%201996:%20Leon%20Lindback"},--Pro Tour 1996: Leon Lindback
 [0]={id=  0, lang=all, fruc={ true }, url="World%20Championship%20Decks"},--World Championship Decks
 [0]={id=  0, lang=all, fruc={ true }, url="WCD%201997:%20Svend%20Geertsen"},--WCD 1997: Svend Geertsen
 [0]={id=  0, lang=all, fruc={ true }, url="WCD%201997:%20Jakub%20Slemr"},--WCD 1997: Jakub Slemr
@@ -1032,23 +1080,59 @@ site.sets = {
 [0]={id=  0, lang=all, fruc={ true }, url="WCD%202004:%20Manuel%20Bevand"},--WCD 2004: Manuel Bevand
 [0]={id=  0, lang=all, fruc={ true }, url="WCD%202004:%20Aeo%20Paquette"},--WCD 2004: Aeo Paquette
 [0]={id=  0, lang=all, fruc={ true }, url="WCD%202004:%20Julien%20Nuijten"},--WCD 2004: Julien Nuijten
+[0]={id=  0, lang=all, fruc={ true }, url="Ultra-Pro%20Puzzle%20Cards"},--Ultra-Pro Puzzle Cards
 [0]={id=  0, lang=all, fruc={ true }, url="Misprints"},--Misprints
+[0]={id=  0, lang=all, fruc={ true }, url="Filler%20Cards"},--Filler Cards
+[0]={id=  0, lang=all, fruc={ true }, url="Blank%20Cards"},--Blank Cards
+[0]={id=  0, lang=all, fruc={ true }, url="2005%20Player%20Cards"},--2005 Player Cards
+[0]={id=  0, lang=all, fruc={ true }, url="2006%20Player%20Cards"},--2006 Player Cards
+[0]={id=  0, lang=all, fruc={ true }, url="2007%20Player%20Cards"},--2007 Player Cards
+[0]={id=  0, lang=all, fruc={ true }, url="Custom%20Tokens"},--Custom Tokens
+[0]={id=  0, lang=all, fruc={ true }, url="Revista%20Serra%20Promos"},--Revista Serra Promos
 [0]={id=  0, lang=all, fruc={ true }, url="Your%20Move%20Games%20Tokens"},--Your Move Games Tokens
 [0]={id=  0, lang=all, fruc={ true }, url="Tierra%20Media%20Tokens"},--Tierra Media Tokens
-[0]={id=  0, lang=all, fruc={ true }, url="Custom%20Tokens"},--Custom Tokens
+[0]={id=  0, lang=all, fruc={ true }, url="TokyoMTG%20Products"},--TokyoMTG Products
+[0]={id=  0, lang=all, fruc={ true }, url="Mystic%20Shop%20Products"},--Mystic Shop Products
+[0]={id=  0, lang=all, fruc={ true }, url="JingHe%20Age:%202002%20Tokens"},--JingHe Age: 2002 Tokens
+[0]={id=  0, lang=all, fruc={ true }, url="JingHe%20Age:%20MtG%2010th%20Anniversary%20Tokens"},--JingHe Age: MtG 10th Anniversary Tokens
+[0]={id=  0, lang=all, fruc={ true }, url="Starcity%20Games:%20Commemorative%20Tokens"},--Starcity Games: Commemorative Tokens
+[0]={id=  0, lang=all, fruc={ true }, url="Starcity%20Games:%20Creature%20Collection"},--Starcity Games: Creature Collection
+[0]={id=  0, lang=all, fruc={ true }, url="Starcity%20Games:%20Justin%20Treadway%20Tokens"},--Starcity Games: Justin Treadway Tokens
+[0]={id=  0, lang=all, fruc={ true }, url="Starcity%20Games:%20Kristen%20Plescow%20Tokens"},--Starcity Games: Kristen Plescow Tokens
+[0]={id=  0, lang=all, fruc={ true }, url="Starcity%20Games:%20Token%20Series%20One"},--Starcity Games: Token Series One
 	}
 --end table site.sets
 
 --[[- card name replacement tables.
 
   fields are for subtables indexed by #number setid.
- { #number (setid)= #table { #string (oldname)= #string , ... } , ... }
+ { #number (setid)= #table { #string (oldname)= #string (newname), ... } , ... }
  
  @type site.namereplace
  @field [parent=#site.namereplace] #string name
 ]]
 site.namereplace = {
 --TODO KTK "Version 2" -> "Intro"
+} -- end table site.namereplace
+
+--[[- set replacement tables.
+
+  fields are for subtables indexed by #number setid.
+ { #number (setid)= #table { #string (cardname)= #string (newset), ... } , ... }
+ 
+ @type site.settweak
+ @field [parent=#site.settweak] #string name
+]]
+site.settweak = {
+[806] = { -- JOU
+["Spear of the General"]		= "Prerelease Promos",
+["Cloak of the Philosopher"]	= "Prerelease Promos",
+["Lash of the Tyrant"]			= "Prerelease Promos",
+["Axe of the Warmonger"]		= "Prerelease Promos",
+["Bow of the Hunter"]			= "Prerelease Promos",
+["The Destined"]				= "REL",
+["The Champion"]				= "MGD",
+},
 } -- end table site.namereplace
 
 --[[- card variant tables.
@@ -1112,17 +1196,22 @@ function site.SetExpected()
  ]]
 	site.expected = {
 --- pset defaults to LHpi.Data.sets[setid].cardcount.reg, if available and not set otherwise here.
---  LHpi.Data.sets[setid]cardcount has 6 fields you can use avoid hardcoded numbers here: { reg, tok, both, nontr, repl, all }.
+--  LHpi.Data.sets[setid]cardcount has 6 fields you can use to avoid hardcoded numbers here: { reg, tok, both, nontr, repl, all }.
 
 --- if EXPECTTOKENS is true, LHpi.Data.sets[setid].cardcount.tok is added to pset default.
--- @field [parent=#site.expected] #boolean EXPECTTOKENS
-	EXPECTTOKENS = true,
+-- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
+-- @field [parent=#site.expected] #boolean or #table { #boolean,...} tokens
+	tokens = true,
+--	tokens = { [1]="ENG" },
+--	tokens = { "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR",[12]="HEB",[13]="ARA",[14]="LAT",[15]="SAN",[16]="GRC" }
 --- if EXPECTNONTRAD is true, LHpi.Data.sets[setid].cardcount.nontrad is added to pset default.
--- @field [parent=#site.expected] #boolean EXPECTNONTRAD
-	EXPECTNONTRAD = true,
+-- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
+-- @field [parent=#site.expected] #boolean nontrad
+	nontrad = true,
 --- if EXPECTREPL is true, LHpi.Data.sets[setid].cardcount.repl is added to pset default.
--- @field [parent=#site.expected] #boolean EXPECTREPL
-	EXPECTREPL = true,
+-- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
+-- @field [parent=#site.expected] #boolean replica
+	replica = true,
 	}--end table site.expected
 end--function site.SetExpected()
 --EOF

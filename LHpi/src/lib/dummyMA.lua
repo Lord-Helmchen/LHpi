@@ -449,7 +449,6 @@ end--function CompareSetlist
 --[[- compare LHpi.Data.sets with Prices/Database/Sets.txt
 Before using this function, you need to convert Sets.txt from UCS-2 to UTF-8.
 
-
  @function [parent=#dummy] CompareDataSets
  @param #string mapath	path to MA
  @param #number libver
@@ -716,7 +715,7 @@ function main()
 		SAVELOG = true,
 		SAVEHTML = true,
 --		SAVEHTML = false,
---		DEBUG = true,
+		DEBUG = true,
 --		DEBUGFOUND = true,
 --		DEBUGVARIANTS = true,
 --		SAVETABLE=true,
@@ -730,7 +729,7 @@ function main()
 		[5]={name="\\MTG Mint Card.lua",path=dummy.savepath,savepath=dummy.savepath},
 		[6]={name="\\Import Prices.lua",path=dummy.savepath,savepath=dummy.savepath},
 		[7]={name="LHpi.mtgprice.com.lua",path=dummy.path,savepath=dummy.savepath},
-		[8]={name="LHpi.magickartenmarktDE.lua",path=dummy.path,savepath=dummy.savepath},
+		[8]={name="LHpi.magickartenmarkt.lua",path=dummy.path,savepath=dummy.savepath},
 	}
 	-- select a predefined script to be tested
 --	dummy.fakesitescript()
@@ -750,13 +749,13 @@ function main()
 --	local importlangs = { [9] = "szh" }
 --	local importlangs = dummy.alllangs
 --	local importsets = { [0] = "fakeset"; }
---	local importsets = { [640] = "some set"; }
-	local importsets = { [808]="catchall" }
+	local importsets = { [808]="some set" }
 --	local importsets = { [220]="foo";[800]="bar";[0]="baz";}
 --	local importsets = dummy.coresets
 --	local importsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 
 	-- now try to break the script :-)
+	--require = nil--test sandbox workaround
 --	LHpi.DoImport(importfoil, importlangs, importsets)
 	ImportPrice( importfoil, importlangs, importsets )
 

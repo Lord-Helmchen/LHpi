@@ -28,9 +28,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 2.14
 GetSourceData split into GetSourceData and ParseSourceData.
 this change is completely transparent to existing sitescripts, but having GetSourceData seperated allows to use it from the sitescript for special cases.
-LHpi.GetSourceData( sourceurl,urldetails ) now returns #string sourcedata
-LHpi.ParseSourceData( sourcedata,sourceurl,urldetails ) does the parsing previously done by GetSourceData and returns the #table sourceTable
-GetSourceData converts url to filename if OFFLINE
+LHpi.GetSourceData( sourceurl,urldetails )
+* now returns #string sourcedata
+* converts url to filename if OFFLINE
+* fixed savepath==nil handling (needed when called before DoImport has run)
+LHpi.ParseSourceData( sourcedata,sourceurl,urldetails )
+* does the parsing previously done by GetSourceData and returns the #table sourceTable
+* copes with site.HtmlData returning (reg-/foil-)prices as #number or table
+* shortcut for sourcedata==nil
+BuildCardData copes with (reg-/foil-)prices as #number or #table
+Logtable no longer strictly requires #table arguments
+MainImportCycle fixed CHECKEXPECTED handling for semi-available languages
+removed some leftover commented-out code
+improved some comments and log msgs
+
 ]]
 
 --TODO configure via extension scriptname.OPTION.lua for:
@@ -76,6 +87,7 @@ end -- function ImportPrice
 ]]
 
 function LHpi.DoImport (importfoil , importlangs , importsets)
+--TODO move initializing to seperate function?
 	--default values for feedback options
 	if VERBOSE==nil then VERBOSE = false end
 	if LOGDROPS==nil then LOGDROPS = false end
@@ -133,8 +145,8 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 			SAVETABLE = false
 			LHpi.Log( "failed to write file to savepath " .. savepath .. ". Disabling SAVEHTML and SAVETABLE" )
 			if DEBUG then
+				print( "failed to write file to savepath " .. savepath .. ". Disabling SAVEHTML and SAVETABLE" )
 				error( "failed to write file to savepath " .. savepath .. "!" )
-				--print( "failed to write file to savepath " .. savepath .. ". Disabling SAVEHTML and SAVETABLE" )
 			end
 		end -- if not folderwritable
 	end -- if SAVEHTML
@@ -722,7 +734,7 @@ function LHpi.GetSourceData( url , details ) --
 		if site.FetchSourceDataFromOAuth then
 			sourcedata, status = site.FetchSourceDataFromOAuth( url )
 		else
-			error("oauth request not implemented yet")
+			error("site.FetchSourceDataFromOAuth not implemented !")
 		end
 		if not sourcedata or sourcedata == "" then
 			LHpi.Log( "!! site.FetchSourceDataFromOAuth failed for " .. url )
@@ -738,7 +750,8 @@ function LHpi.GetSourceData( url , details ) --
 			return nil
 		end
 	end -- if details.isfile
-	if SAVEHTML and not OFFLINE then
+
+	if SAVEHTML and (not OFFLINE) then
 		url = string.gsub(url, '[/\\:%*%?<>|"]', "_")
 		LHpi.Log( "Saving source html to file: \"" .. (savepath or "") .. url .. "\"" )
 		ma.PutFile( (savepath or "") .. url , sourcedata , 0 )
@@ -774,19 +787,42 @@ function LHpi.ParseSourceData( sourcedata,sourceurl,urldetails )
 			LHpi.Log( "FOUND : " .. foundstring )
 		end
 		for _datanum,foundData in next, site.ParseHtmlData(foundstring , urldetails ) do
-			-- divide price by 100 again (see site.ParseHtmlData in sitescript for reason)
 			-- do some initial input sanitizing: "_" to " "; remove spaces from start and end of string
 			for lid,_cName in pairs( foundData.names ) do
 				if urldetails.setid == 600 then
 					foundData.names[lid] = string.gsub( foundData.names[lid], "^_+$" , "Unhinged Shapeshifter" )
 				end
-				foundData.price[lid] = ( foundData.price[lid] or 0 ) / 100
 				foundData.names[lid] = LHpi.Toutf8( foundData.names[lid] )
 				foundData.names[lid] = string.gsub( foundData.names[lid], "_", " " )
 				foundData.names[lid] = string.gsub( foundData.names[lid], "^%s*(.-)%s*$", "%1" )
 			end -- for lid,_cName
+			-- divide price by 100 again (see site.ParseHtmlData in sitescript for reason)
+			if "Table" == type(foundData.price) then
+				for lid,lang in pairs(foundData.price) do
+					foundData.price[lid] = ( foundData.price[lid] or 0 ) / 100
+				end
+			else
+				foundData.price = ( foundData.price or 0 ) / 100
+			end-- if "Table"
+			if foundData.regprice then
+				if "Table" == type(foundData.regprice) then
+					for lid,lang in pairs(foundData.regprice) do
+						foundData.regprice[lid] = ( foundData.regprice[lid] or 0 ) / 100
+					end
+				else
+					foundData.regprice = ( foundData.regprice or 0 ) / 100
+				end-- if "Table"
+			end--if foundData.regprice
+			if foundData.foilprice then
+				if "Table" == type(foundData.foilprice) then
+					for lid,lang in pairs(foundData.foilprice) do
+						foundData.foilprice[lid] = ( foundData.foilprice[lid] or 0 ) / 100
+					end
+				else
+					foundData.foilprice = ( foundData.foilprice or 0 ) / 100
+				end-- if "Table"
+			end--if foundData.foilprice
 			if next( foundData.names ) then
---				table.insert( sourceTable , { names = foundData.names, price = foundData.price , pluginData = foundData.pluginData } )
 				table.insert( sourceTable , foundData ) -- actually keep ParseHtmlData-supplied information
 			else -- nothing was found
 				if VERBOSE or DEBUG then
@@ -822,7 +858,7 @@ end--function LHpi.ParseSourceData
  @param #number setid		(see "..\Database\Sets.txt")
  @param #string importfoil	"y"|"n"|"o" passed from DoImport to drop unwanted cards
  @param #table importlangs	{ #number (langid)= #string, ... } passed from DoImport to drop unwanted cards
- @return #table		{ name= #string , drop= #boolean , lang= #table , (optional) names= #table , variant= #table , regprice= #table , foilprice= #table , objtype= #number }  : card
+ @return #table		{ name= #string , drop= #boolean , lang= #table , (optional) names= #table , variant= #table , regprice= #numer or #table , foilprice= #number or #table , objtype= #number }  : card
  @return #number	0 or 1: namereplace event to be counted in LHpi.MainImportCycle
  @return #number	0 or 1: foiltweak event to be counted in LHpi.MainImportCycle
  
@@ -877,6 +913,22 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 	if sourcerow.drop then -- keep site.ParseHtmlData preset drop
 		card.drop = sourcerow.drop
 	end -- if
+	
+	-- convert #number price to #table { #number (langid) = #number, ... }
+	if type(sourcerow.regprice) ~= "Table" then
+		local sourceprice=sourcerow.regprice
+		sourcerow.regprice={}
+		for lid,_ in pairs(card.lang) do
+			sourcerow.regprice[lid]=sourceprice
+		end	
+	end
+	if type(sourcerow.foilprice) ~= "Table" then
+		local sourceprice=sourcerow.foilprice
+		sourcerow.foilprice={}
+		for lid,_ in pairs(card.lang) do
+			sourcerow.foilprice[lid]=sourceprice
+		end	
+	end
 
 	--[[ do site-specific card data manipulation before processing 
 	]]
@@ -1569,7 +1621,7 @@ end -- function LHpi.SetPrice(setid, name, card)
  file encoding is utf-8 without BOM
  @function [parent=#LHpi] SaveCSV( setid , tbl , path )
  @param	#number setid	(see "Database\Sets.txt")
- @param #table tbl		on set's cardsetTable
+ @param #table tbl		one set's cardsetTable
  @param #string path	path to save csv into, must end in "\\"
 ]]
 function LHpi.SaveCSV( setid , tbl , path )
@@ -1812,7 +1864,8 @@ function LHpi.Logtable( tbl , str , l )
 			LHpi.Log( string.format("BIGTABLE %s sent to log in %i rows", name,c ) , llvl )
 		end
 	else
-		error( "LHpi.Logtable called for non-table" )
+		--error( "LHpi.Logtable called for non-table" )
+		LHpi.Log(LHpi.Tostring(tbl))
 	end
 end -- function LHpi.Logtable
 
