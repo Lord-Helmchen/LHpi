@@ -1245,14 +1245,14 @@ function site.SetExpected( importfoil , importlangs , importsets )
 	-- I'm too lazy to fill in site.expected myself, let the script do it ;-)
 	for sid,name in pairs(importsets) do
 		if site.expected[sid] then
-			if site.expected[sid].pset and site.expected[sid].duppset and site.expected.pset.dup then			
+			if site.expected[sid].pset and site.expected[sid].duppset and site.expected[sid].pset.dup then			
 				for lid,lang in pairs(site.expected[sid].duppset) do
 					site.expected[sid].pset[lid] = site.expected[sid].pset.dup or 0
 				end
 			site.expected[sid].duppset=nil
 			site.expected[sid].pset.dup=nil
 			end
-			if site.expected[sid].failed and site.expected[sid].dupfail and site.expected.failed.dup then			
+			if site.expected[sid].failed and site.expected[sid].dupfail and site.expected[sid].failed.dup then			
 				for lid,lang in pairs(site.expected[sid].dupfail) do
 					site.expected[sid].failed[lid] = site.expected[sid].failed.dup or 0
 				end
