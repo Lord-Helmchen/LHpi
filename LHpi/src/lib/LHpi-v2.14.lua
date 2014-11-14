@@ -41,6 +41,12 @@ Logtable no longer strictly requires #table arguments
 MainImportCycle fixed CHECKEXPECTED handling for semi-available languages
 removed some leftover commented-out code
 improved some comments and log msgs
+DoImport
+*changed site.expected.EXPECTTOKENS to site.expected.tokens
+*changed site.expected.EXPECTNONTRAD to site.expected.nontrad
+*changed site.expected.EXPECTREPL to site.expected.replica
+*all three can be #boolean (like before) or #table { [langid]=#boolean,... }
+
 
 ]]
 
@@ -177,8 +183,8 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 	end -- for
 	if not site.condprio then site.condprio={ [0] = "NONE" } end
 	if CHECKEXPECTED then
-		if site.SetExpected then --if as legacy wrapping --TODO remove on next library version
-			site.SetExpected() -- new way to set site.expected table
+		if site.SetExpected then
+			site.SetExpected( supImportfoil , supImportlangs , supImportsets ) -- actively set site.expected table
 		end--legacy wrapping
 		if not site.expected then site.expected = {} end
 		for sid,_setname in pairs(supImportsets) do
@@ -197,16 +203,13 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 						local psetExpected
 						if ( LHpi.Data.sets[sid] and LHpi.Data.sets[sid].cardcount ) then
 							psetExpected = LHpi.Data.sets[sid].cardcount.reg or 0
-							if site.expected.EXPECTTOKENS then
-							psetExpected = psetExpected + LHpi.Data.sets[sid].cardcount.tok or 0
---								site.expected[sid].pset[lid] = LHpi.Data.sets[sid].cardcount.reg + LHpi.Data.sets[sid].cardcount.tok 
---							else
---								site.expected[sid].pset[lid] = LHpi.Data.sets[sid].cardcount.reg
+							if site.expected.tokens and ( "boolean"==type(site.expected.tokens) or site.expected.tokens[lid] ) then
+								psetExpected = psetExpected + (LHpi.Data.sets[sid].cardcount.tok or 0)
 							end
-							if site.expected.EXPECTNONTRAD then
+							if site.expected.nontrad and ( "boolean"==type(site.expected.nontrad) or site.expected.nontrad[lid] ) then
 								psetExpected = psetExpected + (LHpi.Data.sets[sid].cardcount.nontrad or 0)
 							end
-							if site.expected.EXPECTREPL then
+							if site.expected.replica and ( "boolean"==type(site.expected.replica) or site.expected.replica[lid] ) then
 								psetExpected = psetExpected + (LHpi.Data.sets[sid].cardcount.repl or 0)
 							end
 							site.expected[sid].pset[lid] = psetExpected
@@ -436,21 +439,61 @@ function LHpi.MainImportCycle( sourcelist , totalhtmlnum , importfoil , importla
 					LHpi.Log( string.format( "[%i] contains unknown to LHpi number of cards.", cSet.id ) )
 				end
 			end
-			if DEBUG then
-				LHpi.Log( "persetstats " .. LHpi.Tostring( persetcount ) , 1 )
-			end
 			
 			if CHECKEXPECTED then
 				if site.expected[sid] then
 					local allgood = true
-					for lid,_cLang in pairs(importlangs) do
-						if ( site.expected[cSet.id].pset[lid] or 0 ) ~= persetcount.pset[lid] then allgood = false end
-						if ( site.expected[cSet.id].failed[lid] or 0 ) ~= persetcount.failed[lid] then allgood = false end
-					end -- for lid,_cLang in importlangs
+LHpi.Log("site.expected.pset:"..LHpi.Tostring(site.expected[cSet.id].pset))
+LHpi.Log("persetcount.pset  :"..LHpi.Tostring(persetcount.pset))					
+					if DEBUG then
+						LHpi.Log("site.expected.pset:"..LHpi.Tostring(site.expected[cSet.id].pset))
+						LHpi.Log("persetcount.pset  :"..LHpi.Tostring(persetcount.pset))					
+					end
+					print("site.expected.pset",LHpi.Tostring(site.expected[cSet.id].pset))
+					print("persetcount.pset",LHpi.Tostring(persetcount.pset))
+					for lid,cLang in pairs(importlangs) do
+						if (site.expected[cSet.id].pset[lid] or 0) ~= (persetcount.pset[lid] or 0) then
+							allgood = false
+LHpi.Log(string.format("allgood set false: site.expected[%s].pset[%s]=%s - persetcount.pset[%s]=%s",cSet.id,lid,tostring(site.expected[cSet.id].pset[lid]),lid,tostring(persetcount.pset[lid])))
+							if DEBUG then
+								print("allgood set false in pset "..tostring(cLang) )
+								LHpi.Log(string.format("allgood set false: site.expected[%s].pset[%s]=%s - persetcount.pset[%s]=%s",cSet.id,lid,tostring(site.expected[cSet.id].pset[lid]),lid,tostring(persetcount.pset[lid])))
+							end 
+						end
+						if (site.expected[cSet.id].failed[lid] or 0) ~= (persetcount.failed[lid] or 0) then
+							allgood = false
+LHpi.Log(string.format("allgood set false: site.expected[%s].failed[%s]=%s - persetcount.failed[%s]=%s",cSet.id,lid,tostring(site.expected[cSet.id].failed[lid]),lid,tostring(persetcount.failed[lid])))
+							if DEBUG then
+								print("allgood set false in failed "..tostring(cLang) )
+								LHpi.Log(string.format("allgood set false: site.expected[%s].failed[%s]=%s - persetcount.failed[%s]=%s",cSet.id,lid,tostring(site.expected[cSet.id].failed[lid]),lid,tostring(persetcount.failed[lid])))
+							end 
+						end
+					end -- for lid,cLang in importlangs
 					if STRICTEXPECTED then
-						if ( site.expected[sid].dropped or 0 ) ~= persetcount.dropped then allgood = false end
-						if ( site.expected[sid].namereplaced or 0 ) ~= persetcount.namereplaced then allgood = false end
-						if ( site.expected[sid].foiltweaked or 0 ) ~= persetcount.foiltweaked then allgood = false end
+						if ( site.expected[sid].dropped or 0 ) ~= persetcount.dropped then
+							allgood = false
+LHpi.Log("allgood set false in dropped" )
+							if DEBUG then
+								LHpi.Log("allgood set false in dropped" )
+								print("allgood set false in dropped" )
+							end 
+						end
+						if ( site.expected[sid].namereplaced or 0 ) ~= persetcount.namereplaced then
+							allgood = false
+LHpi.Log("allgood set false in namereplaced" )
+							if DEBUG then
+								LHpi.Log("allgood set false in namereplaced" )
+								print("allgood set false in namereplaced" )
+							end 
+						end
+						if ( site.expected[sid].foiltweaked or 0 ) ~= persetcount.foiltweaked then
+							allgood = false
+LHpi.Log("allgood set false in foiltweaked" )
+							if DEBUG then
+								LHpi.Log("allgood set false in foiltweaked" )
+								print("allgood set false in foiltweaked" )
+							end 
+						end
 					end
 					if not allgood then
 						LHpi.Log( string.format( ":-( persetcount for %s (id %i) differs from expected. ", importsets[sid], sid ) , 1)
@@ -1228,6 +1271,15 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 	if site.BCDpluginPost then
 		card = site.BCDpluginPost ( card , setid , importfoil, importlangs )
 	end
+	if string.find( card.name , "%(DROP[ %a]*%)" ) then
+		card.drop = true
+		if DEBUG then
+			LHpi.Log ( "LHpi.buildCardData\t dropped card " .. LHpi.Tostring(card) , 2 )
+		end
+	end -- if entry to be dropped
+	if card.drop then
+		return card
+	end--if card.drop
 
 	--make sure userParams are honoured, even when preset data is present
 	if importfoil == "n" then

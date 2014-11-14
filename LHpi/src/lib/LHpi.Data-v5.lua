@@ -28,16 +28,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-v5
-renamed Data.sets[setid].cardcount.overs to Data.sets[setid].cardcount.repl
-add "Token" suffix to variant tables to enable objtype=2 in LHpi.BuildCardData
-add Nontrad,Replica variants to 807,769,787,70,761,786,784,782,801,778,23,21,20
-added 809,810,811,812,813
-fix cardcount, variant and/or foiltweak tables for 807,812,31,30,25,23,21,10
+v6
+fixed names for 21,40,814
 ]]
 
-
---TODO param importsets and nil all others to save memory?
 
 local Data={}
 ---	data file version
@@ -83,6 +77,7 @@ Data.languages = {
 	[14] = {id=14, full = "Latin",					abbr="LAT" },
 	[15] = {id=15, full = "Sanskrit",				abbr="SAN" },
 	[16] = {id=16, full = "Ancient Greek",			abbr="GRC" },
+	[17] = {id=17, full = "Phyrexian",				abbr="PHY" },
 }
 
 
@@ -3820,8 +3815,11 @@ SpecialSets = nil,
 	foil="n",
 	cardcount={ reg=0, tok=0, nontr=0, repl=52 }, 
 	variants={
+--TODO 69 seperate 	variants
 ["Ambition’s Cost"]			= { "8ED" },
 ["Avatar of Hope"]			= { "8ED", "PRM" },
+["Avatar of Hope (8ED)"]	= { "8ED", false },
+["Avatar of Hope (PRM)"]	= { false, "PRM" },
 ["Blinding Angel"]			= { "8ED" },
 ["Clone"]					= { "9ED" },
 ["Curiosity"]				= { "8ED" },
@@ -3839,6 +3837,8 @@ SpecialSets = nil,
 ["Llanowar Behemoth"]		= { "8ED" },
 ["Llanowar Elves"]			= { "9ED" },
 ["Lord of the Undead"]		= { "8ED", "PRM" },
+["Lord of the Undead (8ED)"]= { "8ED", false },
+["Lord of the Undead (PRM)"]= { false, "PRM" },
 ["Mahamoti Djinn"]			= { "9ED" },
 ["Merchant of Secrets"]		= { "8ED" },
 ["Merchant Scroll"]			= { "8ED" },
@@ -3847,10 +3847,14 @@ SpecialSets = nil,
 ["Naturalize"]				= { "8ED" },
 ["Nekrataal"]				= { "8ED" },
 ["Obliterate"]				= { "8ED", "PRM" },
+["Obliterate (8ED)"]		= { "8ED", false },
+["Obliterate (PRM)"]		= { false, "PRM" },
 ["Orcish Spy"]				= { "8ED" },
 ["Paladin en-Vec"]			= { "9ED" },
 ["Phyrexian Arena"]			= { "8ED" },
-["Phyrexian Plaguelord"]	= { "8ED", "PRM" },
+["Phyrexian Plaguelord"]		= { "8ED", "PRM" },
+["Phyrexian Plaguelord (8ED)"]	= { "8ED", false },
+["Phyrexian Plaguelord (PRM)"]	= { false, "PRM" },
 ["Plow Under"]				= { "8ED" },
 ["Primeval Force"]			= { "8ED" },
 ["Rathi Dragon"]			= { "9ED" },
@@ -3858,10 +3862,14 @@ SpecialSets = nil,
 ["Rukh Egg"]				= { "8ED" },
 ["Sage of Lat-Nam"]			= { "8ED" },
 ["Savannah Lions"]			= { "8ED", "PRM" },
+["Savannah Lions (8ED)"]	= { "8ED", false },
+["Savannah Lions (PRM)"]	= { false, "PRM" },
 ["Serra Angel"]				= { "9ED" },
 ["Skull of Orm"]			= { "8ED" },
 ["Suntail Hawk"]			= { "8ED" },
 ["Two-Headed Dragon"]		= { "8ED", "PRM" },
+["Two-Headed Dragon (8ED)"]	= { "8ED", false }, 
+["Two-Headed Dragon (PRM)"]	= { false, "PRM" }, 
 ["Underworld Dreams"]		= { "8ED" },
 ["Vampiric Spirit"]			= { "8ED" },
 ["Verdant Force"]			= { "9ED" },
@@ -3872,60 +3880,46 @@ SpecialSets = nil,
 -- @field [parent=#Data.sets] #table Promos
 Promos = nil,
 [50] = { name="Full Box Promotion",
---TODO [50]
---	foil="",
---	cardcount={ reg=0, tok=0, nontr=0, repl=0 }, 
---	variants={
---	},
+	foilonly=true,
+	cardcount={ reg=22, tok=0, nontr=0, repl=0 }, 
 },
 [45] = { name="Magic Premiere Shop",
---TODO [45]
---	foil="",
---	cardcount={ reg=0, tok=0, nontr=0, repl=0 }, 
+--JPN only
+	foil="y",
+	cardcount={ reg=51, tok=0, nontr=0, repl=0 }, 
+-- TODO [45] variants and foiltweak
 --	variants={
 --	},
 },
 [43] = { name="Two-Headed Giant Promos",
---TODO [43]
---	foil="",
---	cardcount={ reg=0, tok=0, nontr=0, repl=0 }, 
---	variants={
---	},
+	foilonly=true,
+	cardcount={ reg=1, tok=0, nontr=0, repl=0 }, 
 },
 [42] = { name="Summer of Magic Promos",
---TODO [42]
---	foil="",
---	cardcount={ reg=0, tok=0, nontr=0, repl=0 }, 
---	variants={
---	},
+	foilonly=true,
+	cardcount={ reg=2, tok=0, nontr=0, repl=0 }, 
 },
 [41] = { name="Happy Holidays Promos",
---TODO [41]
---	foil="",
---	cardcount={ reg=0, tok=0, nontr=0, repl=0 }, 
---	variants={
---	},
+	foilonly=true,
+	cardcount={ reg=8, tok=0, nontr=0, repl=0 }, 
 },
 [40] = { name="Arena/Colosseo Leagues Promos",
---TODO [40]
---	foil="",
---	cardcount={ reg=0, tok=0, nontr=0, repl=0 }, 
+	foil="y",
+	cardcount={ reg=83, tok=5, nontr=0, repl=83 }, 
+--TODO [40] variants, foiltweak
 --	variants={
 --	},
 },
 [33] = { name="Championships Prizes",
---TODO [33]
---	foil="",
---	cardcount={ reg=0, tok=0, nontr=0, repl=0 }, 
+	foil="y",
+	cardcount={ reg=4, tok=0, nontr=0, repl=14 }, 
+--TODO [33] variants,foiltweak
 --	variants={
 --	},
 },
 [32] = { name="Pro Tour Promos",
---TODO [32]
---	foil="",
---	cardcount={ reg=0, tok=0, nontr=0, repl=0 }, 
---	variants={
---	},
+	foilony=true,
+	cardcount={ reg=6, tok=0, nontr=0, repl=0 }, 
 },
 [31] = { name="Grand Prix Promos",
 	foilonly=true,
@@ -3939,9 +3933,9 @@ Promos = nil,
 	},
 },
 [27] = { name="Alternate Art Lands",
---TODO [27]
---	foil="",
---	cardcount={ reg=0, tok=0, nontr=0, repl=0 }, 
+	foil="n",
+	cardcount={ reg=35, tok=0, nontr=0, repl=0 }, 
+--TODO [27] variants
 --	variants={
 --	},
 },
@@ -4120,16 +4114,14 @@ Promos = nil,
 	},
 },
 [12] = { name="Hobby Japan Commemorative Cards",
---TODO [12]
---	foil="n",
---	cardcount={ reg=0, tok=0, nontr=0, repl=0 }, 
---	--jpn only
+-- JPN only
+	foil="n",
+	cardcount={ reg=5, tok=0, nontr=0, repl=0 }, 
 },
 [11] = { name="Redemption Program Cards",
---TODO [11]
---	foil="n",
---	cardcount={ reg=0, tok=0, nontr=0, repl=0 }, 
---	--jpn only
+-- JPN only
+	foil="n",
+	cardcount={ reg=1, tok=0, nontr=0, repl=0 }, 
 },
 [10] = { name="Junior Series Promos",
 	foilonly=true,
@@ -4162,7 +4154,7 @@ Promos = nil,
 	foilonly=true,
 	cardcount={ reg=12, tok=0, nontr=0, repl=1 }, 
 	variants={
---TODO 1 replica
+["Aswan Jaguar"]		= { "Aswan Jaguar", { "Replica"} },
 	},
 	foiltweak={
 ["Aswan Jaguar"] 				= { foil = false},
@@ -4179,7 +4171,11 @@ Promos = nil,
 	foil="n",
 	cardcount={ reg=7, tok=0, nontr=0, repl=5 }, 
 	variants={
---TODO 5 replica
+["Shivan Dragon"]		= { "Shivan Dragon",	{ "Replica"} },
+["Jester’s Cap"]		= { "Jester’s Cap",		{ "Replica"} },
+["Juzám Djinn"]			= { "Juzám Djinn",		{ "Replica"} },
+["Black Lotus"]			= { "Black Lotus",		{ "Replica"} },
+["Chaos Orb"]			= { "Chaos Orb",		{ "Replica"} },
 	},
 	foiltweak={
 ["Lightning Hounds"]	 		= { foil = true },
@@ -4190,7 +4186,7 @@ Promos = nil,
 	foil="n",
 	cardcount={ reg=14, tok=0, nontr=0, repl=1 }, 
 	variants={
---TODO 1 replica
+["Serra Angel"]		= { "Serra Angel", { "Replica"} },
 	},
 },
 [5] = { name="Book Inserts",
@@ -4215,7 +4211,6 @@ Promos = nil,
 ["same (2)"]		= { "samefromData"		, { false, "two" } },
 	},
 },
---[999] = { name="catchall for mkm download" },	
 }-- end table Data.sets
 
 for sid,set in pairs(Data.sets) do
@@ -4225,7 +4220,7 @@ for sid,set in pairs(Data.sets) do
 	end --if
 end -- for sid,count
 
---LHpi.Log( "LHpi.Data loaded and executed successfully." , 0 , nil , 0 )
-ma.Log( "LHpi.Data loaded and executed successfully." , 0 , nil , 0 )
+--LHpi.Log( "LHpi.Data loaded and executed successfully." , 0 , nil )
+ma.Log( "LHpi.Data loaded and executed successfully." )
 return Data
 --EOF

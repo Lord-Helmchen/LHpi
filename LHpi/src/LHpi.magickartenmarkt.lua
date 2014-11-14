@@ -627,20 +627,19 @@ function site.ParseHtmlData( foundstring , urldetails )
 	else
 		error("nothing here for xml yet")
 	end
-	local newCard = 	{ names = {}, lang={}, price = {}, pluginData={} }
-	local newFoilCard = { names = {}, lang={}, price = {}, pluginData={} }
-	newCard.foil = false
-	newFoilCard.foil=true
+	--print(LHpi.Tostring(product.name))
+	local newCard = 	{ names = { "" }, lang={}, price = 0, pluginData={}, foil=false }
+	local newFoilCard = { names = { "" }, lang={}, price = 0, pluginData={}, foil=true  }
 	local regprice  = string.gsub( product.priceGuide[priceType] , "[,.]" , "" ) --nonfoil price, use AVG by default
 	local foilprice = string.gsub( product.priceGuide["LOWFOIL"] , "[,.]" , "" ) --foil price
-	-- could just set name to productNamw[1].productName, as productName reflects mkm ui langs, not card langs		
-	for i,prodName in pairs(product.name) do
-		local langid = site.mapLangs[prodName.languageName] or error("unknown MKM language")
-		newCard.names[langid] = prodName.productName
-		newFoilCard.names[langid] = prodName.productName
-		--newCard.price[langid]= regprice
-		--newFoilCard.price[langid]= foilprice
-	end--for i,prodName
+	-- can just set names[1] to productName[1].productName, as productName reflects mkm ui langs, not card langs		
+	newCard.names[1] = product.name["1"].productName
+	newFoilCard.names[1] = product.name["1"].productName
+	--for i,prodName in pairs(product.name) do
+	--	local langid = site.mapLangs[prodName.languageName] or error("unknown MKM language")
+	--	newCard.names[langid] = prodName.productName
+	--	newFoilCard.names[langid] = prodName.productName
+	--end--for i,prodName
 	for lid,lang in pairs(site.sets[urldetails.setid].lang) do
 		newCard.lang[lid] = LHpi.Data.languages[lid].abbr
 		newFoilCard.lang[lid] = LHpi.Data.languages[lid].abbr
@@ -650,8 +649,7 @@ function site.ParseHtmlData( foundstring , urldetails )
 	local pluginData = { rarity=product.rarity, collectNr=product.number, set=product.expansion }
 	newCard.pluginData = pluginData
 	newFoilCard.pluginData = pluginData
-	local container={ newCard, newFoilCard }
-	return container
+	return { newCard, newFoilCard }
 end -- function site.ParseHtmlData
 
 --[[- special cases card data manipulation.
@@ -729,8 +727,9 @@ function site.BCDpluginPost( card , setid , importfoil, importlangs )
 		if LOGSETTWEAK or DEBUG then
 			LHpi.Log( string.format( "settweak saved %s with new set %s" ,card.name, site.settweak[setid][card.name] ), 1 )
 		end
-		card.name = card.name .. "(DROP settweaked to" .. site.settweak[setid][card.name] .. ")"
+		card.name = card.name .. "(DROP settweaked to " .. site.settweak[setid][card.name] .. ")"
 		settweaked=1
+		--TODO save to file instead of dropping
 	end -- site.settweak[setid]
 
 	
@@ -755,26 +754,14 @@ site.priceTypes = {	--Price guide entity
 }
 
 --[[- Map MKM langs to MA langs
-commented out langs that are not available as mkm site localization
  @field [parent=#site] #table mapLangs	{ #string langName = #number MAlangid, ... }
 ]]
 site.mapLangs = {
 	["English"]				=  1,
---	["Russian"]				=  2,
 	["German"]				=  3,
 	["French"]				=  4,
 	["Italian"]				=  5,
---	["Portuguese"]			=  6,
 	["Spanish"]				=  7,
---	["Japanese"]			=  8,
---	["Simplified Chinese"]	=  9,
---	["Traditional Chinese"]	= 10,
---	["Korean"]				= 11,
---	["Hebrew"]				= 12,
---	["Arabic"]				= 13,
---	["Latin"]				= 14,
---	["Sanskrit"]			= 15,
---	["Ancient Greek"]		= 16,
 }
 
 --[[- table of (supported) languages.
@@ -805,6 +792,7 @@ site.langs = {
 	[14] = { id=14, url="" },--Latin
 	[15] = { id=15, url="" },--Sanskrit
 	[16] = { id=16, url="" },--Ancient Greek
+	[17] = { id=17, url="" },--Phyrexian
 }
 --[[- table of available rarities.
  can contain url infixes for use in site.BuildUrl.
@@ -823,7 +811,7 @@ site.frucs = {
 	[1]= { id=1, name="api", url="" },
 }
 
-local all = { "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR",[12]="HEB",[13]="ARA",[14]="LAT",[15]="SAN",[16]="GRC" }
+local all = { "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }
 --[[- table of available sets.
  List alls sets that the site has prices for,
  and defines which frucs and languages are available for the set.
@@ -847,86 +835,86 @@ site.sets = {
 [770]={id=770, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT" }, fruc={ true }, url="Magic%202011"},--Magic 2011
 [759]={id=759, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Magic%202010"},--Magic 2010
 [720]={id=720, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Tenth%20Edition"},--Tenth Edition
-[630]={id=630, lang=all, fruc={ true }, url="Ninth%20Edition"},--Ninth Edition
+[630]={id=630, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Ninth%20Edition"},--Ninth Edition
 [550]={id=550, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Eighth%20Edition"},--Eighth Edition
 [460]={id=460, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Seventh%20Edition"},--Seventh Edition
 [360]={id=360, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Sixth%20Edition"},--Sixth Edition
 [250]={id=250, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Fifth%20Edition"},--Fifth Edition
 [180]={id=180, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Fourth%20Edition"},--Fourth Edition
-[179]={id=179, lang={ [6] = true, [8]=true }, fruc={ true }, url="Fourth%20Edition:%20Black%20Bordered"},--Fourth Edition: Black Bordered
+[179]={id=179, lang={ [6] = "POR", [8]="JPN" }, fruc={ true }, url="Fourth%20Edition:%20Black%20Bordered"},--Fourth Edition: Black Bordered
 [141]={id=141, lang={ "ENG" }, fruc={ true }, url="Summer%20Magic"},--Summer Magic
-[140]={id=140, lang=all, fruc={ true }, url={ "Revised", "Foreign%20White%20Bordered"} },--Revised; Foreign White Bordered = Revised Unlimited
-[139]={id=139, lang={ [3]=true,[4]=true,[5]=true }, fruc={ true }, url="Foreign%20Black%20Bordered"},--Foreign Black Bordered = Revised Limited
+[140]={id=140, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA" }, fruc={ true }, url={ "Revised", "Foreign%20White%20Bordered"} },--Revised; Foreign White Bordered = Revised Unlimited
+[139]={id=139, lang={ [3]="GER",[4]="FRA",[5]="ITA" }, fruc={ true }, url="Foreign%20Black%20Bordered"},--Foreign Black Bordered = Revised Limited
 [110]={id=110, lang={ "ENG" }, fruc={ true }, url="Unlimited"},--Unlimited
 [100]={id=100, lang={ "ENG" }, fruc={ true }, url="Beta"},--Beta
 [90] ={id= 90, lang={ "ENG" }, fruc={ true }, url="Alpha"},--Alpha
 -- expansionsets
-[813]={id=813, lang=all, fruc={ true }, url="Khans%20of%20Tarkir"},--Khans of Tarkir
-[806]={id=806, lang=all, fruc={ true }, url="Journey%20into%20Nyx"},--Journey into Nyx
-[802]={id=802, lang=all, fruc={ true }, url="Born%20of%20the%20Gods"},--Born of the Gods
-[800]={id=800, lang=all, fruc={ true }, url="Theros"},--Theros
-[795]={id=795, lang=all, fruc={ true }, url="Dragon%27s%20Maze"},--Dragon's Maze
-[793]={id=793, lang=all, fruc={ true }, url="Gatecrash"},--Gatecrash
-[791]={id=791, lang=all, fruc={ true }, url="Return%20to%20Ravnica"},--Return to Ravnica
-[786]={id=786, lang=all, fruc={ true }, url="Avacyn%20Restored"},--Avacyn Restored
-[784]={id=784, lang=all, fruc={ true }, url="Dark%20Ascension"},--Dark Ascension
-[782]={id=782, lang=all, fruc={ true }, url="Innistrad"},--Innistrad
-[776]={id=776, lang=all, fruc={ true }, url="New%20Phyrexia"},--New Phyrexia
-[775]={id=775, lang=all, fruc={ true }, url="Mirrodin%20Besieged"},--Mirrodin Besieged
-[773]={id=773, lang=all, fruc={ true }, url="Scars%20of%20Mirrodin"},--Scars of Mirrodin
-[767]={id=767, lang=all, fruc={ true }, url="Rise%20of%20the%20Eldrazi"},--Rise of the Eldrazi
-[765]={id=765, lang=all, fruc={ true }, url="Worldwake"},--Worldwake
-[762]={id=762, lang=all, fruc={ true }, url="Zendikar"},--Zendikar
-[758]={id=758, lang=all, fruc={ true }, url="Alara%20Reborn"},--Alara Reborn
-[756]={id=756, lang=all, fruc={ true }, url="Conflux"},--Conflux
-[754]={id=754, lang=all, fruc={ true }, url="Shards%20of%20Alara"},--Shards of Alara
-[752]={id=752, lang=all, fruc={ true }, url="Eventide"},--Eventide
-[751]={id=751, lang=all, fruc={ true }, url="Shadowmoor"},--Shadowmoor
-[750]={id=750, lang=all, fruc={ true }, url="Morningtide"},--Morningtide
-[730]={id=730, lang=all, fruc={ true }, url="Lorwyn"},--Lorwyn
-[710]={id=710, lang=all, fruc={ true }, url="Future%20Sight"},--Future Sight
-[700]={id=700, lang=all, fruc={ true }, url="Planar%20Chaos"},--Planar Chaos
-[690]={id=690, lang=all, fruc={ true }, url="Time%20Spiral"},--Time Spiral Timeshifted
-[680]={id=680, lang=all, fruc={ true }, url="Time%20Spiral"},--Time Spiral
-[670]={id=670, lang=all, fruc={ true }, url="Coldsnap"},--Coldsnap
-[660]={id=660, lang=all, fruc={ true }, url="Dissension"},--Dissension
-[650]={id=650, lang=all, fruc={ true }, url="Guildpact"},--Guildpact
-[640]={id=640, lang=all, fruc={ true }, url="Ravnica:%20City%20of%20Guilds"},--Ravnica: City of Guilds
-[620]={id=620, lang=all, fruc={ true }, url="Saviors%20of%20Kamigawa"},--Saviors of Kamigawa
-[610]={id=610, lang=all, fruc={ true }, url="Betrayers%20of%20Kamigawa"},--Betrayers of Kamigawa
-[590]={id=590, lang=all, fruc={ true }, url="Champions%20of%20Kamigawa"},--Champions of Kamigawa
-[580]={id=580, lang=all, fruc={ true }, url="Fifth%20Dawn"},--Fifth Dawn
-[570]={id=570, lang=all, fruc={ true }, url="Darksteel"},--Darksteel
-[560]={id=560, lang=all, fruc={ true }, url="Mirrodin"},--Mirrodin
-[540]={id=540, lang=all, fruc={ true }, url="Scourge"},--Scourge
-[530]={id=530, lang=all, fruc={ true }, url="Legions"},--Legions
-[520]={id=520, lang=all, fruc={ true }, url="Onslaught"},--Onslaught
-[510]={id=510, lang=all, fruc={ true }, url="Judgment"},--Judgment
-[500]={id=500, lang=all, fruc={ true }, url="Torment"},--Torment
-[480]={id=480, lang=all, fruc={ true }, url="Odyssey"},--Odyssey
-[470]={id=470, lang=all, fruc={ true }, url="Apocalypse"},--Apocalypse
-[450]={id=450, lang=all, fruc={ true }, url="Planeshift"},--Planeshift
-[430]={id=430, lang=all, fruc={ true }, url="Invasion"},--Invasion
-[420]={id=420, lang=all, fruc={ true }, url="Prophecy"},--Prophecy
-[410]={id=410, lang=all, fruc={ true }, url="Nemesis"},--Nemesis
-[400]={id=400, lang=all, fruc={ true }, url="Mercadian%20Masques"},--Mercadian Masques
-[370]={id=370, lang=all, fruc={ true }, url="Urza%27s%20Destiny"},--Urza's Destiny
-[350]={id=350, lang=all, fruc={ true }, url="Urza%27s%20Legacy"},--Urza's Legacy
-[330]={id=330, lang=all, fruc={ true }, url="Urza%27s%20Saga"},--Urza's Saga
-[300]={id=300, lang=all, fruc={ true }, url="Exodus"},--Exodus
-[290]={id=290, lang=all, fruc={ true }, url="Stronghold"},--Stronghold
-[280]={id=280, lang=all, fruc={ true }, url="Tempest"},--Tempest
-[270]={id=270, lang=all, fruc={ true }, url="Weatherlight"},--Weatherlight
-[240]={id=240, lang=all, fruc={ true }, url="Visions"},--Visions
-[230]={id=230, lang=all, fruc={ true }, url="Mirage"},--Mirage
-[220]={id=220, lang=all, fruc={ true }, url="Alliances"},--Alliances
-[210]={id=210, lang=all, fruc={ true }, url="Homelands"},--Homelands
-[190]={id=190, lang=all, fruc={ true }, url="Ice%20Age"},--Ice Age
-[170]={id=170, lang=all, fruc={ true }, url="Fallen%20Empires"},--Fallen Empires
-[160]={id=160, lang=all, fruc={ true }, url="The%20Dark"},--The Dark
-[150]={id=150, lang=all, fruc={ true }, url="Legends"},--Legends
-[130]={id=130, lang={ true }, fruc={ true }, url="Antiquities"},--Antiquities
-[120]={id=120, lang=all, fruc={ true }, url="Arabian%20Nights"},--Arabian Nights
+[813]={id=813, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Khans%20of%20Tarkir"},--Khans of Tarkir
+[806]={id=806, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Journey%20into%20Nyx"},--Journey into Nyx
+[802]={id=802, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Born%20of%20the%20Gods"},--Born of the Gods
+[800]={id=800, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Theros"},--Theros
+[795]={id=795, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Dragon%27s%20Maze"},--Dragon's Maze
+[793]={id=793, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Gatecrash"},--Gatecrash
+[791]={id=791, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Return%20to%20Ravnica"},--Return to Ravnica
+[786]={id=786, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Avacyn%20Restored"},--Avacyn Restored
+[784]={id=784, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Dark%20Ascension"},--Dark Ascension
+[782]={id=782, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT" }, fruc={ true }, url="Innistrad"},--Innistrad
+[776]={id=776, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT" }, fruc={ true }, url="New%20Phyrexia"},--New Phyrexia
+[775]={id=775, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT" }, fruc={ true }, url="Mirrodin%20Besieged"},--Mirrodin Besieged
+[773]={id=773, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT" }, fruc={ true }, url="Scars%20of%20Mirrodin"},--Scars of Mirrodin
+[767]={id=767, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Rise%20of%20the%20Eldrazi"},--Rise of the Eldrazi
+[765]={id=765, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Worldwake"},--Worldwake
+[762]={id=762, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Zendikar"},--Zendikar
+[758]={id=758, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Alara%20Reborn"},--Alara Reborn
+[756]={id=756, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Conflux"},--Conflux
+[754]={id=754, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Shards%20of%20Alara"},--Shards of Alara
+[752]={id=752, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Eventide"},--Eventide
+[751]={id=751, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Shadowmoor"},--Shadowmoor
+[750]={id=750, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Morningtide"},--Morningtide
+[730]={id=730, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Lorwyn"},--Lorwyn
+[710]={id=710, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Future%20Sight"},--Future Sight
+[700]={id=700, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Planar%20Chaos"},--Planar Chaos
+[690]={id=690, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Time%20Spiral"},--Time Spiral Timeshifted
+[680]={id=680, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Time%20Spiral"},--Time Spiral
+[670]={id=670, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Coldsnap"},--Coldsnap
+[660]={id=660, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Dissension"},--Dissension
+[650]={id=650, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Guildpact"},--Guildpact
+[640]={id=640, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Ravnica:%20City%20of%20Guilds"},--Ravnica: City of Guilds
+[620]={id=620, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Saviors%20of%20Kamigawa"},--Saviors of Kamigawa
+[610]={id=610, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Betrayers%20of%20Kamigawa"},--Betrayers of Kamigawa
+[590]={id=590, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Champions%20of%20Kamigawa"},--Champions of Kamigawa
+[580]={id=580, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Fifth%20Dawn"},--Fifth Dawn
+[570]={id=570, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Darksteel"},--Darksteel
+[560]={id=560, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Mirrodin"},--Mirrodin
+[540]={id=540, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Scourge"},--Scourge
+[530]={id=530, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Legions"},--Legions
+[520]={id=520, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Onslaught"},--Onslaught
+[510]={id=510, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Judgment"},--Judgment
+[500]={id=500, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Torment"},--Torment
+[480]={id=480, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Odyssey"},--Odyssey
+[470]={id=470, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Apocalypse"},--Apocalypse
+[450]={id=450, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Planeshift"},--Planeshift
+[430]={id=430, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Invasion"},--Invasion
+[420]={id=420, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Prophecy"},--Prophecy
+[410]={id=410, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Nemesis"},--Nemesis
+[400]={id=400, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Mercadian%20Masques"},--Mercadian Masques
+[370]={id=370, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Urza%27s%20Destiny"},--Urza's Destiny
+[350]={id=350, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Urza%27s%20Legacy"},--Urza's Legacy
+[330]={id=330, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Urza%27s%20Saga"},--Urza's Saga
+[300]={id=300, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Exodus"},--Exodus
+[290]={id=290, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Stronghold"},--Stronghold
+[280]={id=280, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Tempest"},--Tempest
+[270]={id=270, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Weatherlight"},--Weatherlight
+[240]={id=240, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Visions"},--Visions
+[230]={id=230, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Mirage"},--Mirage
+[220]={id=220, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR" }, fruc={ true }, url="Alliances"},--Alliances
+[210]={id=210, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR" }, fruc={ true }, url="Homelands"},--Homelands
+[190]={id=190, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR" }, fruc={ true }, url="Ice%20Age"},--Ice Age
+[170]={id=170, lang={ "ENG" }, fruc={ true }, url="Fallen%20Empires"},--Fallen Empires
+[160]={id=160, lang={ "ENG",[5]="ITA" }, fruc={ true }, url="The%20Dark"},--The Dark
+[150]={id=150, lang={ "ENG",[5]="ITA" }, fruc={ true }, url="Legends"},--Legends
+[130]={id=130, lang={ "ENG" }, fruc={ true }, url="Antiquities"},--Antiquities
+[120]={id=120, lang={ "ENG" }, fruc={ true }, url="Arabian%20Nights"},--Arabian Nights
 -- specialsets
 --[0]={id=  0, lang=all, fruc={ true }, url="Duel%20Decks:%20Anthology"},--Duel Decks: Anthology
 [814]={id=814, lang=all, fruc={ true }, url="Commander%202014"},--Commander 2014
@@ -995,31 +983,30 @@ site.sets = {
 --[ 43] = "Two-Headed Giant Promos";
 --[ 42] = "Summer of Magic Promos";
 [41] ={id= 41, lang=all, fruc={ true }, url="Happy%20Holidays%20Promos"},--Happy Holidays Promos
-[40] ={id= 40, lang=all, fruc={ true }, url="Arena%20League%20Promos"},--Arena League Promos
+[40] ={id= 40, lang=all, fruc={ true }, url="Arena%20League%20Promos",--Arena League Promos
+											"Oversized%206x9%20Promos"},--Oversized 6x9 Promos
 --[ 33] = "Championships Prizes";
---[ 32] = "Pro Tour Promos";
-[0]={id=  0, lang=all, fruc={ true }, url="Pro%20Tour%201996:%20Mark%20Justice"},--Pro Tour 1996: Mark Justice
-[0]={id=  0, lang=all, fruc={ true }, url="Pro%20Tour%201996:%20Michael%20Locanto"},--Pro Tour 1996: Michael Locanto
-[0]={id=  0, lang=all, fruc={ true }, url="Pro%20Tour%201996:%20Bertrand%20Lestree"},--Pro Tour 1996: Bertrand Lestree
-[0]={id=  0, lang=all, fruc={ true }, url="Pro%20Tour%201996:%20Preston%20Poulter"},--Pro Tour 1996: Preston Poulter
-[0]={id=  0, lang=all, fruc={ true }, url="Pro%20Tour%201996:%20Eric%20Tam"},--Pro Tour 1996: Eric Tam
-[0]={id=  0, lang=all, fruc={ true }, url="Pro%20Tour%201996:%20Shawn%20Regnier"},--Pro Tour 1996: Shawn Regnier
-[0]={id=  0, lang=all, fruc={ true }, url="Pro%20Tour%201996:%20George%20Baxter"},--Pro Tour 1996: George Baxter
-[0]={id=  0, lang=all, fruc={ true }, url="Pro%20Tour%201996:%20Leon%20Lindback"},--Pro Tour 1996: Leon Lindback
+[32] ={id= 32, lang=all, fruc={ true }, --"Pro Tour Promos";
+										 url="Pro%20Tour%201996:%20Mark%20Justice",--Pro Tour 1996: Mark Justice
+											"Pro%20Tour%201996:%20Michael%20Locanto",--Pro Tour 1996: Michael Locanto
+											"Pro%20Tour%201996:%20Bertrand%20Lestree",--Pro Tour 1996: Bertrand Lestree
+											"Pro%20Tour%201996:%20Preston%20Poulter",--Pro Tour 1996: Preston Poulter
+											"Pro%20Tour%201996:%20Eric%20Tam",--Pro Tour 1996: Eric Tam
+											"Pro%20Tour%201996:%20Shawn%20Regnier",--Pro Tour 1996: Shawn Regnier
+											"Pro%20Tour%201996:%20George%20Baxter",--Pro Tour 1996: George Baxter
+											"Pro%20Tour%201996:%20Leon%20Lindback"},--Pro Tour 1996: Leon Lindback
 --[ 31] = "Grand Prix Promos";
 [30] ={id= 30, lang=all, fruc={ true }, url="Friday%20Night%20Magic%20Promos"},--Friday Night Magic Promos
 [27] ={id= 27, lang=all, fruc={ true }, url={ "APAC%20Lands", "Guru%20Lands", "Euro%20Lands" } },--Alternate Art Lands: APAC Lands, Guru Lands, Euro Lands
 [26] ={id= 26, lang=all, fruc={ true }, url="Game%20Day%20Promos"},--Game Day Promos
-[25] ={id= 25, lang=all, fruc={ true }, url="Judge%20Rewards%20Promos"},--Judge Rewards Promos
---TODO 23 is Gateway & WPN Promos
+[25] ={id= 25, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR",[17]="PHY" }, fruc={ true }, url="Judge%20Rewards%20Promos"},--Judge Rewards Promos
 [24] ={id= 24, lang=all, fruc={ true }, url="Champs%20%26%20States%20Promos"},--Champs & States Promos
 [23] ={id= 23, lang=all, fruc={ true }, url="Gateway%20Promos"},--Gateway Promos
-[22] ={id= 22, lang=all, fruc={ true }, url="Prerelease%20Promos"},--Prerelease Promos
---TODO 21 is release & launch party
+[22] ={id= 22, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR",[12]="HEB",[13]="ARA",[14]="LAT",[15]="SAN",[16]="GRC" }, fruc={ true }, url="Prerelease%20Promos"},--Prerelease Promos
 [21] ={id= 21, lang=all, fruc={ true }, url="Release%20Promos"},--Release Promos
 [20] ={id= 20, lang=all, fruc={ true }, url="Player%20Rewards%20Promos"},--Player Rewards Promos
---[ 15] = "Convention Promos";
-[15]= {id= 15, lang=all, fruc={ true }, url="San%20Diego%20Comic-Con%202013%20Promos", --San Diego Comic-Con 2013 Promos
+[15]= {id= 15, lang=all, fruc={ true }, -- "Convention Promos";
+										 url="San%20Diego%20Comic-Con%202013%20Promos", --San Diego Comic-Con 2013 Promos
 											"San%20Diego%20Comic-Con%202014%20Promos"},--San Diego Comic-Con 2014 Promos
 [12] ={id= 12, lang=all, fruc={ true }, url="Hobby%20Japan%20Commemorative%20Promos"},--Hobby Japan Commemorative Promos
 --[ 11] = "Redemption Program Cards";
@@ -1027,18 +1014,18 @@ site.sets = {
 											"Junior%20Super%20Series%20Promos",--Junior Super Series Promos
 											"Japan%20Junior%20Tournament%20Promos",--Japan Junior Tournament Promos
 											"Magic%20Scholarship%20Series%20Promos"},--Magic Scholarship Series Promos
-[9]=  {id=  9, lang=all, fruc={ true }, url= -- "Video Game Promos";
-											"Duels%20of%20the%20Planeswalkers%20Promos",--Duels of the Planeswalkers Promos
+[9]=  {id=  9, lang=all, fruc={ true },  -- "Video Game Promos";
+										url="Duels%20of%20the%20Planeswalkers%20Promos",--Duels of the Planeswalkers Promos
 											"Oversized%206x9%20Promos"},--Oversized 6x9 Promos
-[8]=  {id=  8, lang=all, fruc={ true }, url= -- "Stores Promos";
-											"Walmart%20Promos"},--Walmart Promos
-[7]=  {id=  7, lang=all, fruc={ true }, url= -- "Magazine Inserts"
-											"The%20Duelist%20Promos",--The Duelist Promos
+[8]=  {id=  8, lang=all, fruc={ true }, -- "Stores Promos";
+										url="Walmart%20Promos"},--Walmart Promos
+[7]=  {id=  7, lang=all, fruc={ true },	-- "Magazine Inserts"
+										url="The%20Duelist%20Promos",--The Duelist Promos
 											"Oversized%206x9%20Promos",--Oversized 6x9 Promos
 											"CardZ%20Promos",--CardZ Promos
 											"TopDeck%20Promos"},--TopDeck Promos
-[6]=  {id=  6, lang=all, fruc={ true }, url=-- "Comic Inserts"
-											"Armada%20Comics",--Armada Comics
+[6]=  {id=  6, lang=all, fruc={ true }, -- "Comic Inserts"
+										url="Armada%20Comics",--Armada Comics
 											"Dengeki%20Maoh%20Promos",--Dengeki Maoh Promos
 											"IDW%20Promos"},--IDW Promos
 [5]=  {id=  5, lang=all, fruc={ true }, url="Harper%20Prism%20Promos"},--Harper Prism Promos = "Book Inserts"
@@ -1113,6 +1100,23 @@ site.sets = {
 ]]
 site.namereplace = {
 --TODO KTK "Version 2" -> "Intro"
+[139]={-- Revised Edition (FBB)
+["Plains (293)"]		= "Plains (1)",
+["Plains (294)"]		= "Plains (2)",
+["Plains (295)"]		= "Plains (3)",
+["Island (287)"]		= "Island (1)",
+["Island (288)"]		= "Island (2)",
+["Island (289)"]		= "Island (3)",
+["Swamp (299)"]			= "Swamp (1)",
+["Swamp (300)"]			= "Swamp (2)",
+["Swamp (301)"]			= "Swamp (3)",
+["Mountain (290)"]		= "Mountain (1)",
+["Mountain (291)"]		= "Mountain (2)",
+["Mountain (292)"]		= "Mountain (3)",
+["Forest (284)"]		= "Forest (1)",
+["Forest (285)"]		= "Forest (2)",
+["Forest (286)"]		= "Forest (3)",
+}
 } -- end table site.namereplace
 
 --[[- set replacement tables.
@@ -1130,10 +1134,10 @@ site.settweak = {
 ["Lash of the Tyrant"]			= "Prerelease Promos",
 ["Axe of the Warmonger"]		= "Prerelease Promos",
 ["Bow of the Hunter"]			= "Prerelease Promos",
-["The Destined"]				= "REL",
-["The Champion"]				= "MGD",
+["The Destined"]				= "Release Promos",
+["The Champion"]				= "Magic Game Day",
 },
-} -- end table site.namereplace
+} -- end table site.settweak
 
 --[[- card variant tables.
  tables of cards that need to set variant.
@@ -1148,14 +1152,6 @@ site.settweak = {
  @field [parent=#site.variants] #table variant
 ]]
 site.variants = {
---[0] = { -- Basic Lands as example (setid 0 is not used)
---override=false,
---["Plains"] 					= { "Plains"	, { 1    , 2    , 3    , 4     } },
---["Island"] 					= { "Island" 	, { 1    , 2    , 3    , 4     } },
---["Swamp"] 					= { "Swamp"		, { 1    , 2    , 3    , 4     } },
---["Mountain"] 					= { "Mountain"	, { 1    , 2    , 3    , 4     } },
---["Forest"] 					= { "Forest" 	, { 1    , 2    , 3    , 4     } }
---},
 } -- end table site.variants
 
 --[[- foil status replacement tables.
@@ -1178,8 +1174,11 @@ site.foiltweak = {
  This allows to read LHpi.Data.sets[setid].cardcount tables for less hardcoded numbers. 
 
  @function [parent=#site] SetExpected
+ @param #string importfoil	"y"|"n"|"o" passed from DoImport
+ @param #table importlangs	{ #number (langid)= #string , ... } passed from DoImport
+ @param #table importsets	{ #number (setid)= #string , ... } passed from DoImport
 ]]
-function site.SetExpected()
+function site.SetExpected( importfoil , importlangs , importsets )
 --[[- table of expected results.
  as of script release. Used as sanity check during sitescript development and source of insanity afterwards ;-)
  For each setid, if unset defaults to expect all cards to be set.
@@ -1201,9 +1200,10 @@ function site.SetExpected()
 --- if EXPECTTOKENS is true, LHpi.Data.sets[setid].cardcount.tok is added to pset default.
 -- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
 -- @field [parent=#site.expected] #boolean or #table { #boolean,...} tokens
-	tokens = true,
+--	tokens = true,
 --	tokens = { [1]="ENG" },
---	tokens = { "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR",[12]="HEB",[13]="ARA",[14]="LAT",[15]="SAN",[16]="GRC" }
+--	tokens = { "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR", },
+	tokens = { "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" },
 --- if EXPECTNONTRAD is true, LHpi.Data.sets[setid].cardcount.nontrad is added to pset default.
 -- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
 -- @field [parent=#site.expected] #boolean nontrad
@@ -1212,6 +1212,54 @@ function site.SetExpected()
 -- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
 -- @field [parent=#site.expected] #boolean replica
 	replica = true,
+-- Core sets
+[808] = { pset={ dup=LHpi.Data.sets[808].cardcount.reg, [1]=LHpi.Data.sets[808].cardcount.both }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, failed={ dup=LHpi.Data.sets[808].cardcount.tok }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
+[797] = { pset={ dup=LHpi.Data.sets[797].cardcount.both,[2]=249,[7]=249,[8]=249,[9]=249,[10]=249,[11]=249 }, duppset={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR" }, failed={ dup=LHpi.Data.sets[797].cardcount.tok }, dupfail={ [2]="RUS",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
+[788] = { pset={ dup=LHpi.Data.sets[788].cardcount.both,[7]=249,[8]=249,[9]=249,[10]=249,[11]=249 }, duppset={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR" }, failed={ dup=LHpi.Data.sets[788].cardcount.tok }, dupfail={ [7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
+[779] = { pset={ dup=LHpi.Data.sets[779].cardcount.both,[8]=249,[9]=249,[10]=249}, duppset={ [1]="ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, failed={ dup=LHpi.Data.sets[779].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH",[10]="ZHT" } },
+[770] = { pset={ dup=LHpi.Data.sets[770].cardcount.both,[8]=249,[9]=249,[10]=249}, duppset={ [1]="ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, failed={ dup=LHpi.Data.sets[770].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH",[10]="ZHT" } },
+[759] = { pset={ dup=LHpi.Data.sets[759].cardcount.both,[8]=249,[9]=249 }, duppset={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, failed={ dup=LHpi.Data.sets[759].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" } },
+[720] = { pset={ dup=LHpi.Data.sets[720].cardcount.both,[3]=LHpi.Data.sets[720].cardcount.both-1,[8]=383,[9]=383 }, duppset={ [2]="RUS",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, failed={ dup=LHpi.Data.sets[720].cardcount.tok, [3]=1 }, dupfail={ [8]="JPN",[9]="SZH" } },
+[630] = { pset={ dup=LHpi.Data.sets[630].cardcount.reg-7, [1]=LHpi.Data.sets[630].cardcount.reg }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[9]="SZH" }, failed={ dup=7 }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[9]="SZH" } },
+[550] = { pset={ dup=LHpi.Data.sets[550].cardcount.reg-2,[1]=357,[5]=357,[8]=357,[9]=350 }, duppset={ [3]="GER",[4]="FRA",[6]="POR",[7]="SPA" }, failed={ dup=2, [9]=7 }, dupfail={ [3]="GER",[4]="FRA",[6]="POR",[7]="SPA" } },
+[180] = { pset={ dup=LHpi.Data.sets[180].cardcount.reg,[6]=375 }, duppset={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[8]="JPN" }, failed={ [6]=3 } },
+[179] = { pset={ [6]=LHpi.Data.sets[179].cardcount.reg-3, [8]=LHpi.Data.sets[179].cardcount.reg}, failed={ [6]=3 } },
+[139] = { namereplaced=30 },
+-- Expansions
+[813] = { pset={ dup=LHpi.Data.sets[813].cardcount.reg, [1]=LHpi.Data.sets[813].cardcount.both }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, failed={ dup=LHpi.Data.sets[813].cardcount.tok }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
+[806] = { pset={ dup=LHpi.Data.sets[806].cardcount.reg, [1]=LHpi.Data.sets[806].cardcount.both }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, failed={ dup=LHpi.Data.sets[806].cardcount.tok }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=14 },
+[776] = { pset={ dup=LHpi.Data.sets[776].cardcount.both, [8]=175,[9]=175,[10]=175 }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, failed={ dup=1, [8]=5,[9]=5,[10]=5 }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA", } },
+[775] = { pset={ dup=LHpi.Data.sets[775].cardcount.both, [8]=155,[9]=155,[10]=155 }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, failed={ dup=1, [8]=6,[9]=6,[10]=6 }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA", } },
+[752] = { failed={ dup=7 }, dupfail={ [8]="JPN",[9]="SZH" } },
+[751] = { duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, failed={ dup=12 }, dupfail={ [8]="JPN",[9]="SZH" } },
+[750] = { duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, failed={ dup=3 }, dupfail={ [8]="JPN",[9]="SZH" } },
+[680] = { dropped=242 },
+
+
+--[0] = { pset={ dup=LHpi.Data.sets[0].cardcount.both, }, duppset={  }, failed={ dup=LHpi.Data.sets[0].cardcount.tok }, dupfail={  } },
+--[752] = { pset={ dup=LHpi.Data.sets[752].cardcount.both, [8]=180,[9]=180 }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, failed={ dup=7 }, dupfail={ [8]="JPN",[9]="SZH" } },
+--[751] = { pset={ dup=LHpi.Data.sets[751].cardcount.both, [8]=301,[9]=301 }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, failed={ dup=12 }, dupfail={ [8]="JPN",[9]="SZH" } },
+--[750] = { pset={ dup=LHpi.Data.sets[750].cardcount.both, [8]=150,[9]=150 }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, failed={ dup=3 }, dupfail={ [8]="JPN",[9]="SZH" } },
+--noneng = { [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR",[12]="HEB",[13]="ARA",[14]="LAT",[15]="SAN",[16]="GRC" }
 	}--end table site.expected
+	-- I'm too lazy to fill in site.expected myself, let the script do it ;-)
+	for sid,name in pairs(importsets) do
+		if site.expected[sid] then
+			if site.expected[sid].pset and site.expected[sid].duppset and site.expected.pset.dup then			
+				for lid,lang in pairs(site.expected[sid].duppset) do
+					site.expected[sid].pset[lid] = site.expected[sid].pset.dup or 0
+				end
+			site.expected[sid].duppset=nil
+			site.expected[sid].pset.dup=nil
+			end
+			if site.expected[sid].failed and site.expected[sid].dupfail and site.expected.failed.dup then			
+				for lid,lang in pairs(site.expected[sid].dupfail) do
+					site.expected[sid].failed[lid] = site.expected[sid].failed.dup or 0
+				end
+			site.expected[sid].dupfail=nil
+			site.expected[sid].failed.dup=nil
+			end
+		end
+	end--for sid,name
 end--function site.SetExpected()
 --EOF

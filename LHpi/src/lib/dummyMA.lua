@@ -715,7 +715,7 @@ function main()
 		SAVELOG = true,
 		SAVEHTML = true,
 --		SAVEHTML = false,
-		DEBUG = true,
+--		DEBUG = true,
 --		DEBUGFOUND = true,
 --		DEBUGVARIANTS = true,
 --		SAVETABLE=true,
@@ -745,13 +745,14 @@ function main()
 	print("dummy says: script loaded.")
 
 	local importfoil = "y"
-	local importlangs = { [1] = "eng" }
---	local importlangs = { [9] = "szh" }
---	local importlangs = dummy.alllangs
+--	local importlangs = { [1] = "eng" }
+	local importlangs = { [3] = "FOO" }
+	local importlangs = dummy.alllangs
 --	local importsets = { [0] = "fakeset"; }
 	local importsets = { [808]="some set" }
 --	local importsets = { [220]="foo";[800]="bar";[0]="baz";}
 --	local importsets = dummy.coresets
+	local importsets = dummy.expansionsets
 --	local importsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 
 	-- now try to break the script :-)
@@ -768,6 +769,14 @@ function main()
 --	dummy.CompareDummySets(dummy.savepath.."\\..",2.14)
 --	dummy.CompareDataSets(dummy.savepath.."\\..",2.14,5)
 
+	--use ProFi to profile the script
+--	ProFi = require 'ProFi'
+--	ProFi:start()
+--	ImportPrice( importfoil, importlangs, importsets )
+--	ProFi:stop()
+--	ProFi:writeReport( 'MyProfilingReport.txt' )
+ 
+	
 	local dt = os.clock() - t1 
 	print(string.format("All this took %g seconds",dt))
 	print("dummy says: Goodbye lua!")
