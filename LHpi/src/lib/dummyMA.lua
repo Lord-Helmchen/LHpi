@@ -715,7 +715,7 @@ function main()
 		SAVELOG = true,
 		SAVEHTML = true,
 --		SAVEHTML = false,
---		DEBUG = true,
+		DEBUG = true,
 --		DEBUGFOUND = true,
 --		DEBUGVARIANTS = true,
 --		SAVETABLE=true,
@@ -747,12 +747,12 @@ function main()
 	local importfoil = "y"
 --	local importlangs = { [1] = "eng" }
 	local importlangs = { [3] = "FOO" }
-	local importlangs = dummy.alllangs
+--	local importlangs = dummy.alllangs
 --	local importsets = { [0] = "fakeset"; }
-	local importsets = { [808]="some set" }
+	local importsets = { [754]="some set" }
 --	local importsets = { [220]="foo";[800]="bar";[0]="baz";}
 --	local importsets = dummy.coresets
-	local importsets = dummy.expansionsets
+	--local importsets = dummy.expansionsets
 --	local importsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 
 	-- now try to break the script :-)

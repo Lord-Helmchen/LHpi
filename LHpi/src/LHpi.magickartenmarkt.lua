@@ -678,7 +678,9 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 	elseif "Token" == card.pluginData.rarity then
 		if card.pluginData.collectNr then
 			card.name = string.gsub( card.name, "%(.+%)", "("..card.pluginData.collectNr..")" )
-			card.name = string.gsub( card.name,"%(T(%d+)%)","(%1)")
+			card.name = string.gsub( card.name, "%(T%-?(%d+[abc]?)%)","(%1)")
+		elseif setid == 751 or setid == 754 then
+			card.name = string.gsub( card.name, "%(.+%)", "" )
 		end
 	end--if "Land" else "Token"
 	if setid == 680 then --Time Spiral
@@ -894,7 +896,7 @@ site.sets = {
 [480]={id=480, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Odyssey"},--Odyssey
 [470]={id=470, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Apocalypse"},--Apocalypse
 [450]={id=450, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Planeshift"},--Planeshift
-[430]={id=430, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Invasion"},--Invasion
+[430]={id=430, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Invasion"},--Invasion
 [420]={id=420, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Prophecy"},--Prophecy
 [410]={id=410, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Nemesis"},--Nemesis
 [400]={id=400, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Mercadian%20Masques"},--Mercadian Masques
@@ -1099,7 +1101,6 @@ site.sets = {
  @field [parent=#site.namereplace] #string name
 ]]
 site.namereplace = {
---TODO KTK "Version 2" -> "Intro"
 [139]={-- Revised Edition (FBB)
 ["Plains (293)"]		= "Plains (1)",
 ["Plains (294)"]		= "Plains (2)",
@@ -1116,7 +1117,87 @@ site.namereplace = {
 ["Forest (284)"]		= "Forest (1)",
 ["Forest (285)"]		= "Forest (2)",
 ["Forest (286)"]		= "Forest (3)",
-}
+},
+[813] = { -- Khans of Tarkir
+["Avalanche Tusker (1)"]			= "Avalanche Tusker",
+["Avalanche Tusker (2)"]			= "Avalanche Tusker (Intro)",
+["Ivorytusk Fortress (1)"]			= "Ivorytusk Fortress",
+["Ivorytusk Fortress (2)"]			= "Ivorytusk Fortress (Intro)",
+["Sage of the Inward Eye (1)"]		= "Sage of the Inward Eye",
+["Sage of the Inward Eye (2)"]		= "Sage of the Inward Eye (Intro)",
+["Rakshasa Vizier (1)"]				= "Rakshasa Vizier",
+["Rakshasa Vizier (2)"]				= "Rakshasa Vizier (Intro)",
+["Ankle Shanker (1)"]				= "Ankle Shanker",
+["Ankle Shanker (2)"]				= "Ankle Shanker (Intro)",
+},
+[802] = { -- Born of the Gods
+["Unravel the Æther"]				= "Unravel the AEther",
+},
+[784] = { -- Dark Ascension
+["Hinterland Hermit"] 				= "Hinterland Hermit|Hinterland Scourge",
+["Mondronen Shaman"] 				= "Mondronen Shaman|Tovolar’s Magehunter",
+["Soul Seizer"] 					= "Soul Seizer|Ghastly Haunting",
+["Lambholt Elder"] 					= "Lambholt Elder|Silverpelt Werewolf",
+["Ravenous Demon"] 					= "Ravenous Demon|Archdemon of Greed",
+["Elbrus, the Binding Blade"] 		= "Elbrus, the Binding Blade|Withengar Unbound",
+["Loyal Cathar"] 					= "Loyal Cathar|Unhallowed Cathar",
+["Chosen of Markov"] 				= "Chosen of Markov|Markov’s Servant",
+["Huntmaster of the Fells"] 		= "Huntmaster of the Fells|Ravager of the Fells",
+["Afflicted Deserter"] 				= "Afflicted Deserter|Werewolf Ransacker",
+["Chalice of Life"] 				= "Chalice of Life|Chalice of Death",
+["Wolfbitten Captive"] 				= "Wolfbitten Captive|Krallenhorde Killer",
+["Scorned Villager"]				= "Scorned Villager|Moonscarred Werewolf",
+},
+[782] = { -- Innistrad
+["Bloodline Keeper"] 				= "Bloodline Keeper|Lord of Lineage",
+["Ludevic's Test Subject"] 			= "Ludevic's Test Subject|Ludevic's Abomination",
+["Instigator Gang"] 				= "Instigator Gang|Wildblood Pack",
+["Kruin Outlaw"] 					= "Kruin Outlaw|Terror of Kruin Pass",
+["Daybreak Ranger"] 				= "Daybreak Ranger|Nightfall Predator",
+["Garruk Relentless"] 				= "Garruk Relentless|Garruk, the Veil-Cursed",
+["Mayor of Avabruck"] 				= "Mayor of Avabruck|Howlpack Alpha",
+["Cloistered Youth"] 				= "Cloistered Youth|Unholy Fiend",
+["Civilized Scholar"] 				= "Civilized Scholar|Homicidal Brute",
+["Screeching Bat"] 					= "Screeching Bat|Stalking Vampire",
+["Hanweir Watchkeep"] 				= "Hanweir Watchkeep|Bane of Hanweir",
+["Reckless Waif"] 					= "Reckless Waif|Merciless Predator",
+["Gatstaf Shepherd"] 				= "Gatstaf Shepherd|Gatstaf Howler",
+["Ulvenwald Mystics"] 				= "Ulvenwald Mystics|Ulvenwald Primordials",
+["Thraben Sentry"] 					= "Thraben Sentry|Thraben Militia",
+["Delver of Secrets"] 				= "Delver of Secrets|Insectile Aberration",
+["Tormented Pariah"] 				= "Tormented Pariah|Rampaging Werewolf",
+["Village Ironsmith"] 				= "Village Ironsmith|Ironfang",
+["Grizzled Outcasts"] 				= "Grizzled Outcasts|Krallenhorde Wantons",
+["Villagers of Estwald"] 			= "Villagers of Estwald|Howlpack of Estwald",
+},
+[620] = { -- Saviors of Kamigawa
+["Sasaya, Orochi Ascendant"] 		= "Sasaya, Orochi Ascendant|Sasaya’s Essence",
+["Rune-Tail, Kitsune Ascendant"]	= "Rune-Tail, Kitsune Ascendant|Rune-Tail’s Essence",
+["Homura, Human Ascendant"] 		= "Homura, Human Ascendant|Homura’s Essence",
+["Kuon, Ogre Ascendant"] 			= "Kuon, Ogre Ascendant|Kuon’s Essence",
+["Erayo, Soratami Ascendant"] 		= "Erayo, Soratami Ascendant|Erayo’s Essence"
+},
+[610] = { -- Betrayers of Kamigawa
+["Hired Muscle"] 					= "Hired Muscle|Scarmaker",
+["Cunning Bandit"] 					= "Cunning Bandit|Azamuki, Treachery Incarnate",
+["Callow Jushi"] 					= "Callow Jushi|Jaraku the Interloper",
+["Faithful Squire"] 				= "Faithful Squire|Kaiso, Memory of Loyalty",
+["Budoka Pupil"] 					= "Budoka Pupil|Ichiga, Who Topples Oaks",
+},
+[590] = { -- Champions of Kamigawa
+["Student of Elements"]				= "Student of Elements|Tobita, Master of Winds",
+["Kitsune Mystic"]					= "Kitsune Mystic|Autumn-Tail, Kitsune Sage",
+["Initiate of Blood"]				= "Initiate of Blood|Goka the Unjust",
+["Bushi Tenderfoot"]				= "Bushi Tenderfoot|Kenzo the Hardhearted",
+["Budoka Gardener"]					= "Budoka Gardener|Dokai, Weaver of Life",
+["Nezumi Shortfang"]				= "Nezumi Shortfang|Stabwhisker the Odious",
+["Jushi Apprentice"]				= "Jushi Apprentice|Tomoya the Revealer",
+["Orochi Eggwatcher"]				= "Orochi Eggwatcher|Shidako, Broodmistress",
+["Nezumi Graverobber"]				= "Nezumi Graverobber|Nighteyes the Desecrator",
+["Akki Lavarunner"]					= "Akki Lavarunner|Tok-Tok, Volcano Born",
+["Brothers Yamazaki (1)"]			= "Brothers Yamazaki (160a)",
+["Brothers Yamazaki (2)"]			= "Brothers Yamazaki (160b)",
+},
 } -- end table site.namereplace
 
 --[[- set replacement tables.
@@ -1136,6 +1217,24 @@ site.settweak = {
 ["Bow of the Hunter"]			= "Prerelease Promos",
 ["The Destined"]				= "Release Promos",
 ["The Champion"]				= "Magic Game Day",
+},
+[802] = { -- BNG
+["The General"]					= "Prerelease Promos",
+["The Savant"]					= "Prerelease Promos",
+["The Tyrant"]					= "Prerelease Promos",
+["The Warmonger"]				= "Prerelease Promos",
+["The Provider"]				= "Prerelease Promos",
+["The Explorer"]				= "Release Promos",
+["The Vanquisher"]				= "Magic Game Day",
+},
+[800] = { -- THS
+["The Protector"]				= "Prerelease Promos",
+["The Philosopher"]				= "Prerelease Promos",
+["The Avenger"]					= "Prerelease Promos",
+["The Warrior"]					= "Prerelease Promos",
+["The Hunter"]					= "Prerelease Promos",
+["The Harvester"]				= "Release Promos",
+["The Slayer"]					= "Magic Game Day",
 },
 } -- end table site.settweak
 
@@ -1213,33 +1312,54 @@ function site.SetExpected( importfoil , importlangs , importsets )
 -- @field [parent=#site.expected] #boolean replica
 	replica = true,
 -- Core sets
-[808] = { pset={ dup=LHpi.Data.sets[808].cardcount.reg, [1]=LHpi.Data.sets[808].cardcount.both }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, failed={ dup=LHpi.Data.sets[808].cardcount.tok }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
-[797] = { pset={ dup=LHpi.Data.sets[797].cardcount.both,[2]=249,[7]=249,[8]=249,[9]=249,[10]=249,[11]=249 }, duppset={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR" }, failed={ dup=LHpi.Data.sets[797].cardcount.tok }, dupfail={ [2]="RUS",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
-[788] = { pset={ dup=LHpi.Data.sets[788].cardcount.both,[7]=249,[8]=249,[9]=249,[10]=249,[11]=249 }, duppset={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR" }, failed={ dup=LHpi.Data.sets[788].cardcount.tok }, dupfail={ [7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
-[779] = { pset={ dup=LHpi.Data.sets[779].cardcount.both,[8]=249,[9]=249,[10]=249}, duppset={ [1]="ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, failed={ dup=LHpi.Data.sets[779].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH",[10]="ZHT" } },
-[770] = { pset={ dup=LHpi.Data.sets[770].cardcount.both,[8]=249,[9]=249,[10]=249}, duppset={ [1]="ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, failed={ dup=LHpi.Data.sets[770].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH",[10]="ZHT" } },
-[759] = { pset={ dup=LHpi.Data.sets[759].cardcount.both,[8]=249,[9]=249 }, duppset={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, failed={ dup=LHpi.Data.sets[759].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" } },
-[720] = { pset={ dup=LHpi.Data.sets[720].cardcount.both,[3]=LHpi.Data.sets[720].cardcount.both-1,[8]=383,[9]=383 }, duppset={ [2]="RUS",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, failed={ dup=LHpi.Data.sets[720].cardcount.tok, [3]=1 }, dupfail={ [8]="JPN",[9]="SZH" } },
+[808] = { pset={ dup=LHpi.Data.sets[808].cardcount.reg }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, failed={ dup=LHpi.Data.sets[808].cardcount.tok }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
+[797] = { pset={ dup=LHpi.Data.sets[797].cardcount.reg }, failed={ dup=LHpi.Data.sets[797].cardcount.tok }, duppset={ [2]="RUS",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
+[788] = { pset={ dup=LHpi.Data.sets[788].cardcount.reg }, failed={ dup=LHpi.Data.sets[788].cardcount.tok }, duppset={ [7]="SPA" }, dupfail={ [7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
+[779] = { failed={ dup=LHpi.Data.sets[779].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH",[10]="ZHT" } },
+[770] = { failed={ dup=LHpi.Data.sets[770].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH",[10]="ZHT" } },
+[759] = { failed={ dup=LHpi.Data.sets[759].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" } },
+[720] = { pset={ dup=LHpi.Data.sets[720].cardcount.reg, [3]=LHpi.Data.sets[720].cardcount.both-1 }, duppset={ [8]="JPN",[9]="SZH" }, failed={ dup=LHpi.Data.sets[720].cardcount.tok, [3]=1 }, dupfail={ [8]="JPN",[9]="SZH" } },
 [630] = { pset={ dup=LHpi.Data.sets[630].cardcount.reg-7, [1]=LHpi.Data.sets[630].cardcount.reg }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[9]="SZH" }, failed={ dup=7 }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[9]="SZH" } },
 [550] = { pset={ dup=LHpi.Data.sets[550].cardcount.reg-2,[1]=357,[5]=357,[8]=357,[9]=350 }, duppset={ [3]="GER",[4]="FRA",[6]="POR",[7]="SPA" }, failed={ dup=2, [9]=7 }, dupfail={ [3]="GER",[4]="FRA",[6]="POR",[7]="SPA" } },
 [180] = { pset={ dup=LHpi.Data.sets[180].cardcount.reg,[6]=375 }, duppset={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[8]="JPN" }, failed={ [6]=3 } },
 [179] = { pset={ [6]=LHpi.Data.sets[179].cardcount.reg-3, [8]=LHpi.Data.sets[179].cardcount.reg}, failed={ [6]=3 } },
 [139] = { namereplaced=30 },
 -- Expansions
-[813] = { pset={ dup=LHpi.Data.sets[813].cardcount.reg, [1]=LHpi.Data.sets[813].cardcount.both }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, failed={ dup=LHpi.Data.sets[813].cardcount.tok }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
-[806] = { pset={ dup=LHpi.Data.sets[806].cardcount.reg, [1]=LHpi.Data.sets[806].cardcount.both }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, failed={ dup=LHpi.Data.sets[806].cardcount.tok }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=14 },
-[776] = { pset={ dup=LHpi.Data.sets[776].cardcount.both, [8]=175,[9]=175,[10]=175 }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, failed={ dup=1, [8]=5,[9]=5,[10]=5 }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA", } },
-[775] = { pset={ dup=LHpi.Data.sets[775].cardcount.both, [8]=155,[9]=155,[10]=155 }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, failed={ dup=1, [8]=6,[9]=6,[10]=6 }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA", } },
-[752] = { failed={ dup=7 }, dupfail={ [8]="JPN",[9]="SZH" } },
-[751] = { duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, failed={ dup=12 }, dupfail={ [8]="JPN",[9]="SZH" } },
-[750] = { duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, failed={ dup=3 }, dupfail={ [8]="JPN",[9]="SZH" } },
-[680] = { dropped=242 },
+[813] = { pset={ dup=LHpi.Data.sets[813].cardcount.reg-5 }, failed={ dup=LHpi.Data.sets[813].cardcount.tok+5 }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, namereplaced=20, foiltweaked=10 },
+[806] = { pset={ dup=LHpi.Data.sets[806].cardcount.reg }, failed={ dup=LHpi.Data.sets[806].cardcount.tok }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=14 },
+[802] = { pset={ dup=LHpi.Data.sets[802].cardcount.reg }, failed={ dup=LHpi.Data.sets[802].cardcount.tok }, duppset={ [2]="RUS",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=14, namereplaced=2 },
+[800] = { pset={ dup=LHpi.Data.sets[800].cardcount.reg }, failed={ dup=LHpi.Data.sets[800].cardcount.tok }, duppset={ [2]="RUS",[7]="SPA" }, dupfail={ [2]="RUS",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=14 },
+[795] = { pset={ dup=LHpi.Data.sets[795].cardcount.reg }, failed={ dup=LHpi.Data.sets[795].cardcount.tok }, duppset={ [2]="RUS",[3]="GER",[7]="SPA" }, dupfail={ [2]="RUS",[3]="GER",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
+[793] = { pset={ dup=LHpi.Data.sets[793].cardcount.reg }, failed={ dup=LHpi.Data.sets[793].cardcount.tok }, duppset={ [2]="RUS",[7]="SPA" }, dupfail={ [2]="RUS",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
+[791] = { pset={ dup=LHpi.Data.sets[791].cardcount.reg }, failed={ dup=LHpi.Data.sets[791].cardcount.tok }, duppset={ [2]="RUS",[7]="SPA" }, dupfail={ [2]="RUS",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
+[786] = { pset={ [7]=LHpi.Data.sets[786].cardcount.reg }, failed= { dup=LHpi.Data.sets[786].cardcount.tok }, dupfail= { [7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
+[784] = { failed={ dup=1, [8]=4, [9]=4, [10]=4, [11]=4 }, dupfail={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, namereplaced=26 },
+[782] = { failed={ dup=1, [8]=13, [9]=13, [10]=13}, dupfail={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, namereplaced=40 },
+[776] = { pset={ dup=LHpi.Data.sets[776].cardcount.reg }, failed={ dup=1, [8]=5,[9]=5,[10]=5 }, duppset={ [8]="JPN",[9]="SZH",[10]="ZHT" }, dupfail={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA", } },
+[775] = { pset={ dup=LHpi.Data.sets[775].cardcount.reg }, failed={ dup=1, [8]=6,[9]=6,[10]=6 }, duppset={ [8]="JPN",[9]="SZH",[10]="ZHT" }, dupfail={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA", } },
+[773] = { failed={ dup=1, [8]=10,[9]=10,[10]=10 }, dupfail={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA", } },
+[767] = { failed={ dup=LHpi.Data.sets[767].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" } },
+[765] = { failed={ dup=LHpi.Data.sets[765].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" } },
+[764] = { failed={ dup=LHpi.Data.sets[764].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" } },
+[762] = { failed={ dup=LHpi.Data.sets[762].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" } },
+[758] = { failed={ dup=LHpi.Data.sets[758].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" } },
+[756] = { failed={ dup=LHpi.Data.sets[756].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" } },
+[754] = { failed={ dup=LHpi.Data.sets[754].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" } },
+[752] = { failed={ dup=LHpi.Data.sets[752].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" } },
+[751] = { failed={ dup=LHpi.Data.sets[751].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" } },
+[750] = { failed={ dup=LHpi.Data.sets[750].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" } },
+[730] = { failed={ dup=LHpi.Data.sets[730].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" } },
+[690] = { dropped=602 },-- non-Timeshifted 301
+[680] = { dropped=242 }, -- Timeshifted 121
+[620] = { namereplaced=10 },
+[610] = { namereplaced=10 },
+[590] = { namereplaced=24 },
+[450] = { pset={ dup=LHpi.Data.sets[450].cardcount.reg-3 }, duppset={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" } },
+[210] = { pset={ [6]=LHpi.Data.sets[210].cardcount.reg-1 }, failed= { [6]=1 } },
+[190] = { pset={ [6]=LHpi.Data.sets[190].cardcount.reg-1 }, failed= { [6]=1 } },
 
-
---[0] = { pset={ dup=LHpi.Data.sets[0].cardcount.both, }, duppset={  }, failed={ dup=LHpi.Data.sets[0].cardcount.tok }, dupfail={  } },
---[752] = { pset={ dup=LHpi.Data.sets[752].cardcount.both, [8]=180,[9]=180 }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, failed={ dup=7 }, dupfail={ [8]="JPN",[9]="SZH" } },
---[751] = { pset={ dup=LHpi.Data.sets[751].cardcount.both, [8]=301,[9]=301 }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, failed={ dup=12 }, dupfail={ [8]="JPN",[9]="SZH" } },
---[750] = { pset={ dup=LHpi.Data.sets[750].cardcount.both, [8]=150,[9]=150 }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, failed={ dup=3 }, dupfail={ [8]="JPN",[9]="SZH" } },
+--[] = { pset={ dup=LHpi.Data.sets[].cardcount.reg }, failed={ dup=LHpi.Data.sets[].cardcount.tok }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" } },
+--[] = { failed={ dup=LHpi.Data.sets[].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" } },
 --noneng = { [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR",[12]="HEB",[13]="ARA",[14]="LAT",[15]="SAN",[16]="GRC" }
 	}--end table site.expected
 	-- I'm too lazy to fill in site.expected myself, let the script do it ;-)
