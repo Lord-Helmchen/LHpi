@@ -721,16 +721,16 @@ function site.SetExpected( importfoil , importlangs , importsets )
 --- pset defaults to LHpi.Data.sets[setid].cardcount.reg, if available and not set otherwise here.
 --  LHpi.Data.sets[setid]cardcount has 6 fields you can use to avoid hardcoded numbers here: { reg, tok, both, nontrad, repl, all }.
 
---- if EXPECTTOKENS is true, LHpi.Data.sets[setid].cardcount.tok is added to pset default.
+--- if site.expected.tokens is true, LHpi.Data.sets[setid].cardcount.tok is added to pset default.
 -- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
 -- @field [parent=#site.expected] #boolean or #table { #boolean,...} tokens
 	tokens = false,
 --	tokens = { "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" },
---- if EXPECTNONTRAD is true, LHpi.Data.sets[setid].cardcount.nontrad is added to pset default.
+--- if site.expected.nontrad is true, LHpi.Data.sets[setid].cardcount.nontrad is added to pset default.
 -- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
 -- @field [parent=#site.expected] #boolean nontrad
 	nontrad = true,
---- if EXPECTREPL is true, LHpi.Data.sets[setid].cardcount.repl is added to pset default.
+--- if site.expected.repl is true, LHpi.Data.sets[setid].cardcount.repl is added to pset default.
 -- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
 -- @field [parent=#site.expected] #boolean replica
 	replica = true,

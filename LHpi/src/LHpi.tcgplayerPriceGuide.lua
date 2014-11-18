@@ -68,7 +68,7 @@ copyprice = { [3]=true }
 STRICTEXPECTED = true
 
 --- if true, exit with error on object type mismatch, else use object type 0 (all)
--- @field [parent=#global] boolena STRICTOBJTYPE
+-- @field [parent=#global] #boolean STRICTOBJTYPE
 STRICTOBJTYPE = true
 
 --- log to seperate logfile instead of Magic Album.log;	default true
@@ -143,8 +143,12 @@ site.regex = '<TR height=20>(.-)</TR>'
  @param #table importsets	{ #number (setid)= #string , ... }
 	-- parameter passed from Magic Album
 	-- array of sets the script should import, represented as pairs { #number = #string } (see "Database\Sets.txt").
+ @param #table scriptmode { #boolean listsets, boolean checksets, ... }
+	-- nil if called by Magic Album
+	-- will be passed to site.Initialize to trigger nonstandard modes of operation	
 ]]
-function ImportPrice( importfoil , importlangs , importsets )
+function ImportPrice( importfoil , importlangs , importsets , scriptmode)
+	scriptmode = scriptmode or {}
 	if SAVELOG~=false then
 		ma.Log( "Check " .. scriptname .. ".log for detailed information" )
 	end
@@ -182,10 +186,26 @@ function ImportPrice( importfoil , importlangs , importsets )
 	end -- do load LHpi library
 	collectgarbage() -- we now have LHpi table with all its functions inside, let's clear LHpilib and execlib() from memory
 	LHpi.Log( "LHpi lib is ready to use." )
+	site.Initialize( scriptmode ) -- keep site-specific stuff out of ImportPrice
 	LHpi.Log("Importing " .. site.himelo[himelo] .. " prices. Columns available are " .. LHpi.Tostring(site.himelo) , 1 )
 	LHpi.DoImport (importfoil , importlangs , importsets)
 	ma.Log( "End of Lua script " .. scriptname )
 end -- function ImportPrice
+
+--[[- prepare script
+ Do stuff here that needs to be done between loading the Library and calling LHpi.DoImport.
+ At this point, LHpi's functions are avalable, but default values for missing fields have not yet been set.
+ 
+ for LHpi.mkm, we need to configure and prepare the oauth client.
+@param #table mode { #boolean listsets, boolean checksets, ... }
+	-- nil if called by Magic Album
+	-- testOAuth	tests the OAuth implementation
+	-- checksets	compares site.sets with setlist from dummyMA
+	-- getsets		fetches available expansions from server and saves a site.sets template.
+ @function [parent=#site] Initialize
+]]
+function site.Initialize( mode )
+end
 
 --[[-  build source url/filename.
  Has to be done in sitescript since url structure is site specific.
@@ -226,26 +246,30 @@ end -- function site.BuildUrl
 
 --[[-  get data from foundstring.
  Has to be done in sitescript since html raw data structure is site specific.
- To allow returning more than one card here (foil and nonfoil versions are considered seperate cards!),
+ To allow returning more than one card here (foil and nonfoil versions are considered seperate cards at this stage!),
  ParseHtmlData is required to wrap it/them into a container table.
+ NEW: newCard.price must be #number; if foundstring contains multiple prices, return a different card for each price! 
+ If you decide to set regprice or foilprice directly, language and variant detection will not be applied to the price!
+ LHpi.buildCardData will construct regprice or foilprice as #table { #number (langid)= #number, ... } or { #number (langid)= #table { #string (variant)= #number, ... }, ... }
+ It's usually a good idea to explicitely set newCard.foil, for example by querying site.frucs[urldetails.frucid].isfoil, unless parsed card names contain a foil suffix.
  
  Price is returned as whole number to generalize decimal and digit group separators
  ( 1.000,00 vs 1,000.00 ); LHpi library then divides the price by 100 again.
  This is, of course, not optimal for speed, but the most flexible.
 
  Return value newCard can receive optional additional fields:
- @return #boolean newcard.foil		(semi-optional) set the card as foil. It's often a good idea to explicitely set this, for example by querying site.frucs[urldetails.frucid].isfoil
+ @return #boolean newcard.foil		(semi-optional) set the card as foil. 
  @return #table newCard.pluginData	(optional) is passed on by LHpi.buildCardData for use in site.BCDpluginName and/or site.BCDpluginCard.
  @return #string newCard.name		(optional) will pre-set the card's unique (for the cardsetTable) identifying name.
  @return #table newCard.lang		(optional) will override LHpi.buildCardData generated values.
  @return #boolean newCard.drop		(optional) will override LHpi.buildCardData generated values.
  @return #table newCard.variant		(optional) will override LHpi.buildCardData generated values.
- @return #table newCard.regprice	(optional) will override LHpi.buildCardData generated values.
- @return #table newCard.foilprice 	(optional) will override LHpi.buildCardData generated values.
+ @return #number or #table newCard.regprice		(optional) will override LHpi.buildCardData generated values. #number or #table { [#number langid]= #number,...}
+ @return #number or #table newCard.foilprice 	(optional) will override LHpi.buildCardData generated values. #number or #table { [#number langid]= #number,...}
  
  @function [parent=#site] ParseHtmlData
  @param #string foundstring		one occurence of siteregex from raw html data
- @param #table urldetails		{ isfile= #boolean , setid= #number, langid= #number, frucid= #number , foilonly= #boolean }
+ @param #table urldetails		{ isfile= #boolean, oauth= #boolean, setid= #number, langid= #number, frucid= #number , foilonly= #boolean }
  @return #table { #number= #table { names= #table { #number (langid)= #string , ... }, price= #number , foil= #boolean , ... } , ... } 
 ]]
 function site.ParseHtmlData( foundstring , urldetails )
@@ -266,7 +290,8 @@ function site.ParseHtmlData( foundstring , urldetails )
 	if (price == 0) and string.find(foundstring,"SOON") then
 		name = name .. "(DROP price SOON)"
 	end
-	local newCard = { names = { [1] = name } , price = { [1] = price } }
+--	local newCard = { names = { [1] = name } , price = { [1] = price } }
+	local newCard = { names = { [1] = name } , price = price }
 	return { newCard }
 end -- function site.ParseHtmlData
 
@@ -566,7 +591,7 @@ site.sets = {
 --[[- card name replacement tables.
 
   fields are for subtables indexed by #number setid.
- { #number (setid)= #table { #string (oldname)= #string , ... } , ... }
+ { #number (setid)= #table { #string (oldname)= #string (newname), ... } , ... }
  
  @type site.namereplace
  @field [parent=#site.namereplace] #string name
@@ -1477,9 +1502,11 @@ override=true,
  This allows to read LHpi.Data.sets[setid].cardcount tables for less hardcoded numbers. 
 
  @function [parent=#site] SetExpected
- @param nil
+ @param #string importfoil	"y"|"n"|"o" passed from DoImport
+ @param #table importlangs	{ #number (langid)= #string , ... } passed from DoImport
+ @param #table importsets	{ #number (setid)= #string , ... } passed from DoImport
 ]]
-function site.SetExpected()
+function site.SetExpected( importfoil , importlangs , importsets )
 --[[- table of expected results.
  as of script release. Used as sanity check during sitescript development and source of insanity afterwards ;-)
  For each setid, if unset defaults to expect all cards to be set.
@@ -1496,17 +1523,20 @@ function site.SetExpected()
  ]]
 	site.expected = {
 --- pset defaults to LHpi.Data.sets[setid].cardcount.reg, if available and not set otherwise here.
---  LHpi.Data.sets[setid]cardcount has 6 fields you can use avoid hardcoded numbers here: { reg, tok, both, nontr, repl, all }.
+--  LHpi.Data.sets[setid]cardcount has 6 fields you can use to avoid hardcoded numbers here: { reg, tok, both, nontrad, repl, all }.
 
---- if EXPECTTOKENS is true, LHpi.Data.sets[setid].cardcount.tok is added to pset default.
--- @field [parent=#site.expected] #boolean EXPECTTOKENS
-	EXPECTTOKENS = true,
---- if EXPECTNONTRAD is true, LHpi.Data.sets[setid].cardcount.nontrad is added to pset default.
--- @field [parent=#site.expected] #boolean EXPECTNONTRAD
-	EXPECTNONTRAD = true,
---- if EXPECTREPL is true, LHpi.Data.sets[setid].cardcount.repl is added to pset default.
--- @field [parent=#site.expected] #boolean EXPECTREPL
-	EXPECTREPL = true,
+--- if site.expected.tokens is true, LHpi.Data.sets[setid].cardcount.tok is added to pset default.
+-- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
+-- @field [parent=#site.expected] #boolean or #table { #boolean,...} tokens
+	tokens = true,
+--- if site.expected.nontrad is true, LHpi.Data.sets[setid].cardcount.nontrad is added to pset default.
+-- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
+-- @field [parent=#site.expected] #boolean nontrad
+	nontrad = true,
+--- if site.expected.repl is true, LHpi.Data.sets[setid].cardcount.repl is added to pset default.
+-- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
+-- @field [parent=#site.expected] #boolean replica
+	replica = true,
 -- Core sets
 [808] = { pset={LHpi.Data.sets[808].cardcount.both}, dropped=1, namereplaced=4 }, -- 1 SOON (1 Garruk the Slayer (oversized))
 [797] = { failed={ 1 }, namereplaced=2 },
@@ -1581,7 +1611,7 @@ function site.SetExpected()
 -- special sets
 [812] = { pset={0} },
 [810] = { pset={0} },
-[807] = { pset={ LHpi.Data.sets[807].cardcount.both+LHpi.Data.sets[807].cardcount.nontr }, namereplaced=2 },
+[807] = { pset={ LHpi.Data.sets[807].cardcount.both+LHpi.Data.sets[807].cardcount.nontrad }, namereplaced=2 },
 [805] = { pset={0} },--{ foiltweaked=2, namereplaced=2 },
 [801] = { pset={ LHpi.Data.sets[801].cardcount.all-1 }, failed={ 1 }, foiltweaked=15-1, namereplaced=7 },--  "Sydri, Galvanic Genius - Oversized)" missing
 [799] = { pset={ LHpi.Data.sets[799].cardcount.both-20 }, foiltweaked=0, },
@@ -1597,7 +1627,7 @@ function site.SetExpected()
 [778] = { pset={ LHpi.Data.sets[778].cardcount.reg }, failed={ LHpi.Data.sets[778].cardcount.repl }, namereplaced=3 },
 [772] = { pset={ LHpi.Data.sets[772].cardcount.both-2 }, namereplaced=1, foiltweaked=2-1 },
 [771] = { namereplaced=1},
-[769] = { pset={ LHpi.Data.sets[769].cardcount.reg+LHpi.Data.sets[769].cardcount.nontr }, namereplaced=1, dropped=2 },
+[769] = { pset={ LHpi.Data.sets[769].cardcount.reg+LHpi.Data.sets[769].cardcount.nontrad }, namereplaced=1, dropped=2 },
 [768] = { foiltweaked=5},
 [766] = { pset={ LHpi.Data.sets[766].cardcount.both-5 }, foiltweaked=2, dropped=4, namereplaced=1 },
 [763] = { pset={ LHpi.Data.sets[763].cardcount.both-3 }, dropped=1, namereplaced=3, foiltweaked=2},
@@ -1615,7 +1645,7 @@ function site.SetExpected()
 [310] = { pset={165-2}, failed={ 2 }, dropped=2, namereplaced=15-2},-- 2 SOON
 [260] = { pset={228-6-1}, failed={ 7}, dropped=1, namereplaced=27-1 },-- 1 SOON, -6 "DG" variant
 [200] = { namereplaced=12 },
-[70]  = { pset={ LHpi.Data.sets[70].cardcount.nontr-1 }, dropped=1 },--1 SOON
+[70]  = { pset={ LHpi.Data.sets[70].cardcount.nontrad-1 }, dropped=1 },--1 SOON
 -- promos
 [31]  = { pset={ LHpi.Data.sets[31].cardcount.reg } },
 [30]  = { pset={ 172}, failed={ 2 }, foiltweaked=1, dropped=3 },--3 SOON

@@ -10,7 +10,8 @@ everything else Copyright (C) 2012-2014 by Christian Harms.
 If you want to contact me about the script, try its release thread in http://www.slightlymagic.net/forum/viewforum.php?f=32
 
 @module LHpi.site
-@author Christ@copyright 2012-2014 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
+@author Christian Harms
+@copyright 2012-2014 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
 @release This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -236,7 +237,7 @@ end -- function ImportPrice
 function site.Initialize( mode )
 	if not require then
 		LHpi.Log("trying to work around Magic Album lua sandbox limitations...")
-		--emulate require(modname) using dofile
+		--emulate require(modname) using dofile; only works for lua files, not dlls.
 		local packagePath = 'Prices\\lib\\ext\\'
 		require = function (fname)
 			local donefile
@@ -456,7 +457,7 @@ end
 --[[- compare site.sets with dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets.
 finds sets from dummy's lists that are not in site.sets.
 
- @function [parent=#site] CompareDataSets
+ @function [parent=#site] CompareSiteSets
 ]]
 function site.CompareSiteSets()
 	if not dummy then error("CompareSiteSetsneeds to be run from dummyMA!") end
@@ -620,7 +621,7 @@ end -- function site.BuildUrl
  
  @function [parent=#site] ParseHtmlData
  @param #string foundstring		one occurence of siteregex from raw html data
- @param #table urldetails		{ isfile= #boolean , setid= #number, langid= #number, frucid= #number , foilonly= #boolean }
+ @param #table urldetails		{ isfile= #boolean, oauth= #boolean, setid= #number, langid= #number, frucid= #number , foilonly= #boolean }
  @return #table { #number= #table { names= #table { #number (langid)= #string , ... }, price= #number , foil= #boolean , ... } , ... } 
 ]]
 function site.ParseHtmlData( foundstring , urldetails )
