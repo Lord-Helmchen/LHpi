@@ -1,0 +1,4 @@
+set	363	name:"Huracán" 						oracleName:"Hurloon Wrangler"	oracleName should be "Hurricane"
+		name:"Fin de la desgracia visual"	oracleName:"Changeling Hero"	oracleName should be "Eyeblight’s Ending"
+set 310	why does ma.SetPrice(310,5,"Ogre Berserker","",0.14,0,1) return 2 ?!
+	

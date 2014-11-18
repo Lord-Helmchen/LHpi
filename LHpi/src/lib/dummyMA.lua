@@ -716,7 +716,7 @@ function main()
 		SAVEHTML = true,
 --		SAVEHTML = false,
 		DEBUG = true,
---		DEBUGFOUND = true,
+		DEBUGFOUND = true,
 --		DEBUGVARIANTS = true,
 --		SAVETABLE=true,
 	}
@@ -737,22 +737,22 @@ function main()
 	dummy.loadscript(script.name,script.path,script.savepath)
 
 	-- only load library (and Data)
---	local LHpi = dummy.loadlibonly(2.14,dummy.path,dummy.savepath)
---	local Data = LHpi.LoadData(2)
+--	LHpi = dummy.loadlibonly(2.14,dummy.path,dummy.savepath)
+--	LHpi.Data = LHpi.LoadData(5)
 
 	-- force debug enviroment options
 	dummy.forceEnv(dummy.env)
 	print("dummy says: script loaded.")
 
 	local importfoil = "y"
---	local importlangs = { [1] = "eng" }
-	local importlangs = { [3] = "FOO" }
+	local importlangs = { [1] = "eng" }
+--	local importlangs = { [5] = "FOO" }
 --	local importlangs = dummy.alllangs
 --	local importsets = { [0] = "fakeset"; }
-	local importsets = { [754]="some set" }
+	local importsets = { [814]="some set" }
 --	local importsets = { [220]="foo";[800]="bar";[0]="baz";}
 --	local importsets = dummy.coresets
-	--local importsets = dummy.expansionsets
+--	local importsets = dummy.expansionsets
 --	local importsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 
 	-- now try to break the script :-)
@@ -769,13 +769,21 @@ function main()
 --	dummy.CompareDummySets(dummy.savepath.."\\..",2.14)
 --	dummy.CompareDataSets(dummy.savepath.."\\..",2.14,5)
 
-	--use ProFi to profile the script
+	-- use ProFi to profile the script
 --	ProFi = require 'ProFi'
 --	ProFi:start()
+	--
 --	ImportPrice( importfoil, importlangs, importsets )
+	--profile single function only
+--	package.path = 'src\\lib\\ext\\?.lua;' .. package.path
+--	Json = require ("dkjson")
+--	site.sets={ [808]={id=808, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Magic%202015"} }
+--	local urldetails = { setid=808, langid=1, frucid=1 }
+--	local foundstring = '{"idProduct":7923,"idMetaproduct":2248,"idGame":1,"countReprints":2,"name":{"1":{"idLanguage":1,"languageName":"English","productName":"Fyndhorn Druid (Version 2)"},"2":{"idLanguage":2,"languageName":"French","productName":"Druide cordellien (Version 2)"},"3":{"idLanguage":3,"languageName":"German","productName":"Fyndhorndruide (Version 2)"},"4":{"idLanguage":4,"languageName":"Spanish","productName":"Druida de Fyndhorn (Version 2)"},"5":{"idLanguage":5,"languageName":"Italian","productName":"Druido di Fyndhorn (Version 2)"}},"website":"\\/Products\\/Singles\\/Alliances\\/Fyndhorn+Druid+%28Version+2%29","image":".\\/img\\/cards\\/Alliances\\/fyndhorn_druid2.jpg","category":{"idCategory":1,"categoryName":"Magic Single"},"priceGuide":{"SELL":0.05,"LOW":0.02,"LOWEX":0.02,"LOWFOIL":0,"AVG":0.1,"TREND":0.05},"expansion":"Alliances","expIcon":13,"number":null,"rarity":"Common","countArticles":466,"countFoils":0}'
+--	site.ParseHtmlData( foundstring , urldetails )
+	--	
 --	ProFi:stop()
 --	ProFi:writeReport( 'MyProfilingReport.txt' )
- 
 	
 	local dt = os.clock() - t1 
 	print(string.format("All this took %g seconds",dt))

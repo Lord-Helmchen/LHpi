@@ -597,15 +597,19 @@ end -- function site.BuildUrl
 
 --[[-  get data from foundstring.
  Has to be done in sitescript since html raw data structure is site specific.
- To allow returning more than one card here (foil and nonfoil versions are considered seperate cards!),
+ To allow returning more than one card here (foil and nonfoil versions are considered seperate cards at this stage!),
  ParseHtmlData is required to wrap it/them into a container table.
+ NEW: newCard.price must be #number; if foundstring contains multiple prices, return a different card for each price! 
+ If you decide to set regprice or foilprice directly, language and variant detection will not be applied to the price!
+ LHpi.buildCardData will construct regprice or foilprice as #table { #number (langid)= #number, ... } or { #number (langid)= #table { #string (variant)= #number, ... }, ... }
+ It's usually a good idea to explicitely set newCard.foil, for example by querying site.frucs[urldetails.frucid].isfoil, unless parsed card names contain a foil suffix.
  
  Price is returned as whole number to generalize decimal and digit group separators
  ( 1.000,00 vs 1,000.00 ); LHpi library then divides the price by 100 again.
  This is, of course, not optimal for speed, but the most flexible.
 
  Return value newCard can receive optional additional fields:
- @return #boolean newcard.foil		(semi-optional) set the card as foil. It's often a good idea to explicitely set this, for example by querying site.frucs[urldetails.frucid].isfoil
+ @return #boolean newcard.foil		(semi-optional) set the card as foil. 
  @return #table newCard.pluginData	(optional) is passed on by LHpi.buildCardData for use in site.BCDpluginName and/or site.BCDpluginCard.
  @return #string newCard.name		(optional) will pre-set the card's unique (for the cardsetTable) identifying name.
  @return #table newCard.lang		(optional) will override LHpi.buildCardData generated values.
@@ -617,7 +621,7 @@ end -- function site.BuildUrl
  @function [parent=#site] ParseHtmlData
  @param #string foundstring		one occurence of siteregex from raw html data
  @param #table urldetails		{ isfile= #boolean , setid= #number, langid= #number, frucid= #number , foilonly= #boolean }
- @return #table { #number= #table { names= #table { #number (langid)= #string , ... }, price= #number or #table { [#number langid]= #number,...} , foil= #boolean , ... } , ... } 
+ @return #table { #number= #table { names= #table { #number (langid)= #string , ... }, price= #number , foil= #boolean , ... } , ... } 
 ]]
 function site.ParseHtmlData( foundstring , urldetails )
 	local priceType = site.priceTypes[priceToUse] or "AVG"
@@ -628,10 +632,12 @@ function site.ParseHtmlData( foundstring , urldetails )
 		error("nothing here for xml yet")
 	end
 	--print(LHpi.Tostring(product.name))
-	local newCard = 	{ names = { "" }, lang={}, price = 0, pluginData={}, foil=false }
-	local newFoilCard = { names = { "" }, lang={}, price = 0, pluginData={}, foil=true  }
-	local regprice  = string.gsub( product.priceGuide[priceType] , "[,.]" , "" ) --nonfoil price, use AVG by default
-	local foilprice = string.gsub( product.priceGuide["LOWFOIL"] , "[,.]" , "" ) --foil price
+	local newCard = 	{ names = {}, lang={}, pluginData={}, foil=false }
+	local newFoilCard = { names = {}, lang={}, pluginData={}, foil=true  }
+--	local regprice  = string.gsub( product.priceGuide[priceType] , "[,.]" , "" ) --nonfoil price, use AVG by default
+--	local foilprice = string.gsub( product.priceGuide["LOWFOIL"] , "[,.]" , "" ) --foil price
+	local regprice  = tonumber(product.priceGuide[priceType])*100 --nonfoil price, use AVG by default
+	local foilprice = tonumber(product.priceGuide["LOWFOIL"])*100 --foil price
 	-- can just set names[1] to productName[1].productName, as productName reflects mkm ui langs, not card langs		
 	newCard.names[1] = product.name["1"].productName
 	newFoilCard.names[1] = product.name["1"].productName
@@ -641,8 +647,10 @@ function site.ParseHtmlData( foundstring , urldetails )
 	--	newFoilCard.names[langid] = prodName.productName
 	--end--for i,prodName
 	for lid,lang in pairs(site.sets[urldetails.setid].lang) do
-		newCard.lang[lid] = LHpi.Data.languages[lid].abbr
-		newFoilCard.lang[lid] = LHpi.Data.languages[lid].abbr
+		if site.sets[urldetails.setid].lang[lid] then
+			newCard.lang[lid] = LHpi.Data.languages[lid].abbr
+			newFoilCard.lang[lid] = LHpi.Data.languages[lid].abbr
+		end
 	end
 	newCard.price=tonumber(regprice)
 	newFoilCard.price=tonumber(foilprice)
@@ -678,8 +686,13 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 	elseif "Token" == card.pluginData.rarity then
 		if card.pluginData.collectNr then
 			card.name = string.gsub( card.name, "%(.+%)", "("..card.pluginData.collectNr..")" )
-			card.name = string.gsub( card.name, "%(T%-?(%d+[abc]?)%)","(%1)")
-		elseif setid == 751 or setid == 754 then
+			card.name = string.gsub( card.name, "%(TO?K?E?N?%-?(%d+[abc]?)%)","(%1)")
+		elseif setid == 751
+			or setid == 754
+			or setid == 755
+			or setid == 757
+			or setid == 766
+		then
 			card.name = string.gsub( card.name, "%(.+%)", "" )
 		end
 	end--if "Land" else "Token"
@@ -703,6 +716,25 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 		elseif card.pluginData.set == "Rinascimento" then
 			card.lang = { [5]="ITA" }
 		end
+--	elseif setid == 775 then
+--		if string.find(card.name,"(Manga)$") then
+--			card.name = card.name .. "(DROP)"
+--		end
+	elseif setid == 9 then
+		if card.pluginData.set == "Oversized 6x9 Promos" then
+			if card.name ~= "Aswan Jaguar" then
+				--TODO better settweak this?
+				card.name = card.name .. "(DROP not Video Game Promo)"
+			end
+		end
+	elseif setid == 2 then
+		if card.name == "Incinerate"
+		or card.name == "Counterspell"
+		then
+		else
+			--TODO better settweak this?
+			card.name = card.name .. "(DROP not DCI Legend Membership)"
+		end
 	end
 	
 	return card
@@ -725,6 +757,7 @@ function site.BCDpluginPost( card , setid , importfoil, importlangs )
 	if DEBUG then
 		LHpi.Log( "site.BCDpluginPost got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
 	end
+	--TODO migrate settweak to library?
 	if site.settweak[setid] and site.settweak[setid][card.name] then
 		if LOGSETTWEAK or DEBUG then
 			LHpi.Log( string.format( "settweak saved %s with new set %s" ,card.name, site.settweak[setid][card.name] ), 1 )
@@ -919,176 +952,192 @@ site.sets = {
 [120]={id=120, lang={ "ENG" }, fruc={ true }, url="Arabian%20Nights"},--Arabian Nights
 -- specialsets
 --[0]={id=  0, lang=all, fruc={ true }, url="Duel%20Decks:%20Anthology"},--Duel Decks: Anthology
-[814]={id=814, lang=all, fruc={ true }, url="Commander%202014"},--Commander 2014
-[812]={id=812, lang=all, fruc={ true }, url="Duel%20Decks:%20Speed%20vs.%20Cunning"},--Duel Decks: Speed vs. Cunning
-[811]={id=811, lang=all, fruc={ true }, url="M15%20Clash%20Pack"},--M15 Clash Pack
-[810]={id=810, lang=all, fruc={ true }, url="Modern%20Event%20Deck%202014"},--Modern Event Deck 2014
-[809]={id=809, lang=all, fruc={ true }, url="From%20the%20Vault:%20Annihilation"},--From the Vault: Annihilation
-[807]={id=807, lang=all, fruc={ true }, url="Conspiracy"},--Conspiracy
-[805]={id=805, lang=all, fruc={ true }, url="Duel%20Decks:%20Jace%20vs.%20Vraska"},--Duel Decks: Jace vs. Vraska
+[814]={id=814, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Commander%202014"},--Commander 2014
+[812]={id=812, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel%20Decks:%20Speed%20vs.%20Cunning"},--Duel Decks: Speed vs. Cunning
+[811]={id=811, lang={ "ENG" }, fruc={ true }, url="M15%20Clash%20Pack"},--M15 Clash Pack
+[810]={id=810, lang={ "ENG" }, fruc={ true }, url="Modern%20Event%20Deck%202014"},--Modern Event Deck 2014
+[809]={id=809, lang={ "ENG" }, fruc={ true }, url="From%20the%20Vault:%20Annihilation"},--From the Vault: Annihilation
+[807]={id=807, lang={ "ENG",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Conspiracy"},--Conspiracy
+[805]={id=805, lang={ "ENG" }, fruc={ true }, url="Duel%20Decks:%20Jace%20vs.%20Vraska"},--Duel Decks: Jace vs. Vraska
 --[804] = "Challenge Deck: Battle the Horde";
 --[803] = "Challenge Deck: Face the Hydra";
-[801]={id=801, lang=all, fruc={ true }, url="Commander%202013"},--Commander 2013
-[799]={id=799, lang=all, fruc={ true }, url="Duel%20Decks:%20Heroes%20vs.%20Monsters"},--Duel Decks: Heroes vs. Monsters
-[798]={id=798, lang=all, fruc={ true }, url="From%20the%20Vault:%20Twenty"},--From the Vault: Twenty
-[796]={id=796, lang=all, fruc={ true }, url="Modern%20Masters"},--Modern Masters
-[794]={id=794, lang=all, fruc={ true }, url="Duel%20Decks:%20Sorin%20vs.%20Tibalt"},--Duel Decks: Sorin vs. Tibalt
-[792]={id=792, lang=all, fruc={ true }, url="Commander%27s%20Arsenal"},--Commander's Arsenal
-[790]={id=790, lang=all, fruc={ true }, url="Duel%20Decks:%20Izzet%20vs.%20Golgari"},--Duel Decks: Izzet vs. Golgari
-[789]={id=789, lang=all, fruc={ true }, url="From%20the%20Vault:%20Realms"},--From the Vault: Realms
-[787]={id=787, lang=all, fruc={ true }, url="Planechase%202012"},--Planechase 2012
-[785]={id=785, lang=all, fruc={ true }, url="Duel%20Decks:%20Venser%20vs.%20Koth"},--Duel Decks: Venser vs. Koth
-[783]={id=783, lang=all, fruc={ true }, url="Premium%20Deck%20Series:%20Graveborn"},--Premium Deck Series: Graveborn
-[781]={id=781, lang=all, fruc={ true }, url="Duel%20Decks:%20Ajani%20vs.%20Nicol%20Bolas"},--Duel Decks: Ajani vs. Nicol Bolas
-[780]={id=780, lang=all, fruc={ true }, url="From%20the%20Vault:%20Legends"},--From the Vault: Legends
-[778]={id=778, lang=all, fruc={ true }, url="Commander"},--Commander
-[777]={id=777, lang=all, fruc={ true }, url="Duel%20Decks:%20Knights%20vs.%20Dragons"},--Duel Decks: Knights vs. Dragons
-[774]={id=774, lang=all, fruc={ true }, url="Premium%20Deck%20Series:%20Fire%20&%20Lightning"},--Premium Deck Series: Fire & Lightning
-[772]={id=772, lang=all, fruc={ true }, url="Duel%20Decks:%20Elspeth%20vs.%20Tezzeret"},--Duel Decks: Elspeth vs. Tezzeret
-[771]={id=771, lang=all, fruc={ true }, url="From%20the%20Vault:%20Relics"},--From the Vault: Relics
-[769]={id=769, lang=all, fruc={ true }, url="Archenemy"},--Archenemy
-[768]={id=768, lang=all, fruc={ true }, url="Duels%20of%20the%20Planeswalkers%20Decks"},--Duels of the Planeswalkers Decks
-[766]={id=766, lang=all, fruc={ true }, url="Duel%20Decks:%20Phyrexia%20vs.%20The%20Coalition"},--Duel Decks: Phyrexia vs. The Coalition
-[764]={id=764, lang=all, fruc={ true }, url="Premium%20Deck%20Series:%20Slivers"},--Premium Deck Series: Slivers
-[763]={id=763, lang=all, fruc={ true }, url="Duel%20Decks:%20Garruk%20vs.%20Liliana"},--Duel Decks: Garruk vs. Liliana
-[761]={id=761, lang=all, fruc={ true }, url="Planechase"},--Planechase
-[760]={id=760, lang=all, fruc={ true }, url="From%20the%20Vault:%20Exiled"},--From the Vault: Exiled
-[757]={id=757, lang=all, fruc={ true }, url="Duel%20Decks:%20Divine%20vs.%20Demonic"},--Duel Decks: Divine vs. Demonic
-[755]={id=755, lang=all, fruc={ true }, url="Duel%20Decks:%20Jace%20vs.%20Chandra"},--Duel Decks: Jace vs. Chandra
-[753]={id=753, lang=all, fruc={ true }, url="From%20the%20Vault:%20Dragons"},--From the Vault: Dragons
-[740]={id=740, lang=all, fruc={ true }, url="Duel%20Decks:%20Elves%20vs.%20Goblins"},--Duel Decks: Elves vs. Goblins
-[675]={id=675, lang=all, fruc={ true }, url="Coldsnap%20Theme%20Decks"},--Coldsnap Theme Decks
-[636]={id=636, lang=all, fruc={ true }, url="Salvat-Hachette"},--Salvat-Hachette
-[635]={id=635, lang=all, fruc={ true }, url="Salvat-Hachette%202011"},--Salvat-Hachette 2011
-[600]={id=600, lang=all, fruc={ true }, url="Unhinged"},--Unhinged
-[490]={id=490, lang=all, fruc={ true }, url="Deckmasters"},--Deckmasters
-[440]={id=440, lang=all, fruc={ true }, url="Beatdown"},--Beatdown
-[415]={id=415, lang=all, fruc={ true }, url="Starter%202000"},--Starter 2000
-[405]={id=405, lang=all, fruc={ true }, url="Battle%20Royale"},--Battle Royale
-[390]={id=390, lang=all, fruc={ true }, url="Starter%201999"},--Starter 1999
-[380]={id=380, lang=all, fruc={ true }, url="Portal%20Three%20Kingdoms"},--Portal Three Kingdoms
-[340]={id=340, lang=all, fruc={ true }, url="Anthologies"},--Anthologies
+[801]={id=801, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Commander%202013"},--Commander 2013
+[799]={id=799, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel%20Decks:%20Heroes%20vs.%20Monsters"},--Duel Decks: Heroes vs. Monsters
+[798]={id=798, lang={ "ENG" }, fruc={ true }, url="From%20the%20Vault:%20Twenty"},--From the Vault: Twenty
+[796]={id=796, lang={ "ENG" }, fruc={ true }, url="Modern%20Masters"},--Modern Masters
+[794]={id=794, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel%20Decks:%20Sorin%20vs.%20Tibalt"},--Duel Decks: Sorin vs. Tibalt
+[792]={id=792, lang={ "ENG" }, fruc={ true }, url="Commander%27s%20Arsenal"},--Commander's Arsenal
+[790]={id=790, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel%20Decks:%20Izzet%20vs.%20Golgari"},--Duel Decks: Izzet vs. Golgari
+[789]={id=789, lang={ "ENG" }, fruc={ true }, url="From%20the%20Vault:%20Realms"},--From the Vault: Realms
+[787]={id=787, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Planechase%202012"},--Planechase 2012
+[785]={id=785, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel%20Decks:%20Venser%20vs.%20Koth"},--Duel Decks: Venser vs. Koth
+[783]={id=783, lang={ "ENG" }, fruc={ true }, url="Premium%20Deck%20Series:%20Graveborn"},--Premium Deck Series: Graveborn
+[781]={id=781, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA" }, fruc={ true }, url="Duel%20Decks:%20Ajani%20vs.%20Nicol%20Bolas"},--Duel Decks: Ajani vs. Nicol Bolas
+[780]={id=780, lang={ "ENG" }, fruc={ true }, url="From%20the%20Vault:%20Legends"},--From the Vault: Legends
+[778]={id=778, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Commander"},--Commander
+[777]={id=777, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA" }, fruc={ true }, url="Duel%20Decks:%20Knights%20vs.%20Dragons"},--Duel Decks: Knights vs. Dragons
+[774]={id=774, lang={ "ENG" }, fruc={ true }, url="Premium%20Deck%20Series:%20Fire%20&%20Lightning"},--Premium Deck Series: Fire & Lightning
+[772]={id=772, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA" }, fruc={ true }, url="Duel%20Decks:%20Elspeth%20vs.%20Tezzeret"},--Duel Decks: Elspeth vs. Tezzeret
+[771]={id=771, lang={ "ENG" }, fruc={ true }, url="From%20the%20Vault:%20Relics"},--From the Vault: Relics
+[769]={id=769, lang={ "ENG" }, fruc={ true }, url="Archenemy"},--Archenemy
+[768]={id=768, lang={ "ENG" }, fruc={ true }, url="Duels%20of%20the%20Planeswalkers%20Decks"},--Duels of the Planeswalkers Decks
+[766]={id=766, lang={ "ENG" }, fruc={ true }, url="Duel%20Decks:%20Phyrexia%20vs.%20The%20Coalition"},--Duel Decks: Phyrexia vs. The Coalition
+[764]={id=764, lang={ "ENG" }, fruc={ true }, url="Premium%20Deck%20Series:%20Slivers"},--Premium Deck Series: Slivers
+[763]={id=763, lang={ "ENG" }, fruc={ true }, url="Duel%20Decks:%20Garruk%20vs.%20Liliana"},--Duel Decks: Garruk vs. Liliana
+[761]={id=761, lang={ "ENG" }, fruc={ true }, url="Planechase"},--Planechase
+[760]={id=760, lang={ "ENG" }, fruc={ true }, url="From%20the%20Vault:%20Exiled"},--From the Vault: Exiled
+[757]={id=757, lang={ "ENG" }, fruc={ true }, url="Duel%20Decks:%20Divine%20vs.%20Demonic"},--Duel Decks: Divine vs. Demonic
+[755]={id=755, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel%20Decks:%20Jace%20vs.%20Chandra"},--Duel Decks: Jace vs. Chandra
+[753]={id=753, lang={ "ENG" }, fruc={ true }, url="From%20the%20Vault:%20Dragons"},--From the Vault: Dragons
+[740]={id=740, lang={ "ENG" }, fruc={ true }, url="Duel%20Decks:%20Elves%20vs.%20Goblins"},--Duel Decks: Elves vs. Goblins
+[675]={id=675, lang={ "ENG",[3]="GER",[5]="ITA" }, fruc={ true }, url="Coldsnap%20Theme%20Decks"},--Coldsnap Theme Decks
+[636]={id=636, lang={ [7]="SPA" }, fruc={ true }, url="Salvat-Hachette%202011"},--Salvat-Hachette 2011
+--TODO [635] Data.variants, site.namereplace
+--[635]={id=635, lang={ [4]="FRA",[5]="ITA",[7]="SPA" }, fruc={ true }, url="Salvat-Hachette"},--Salvat Magic Encyclopedia
+[600]={id=600, lang={ "ENG" }, fruc={ true }, url="Unhinged"},--Unhinged
+[490]={id=490, lang={ "ENG" }, fruc={ true }, url="Deckmasters"},--Deckmasters
+[440]={id=440, lang={ "ENG" }, fruc={ true }, url="Beatdown"},--Beatdown
+[415]={id=415, lang={ "ENG",[3]="GER",[7]="SPA" }, fruc={ true }, url="Starter%202000"},--Starter 2000
+[405]={id=405, lang={ "ENG" }, fruc={ true }, url="Battle%20Royale"},--Battle Royale
+[390]={id=390, lang={ "ENG" }, fruc={ true }, url="Starter%201999"},--Starter 1999
+[380]={id=380, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Portal%20Three%20Kingdoms"},--Portal Three Kingdoms
+[340]={id=340, lang={ "ENG" }, fruc={ true }, url="Anthologies"},--Anthologies
 --[235] = "Multiverse Gift Box";
-[320]={id=320, lang=all, fruc={ true }, url="Unglued"},--Unglued
-[310]={id=310, lang=all, fruc={ true }, url="Portal%20Second%20Age"},--Portal Second Age
-[260]={id=260, lang=all, fruc={ true }, url="Portal"},--Portal
-[225]={id=225, lang=all, fruc={ true }, url="Introductory%20Two-Player%20Set"},--Introductory Two-Player Set
-[201]={id=201, lang={ [3]=true, [4]=true, [5]=true }, fruc={ true }, url={ "Renaissance", "Rinascimento" } },--Renaissance
-[200]={id=200, lang=all, fruc={ true }, url="Chronicles"},--Chronicles
-[106]={id=106, lang=all, fruc={ true }, url="International%20Edition"},--International Edition
-[105]={id=105, lang=all, fruc={ true }, url="Collectors%27%20Edition"},--Collectors' Edition
-[70] ={id= 70, lang=all, fruc={ true }, url="Vanguard"},--Vanguard
-[69] ={id= 69, lang=all, fruc={ true }, url="Oversized%20Box%20Toppers"},--Oversized Box Toppers
+[320]={id=320, lang={ "ENG" }, fruc={ true }, url="Unglued"},--Unglued
+[310]={id=310, lang={ "ENG",[3]="GER",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Portal%20Second%20Age"},--Portal Second Age
+[260]={id=260, lang={ "ENG",[3]="GER",[8]="JPN" }, fruc={ true }, url="Portal"},--Portal
+[225]={id=225, lang={ "ENG",[3]="GER",[4]="FRA",[7]="SPA" }, fruc={ true }, url="Introductory%20Two-Player%20Set"},--Introductory Two-Player Set
+[201]={id=201, lang={ [3]="GER", [4]="FRA", [5]="ITA" }, fruc={ true }, url={ "Renaissance", "Rinascimento" } },--Renaissance
+[200]={id=200, lang={ "ENG" }, fruc={ true }, url="Chronicles"},--Chronicles
+[106]={id=106, lang={ "ENG" }, fruc={ true }, url="International%20Edition"},--Collectors' Edition International
+[105]={id=105, lang={ "ENG" }, fruc={ true }, url="Collectors%27%20Edition"},--Collectors' Edition
+[70] ={id= 70, lang={ "ENG" }, fruc={ true }, url="Vanguard"},--Vanguard
+[69] ={id= 69, lang={ "ENG" }, fruc={ true }, url="Oversized%20Box%20Toppers"},--Oversized Box Toppers
 -- promosets
-[50] ={id= 50, lang=all, fruc={ true }, url="Buy%20a%20Box%20Promos"},--Buy a Box Promos
-[45] ={id= 45, lang=all, fruc={ true }, url="Magic%20Premiere%20Shop%20Promos"},--Magic Premiere Shop Promos
---[ 43] = "Two-Headed Giant Promos";
---[ 42] = "Summer of Magic Promos";
-[41] ={id= 41, lang=all, fruc={ true }, url="Happy%20Holidays%20Promos"},--Happy Holidays Promos
-[40] ={id= 40, lang=all, fruc={ true }, url="Arena%20League%20Promos",--Arena League Promos
-											"Oversized%206x9%20Promos"},--Oversized 6x9 Promos
---[ 33] = "Championships Prizes";
-[32] ={id= 32, lang=all, fruc={ true }, --"Pro Tour Promos";
-										 url="Pro%20Tour%201996:%20Mark%20Justice",--Pro Tour 1996: Mark Justice
+[50] ={id= 50, lang={ "ENG",[3]="GER",[4]="FRA",[6]="POR",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Buy%20a%20Box%20Promos"},--Buy a Box Promos
+[45] ={id= 45, lang={ [8]="JPN" }, fruc={ true }, url="Magic%20Premiere%20Shop%20Promos"},--Magic Premiere Shop Promos
+--[43] = "Two-Headed Giant Promos";
+--[42] = "Summer of Magic Promos";
+[41] ={id= 41, lang={ "ENG" }, fruc={ true }, url="Happy%20Holidays%20Promos"},--Happy Holidays Promos
+[40] ={id= 40, lang={ "ENG",[3]="GER",[8]="JPN" }, fruc={ true }, url={ --Arena/Colosseo Leagues Promos
+																		"Arena%20League%20Promos",--Arena League Promos
+																		"Oversized%206x9%20Promos",--Oversized 6x9 Promos
+																		} },
+--[33] = "Championships Prizes";
+[32] ={id= 32, lang={ "ENG",[8]="JPN" }, fruc={ true } , url="DCI%20Promos"},--"Pro Tour Promos"
+--[31] = "Grand Prix Promos";
+[30] ={id= 30, lang={ "ENG",[2]="RUS",[3]="GER",[5]="ITA",[7]="SPA" }, fruc={ true }, url="Friday%20Night%20Magic%20Promos"},--Friday Night Magic Promos
+[27] ={id= 27, lang=all, fruc={ true }, url={ "APAC%20Lands", "Guru%20Lands", "Euro%20Lands" } },--Alternate Art Lands: APAC Lands, Guru Lands, Euro Lands
+[26] ={id= 26, lang={ "ENG",[2]="RUS",[3]="GER" }, fruc={ true }, url="Game%20Day%20Promos"},--Game Day Promos
+[25] ={id= 25, lang={ "ENG",[17]="PHY" }, fruc={ true }, url="Judge%20Rewards%20Promos"},--Judge Rewards Promos
+[24] ={id= 24, lang={ "ENG" }, fruc={ true }, url="Champs%20&%20States%20Promos"},--Champs & States Promos
+[23] ={id= 23, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Gateway%20Promos"},--Gateway Promos
+[22] ={id= 22, lang={ "ENG",[2]="RUS",[3]="GER",[7]="SPA",[12]="HEB",[13]="ARA",[14]="LAT",[15]="SAN",[16]="GRC" }, fruc={ true }, url="Prerelease%20Promos"},--Prerelease Promos
+[21] ={id= 21, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Release%20Promos"},--Release Promos
+[20] ={id= 20, lang={ "ENG" }, fruc={ true }, url="Player%20Rewards%20Promos"},--Player Rewards Promos
+[15]= {id= 15, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN" }, fruc={ true }, url={-- "Convention Promos";
+											"San%20Diego%20Comic-Con%202013%20Promos", --San Diego Comic-Con 2013 Promos
+											"San%20Diego%20Comic-Con%202014%20Promos",--San Diego Comic-Con 2014 Promos
+											"Oversized%206x9%20Promos",--Oversized 6x9 Promos
+											} },
+[12] ={id= 12, lang={ [8]="JPN" }, fruc={ true }, url="Hobby%20Japan%20Commemorative%20Promos"},--Hobby Japan Commemorative Promos
+--[11] = "Redemption Program Cards";
+[10] ={id= 10, lang={ "ENG",[8]="JPN" }, fruc={ true }, url={
+											"Junior%20Series%20Promos",--Junior Series Promos
+											"Junior%20Super%20Series%20Promos",--Junior Super Series Promos
+											"Japan%20Junior%20Tournament%20Promos",--Japan Junior Tournament Promos
+											"Magic%20Scholarship%20Series%20Promos",--Magic Scholarship Series Promos
+													} },
+[9]=  {id=  9, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[7]="SPA" }, fruc={ true }, url={ -- "Video Game Promos";
+											"Duels%20of%20the%20Planeswalkers%20Promos",--Duels of the Planeswalkers Promos
+											"Oversized%206x9%20Promos",--Oversized 6x9 Promos
+											} },
+[8]=  {id=  8, lang={ "ENG",[5]="ITA",[8]="JPN" }, fruc={ true }, url="Walmart%20Promos"},--Walmart Promos = "Stores Promos"
+[7]=  {id=  7, lang={ "ENG",[8]="JPN" }, fruc={ true },	url={ -- "Magazine Inserts"
+											"The%20Duelist%20Promos",--The Duelist Promos
+											"Oversized%206x9%20Promos",--Oversized 6x9 Promos
+											"CardZ%20Promos",--CardZ Promos
+											"TopDeck%20Promos",--TopDeck Promos
+											} },
+[6]=  {id=  6, lang={ "ENG",[8]="JPN" }, fruc={ true }, url={ -- "Comic Inserts"
+											"Armada%20Comics",--Armada Comics
+											"Dengeki%20Maoh%20Promos",--Dengeki Maoh Promos
+											"IDW%20Promos",--IDW Promos
+											} },
+[5]=  {id=  5, lang={ "ENG",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, fruc={ true }, url="Harper%20Prism%20Promos"},--Harper Prism Promos = "Book Inserts"
+--[4] = "Ultra Rare Cards";
+[2]  ={id=  2, lang={ "ENG" }, fruc={ true }, url="DCI%20Promos"},--DCI Promos
+-- unknown
+[0]={id=  0, lang=all, fruc={ true }, url="Promos"},--Promos
+[0]={id=  0, lang=all, fruc={ true }, url="Simplified%20Chinese%20Alternate%20Art%20Cards"},--Simplified Chinese Alternate Art Cards
+[0]={id=  0, lang=all, fruc={ true }, url="Misprints"},--Misprints
+[0] ={id= 0, lang=all, fruc={ true }, url={-- these are preconstructed decks
+											"Pro%20Tour%201996:%20Mark%20Justice",--Pro Tour 1996: Mark Justice
 											"Pro%20Tour%201996:%20Michael%20Locanto",--Pro Tour 1996: Michael Locanto
 											"Pro%20Tour%201996:%20Bertrand%20Lestree",--Pro Tour 1996: Bertrand Lestree
 											"Pro%20Tour%201996:%20Preston%20Poulter",--Pro Tour 1996: Preston Poulter
 											"Pro%20Tour%201996:%20Eric%20Tam",--Pro Tour 1996: Eric Tam
 											"Pro%20Tour%201996:%20Shawn%20Regnier",--Pro Tour 1996: Shawn Regnier
 											"Pro%20Tour%201996:%20George%20Baxter",--Pro Tour 1996: George Baxter
-											"Pro%20Tour%201996:%20Leon%20Lindback"},--Pro Tour 1996: Leon Lindback
---[ 31] = "Grand Prix Promos";
-[30] ={id= 30, lang=all, fruc={ true }, url="Friday%20Night%20Magic%20Promos"},--Friday Night Magic Promos
-[27] ={id= 27, lang=all, fruc={ true }, url={ "APAC%20Lands", "Guru%20Lands", "Euro%20Lands" } },--Alternate Art Lands: APAC Lands, Guru Lands, Euro Lands
-[26] ={id= 26, lang=all, fruc={ true }, url="Game%20Day%20Promos"},--Game Day Promos
-[25] ={id= 25, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR",[17]="PHY" }, fruc={ true }, url="Judge%20Rewards%20Promos"},--Judge Rewards Promos
-[24] ={id= 24, lang=all, fruc={ true }, url="Champs%20%26%20States%20Promos"},--Champs & States Promos
-[23] ={id= 23, lang=all, fruc={ true }, url="Gateway%20Promos"},--Gateway Promos
-[22] ={id= 22, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR",[12]="HEB",[13]="ARA",[14]="LAT",[15]="SAN",[16]="GRC" }, fruc={ true }, url="Prerelease%20Promos"},--Prerelease Promos
-[21] ={id= 21, lang=all, fruc={ true }, url="Release%20Promos"},--Release Promos
-[20] ={id= 20, lang=all, fruc={ true }, url="Player%20Rewards%20Promos"},--Player Rewards Promos
-[15]= {id= 15, lang=all, fruc={ true }, -- "Convention Promos";
-										 url="San%20Diego%20Comic-Con%202013%20Promos", --San Diego Comic-Con 2013 Promos
-											"San%20Diego%20Comic-Con%202014%20Promos"},--San Diego Comic-Con 2014 Promos
-[12] ={id= 12, lang=all, fruc={ true }, url="Hobby%20Japan%20Commemorative%20Promos"},--Hobby Japan Commemorative Promos
---[ 11] = "Redemption Program Cards";
-[10] ={id= 10, lang=all, fruc={ true }, url="Junior%20Series%20Promos",--Junior Series Promos
-											"Junior%20Super%20Series%20Promos",--Junior Super Series Promos
-											"Japan%20Junior%20Tournament%20Promos",--Japan Junior Tournament Promos
-											"Magic%20Scholarship%20Series%20Promos"},--Magic Scholarship Series Promos
-[9]=  {id=  9, lang=all, fruc={ true },  -- "Video Game Promos";
-										url="Duels%20of%20the%20Planeswalkers%20Promos",--Duels of the Planeswalkers Promos
-											"Oversized%206x9%20Promos"},--Oversized 6x9 Promos
-[8]=  {id=  8, lang=all, fruc={ true }, -- "Stores Promos";
-										url="Walmart%20Promos"},--Walmart Promos
-[7]=  {id=  7, lang=all, fruc={ true },	-- "Magazine Inserts"
-										url="The%20Duelist%20Promos",--The Duelist Promos
-											"Oversized%206x9%20Promos",--Oversized 6x9 Promos
-											"CardZ%20Promos",--CardZ Promos
-											"TopDeck%20Promos"},--TopDeck Promos
-[6]=  {id=  6, lang=all, fruc={ true }, -- "Comic Inserts"
-										url="Armada%20Comics",--Armada Comics
-											"Dengeki%20Maoh%20Promos",--Dengeki Maoh Promos
-											"IDW%20Promos"},--IDW Promos
-[5]=  {id=  5, lang=all, fruc={ true }, url="Harper%20Prism%20Promos"},--Harper Prism Promos = "Book Inserts"
---[  4] = "Ultra Rare Cards";
-[2]  ={id=  2, lang=all, fruc={ true }, url="DCI%20Promos"},--DCI Promos
--- unknown
-[0]={id=  0, lang=all, fruc={ true }, url="Promos"},--Promos
-[0]={id=  0, lang=all, fruc={ true }, url="Simplified%20Chinese%20Alternate%20Art%20Cards"},--Simplified Chinese Alternate Art Cards
-[0]={id=  0, lang=all, fruc={ true }, url="World%20Championship%20Decks"},--World Championship Decks
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%201997:%20Svend%20Geertsen"},--WCD 1997: Svend Geertsen
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%201997:%20Jakub%20Slemr"},--WCD 1997: Jakub Slemr
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%201997:%20Janosch%20Kuhn"},--WCD 1997: Janosch Kuhn
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%201997:%20Paul%20McCabe"},--WCD 1997: Paul McCabe
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%201998:%20Brian%20Selden"},--WCD 1998: Brian Selden
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%201998:%20Randy%20Buehler"},--WCD 1998: Randy Buehler
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%201998:%20Brian%20Hacker"},--WCD 1998: Brian Hacker
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%201998:%20Ben%20Rubin"},--WCD 1998: Ben Rubin
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%201999:%20Jakub%20Slemr"},--WCD 1999: Jakub Šlemr
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%201999:%20Matt%20Linde"},--WCD 1999: Matt Linde
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%201999:%20Mark%20Le%20Pine"},--WCD 1999: Mark Le Pine
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%201999:%20Kai%20Budde"},--WCD 1999: Kai Budde
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%202000:%20Janosch%20uhn"},--WCD 2000: Janosch Kühn
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%202000:%20Jon%20Finkel"},--WCD 2000: Jon Finkel
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%202000:%20Nicolas%20Labarre"},--WCD 2000: Nicolas Labarre
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%202000:%20Tom%20Van%20de%20Logt"},--WCD 2000: Tom Van de Logt
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%202001:%20Alex%20Borteh"},--WCD 2001: Alex Borteh
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%202001:%20Tom%20van%20de%20Logt"},--WCD 2001: Tom van de Logt
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%202001:%20Jan%20Tomcani"},--WCD 2001: Jan Tomcani
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%202001:%20Antoine%20Ruel"},--WCD 2001: Antoine Ruel
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%202002:%20Carlos%20Romao"},--WCD 2002: Carlos Romao
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%202002:%20Sim%20Han%20How"},--WCD 2002: Sim Han How
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%202002:%20Raphael%20Levy"},--WCD 2002: Raphael Levy
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%202002:%20Brian%20Kibler"},--WCD 2002: Brian Kibler
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%202003:%20Dave%20Humpherys"},--WCD 2003: Dave Humpherys
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%202003:%20Daniel%20Zink"},--WCD 2003: Daniel Zink
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%202003:%20Peer%20Kroger"},--WCD 2003: Peer Kröger
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%202003:%20Wolfgang%20Eder"},--WCD 2003: Wolfgang Eder
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%202004:%20Gabriel%20Nassif"},--WCD 2004: Gabriel Nassif
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%202004:%20Manuel%20Bevand"},--WCD 2004: Manuel Bevand
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%202004:%20Aeo%20Paquette"},--WCD 2004: Aeo Paquette
-[0]={id=  0, lang=all, fruc={ true }, url="WCD%202004:%20Julien%20Nuijten"},--WCD 2004: Julien Nuijten
+											"Pro%20Tour%201996:%20Leon%20Lindback",--Pro Tour 1996: Leon Lindback
+											} },
+[0]={id=  0, lang=all, fruc={ true }, url={"World%20Championship%20Decks",--World Championship Decks
+										"WCD%201997:%20Svend%20Geertsen",--WCD 1997: Svend Geertsen
+										"WCD%201997:%20Jakub%20Slemr",--WCD 1997: Jakub Slemr
+										"WCD%201997:%20Janosch%20Kuhn",--WCD 1997: Janosch Kuhn
+										"WCD%201997:%20Paul%20McCabe",--WCD 1997: Paul McCabe
+										"WCD%201998:%20Brian%20Selden",--WCD 1998: Brian Selden
+										"WCD%201998:%20Randy%20Buehler",--WCD 1998: Randy Buehler
+										"WCD%201998:%20Brian%20Hacker",--WCD 1998: Brian Hacker
+										"WCD%201998:%20Ben%20Rubin",--WCD 1998: Ben Rubin
+										"WCD%201999:%20Jakub%20Slemr",--WCD 1999: Jakub Šlemr
+										"WCD%201999:%20Matt%20Linde",--WCD 1999: Matt Linde
+										"WCD%201999:%20Mark%20Le%20Pine",--WCD 1999: Mark Le Pine
+										"WCD%201999:%20Kai%20Budde",--WCD 1999: Kai Budde
+										"WCD%202000:%20Janosch%20uhn",--WCD 2000: Janosch Kühn
+										"WCD%202000:%20Jon%20Finkel",--WCD 2000: Jon Finkel
+										"WCD%202000:%20Nicolas%20Labarre",--WCD 2000: Nicolas Labarre
+										"WCD%202000:%20Tom%20Van%20de%20Logt",--WCD 2000: Tom Van de Logt
+										"WCD%202001:%20Alex%20Borteh",--WCD 2001: Alex Borteh
+										"WCD%202001:%20Tom%20van%20de%20Logt",--WCD 2001: Tom van de Logt
+										"WCD%202001:%20Jan%20Tomcani",--WCD 2001: Jan Tomcani
+										"WCD%202001:%20Antoine%20Ruel",--WCD 2001: Antoine Ruel
+										"WCD%202002:%20Carlos%20Romao",--WCD 2002: Carlos Romao
+										"WCD%202002:%20Sim%20Han%20How",--WCD 2002: Sim Han How
+										"WCD%202002:%20Raphael%20Levy",--WCD 2002: Raphael Levy
+										"WCD%202002:%20Brian%20Kibler",--WCD 2002: Brian Kibler
+										"WCD%202003:%20Dave%20Humpherys",--WCD 2003: Dave Humpherys
+										"WCD%202003:%20Daniel%20Zink",--WCD 2003: Daniel Zink
+										"WCD%202003:%20Peer%20Kroger",--WCD 2003: Peer Kröger
+										"WCD%202003:%20Wolfgang%20Eder",--WCD 2003: Wolfgang Eder
+										"WCD%202004:%20Gabriel%20Nassif",--WCD 2004: Gabriel Nassif
+										"WCD%202004:%20Manuel%20Bevand",--WCD 2004: Manuel Bevand
+										"WCD%202004:%20Aeo%20Paquette",--WCD 2004: Aeo Paquette
+										"WCD%202004:%20Julien%20Nuijten",--WCD 2004: Julien Nuijten
+} },
 [0]={id=  0, lang=all, fruc={ true }, url="Ultra-Pro%20Puzzle%20Cards"},--Ultra-Pro Puzzle Cards
-[0]={id=  0, lang=all, fruc={ true }, url="Misprints"},--Misprints
 [0]={id=  0, lang=all, fruc={ true }, url="Filler%20Cards"},--Filler Cards
 [0]={id=  0, lang=all, fruc={ true }, url="Blank%20Cards"},--Blank Cards
-[0]={id=  0, lang=all, fruc={ true }, url="2005%20Player%20Cards"},--2005 Player Cards
-[0]={id=  0, lang=all, fruc={ true }, url="2006%20Player%20Cards"},--2006 Player Cards
-[0]={id=  0, lang=all, fruc={ true }, url="2007%20Player%20Cards"},--2007 Player Cards
-[0]={id=  0, lang=all, fruc={ true }, url="Custom%20Tokens"},--Custom Tokens
-[0]={id=  0, lang=all, fruc={ true }, url="Revista%20Serra%20Promos"},--Revista Serra Promos
-[0]={id=  0, lang=all, fruc={ true }, url="Your%20Move%20Games%20Tokens"},--Your Move Games Tokens
-[0]={id=  0, lang=all, fruc={ true }, url="Tierra%20Media%20Tokens"},--Tierra Media Tokens
-[0]={id=  0, lang=all, fruc={ true }, url="TokyoMTG%20Products"},--TokyoMTG Products
-[0]={id=  0, lang=all, fruc={ true }, url="Mystic%20Shop%20Products"},--Mystic Shop Products
-[0]={id=  0, lang=all, fruc={ true }, url="JingHe%20Age:%202002%20Tokens"},--JingHe Age: 2002 Tokens
-[0]={id=  0, lang=all, fruc={ true }, url="JingHe%20Age:%20MtG%2010th%20Anniversary%20Tokens"},--JingHe Age: MtG 10th Anniversary Tokens
-[0]={id=  0, lang=all, fruc={ true }, url="Starcity%20Games:%20Commemorative%20Tokens"},--Starcity Games: Commemorative Tokens
-[0]={id=  0, lang=all, fruc={ true }, url="Starcity%20Games:%20Creature%20Collection"},--Starcity Games: Creature Collection
-[0]={id=  0, lang=all, fruc={ true }, url="Starcity%20Games:%20Justin%20Treadway%20Tokens"},--Starcity Games: Justin Treadway Tokens
-[0]={id=  0, lang=all, fruc={ true }, url="Starcity%20Games:%20Kristen%20Plescow%20Tokens"},--Starcity Games: Kristen Plescow Tokens
-[0]={id=  0, lang=all, fruc={ true }, url="Starcity%20Games:%20Token%20Series%20One"},--Starcity Games: Token Series One
+[0]={id=  0, lang=all, fruc={ true }, url={ -- actual Pro-Players on baseballcard-like cards
+										"2005%20Player%20Cards",--2005 Player Cards
+										"2006%20Player%20Cards",--2006 Player Cards
+										"2007%20Player%20Cards",--2007 Player Cards
+										} },
+[0]={id=  0, lang=all, fruc={ true }, url={ -- custom tokens
+										"Custom%20Tokens",--Custom Tokens
+										"Revista%20Serra%20Promos",--Revista Serra Promos
+										"Your%20Move%20Games%20Tokens",--Your Move Games Tokens
+										"Tierra%20Media%20Tokens",--Tierra Media Tokens
+										"TokyoMTG%20Products",--TokyoMTG Products
+										"Mystic%20Shop%20Products",--Mystic Shop Products
+										"JingHe%20Age:%202002%20Tokens",--JingHe Age: 2002 Tokens
+										"JingHe%20Age:%20MtG%2010th%20Anniversary%20Tokens",--JingHe Age: MtG 10th Anniversary Tokens
+										"Starcity%20Games:%20Commemorative%20Tokens",--Starcity Games: Commemorative Tokens
+										"Starcity%20Games:%20Creature%20Collection",--Starcity Games: Creature Collection
+										"Starcity%20Games:%20Justin%20Treadway%20Tokens",--Starcity Games: Justin Treadway Tokens
+										"Starcity%20Games:%20Kristen%20Plescow%20Tokens",--Starcity Games: Kristen Plescow Tokens
+										"Starcity%20Games:%20Token%20Series%20One",--Starcity Games: Token Series One
+										} },
 	}
 --end table site.sets
 
@@ -1129,6 +1178,8 @@ site.namereplace = {
 ["Rakshasa Vizier (2)"]				= "Rakshasa Vizier (Intro)",
 ["Ankle Shanker (1)"]				= "Ankle Shanker",
 ["Ankle Shanker (2)"]				= "Ankle Shanker (Intro)",
+["Sultai Charm (1)"]				= "Sultai Charm",
+["Sultai Charm (2)"]				= "Sultai Charm (Holiday Gift Box)",
 },
 [802] = { -- Born of the Gods
 ["Unravel the Æther"]				= "Unravel the AEther",
@@ -1198,6 +1249,393 @@ site.namereplace = {
 ["Brothers Yamazaki (1)"]			= "Brothers Yamazaki (160a)",
 ["Brothers Yamazaki (2)"]			= "Brothers Yamazaki (160b)",
 },
+[450] = { -- Planeshift
+["Ertai, the Corrupted (2)"] 		= "Ertai, the Corrupted (Alt)",
+["Skyship Weatherlight (2)"] 		= "Skyship Weatherlight (Alt)",
+["Tahngarth, Talruum Hero (2)"]		= "Tahngarth, Talruum Hero (Alt)",
+["Ertai, the Corrupted (1)"] 		= "Ertai, the Corrupted",
+["Skyship Weatherlight (1)"] 		= "Skyship Weatherlight",
+["Tahngarth, Talruum Hero (1)"]		= "Tahngarth, Talruum Hero",
+},
+[240] = { -- Visions
+["Jamuraan Lion (1)"]				= "Jamuraan Lion",
+["Jamuraan Lion (2)"]				= "Jamuraan Lion",
+},
+-- special sets and promos
+[814] = { --Commander 2014
+["Daretti, Scrap Savant (1)"]			= "Daretti, Scrap Savant",
+["Daretti, Scrap Savant (2)"]			= "Daretti, Scrap Savant (oversized)",
+["Daretti, Scrap Savant Emblem"]		= "Daretti Emblem",
+["Freyalise, Llanowar's Fury (1)"]		= "Freyalise, Llanowar’s Fury",
+["Freyalise, Llanowar's Fury (2)"]		= "Freyalise, Llanowar’s Fury (oversized)",
+["Nahiri, the Lithomancer (1)"]			= "Nahiri, the Lithomancer",
+["Nahiri, the Lithomancer (2)"]			= "Nahiri, the Lithomancer (oversized)",
+["Ob Nixilis of the Black Oath (1)"]	= "Ob Nixilis of the Black Oath",
+["Ob Nixilis of the Black Oath (2)"]	= "Ob Nixilis of the Black Oath (oversized)",
+["Ob Nixilis of the Black Oath Emblem"]	= "Nixilis Emblem",
+["Teferi, Temporal Archmage (1)"]		= "Teferi, Temporal Archmage",
+["Teferi, Temporal Archmage (2)"]		= "Teferi, Temporal Archmage (oversized)",
+["Teferi, Temporal Archmage Emblem"]	= "Teferi Emblem",
+},
+[810] = { --Modern Event Deck 2014
+["Myr|Spirit Token"]				= "Spirit Token|Myr Token",
+["Elspeth Emblem|Soldier Token"]	= "Soldier Token|Elspeth, Knight-Errant Emblem",
+},
+[801] = { -- Commander 2013
+["Plains (325)"]	= "Plains (337)",
+["Plains (326)"]	= "Plains (338)",
+["Plains (327)"]	= "Plains (339)",
+["Plains (328)"]	= "Plains (340)",
+["Island (300)"]	= "Island (341)",
+["Island (301)"]	= "Island (342)",
+["Island (302)"]	= "Island (343)",
+["Island (303)"]	= "Island (344)",
+["Swamp (343)"]		= "Swamp (345)",
+["Swamp (344)"]		= "Swamp (346)",
+["Swamp (345)"]		= "Swamp (347)",
+["Swamp (346)"]		= "Swamp (348)",
+["Mountain (316)"]	= "Mountain (349)",
+["Mountain (317)"]	= "Mountain (350)",
+["Mountain (318)"]	= "Mountain (351)",
+["Mountain (319)"]	= "Mountain (352)",
+["Forest (289)"]	= "Forest (353)",
+["Forest (290)"]	= "Forest (354)",
+["Forest (291)"]	= "Forest (355)",
+["Forest (292)"]	= "Forest (356)",
+['Kongming, "Sleeping Dragon"']		= "Kongming, “Sleeping Dragon”",
+["Derevi, Empyrial Tactician (1)"]	= "Derevi, Empyrial Tactician",
+["Derevi, Empyrial Tactician (2)"]	= "Derevi, Empyrial Tactician (oversized)",
+["Gahiji, Honored One (1)"]			= "Gahiji, Honored One",
+["Gahiji, Honored One (2)"]			= "Gahiji, Honored One (oversized)",
+["Jeleva, Nephalia's Scourge (1)"]	= "Jeleva, Nephalia’s Scourge",
+["Jeleva, Nephalia's Scourge (2)"]	= "Jeleva, Nephalia’s Scourge (oversized)",
+["Marath, Will of the Wild (1)"]	= "Marath, Will of the Wild",
+["Marath, Will of the Wild (2)"]	= "Marath, Will of the Wild (oversized)",
+["Mayael the Anima (1)"]			= "Mayael the Anima",
+["Mayael the Anima (2)"]			= "Mayael the Anima (oversized)",
+["Nekusar, the Mindrazer (1)"]		= "Nekusar, the Mindrazer",
+["Nekusar, the Mindrazer (2)"]		= "Nekusar, the Mindrazer (oversized)",
+["Oloro, Ageless Ascetic (1)"]		= "Oloro, Ageless Ascetic",
+["Oloro, Ageless Ascetic (2)"]		= "Oloro, Ageless Ascetic (oversized)",
+["Prossh, Skyraider of Kher (1)"]	= "Prossh, Skyraider of Kher",
+["Prossh, Skyraider of Kher (2)"]	= "Prossh, Skyraider of Kher (oversized)",
+["Roon of the Hidden Realm (1)"]	= "Roon of the Hidden Realm",
+["Roon of the Hidden Realm (2)"]	= "Roon of the Hidden Realm (oversized)",
+["Rubinia Soulsinger (1)"]			= "Rubinia Soulsinger",
+["Rubinia Soulsinger (2)"]			= "Rubinia Soulsinger (oversized)",
+["Sek'Kuar, Deathkeeper (1)"]		= "Sek’Kuar, Deathkeeper",
+["Sek'Kuar, Deathkeeper (2)"]		= "Sek’Kuar, Deathkeeper (oversized)",
+["Sharuum the Hegemon (1)"]			= "Sharuum the Hegemon",
+["Sharuum the Hegemon (2)"]			= "Sharuum the Hegemon (oversized)",
+["Shattergang Brothers (1)"]		= "Shattergang Brothers",
+["Shattergang Brothers (2)"]		= "Shattergang Brothers (oversized)",
+["Sydri, Galvanic Genius (1)"]		= "Sydri, Galvanic Genius",
+["Sydri, Galvanic Genius (2)"]		= "Sydri, Galvanic Genius (oversized)",
+["Thraximundar (1)"]				= "Thraximundar",
+["Thraximundar (2)"]				= "Thraximundar (oversized)",
+},
+[792] = { -- Commander's Arsenal
+["Azusa, Lost but Seeking"]			= "Azusa, Lost but Seeking (Oversized)",
+["Brion Stoutarm"]					= "Brion Stoutarm (Oversized)",
+["Glissa, the Traitor"]				= "Glissa, the Traitor (Oversized)",
+["Godo, Bandit Warlord"]			= "Godo, Bandit Warlord (Oversized)",
+["Grimgrin, Corpse-Born"]			= "Grimgrin, Corpse-Born (Oversized)",
+["Karn, Silver Golem"]				= "Karn, Silver Golem (Oversized)",
+["Karrthus, Tyrant of Jund"]		= "Karrthus, Tyrant of Jund (Oversized)",
+["Mayael the Anima"]				= "Mayael the Anima (Oversized)",
+["Sliver Queen"]					= "Sliver Queen (Oversized)",
+["Zur the Enchanter"]				= "Zur the Enchanter (Oversized)",
+},
+[787] = { -- Planechase 2012
+["Norn's Dominion"]					= "Norn’s Dominion",
+},
+[785] = { -- DD: Venser vs Koth
+["Plains (1)"]			= "Plains (38)",
+["Plains (2)"]			= "Plains (39)",
+["Plains (3)"]			= "Plains (40)",
+["Island (1)"]			= "Island (41)",
+["Island (2)"]			= "Island (42)",
+["Island (3)"]			= "Island (43)",
+["Mountain (1)"]		= "Mountain (74)",
+["Mountain (2)"]		= "Mountain (75)",
+["Mountain (3)"]		= "Mountain (76)",
+["Mountain (4)"]		= "Mountain (77)",
+},
+[778] = { -- Magic: The Gathering Commander
+["Plains (1)"]			= "Plains (299)",
+["Plains (2)"]			= "Plains (300)",
+["Plains (3)"]			= "Plains (301)",
+["Plains (4)"]			= "Plains (302)",
+["Island (1)"]			= "Island (303)",
+["Island (2)"]			= "Island (304)",
+["Island (3)"]			= "Island (305)",
+["Island (4)"]			= "Island (306)",
+["Swamp (1)"]			= "Swamp (307)",
+["Swamp (2)"]			= "Swamp (308)",
+["Swamp (3)"]			= "Swamp (309)",
+["Swamp (4)"]			= "Swamp (310)",
+["Mountain (1)"]		= "Mountain (311)",
+["Mountain (2)"]		= "Mountain (312)",
+["Mountain (3)"]		= "Mountain (313)",
+["Mountain (4)"]		= "Mountain (314)",
+["Forest (1)"]			= "Forest (315)",
+["Forest (2)"]			= "Forest (316)",
+["Forest (3)"]			= "Forest (317)",
+["Forest (4)"]			= "Forest (318)",
+["Nezumi Graverobber"]	= "Nezumi Graverobber|Nighteyes the Desecrator",
+["Animar, Soul of Elements (1)"]	= "Animar, Soul of Elements",
+["Animar, Soul of Elements (2)"]	= "Animar, Soul of Elements (oversized)",
+["Damia, Sage of Stone (1)"]		= "Damia, Sage of Stone",
+["Damia, Sage of Stone (2)"]		= "Damia, Sage of Stone (oversized)",
+["Ghave, Guru of Spores (1)"]		= "Ghave, Guru of Spores",
+["Ghave, Guru of Spores (2)"]		= "Ghave, Guru of Spores (oversized)",
+["Intet, the Dreamer (1)"]			= "Intet, the Dreamer",
+["Intet, the Dreamer (2)"]			= "Intet, the Dreamer (oversized)",
+["Kaalia of the Vast (1)"]			= "Kaalia of the Vast",
+["Kaalia of the Vast (2)"]			= "Kaalia of the Vast (oversized)",
+["Karador, Ghost Chieftain (1)"]	= "Karador, Ghost Chieftain",
+["Karador, Ghost Chieftain (2)"]	= "Karador, Ghost Chieftain (oversized)",
+["Numot, the Devastator (1)"]		= "Numot, the Devastator",
+["Numot, the Devastator (2)"]		= "Numot, the Devastator (oversized)",
+["Oros, the Avenger (1)"]			= "Oros, the Avenger",
+["Oros, the Avenger (2)"]			= "Oros, the Avenger (oversized)",
+["Riku of Two Reflections (1)"]		= "Riku of Two Reflections",
+["Riku of Two Reflections (2)"]		= "Riku of Two Reflections (oversized)",
+["Ruhan of the Fomori (1)"]			= "Ruhan of the Fomori",
+["Ruhan of the Fomori (2)"]			= "Ruhan of the Fomori (oversized)",
+["Tariel, Reckoner of Souls (1)"]	= "Tariel, Reckoner of Souls",
+["Tariel, Reckoner of Souls (2)"]	= "Tariel, Reckoner of Souls (oversized)",
+["Teneb, the Harvester (1)"]		= "Teneb, the Harvester",
+["Teneb, the Harvester (2)"]		= "Teneb, the Harvester (oversized)",
+["The Mimeoplasm (1)"]				= "The Mimeoplasm",
+["The Mimeoplasm (2)"]				= "The Mimeoplasm (oversized)",
+["Vorosh, the Hunter (1)"]			= "Vorosh, the Hunter",
+["Vorosh, the Hunter (2)"]			= "Vorosh, the Hunter (oversized)",
+["Zedruu the Greathearted (1)"]		= "Zedruu the Greathearted",
+["Zedruu the Greathearted (2)"]		= "Zedruu the Greathearted (oversized)",
+},
+[769] = { -- Archenemy
+["Plains (1)"]			= "Plains (137)",
+["Plains (2)"]			= "Plains (138)",
+["Island (1)"]			= "Island (139)",
+["Island (2)"]			= "Island (140)",
+["Island (3)"]			= "Island (141)",
+["Swamp (1)"]			= "Swamp (142)",
+["Swamp (2)"]			= "Swamp (143)",
+["Swamp (3)"]			= "Swamp (144)",
+["Mountain (1)"]		= "Mountain (145)",
+["Mountain (2)"]		= "Mountain (146)",
+["Mountain (3)"]		= "Mountain (147)",
+["Forest (1)"]			= "Forest (148)",
+["Forest (2)"]			= "Forest (149)",
+["Forest (3)"]			= "Forest (150)",
+["Your Will is Not Your Own"]	= "Your Will Is Not Your Own",
+["Mortal Flesh is Weak"]		= "Mortal Flesh Is Weak",
+},
+[768] = { -- Duels of the Planeswalkers
+["Island (1)"]			= "Island (98)",
+["Island (2)"]			= "Island (99)",
+["Island (3)"]			= "Island (100)",
+["Island (4)"]			= "Island (101)",
+["Swamp (1)"]			= "Swamp (102)",
+["Swamp (2)"]			= "Swamp (103)",
+["Swamp (3)"]			= "Swamp (104)",
+["Swamp (4)"]			= "Swamp (105)",
+["Mountain (1)"]		= "Mountain (106)",
+["Mountain (2)"]		= "Mountain (107)",
+["Mountain (3)"]		= "Mountain (108)",
+["Mountain (4)"]		= "Mountain (109)",
+["Forest (1)"]			= "Forest (110)",
+["Forest (2)"]			= "Forest (111)",
+["Forest (3)"]			= "Forest (112)",
+["Forest (4)"]			= "Forest (113)",
+},
+[766] = { -- DD: Phyrexia vs Coalition
+["Urza's Rage"]					= "Urza’s Rage",
+},
+[761] = { -- Planechase
+["The Aether Flues"]				= "The Æther Flues",
+},
+[755] = { -- DD: Jace vs Chandra
+["Chandra Nalaar (1)"]			= "Chandra Nalaar",
+["Chandra Nalaar (2)"]			= "Chandra Nalaar (Manga)",
+["Jace Beleren (1)"]			= "Jace Beleren",
+["Jace Beleren (2)"]			= "Jace Beleren (Manga)",
+},
+[675] = { -- Coldsnap Theme Decks
+["Plains (48)"]			= "Plains (369)",
+["Plains (49)"]			= "Plains (370)",
+["Plains (50)"]			= "Plains (371)",
+["Island (51)"]			= "Island (372)",
+["Island (52)"]			= "Island (373)",
+["Island (53)"]			= "Island (374)",
+["Swamp (54)"]			= "Swamp (375)",
+["Swamp (55)"]			= "Swamp (376)",
+["Swamp (56)"]			= "Swamp (377)",
+["Mountain (57)"]		= "Mountain (378)",
+["Mountain (58)"]		= "Mountain (379)",
+["Mountain (59)"]		= "Mountain (380)",
+["Forest (60)"]			= "Forest (381)",
+["Forest (61)"]			= "Forest (382)",
+["Forest (62)"]			= "Forest (383)",
+},
+[636] = { -- Salvat 2011
+--["Plains (1)"]			= "Plains (205)",
+--["Plains (2)"]			= "Plains (206)",
+--["Plains (3)"]			= "Plains (207)",
+--["Plains (4)"]			= "Plains (208)",
+["Island (1)"]			= "Island (209)",
+["Island (2)"]			= "Island (210)",
+["Island (3)"]			= "Island (211)",
+["Island (4)"]			= "Island (212)",
+["Swamp (1)"]			= "Swamp (213)",
+["Swamp (2)"]			= "Swamp (214)",
+["Swamp (3)"]			= "Swamp (215)",
+["Swamp (4)"]			= "Swamp (216)",
+["Mountain (1)"]		= "Mountain (217)",
+["Mountain (2)"]		= "Mountain (218)",
+["Mountain (3)"]		= "Mountain (219)",
+["Mountain (4)"]		= "Mountain (220)",
+["Forest (1)"]			= "Forest (221)",
+["Forest (2)"]			= "Forest (222)",
+["Forest (3)"]			= "Forest (223)",
+["Forest (4)"]			= "Forest (224)",
+["Eyeblight's Ending"]	= "Fin de la desgracia visual",
+["Hurricane"]			= "Huracán",
+},
+[600] = { -- Unhinged
+['"Ach! Hans, Run!"']				= '“Ach! Hans, Run!”',
+},
+[490] = { -- Deckmasters
+["Swamp (48)"]			= "Swamp (42)",
+["Swamp (49)"]			= "Swamp (43)",
+["Swamp (50)"]			= "Swamp (44)",
+["Mountain (51)"]		= "Mountain (45)",
+["Mountain (52)"]		= "Mountain (46)",
+["Mountain (53)"]		= "Mountain (47)",
+["Forest (54)"]			= "Forest (48)",
+["Forest (55)"]			= "Forest (49)",
+["Forest (56)"]			= "Forest (50)",
+["Guerrilla Tactics (1)"]		= "Guerrilla Tactics (13a)",
+["Guerrilla Tactics (2)"]		= "Guerrilla Tactics (13b)",
+["Icy Manipulator (1)"]			= "Icy Manipulator",
+["Icy Manipulator (2)"]			= "Icy Manipulator (premium)",
+["Incinerate (1)"]				= "Incinerate",
+["Incinerate (2)"]				= "Incinerate (premium)",
+["Lim-Dûl's High Guard (1)"]	= "Lim-Dûl’s High Guard (6a)",
+["Lim-Dûl's High Guard (2)"]	= "Lim-Dûl’s High Guard (6b)",
+["Phantasmal Fiend (1)"]		= "Phantasmal Fiend (8a)",
+["Phantasmal Fiend (2)"]		= "Phantasmal Fiend (8b)",
+["Phyrexian War Beast (1)"]		= "Phyrexian War Beast (37a)",
+["Phyrexian War Beast (2)"]		= "Phyrexian War Beast (37b)",
+["Storm Shaman (1)"]			= "Storm Shaman (21a)",
+["Storm Shaman (2)"]			= "Storm Shaman (21b)",
+["Yavimaya Ancients (1)"]		= "Yavimaya Ancients (31a)",
+["Yavimaya Ancients (2)"]		= "Yavimaya Ancients (31b)",
+},
+[380] = { -- Portal Three Kingdoms
+['Pang Tong, "Young Phoenix"']			= "Pang Tong, “Young Phoenix”",
+['Kongming, "Sleeping Dragon"']			= "Kongming, “Sleeping Dragon”",
+},
+[340] = { -- Anthologies
+["Plains (87)"]			= "Plains (1)",
+["Plains (86)"]			= "Plains (2)",
+["Swamp (42)"]			= "Swamp (1)",
+["Swamp (43)"]			= "Swamp (2)",
+["Mountain (40)"]		= "Mountain (1)",
+["Mountain (41)"]		= "Mountain (2)",
+["Forest (85)"]			= "Forest (1)",
+["Forest (84)"]			= "Forest (2)",
+},
+[320] = { -- Unglued
+["B.F.M. (Big Furry Monster) (1)"]	= "B.F.M. (Left)",
+["B.F.M. (Big Furry Monster) (2)"]	= "B.F.M. (Right)",
+},
+[260] = { -- Portal
+["Anaconda (2)"]			= "Anaconda",
+["Anaconda (1)"]			= "Anaconda (ST)",
+["Armored Pegasus (1)"]		= "Armored Pegasus",
+["Armored Pegasus (2)"]		= "Armored Pegasus (DG)",
+["Blaze (2)"]				= "Blaze",
+["Blaze (1)"]				= "Blaze (ST)",
+["Bull Hippo (2)"]			= "Bull Hippo",
+["Bull Hippo (1)"]			= "Bull Hippo (DG)",
+["Cloud Pirates (1)"]		= "Cloud Pirates",
+["Cloud Pirates (2)"]		= "Cloud Pirates (DG)",
+["Elite Cat Warrior (2)"]	= "Elite Cat Warrior",
+["Elite Cat Warrior (1)"]	= "Elite Cat Warrior (ST)",
+["Feral Shadow (1)"]		= "Feral Shadow",
+["Feral Shadow (2)"]		= "Feral Shadow (DG)",
+["Hand of Death (2)"]		= "Hand of Death",
+["Hand of Death (1)"]		= "Hand of Death (ST)",
+["Monstrous Growth (2)"]	= "Monstrous Growth",
+["Monstrous Growth (1)"]	= "Monstrous Growth (ST)",
+["Raging Goblin (2)"]		= "Raging Goblin",
+["Raging Goblin (1)"]		= "Raging Goblin (ST)",
+["Snapping Drake (1)"]		= "Snapping Drake",
+["Snapping Drake (2)"]		= "Snapping Drake (DG)",
+["Storm Crow (1)"]			= "Storm Crow",
+["Storm Crow (2)"]			= "Storm Crow (DG)",
+["Warrior's Charge (2)"]	= "Warrior's Charge",
+["Warrior's Charge (1)"]	= "Warrior's Charge (ST)",
+},
+[69] = { -- Box Topper Cards
+["Ambition's Cost"]			= "Ambition’s Cost",
+["Avatar of Hope (1)"]	= "Avatar of Hope (8ED)",
+["Avatar of Hope (2)"]	= "Avatar of Hope (PRM)",
+--["Blinding Angel"]			= "",
+--["Clone"]					= "",
+--["Curiosity"]				= "",
+--["Diabolic Tutor"]			= "",
+--["Enrage"]					= "",
+--["Force of Nature"]			= "",
+--["Furnace of Rath"]			= "",
+--["Guerrilla Tactics"]		= "",
+["Hell's Caretaker"]		= "Hell’s Caretaker",
+--["Hypnotic Specter"]		= "",
+--["Icy Manipulator"]			= "",
+--["Intruder Alarm"]			= "",
+["Jester's Cap"]			= "Jester’s Cap",
+--["Kird Ape"]				= "",
+--["Llanowar Behemoth"]		= "",
+--["Llanowar Elves"]			= "",
+["Lord of the Undead (1)"]= "Lord of the Undead (8ED)",
+["Lord of the Undead (2)"]= "Lord of the Undead (PRM)",
+--["Mahamoti Djinn"]			= "",
+--["Merchant of Secrets"]		= "",
+--["Merchant Scroll"]			= "",
+--["Mind Bend"]				= "",
+--["Mind Sludge"]				= "",
+--["Naturalize"]				= "",
+--["Nekrataal"]				= "",
+["Obliterate (1)"]		= "Obliterate (8ED)",
+["Obliterate (2)"]		= "Obliterate (PRM)",
+--["Orcish Spy"]				= "",
+--["Paladin en-Vec"]			= "",
+--["Phyrexian Arena"]			= "",
+["Phyrexian Plaguelord (1)"]	= "Phyrexian Plaguelord (8ED)",
+["Phyrexian Plaguelord (2)"]	= "Phyrexian Plaguelord (PRM)",
+--["Plow Under"]				= "",
+--["Primeval Force"]			= "",
+--["Rathi Dragon"]			= "",
+--["Rewind"]					= "",
+--["Rukh Egg"]				= "",
+--["Sage of Lat-Nam"]			= "",
+["Savannah Lions (1)"]	= "Savannah Lions (8ED)",
+["Savannah Lions (2)"]	= "Savannah Lions (PRM)",
+--["Serra Angel"]				= "",
+--["Skull of Orm"]			= "",
+--["Suntail Hawk"]			= "",
+["Two-Headed Dragon (1)"]	= "Two-Headed Dragon (8ED)", 
+["Two-Headed Dragon (2)"]	= "Two-Headed Dragon (PRM)", 
+--["Underworld Dreams"]		= "",
+--["Vampiric Spirit"]			= "",
+--["Verdant Force"]			= "",
+--["Vexing Arcanix"]			= "",
+},
+[24] = {
+["Urza's Factory"]			= "Urza’s Factory",
+},
 } -- end table site.namereplace
 
 --[[- set replacement tables.
@@ -1209,6 +1647,9 @@ site.namereplace = {
  @field [parent=#site.settweak] #string name
 ]]
 site.settweak = {
+[813] = { -- KTK
+["Sultai Charm (Holiday Gift Box)"]	= "Holiday Gift Box",
+},
 [806] = { -- JOU
 ["Spear of the General"]		= "Prerelease Promos",
 ["Cloak of the Philosopher"]	= "Prerelease Promos",
@@ -1235,6 +1676,14 @@ site.settweak = {
 ["The Hunter"]					= "Prerelease Promos",
 ["The Harvester"]				= "Release Promos",
 ["The Slayer"]					= "Magic Game Day",
+},
+[755] = { -- DD:Jace vs Chandra
+["Chandra Nalaar (Manga)"]		= "Promo",
+["Jace Beleren (Manga)"]		= "Promo",
+},
+[340] = { --Anthologies
+["Goblin"]						= "(Token) Unglued",
+["Pegasus"]						= "(Token) Unglued",
 },
 } -- end table site.settweak
 
@@ -1294,14 +1743,12 @@ function site.SetExpected( importfoil , importlangs , importsets )
  ]]
 	site.expected = {
 --- pset defaults to LHpi.Data.sets[setid].cardcount.reg, if available and not set otherwise here.
---  LHpi.Data.sets[setid]cardcount has 6 fields you can use to avoid hardcoded numbers here: { reg, tok, both, nontr, repl, all }.
+--  LHpi.Data.sets[setid]cardcount has 6 fields you can use to avoid hardcoded numbers here: { reg, tok, both, nontrad, repl, all }.
 
 --- if EXPECTTOKENS is true, LHpi.Data.sets[setid].cardcount.tok is added to pset default.
 -- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
 -- @field [parent=#site.expected] #boolean or #table { #boolean,...} tokens
 --	tokens = true,
---	tokens = { [1]="ENG" },
---	tokens = { "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR", },
 	tokens = { "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" },
 --- if EXPECTNONTRAD is true, LHpi.Data.sets[setid].cardcount.nontrad is added to pset default.
 -- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
@@ -1325,7 +1772,7 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [179] = { pset={ [6]=LHpi.Data.sets[179].cardcount.reg-3, [8]=LHpi.Data.sets[179].cardcount.reg}, failed={ [6]=3 } },
 [139] = { namereplaced=30 },
 -- Expansions
-[813] = { pset={ dup=LHpi.Data.sets[813].cardcount.reg-5 }, failed={ dup=LHpi.Data.sets[813].cardcount.tok+5 }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, namereplaced=20, foiltweaked=10 },
+[813] = { pset={ dup=LHpi.Data.sets[813].cardcount.reg-5 }, failed={ dup=LHpi.Data.sets[813].cardcount.tok+5 }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, namereplaced=20, foiltweaked=10, dropped=2 },
 [806] = { pset={ dup=LHpi.Data.sets[806].cardcount.reg }, failed={ dup=LHpi.Data.sets[806].cardcount.tok }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=14 },
 [802] = { pset={ dup=LHpi.Data.sets[802].cardcount.reg }, failed={ dup=LHpi.Data.sets[802].cardcount.tok }, duppset={ [2]="RUS",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=14, namereplaced=2 },
 [800] = { pset={ dup=LHpi.Data.sets[800].cardcount.reg }, failed={ dup=LHpi.Data.sets[800].cardcount.tok }, duppset={ [2]="RUS",[7]="SPA" }, dupfail={ [2]="RUS",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=14 },
@@ -1349,32 +1796,82 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [751] = { failed={ dup=LHpi.Data.sets[751].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" } },
 [750] = { failed={ dup=LHpi.Data.sets[750].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" } },
 [730] = { failed={ dup=LHpi.Data.sets[730].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" } },
-[690] = { dropped=602 },-- non-Timeshifted 301
-[680] = { dropped=242 }, -- Timeshifted 121
+[690] = { dropped=602 },-- non-Timeshifted are 301 cards
+[680] = { dropped=242 }, -- Timeshifted are 121 cards
 [620] = { namereplaced=10 },
 [610] = { namereplaced=10 },
 [590] = { namereplaced=24 },
-[450] = { pset={ dup=LHpi.Data.sets[450].cardcount.reg-3 }, duppset={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" } },
+[450] = { namereplaced=6, foiltweaked=6 },
+[240] = { namereplaced=4 },
 [210] = { pset={ [6]=LHpi.Data.sets[210].cardcount.reg-1 }, failed= { [6]=1 } },
 [190] = { pset={ [6]=LHpi.Data.sets[190].cardcount.reg-1 }, failed= { [6]=1 } },
+-- special and Promo
+[814] = { pset={ dup=LHpi.Data.sets[814].cardcount.reg+LHpi.Data.sets[814].cardcount.repl }, duppset={ [3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN",[9]="SZH" }, failed={ dup=LHpi.Data.sets[814].cardcount.tok }, dupfail={ [3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN",[9]="SZH" }, namereplaced=26, foiltweaked=10 },
+[812] = { pset={ [8]=LHpi.Data.sets[812].cardcount.both }, foiltweaked=4 },
+[810] = { namereplaced=4 },
+[807] = { pset={ dup=LHpi.Data.sets[807].cardcount.reg+LHpi.Data.sets[807].cardcount.nontrad }, failed={ dup=LHpi.Data.sets[807].cardcount.tok }, duppset={ [8]="JPN",[9]="SZH" }, dupfail={ [8]="JPN",[9]="SZH" } },
+[805] = { foiltweaked=4 },
+[801] = { foiltweaked=30, namereplaced=102 },
+[799] = { failed={ [8]=LHpi.Data.sets[799].cardcount.tok }, foiltweaked=4 },
+[794] = { failed={ [8]=LHpi.Data.sets[794].cardcount.tok }, foiltweaked=4 },
+[792] = { namereplaced=20 },
+[790] = { failed={ [8]=LHpi.Data.sets[790].cardcount.tok }, foiltweaked=4 },
+[787] = { namereplaced=2 },
+[785] = { failed={ [8]=LHpi.Data.sets[785].cardcount.tok },namereplaced=20, foiltweaked=4 },
+[781] = { pset={ dup=LHpi.Data.sets[781].cardcount.reg }, failed={ dup=LHpi.Data.sets[781].cardcount.tok }, duppset={ [3]="GER",[5]="ITA" }, dupfail={ [3]="GER",[5]="ITA" }, foiltweaked=4 },
+[778] = { namereplaced=102, foiltweaked=30 },
+[777] = { pset={ [5]=LHpi.Data.sets[777].cardcount.reg }, failed={ [5]=LHpi.Data.sets[777].cardcount.tok }, foiltweaked=4 },
+[772] = { pset={ [5]=LHpi.Data.sets[772].cardcount.reg }, failed={ [5]=LHpi.Data.sets[772].cardcount.tok }, foiltweaked=4 },
+[769] = { namereplaced=32 },
+[768] = { namereplaced=32, foiltweaked=10 },
+[766] = { namereplaced=2, foiltweaked=4 },
+[763] = { foiltweaked=4 },
+[761] = { namereplaced=2 },
+[757] = { foiltweaked=4 },
+[755] = { pset={ [8]=LHpi.Data.sets[755].cardcount.both }, dropped=4, namereplaced=4, foiltweaked=4 },
+[740] = { foiltweaked=4 },
+[675] = { namereplaced=30 },
+[636] = { namereplaced=36 },
+[600] = { namereplaced=2, foiltweaked=2 },
+[490] = { namereplaced=50, foiltweaked=8 },
+[440] = { foiltweaked=4 },
+[415] = { pset={ [7]=1 }, failed={ [7]=LHpi.Data.sets[415].cardcount.reg-1  }, foiltweaked=2 },
+[380] = { namereplaced=4 },
+[340] = { dropped=4, namereplaced=16 },
+[320] = { namereplaced=4 },
+-- TODO why does ma.SetPrice(setid="310",langid="5",cardname="Ogre Berserker",cardversion="",regprice="0.14",foilprice="0",objtype="1") return 2 ?!
+[310] = { pset={ [5]=LHpi.Data.sets[310].cardcount.reg+1,[6]=49 }, failed={ [5]=1,[6]=LHpi.Data.sets[310].cardcount.reg-49 } },
+[260] = { pset={ dup=LHpi.Data.sets[260].cardcount.reg-6 }, failed={ dup=6 }, duppset={ [3]="GER",[8]="JPN" }, dupfail={ [3]="GER",[8]="JPN" }, namereplaced=52 },
+[201] = { pset={ [5]=69 } },
+[69]  = { namereplaced=30 },
+[32]  = { pset={ 5,[8]=1 }, failed={ 1,[8]=5 } },
+[25]  = { pset={ [17]=1 }, failed={ [17]=LHpi.Data.sets[25].cardcount.all-1 } },
+[24]  = { foiltweaked=12, namereplaced=2 },
+[9]   = { pset={ [2]=3,[3]=12,[4]=3,[7]=3 }, foiltweak=10 },
+[2]   = { dropped=2*29 },
 
---[] = { pset={ dup=LHpi.Data.sets[].cardcount.reg }, failed={ dup=LHpi.Data.sets[].cardcount.tok }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" } },
---[] = { failed={ dup=LHpi.Data.sets[].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" } },
---noneng = { [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR",[12]="HEB",[13]="ARA",[14]="LAT",[15]="SAN",[16]="GRC" }
+--TODO check why averaging foilcard in duel decks. possibly no averaging should be necessarry, so error on any conflict.
+-- prob'ly have to set foil/regprice in site.parse, foiltweaked reg wouldd become foil (and averaged) otherwise
+-- averaging in core,expansion: 813(ktk)	762(ZEN)	450(Planeshift)	240(visions)
+
 	}--end table site.expected
 	-- I'm too lazy to fill in site.expected myself, let the script do it ;-)
 	for sid,name in pairs(importsets) do
 		if site.expected[sid] then
 			if site.expected[sid].pset and site.expected[sid].duppset and site.expected[sid].pset.dup then			
 				for lid,lang in pairs(site.expected[sid].duppset) do
-					site.expected[sid].pset[lid] = site.expected[sid].pset.dup or 0
+					if importlangs[lid] then
+						site.expected[sid].pset[lid] = site.expected[sid].pset.dup or 0
+					end
 				end
 			site.expected[sid].duppset=nil
 			site.expected[sid].pset.dup=nil
 			end
 			if site.expected[sid].failed and site.expected[sid].dupfail and site.expected[sid].failed.dup then			
 				for lid,lang in pairs(site.expected[sid].dupfail) do
-					site.expected[sid].failed[lid] = site.expected[sid].failed.dup or 0
+					if importlangs[lid] then
+						site.expected[sid].failed[lid] = site.expected[sid].failed.dup or 0
+					end
 				end
 			site.expected[sid].dupfail=nil
 			site.expected[sid].failed.dup=nil

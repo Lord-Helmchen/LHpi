@@ -50,14 +50,8 @@ DoImport
 
 ]]
 
---TODO configure via extension scriptname.OPTION.lua for:
--- magicuniverse: stammkundenpreis
--- mtgprice: low/fair
--- tcgplayer: low/mid/high
--- mkm
-
 --TODO count averaging events with counter attached to prices
---TODO nil unneeded Data.sets[sid] to save memory?
+--todo nil unneeded Data.sets[sid] to save memory?
 
 local LHpi = {}
 ---	LHpi library version
@@ -185,7 +179,7 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 	if CHECKEXPECTED then
 		if site.SetExpected then
 			site.SetExpected( supImportfoil , supImportlangs , supImportsets ) -- actively set site.expected table
-		end--legacy wrapping
+		end
 		if not site.expected then site.expected = {} end
 		for sid,_setname in pairs(supImportsets) do
 			if not site.expected[sid] then
@@ -434,7 +428,7 @@ function LHpi.MainImportCycle( sourcelist , totalhtmlnum , importfoil , importla
 			LHpi.Log ( "Set " .. importsets[cSet.id] .. " imported." )
 			if VERBOSE then
 				if ( LHpi.Data.sets[sid] and LHpi.Data.sets[sid].cardcount ) then
-					LHpi.Log( string.format( "[%i] contains %4i cards (%4i regular, %4i tokens, %4i nontraditional, %4i replica )", cSet.id, LHpi.Data.sets[sid].cardcount.all, LHpi.Data.sets[sid].cardcount.reg, LHpi.Data.sets[sid].cardcount.tok, LHpi.Data.sets[sid].cardcount.nontr or 0, LHpi.Data.sets[sid].cardcount.repl or 0 ) )
+					LHpi.Log( string.format( "[%i] contains %4i cards (%4i regular, %4i tokens, %4i nontraditional, %4i replica )", cSet.id, LHpi.Data.sets[sid].cardcount.all, LHpi.Data.sets[sid].cardcount.reg, LHpi.Data.sets[sid].cardcount.tok, LHpi.Data.sets[sid].cardcount.nontrad or 0, LHpi.Data.sets[sid].cardcount.repl or 0 ) )
 				else
 					LHpi.Log( string.format( "[%i] contains unknown to LHpi number of cards.", cSet.id ) )
 				end
@@ -840,31 +834,31 @@ function LHpi.ParseSourceData( sourcedata,sourceurl,urldetails )
 				foundData.names[lid] = string.gsub( foundData.names[lid], "^%s*(.-)%s*$", "%1" )
 			end -- for lid,_cName
 			-- divide price by 100 again (see site.ParseHtmlData in sitescript for reason)
-			if "Table" == type(foundData.price) then
-				for lid,lang in pairs(foundData.price) do
-					foundData.price[lid] = ( foundData.price[lid] or 0 ) / 100
-				end
-			else
+--			if "Table" == type(foundData.price) then
+--				for lid,price in pairs(foundData.price) do
+--					foundData.price[lid] = ( foundData.price[lid] or 0 ) / 100
+--				end
+--			else
 				foundData.price = ( foundData.price or 0 ) / 100
-			end-- if "Table"
-			if foundData.regprice then
-				if "Table" == type(foundData.regprice) then
-					for lid,lang in pairs(foundData.regprice) do
-						foundData.regprice[lid] = ( foundData.regprice[lid] or 0 ) / 100
-					end
-				else
-					foundData.regprice = ( foundData.regprice or 0 ) / 100
-				end-- if "Table"
-			end--if foundData.regprice
-			if foundData.foilprice then
-				if "Table" == type(foundData.foilprice) then
-					for lid,lang in pairs(foundData.foilprice) do
-						foundData.foilprice[lid] = ( foundData.foilprice[lid] or 0 ) / 100
-					end
-				else
-					foundData.foilprice = ( foundData.foilprice or 0 ) / 100
-				end-- if "Table"
-			end--if foundData.foilprice
+--			end-- if "Table"
+--			if foundData.regprice then
+--				if "Table" == type(foundData.regprice) then
+--					for lid,lang in pairs(foundData.regprice) do
+--						foundData.regprice[lid] = ( foundData.regprice[lid] or 0 ) / 100
+--					end
+--				else
+--					foundData.regprice = ( foundData.regprice or 0 ) / 100
+--				end-- if "Table"
+--			end--if foundData.regprice
+--			if foundData.foilprice then
+--				if "Table" == type(foundData.foilprice) then
+--					for lid,lang in pairs(foundData.foilprice) do
+--						foundData.foilprice[lid] = ( foundData.foilprice[lid] or 0 ) / 100
+--					end
+--				else
+--					foundData.foilprice = ( foundData.foilprice or 0 ) / 100
+--				end-- if "Table"
+--			end--if foundData.foilprice
 			if next( foundData.names ) then
 				table.insert( sourceTable , foundData ) -- actually keep ParseHtmlData-supplied information
 			else -- nothing was found
@@ -951,28 +945,12 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 
 	if not card.name then-- should not be reached, but caught here to prevent errors in string.gsub/find below
 		card.drop = true
-		card.name = "DROPPED nil-name"
+		card.name = "(DROPPED nil-name)"
 	end --if not card.name
 	if sourcerow.drop then -- keep site.ParseHtmlData preset drop
 		card.drop = sourcerow.drop
 	end -- if
 	
-	-- convert #number price to #table { #number (langid) = #number, ... }
-	if type(sourcerow.regprice) ~= "Table" then
-		local sourceprice=sourcerow.regprice
-		sourcerow.regprice={}
-		for lid,_ in pairs(card.lang) do
-			sourcerow.regprice[lid]=sourceprice
-		end	
-	end
-	if type(sourcerow.foilprice) ~= "Table" then
-		local sourceprice=sourcerow.foilprice
-		sourcerow.foilprice={}
-		for lid,_ in pairs(card.lang) do
-			sourcerow.foilprice[lid]=sourceprice
-		end	
-	end
-
 	--[[ do site-specific card data manipulation before processing 
 	]]
 	if site.BCDpluginPre then
@@ -980,7 +958,7 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 	end
 	
 	-- drop unwanted sourcedata before further processing
-	if string.find( card.name , "%(DROP[ %a]*%)" ) then
+	if string.find( card.name , "%(DROP.*%)" ) then
 		card.drop = true
 		if DEBUG then
 			LHpi.Log ( "LHpi.buildCardData\t dropped card " .. LHpi.Tostring(card) , 2 )
@@ -1107,30 +1085,44 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 --	elseif string.find (card.name, "[tT][oO][kK][eE][nN]" ) then
 --		card.objtype = 2
 	elseif string.find(card.name, "%([Nn][Oo][Nn][Tt][Rr][Aa][Dd]%.?[Ii]?[Tt]?[Ii]?[Oo]?[Nn]?[Aa]?[Ll]?%)") then
+		card.name = string.gsub(card.name,"%([Nn][Oo][Nn][Tt][Rr][Aa][Dd]%.?[Ii]?[Tt]?[Ii]?[Oo]?[Nn]?[Aa]?[Ll]?%)","(Nontrad)")
 		objtype = 3
 	elseif string.find(card.name, "%([Ii][Nn][Ss]%.?[Ee]?[Rr]?[Tt]?%)") then
 		objtype = 4
 	elseif string.find(card.name, "%([Rr][Ee][Pp][Ll]%.?[Ii]?[Cc]?[Aa]?%)") then
+		card.name = string.gsub(card.name,"%([Rr][Ee][Pp][Ll]%.?[Ii]?[Cc]?[Aa]?%)","(Replica)")
 		objtype = 5
 	elseif string.find(card.name, "%([Pp]lane%)") then
+		card.name = string.gsub(card.name,"%([Pp]lane%)","")
 		objtype = 3
 	elseif string.find(card.name, "%([Ss]cheme%)") then
+		card.name = string.gsub(card.name,"%([Ss]cheme%)","")
 		objtype = 3
-	elseif string.find(card.name, "%([Co]onspiracy%)") then
+	elseif string.find(card.name, "%([Cc]onspiracy%)") then
+		card.name = string.gsub(card.name,"%([Cc]onspiracy%)","")
 		objtype = 3
-	elseif string.find (card.name , "%([Oo]versized%)$" ) then
+	elseif string.find(card.name, "%([Oo]versized%)$" ) then
 		if setid == 778 -- Commander
-			or setid == 792 -- Commander's Arsenal
-			or setid == 801 -- Commander 2013
+		or setid == 801 -- Commander 2013
 		then
-			objtype = 5
+			-- keep suffix for variants
+			objtype = 5 -- replica
+		elseif setid == 792 then -- Commander's Arsenal
+			card.name = string.gsub(card.name,"%s*%([Oo]versized%)$","")			
+			objtype = 5 -- replica
 		elseif setid == 761 -- Planechase
-			or setid == 769 -- Archenemy
-			or setid == 787 -- Planechase 2012 Edition
-			or setid == 807 -- Conspiracy
+		or setid == 769 -- Archenemy
+		or setid == 787 -- Planechase 2012 Edition
+		or setid == 807 -- Conspiracy
 		then
-			objtype = 3
+			card.name = string.gsub(card.name," *%([Oo]versized%)$","")
+			objtype = 3 -- nontrad
 		end-- if setid
+	elseif setid == 105 --Collectors Edition
+	or setid == 106 -- Collectors Edition
+	or setid ==  69 -- Box Topper Cards
+	then
+		objtype = 5
 	else
 		objtype = 1
 	end--if string.find
@@ -1148,11 +1140,14 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 				LHpi.Log( string.format("VARIANTS\tcardname \"%s\" changed to name \"%s\" with variant \"%s\"", card.name, site.variants[setid][card.name][1], LHpi.Tostring( card.variant ) ) , 2 )
 			end
 			card.name = site.variants[setid][card.name][1]
+		else
+--			--set variant to empty string
+--			card.variant = { "" }
 		end -- if site.variants[setid]
 	end -- if sourcerow.variant
 	-- remove unparsed leftover variant numbers
-	card.name = string.gsub( card.name , "%(%d+%)" , "" )
-	card.name = string.gsub(card.name," *%([Oo]versized%)$","")
+--keep then, let's see what breaks :)
+--	card.name = string.gsub( card.name , "%(%d+%)" , "" )
 	
 	-- Token infix removal, must come after variant checking
 	-- For object type detection, variant tables need to keep/set "Token" suffix.
@@ -1169,8 +1164,11 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 		card.name = string.gsub( card.name , "%(Go?ld%)" , "" )
 		card.name = string.gsub( card.name , "%(Multicolor%)" , "" )
 		card.name = string.gsub( card.name , "%([Sp][Pp][Tt]%)" , "" )
+		card.name = string.gsub( card.name , "%(%d+%)" , "" )
+--		card.name = string.gsub( card.name , "  +" , " " )
+		card.name = string.gsub( card.name , "%s+" , " " )
 		card.name = string.gsub( card.name , "%(%)%s*$" , "" )
-		card.name = string.gsub( card.name , "  +" , " " )
+--		card.name = string.gsub( card.name , "^%s*(.-)%s*$" , "%1" )
 	end
 	if string.find( card.name , "^Emblem" ) then -- Emblem prefix to suffix
 		if card.name == "Emblem of the Warmind" 
@@ -1220,10 +1218,36 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 	card.regprice={}
 	card.foilprice={}
 	-- I would prefer to skip as many loops as possible if we're to discard the results anyway...
-	if sourcerow.regprice~=nil or sourcerow.foilprice~=nil then -- keep site.ParseHtmlData preset reg/foilprice
-		card.regprice = sourcerow.regprice
-		card.foilprice = sourcerow.foilprice
-	else -- define price according to card.foil and card.variant	
+	-- Therefore, we'll nest some ifs to skip some fors
+	if sourcerow.regprice~=nil or sourcerow.foilprice~=nil then -- keep site.ParseHtmlData preset reg/foilprice		
+--		-- keep #table, otherwise convert #number price to #table { #number (langid) = #number, ... }
+		if sourcerow.regprice then
+--			if "Table" == type(sourcerow.regprice) then
+				card.regprice = sourcerow.regprice
+--			else
+--				for lid,_ in pairs(card.lang) do
+--					card.regprice[lid]=sourcerow.regprice
+--				end-- end for lid
+--			end--if "Table"
+		end--if sourcerow.regprice
+		if sourcerow.foilprice then
+--			if "Table" == type(sourcerow.foilprice) then
+				card.foilprice = sourcerow.foilprice
+--			else
+--				for lid,_ in pairs(card.lang) do
+--					card.foilprice[lid]=sourcerow.foilprice
+--				end-- end for lid
+--			end--if "Table"
+		end--if sourcerow.foilprice
+	else -- define price according to card.foil and card.variant
+		if "Table" ~= type(sourcerow.price) then
+			--convert #number price to #table { #number (langid) = #number, ... }
+			local sourceprice=sourcerow.price
+			sourcerow.price={}
+			for lid,_ in pairs(card.lang) do
+				sourcerow.price[lid]=sourceprice
+			end--for lid
+		end-- if not "Table"
 		for lid,lang in pairs( card.lang ) do
 			if importlangs[lid] then
 				if card.variant then
@@ -1259,19 +1283,13 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 			end--if importlangs[lid]
 		end -- for lid,_lang
 	end--if sourcerow reg/foilprice
---	if sourcerow.regprice~=nil then -- keep site.ParseHtmlData preset regprice instead
---		card.regprice = sourcerow.regprice
---	end
---	if sourcerow.foilprice~=nil then -- keep site.ParseHtmlData preset foilprice instead
---		card.foilprice = sourcerow.foilprice
---	end
 	
 	--[[ do final site-specific card data manipulation
 	]]
 	if site.BCDpluginPost then
 		card = site.BCDpluginPost ( card , setid , importfoil, importlangs )
 	end
-	if string.find( card.name , "%(DROP[ %a]*%)" ) then
+	if string.find( card.name , "%(DROP.*%)" ) then
 		card.drop = true
 		if DEBUG then
 			LHpi.Log ( "LHpi.buildCardData\t dropped card " .. LHpi.Tostring(card) , 2 )
@@ -1556,7 +1574,7 @@ function LHpi.MergeCardrows ( name, langs,  oldRow , newRow , variants )
 			conflictdesc.type="ok:new"
 		else
 			conflictcount=conflictcount+1
-			conflictdesc.type="mismatch:" .. tostring(oldRow.objtype) .. " vs " .. tostring(newRow.objtype)
+			conflictdesc.type="objtype mismatch:" .. tostring(oldRow.objtype) .. " vs " .. tostring(newRow.objtype)
 			LHpi.Log( string.format("card \"%s\" objtype mismatch: old is %i but new is %i !", name, oldRow.objtype, newRow.objtype) )
 			if STRICTOBJTYPE then
 				error( string.format("card \"%s\" objtype mismatch: old is %i but new is %i !", name, oldRow.objtype, newRow.objtype) )
