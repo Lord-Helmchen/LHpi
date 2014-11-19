@@ -717,10 +717,6 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 		elseif card.pluginData.set == "Rinascimento" then
 			card.lang = { [5]="ITA" }
 		end
---	elseif setid == 775 then
---		if string.find(card.name,"(Manga)$") then
---			card.name = card.name .. "(DROP)"
---		end
 	elseif setid == 9 then
 		if card.pluginData.set == "Oversized 6x9 Promos" then
 			if card.name ~= "Aswan Jaguar" then
@@ -735,6 +731,16 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 		else
 			--TODO better settweak this?
 			card.name = card.name .. "(DROP not DCI Legend Membership)"
+		end
+	elseif setid == 10 then
+		if card.pluginData.set == "Junior Series Promos" then
+		
+		elseif card.pluginData.set == "Junior Super Series Promos" then
+		
+		elseif card.pluginData.set == "Japan Junior Tournament Promos" then
+
+		elseif card.pluginData.set == "Magic Scholarship Series Promos" then
+		
 		end
 	end
 	
@@ -1584,55 +1590,18 @@ site.namereplace = {
 ["Ambition's Cost"]			= "Ambition’s Cost",
 ["Avatar of Hope (1)"]	= "Avatar of Hope (8ED)",
 ["Avatar of Hope (2)"]	= "Avatar of Hope (PRM)",
---["Blinding Angel"]			= "",
---["Clone"]					= "",
---["Curiosity"]				= "",
---["Diabolic Tutor"]			= "",
---["Enrage"]					= "",
---["Force of Nature"]			= "",
---["Furnace of Rath"]			= "",
---["Guerrilla Tactics"]		= "",
 ["Hell's Caretaker"]		= "Hell’s Caretaker",
---["Hypnotic Specter"]		= "",
---["Icy Manipulator"]			= "",
---["Intruder Alarm"]			= "",
 ["Jester's Cap"]			= "Jester’s Cap",
---["Kird Ape"]				= "",
---["Llanowar Behemoth"]		= "",
---["Llanowar Elves"]			= "",
 ["Lord of the Undead (1)"]= "Lord of the Undead (8ED)",
 ["Lord of the Undead (2)"]= "Lord of the Undead (PRM)",
---["Mahamoti Djinn"]			= "",
---["Merchant of Secrets"]		= "",
---["Merchant Scroll"]			= "",
---["Mind Bend"]				= "",
---["Mind Sludge"]				= "",
---["Naturalize"]				= "",
---["Nekrataal"]				= "",
 ["Obliterate (1)"]		= "Obliterate (8ED)",
 ["Obliterate (2)"]		= "Obliterate (PRM)",
---["Orcish Spy"]				= "",
---["Paladin en-Vec"]			= "",
---["Phyrexian Arena"]			= "",
 ["Phyrexian Plaguelord (1)"]	= "Phyrexian Plaguelord (8ED)",
 ["Phyrexian Plaguelord (2)"]	= "Phyrexian Plaguelord (PRM)",
---["Plow Under"]				= "",
---["Primeval Force"]			= "",
---["Rathi Dragon"]			= "",
---["Rewind"]					= "",
---["Rukh Egg"]				= "",
---["Sage of Lat-Nam"]			= "",
 ["Savannah Lions (1)"]	= "Savannah Lions (8ED)",
 ["Savannah Lions (2)"]	= "Savannah Lions (PRM)",
---["Serra Angel"]				= "",
---["Skull of Orm"]			= "",
---["Suntail Hawk"]			= "",
 ["Two-Headed Dragon (1)"]	= "Two-Headed Dragon (8ED)", 
 ["Two-Headed Dragon (2)"]	= "Two-Headed Dragon (PRM)", 
---["Underworld Dreams"]		= "",
---["Vampiric Spirit"]			= "",
---["Verdant Force"]			= "",
---["Vexing Arcanix"]			= "",
 },
 [24] = {
 ["Urza's Factory"]			= "Urza’s Factory",
@@ -1712,11 +1681,16 @@ site.variants = {
  { #number (setid)= #table { #string (name)= #table { foil= #boolean } , ... } , ... }
  
  @type site.foiltweak
- @field [parent=#site.variants] #boolean override	(optional) if true, defaults from LHpi.Data will not be used at all
+ @field [parent=#site.foiltweak] #boolean override	(optional) if true, defaults from LHpi.Data will not be used at all
  @field [parent=#site.foiltweak] #table foilstatus
 ]]
 site.foiltweak = {
+
 } -- end table site.foiltweak
+--ignore all foiltweak tables from LHpi.Data
+for sid,set in pairs(site.sets) do
+	site.foiltweak[sid] = { override=true }
+end
 
 --[[- wrapper function for expected table 
  Wraps table site.expected, so we can wait for LHpi.Data to be loaded before setting it.
@@ -1773,7 +1747,7 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [179] = { pset={ [6]=LHpi.Data.sets[179].cardcount.reg-3, [8]=LHpi.Data.sets[179].cardcount.reg}, failed={ [6]=3 } },
 [139] = { namereplaced=30 },
 -- Expansions
-[813] = { pset={ dup=LHpi.Data.sets[813].cardcount.reg-5 }, failed={ dup=LHpi.Data.sets[813].cardcount.tok+5 }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, namereplaced=20, foiltweaked=10, dropped=2 },
+[813] = { pset={ dup=LHpi.Data.sets[813].cardcount.reg-5 }, failed={ dup=LHpi.Data.sets[813].cardcount.tok+5 }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, namereplaced=24, foiltweaked=10, dropped=2 },
 [806] = { pset={ dup=LHpi.Data.sets[806].cardcount.reg }, failed={ dup=LHpi.Data.sets[806].cardcount.tok }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=14 },
 [802] = { pset={ dup=LHpi.Data.sets[802].cardcount.reg }, failed={ dup=LHpi.Data.sets[802].cardcount.tok }, duppset={ [2]="RUS",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=14, namereplaced=2 },
 [800] = { pset={ dup=LHpi.Data.sets[800].cardcount.reg }, failed={ dup=LHpi.Data.sets[800].cardcount.tok }, duppset={ [2]="RUS",[7]="SPA" }, dupfail={ [2]="RUS",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=14 },
@@ -1802,7 +1776,7 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [620] = { namereplaced=10 },
 [610] = { namereplaced=10 },
 [590] = { namereplaced=24 },
-[450] = { namereplaced=6, foiltweaked=6 },
+[450] = { namereplaced=12, foiltweaked=6 },
 [240] = { namereplaced=4 },
 [210] = { pset={ [6]=LHpi.Data.sets[210].cardcount.reg-1 }, failed= { [6]=1 } },
 [190] = { pset={ [6]=LHpi.Data.sets[190].cardcount.reg-1 }, failed= { [6]=1 } },
@@ -1848,7 +1822,7 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [32]  = { pset={ 5,[8]=1 }, failed={ 1,[8]=5 } },
 [25]  = { pset={ [17]=1 }, failed={ [17]=LHpi.Data.sets[25].cardcount.all-1 } },
 [24]  = { foiltweaked=12, namereplaced=2 },
-[9]   = { pset={ [2]=3,[3]=12,[4]=3,[7]=3 }, foiltweak=10 },
+[9]   = { pset={ [2]=3,[3]=12,[4]=3,[7]=3 }, dropped=188, foiltweaked=10 },
 [2]   = { dropped=2*29 },
 
 --TODO check why averaging foilcard in duel decks. possibly no averaging should be necessarry, so error on any conflict.
