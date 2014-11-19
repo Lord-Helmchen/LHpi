@@ -34,18 +34,18 @@ LHpi.GetSourceData( sourceurl,urldetails )
 * fixed savepath==nil handling (needed when called before DoImport has run)
 LHpi.ParseSourceData( sourcedata,sourceurl,urldetails )
 * does the parsing previously done by GetSourceData and returns the #table sourceTable
-* copes with site.HtmlData returning (reg-/foil-)prices as #number or table
-* shortcut for sourcedata==nil
-BuildCardData copes with (reg-/foil-)prices as #number or #table
+* shortcut return nil for sourcedata==nil
+BuildCardData
+* counts namereplace and foiltweak even if card is dopped
 Logtable no longer strictly requires #table arguments
 MainImportCycle fixed CHECKEXPECTED handling for semi-available languages
 removed some leftover commented-out code
 improved some comments and log msgs
 DoImport
-*changed site.expected.EXPECTTOKENS to site.expected.tokens
-*changed site.expected.EXPECTNONTRAD to site.expected.nontrad
-*changed site.expected.EXPECTREPL to site.expected.replica
-*all three can be #boolean (like before) or #table { [langid]=#boolean,... }
+* changed site.expected.EXPECTTOKENS to site.expected.tokens
+* changed site.expected.EXPECTNONTRAD to site.expected.nontrad
+* changed site.expected.EXPECTREPL to site.expected.replica
+* all three can be #boolean (like before) or #table { [langid]=#boolean,... }
 
 
 ]]
@@ -235,13 +235,13 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 	-- Don't need to define defaults here as long as BuildCardData checks for their existence before calling them.	
 	--	if not site.BCDpluginPre then
 	--		function site.BCDpluginPre ( card , setid )
-	--			return card
+	--			return card,namereplaced,foiltweaked
 	--		end -- function
 	--	end -- if
 	--	if not site.BCDpluginPost then
 	--		function site.BCDpluginPost( card , setid )
 	--			card.pluginData = nil
-	--			return card
+	--			return card,namereplaced,foiltweaked
 	--		end -- function
 	--	end -- if
 	
@@ -350,7 +350,7 @@ function LHpi.MainImportCycle( sourcelist , totalhtmlnum , importfoil , importla
 				if sourceTable then
 					for _,row in pairs(sourceTable) do
 						local newcard,namereplaced,foiltweaked = LHpi.BuildCardData( row , sid , importfoil , importlangs)
-						persetcount.namereplaced = persetcount.namereplaced + (namereplaced or 0) 
+						persetcount.namereplaced = persetcount.namereplaced + (namereplaced or 0)
 						persetcount.foiltweaked = persetcount.foiltweaked + (foiltweaked or 0)
 						if newcard.drop then
 							persetcount.dropped = persetcount.dropped + 1
@@ -965,7 +965,7 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 		end
 	end -- if entry to be dropped
 	if card.drop then
-		return card
+		return card,namereplaced,foiltweaked
 	end--if card.drop
 	
 	card.name = string.gsub( card.name , " ?// ?" , "|" )
@@ -1037,7 +1037,7 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 		card.drop = true
 	end-- if importfoil == "y" no reason for drop here
 	if card.drop then
-		return card
+		return card,namereplaced,foiltweaked
 	end--if card.drop
 	
 	-- unify basic land names
@@ -1296,7 +1296,7 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 		end
 	end -- if entry to be dropped
 	if card.drop then
-		return card
+		return card,namereplaced,foiltweaked
 	end--if card.drop
 
 	--make sure userParams are honoured, even when preset data is present
