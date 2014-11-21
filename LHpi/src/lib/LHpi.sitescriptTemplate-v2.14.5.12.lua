@@ -411,12 +411,12 @@ site.langs = {
 --	[9]  = { id= 9, url="" },--Simplified Chinese
 --	[10] = { id=10, url="" },--Traditional Chinese
 --	[11] = { id=11, url="" },--Korean
---	[12] = { id=12, url="" },--Hebrew
---	[13] = { id=13, url="" },--Arabic
---	[14] = { id=14, url="" },--Latin
---	[15] = { id=15, url="" },--Sanskrit
---	[16] = { id=16, url="" },--Ancient Greek
---	[17] = { id=17, url="" },--Phyrexian
+--	[12] = { id=12, url="" },--Hebrew			-- Only 1 card, in [22] Prerelease Promos
+--	[13] = { id=13, url="" },--Arabic			-- Only 1 card, in [22] Prerelease Promos
+--	[14] = { id=14, url="" },--Latin			-- Only 1 card, in [22] Prerelease Promos
+--	[15] = { id=15, url="" },--Sanskrit			-- Only 1 card, in [22] Prerelease Promos
+--	[16] = { id=16, url="" },--Ancient Greek	-- Only 1 card, in [22] Prerelease Promos
+--	[17] = { id=17, url="" },--Phyrexian		-- Only 1 card, in [25] Judge Gift Cards
 }
 
 --[[- table of available rarities.

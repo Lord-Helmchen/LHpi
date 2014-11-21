@@ -749,7 +749,7 @@ function main()
 --	local importlangs = { [5] = "FOO" }
 --	local importlangs = dummy.alllangs
 --	local importsets = { [0] = "fakeset"; }
-	local importsets = { [814]="some set" }
+	local importsets = { [40]="some set" }
 --	local importsets = { [220]="foo";[800]="bar";[0]="baz";}
 --	local importsets = dummy.coresets
 --	local importsets = dummy.expansionsets

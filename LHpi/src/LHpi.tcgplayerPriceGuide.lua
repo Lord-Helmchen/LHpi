@@ -1553,7 +1553,7 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [140] = { namereplaced=15, dropped=2 },
 --[110] = { namereplaced=15},
 [100] = { namereplaced=15},
-[90]  = { pset={295-5}, dropped=7, namereplaced=10},-- 7 SOON
+[90]  = { pset={295-5}, dropped=6, namereplaced=10},-- 6 SOON
 -- Expansions
 [813] = { pset={LHpi.Data.sets[813].cardcount.both-5}, failed={ 5 }, namereplaced=3 },-- -5 Intro Deck variants
 [802] = { namereplaced=2},
@@ -1573,8 +1573,7 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [758] = { dropped=1 },
 [756] = { namereplaced=1 },
 --[754] = { namereplaced=1 },
-[752] = { pset={ 187-1 }, dropped=1 },-- 1 SOON
-[751] = { pset={LHpi.Data.sets[751].cardcount.both-5}, failed={ 5 }, namereplaced=5, dropped=5 },--5 SOON
+[751] = { pset={LHpi.Data.sets[751].cardcount.both-2}, failed={ "" }, namereplaced=5, dropped=2 },--2 SOON
 [730] = { namereplaced=4 },
 [710] = { namereplaced=1 },
 [700] = { namereplaced=2 },
@@ -1642,10 +1641,9 @@ function site.SetExpected( importfoil , importlangs , importsets )
 --[390] = { pset={ LHpi.Data.sets[390].cardcount.reg+1 },failed={ 1 } },-- +1 Thorn Elemental
 [380] = { pset={180}, namereplaced=2 },
 [320] = { namereplaced=8 },
-[310] = { pset={165-2}, failed={ 2 }, dropped=2, namereplaced=15-2},-- 2 SOON
+[310] = { namereplaced=15 },
 [260] = { pset={228-6-1}, failed={ 7}, dropped=1, namereplaced=27-1 },-- 1 SOON, -6 "DG" variant
 [200] = { namereplaced=12 },
-[70]  = { pset={ LHpi.Data.sets[70].cardcount.nontrad-1 }, dropped=1 },--1 SOON
 -- promos
 [31]  = { pset={ LHpi.Data.sets[31].cardcount.reg } },
 [30]  = { pset={ 172}, failed={ 2 }, foiltweaked=1, dropped=3 },--3 SOON

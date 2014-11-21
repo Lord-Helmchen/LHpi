@@ -982,7 +982,7 @@ function site.SetExpected( importfoil , importlangs , importsets )
 --- if site.expected.tokens is true, LHpi.Data.sets[setid].cardcount.tok is added to pset default.
 -- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
 -- @field [parent=#site.expected] #boolean or #table { #boolean,...} tokens
-	tokens = trrue,
+	tokens = true,
 --- if site.expected.nontrad is true, LHpi.Data.sets[setid].cardcount.nontrad is added to pset default.
 -- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
 -- @field [parent=#site.expected] #boolean nontrad

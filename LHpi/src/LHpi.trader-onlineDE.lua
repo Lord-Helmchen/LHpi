@@ -1109,7 +1109,7 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [140] = { pset={ [3]=306-2 }, failed= { [3]=2 }, namereplaced=5 },--fail 2 Fehldruck
 [139] = { namereplaced=2 },
 [110] = { pset={ 302-7-9 }, namereplaced=1 }, -- 7 empty cards on page, 9 missing entirely
-[100] = { pset={ 245 } },
+[100] = { pset={ 241 } },
 -- Expansions
 [813] = { pset={ LHpi.Data.sets[813].cardcount.both-5, [3]=LHpi.Data.sets[813].cardcount.reg-5 }, failed={ 5, [3]=LHpi.Data.sets[813].cardcount.tok+5 }, namereplaced=10 },-- -5 Intro Deck variants
 [806] = { pset={ [3]=171-6 }, failed= { [3]=6 } }, -- -6 is tokens
@@ -1126,13 +1126,13 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [765] = { namereplaced=2 },
 [762] = { namereplaced=1 },
 [756] = { namereplaced=2 },
-[754] = { namereplaced=4 },
+[754] = { namereplaced=3 },
 [751] = { namereplaced=12 },
 [730] = { namereplaced=6 },
 [710] = { namereplaced=4 },
 [700] = { namereplaced=4 },
-[690] = { dropped=956, namereplaced=5 },
-[680] = { dropped=379, namereplaced=5 },
+[690] = { dropped=954, namereplaced=5 },
+[680] = { dropped=378, namereplaced=5 },
 [670] = { namereplaced=4 },
 [660] = { namereplaced=4 },
 [650] = { namereplaced=4 },

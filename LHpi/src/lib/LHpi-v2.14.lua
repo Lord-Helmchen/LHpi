@@ -1082,15 +1082,17 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 	if sourcerow.objtype ~=nil then
 		objtype = sourcerow.objtype
 	-- Token and Emblems are handled below
---	elseif string.find (card.name, "[tT][oO][kK][eE][nN]" ) then
---		card.objtype = 2
+	--elseif string.find (card.name, "[tT][oO][kK][eE][nN]" ) then
+	--	card.objtype = 2
 	elseif string.find(card.name, "%([Nn][Oo][Nn][Tt][Rr][Aa][Dd]%.?[Ii]?[Tt]?[Ii]?[Oo]?[Nn]?[Aa]?[Ll]?%)") then
 		card.name = string.gsub(card.name,"%([Nn][Oo][Nn][Tt][Rr][Aa][Dd]%.?[Ii]?[Tt]?[Ii]?[Oo]?[Nn]?[Aa]?[Ll]?%)","(Nontrad)")
 		objtype = 3
 	elseif string.find(card.name, "%([Ii][Nn][Ss]%.?[Ee]?[Rr]?[Tt]?%)") then
+		card.name = string.gsub(card.name,"%([Ii][Nn][Ss]%.?[Ee]?[Rr]?[Tt]?%)","")
 		objtype = 4
 	elseif string.find(card.name, "%([Rr][Ee][Pp][Ll]%.?[Ii]?[Cc]?[Aa]?%)") then
-		card.name = string.gsub(card.name,"%([Rr][Ee][Pp][Ll]%.?[Ii]?[Cc]?[Aa]?%)","(Replica)")
+		--card.name = string.gsub(card.name,"%([Rr][Ee][Pp][Ll]%.?[Ii]?[Cc]?[Aa]?%)","(Replica)")
+		-- keep suffix for variants
 		objtype = 5
 	elseif string.find(card.name, "%([Pp]lane%)") then
 		card.name = string.gsub(card.name,"%([Pp]lane%)","")
@@ -1104,6 +1106,7 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 	elseif string.find(card.name, "%([Oo]versized%)$" ) then
 		if setid == 778 -- Commander
 		or setid == 801 -- Commander 2013
+		or setid == 40 -- Arena/Colosseo Leagues Promos
 		then
 			-- keep suffix for variants
 			objtype = 5 -- replica
@@ -1633,16 +1636,16 @@ function LHpi.SetPrice(setid, name, card)
 				if varname then
 					if string.find(varname,"[Tt][Oo][Kk][Ee][Nn]") then
 						card.objtype[varname] = 2
-						realvarname = string.gsub(realvarname,"[Tt][Oo][Kk][Ee][Nn]","")
+						realvarname = string.gsub(realvarname," ?[Tt][Oo][Kk][Ee][Nn] ?","")
 					elseif string.find(varname,"[Nn][Oo][Nn][Tt][Rr][Aa][Dd]") then
 						card.objtype[varname] = 3
-						realvarname = string.gsub(realvarname,"[Nn][Oo][Nn][Tt][Rr][Aa][Dd]","")
+						realvarname = string.gsub(realvarname," ?[Nn][Oo][Nn][Tt][Rr][Aa][Dd] ?","")
 					elseif string.find(varname,"[Ii][Nn][Ss][Ee][Rr][Tt]") then
 						card.objtype[varname] = 4
-						realvarname = string.gsub(realvarname,"[Ii][Nn][Ss][Ee][Rr][Tt]","")
+						realvarname = string.gsub(realvarname," ?[Ii][Nn][Ss][Ee][Rr][Tt] ?","")
 					elseif string.find(varname,"[Rr][Ee][Pp][Ll][Ii][Cc][Aa]") then
 						card.objtype[varname] = 5
-						realvarname = string.gsub(realvarname,"[Rr][Ee][Pp][Ll][Ii][Cc][Aa]","")
+						realvarname = string.gsub(realvarname," ?[Rr][Ee][Pp][Ll][Ii][Cc][Aa] ?","")
 					else
 					end-- if string.find
 					perlangretval = (perlangretval or 0) + ma.SetPrice(setid, lid, name, realvarname, card.regprice[lid][varname] or 0, card.foilprice[lid][varname] or 0, card.objtype[varname] or 0 )

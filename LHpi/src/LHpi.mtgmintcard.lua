@@ -289,11 +289,12 @@ end -- function site.BuildUrl
 function site.ParseHtmlData( foundstring , 	urldetails )
 	local _start,_end,name = string.find(foundstring, '<a .*href=%b"">([^<]+)</a>' )
 	local _start,_end,price = string.find( foundstring , '[$€]([%d.,]+)' )
---	if price then
+	if price then
 		price = string.gsub( price , "[,.]" , "" )
---	else
---		price=0
---	end
+	else
+		-- out of stock
+		price=0
+	end
 	price = tonumber( price )
 --	local newCard = { names = { [urldetails.langid] = name }, price = { [urldetails.langid] = price }, foil=urldetails.foilonly }
 	local newCard = { names = { [urldetails.langid] = name }, price = price, foil=urldetails.foilonly }
