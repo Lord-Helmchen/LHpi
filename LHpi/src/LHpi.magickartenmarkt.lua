@@ -54,10 +54,19 @@ LOGFOILTWEAK = true
 -- @field [parent=#global] #boolean CHECKEXPECTED
 --CHECKEXPECTED = false
 
---- choose between available price types; defaults to 5 ("AVG" prices).
--- see table site.priceTypes for available options
--- @field #number priceToUse
-local priceToUse=5--use AVG
+--[[- choose between available price types; defaults to 5 ("AVG" prices).
+ 	[1] = "SELL",	--Average price of articles ever sold of this product
+	[2] = "LOW",	--Current lowest non-foil price (all conditions)
+	[3] = "LOWEX+",	--Current lowest non-foil price (condition EX and better)
+	[4] = "LOWFOIL",--Current lowest foil price
+	[5] = "AVG",	--Current average non-foil price of all available articles of this product
+	[6] = "TREND",	--Trend of AVG 
+
+ @field #number useAsRegprice
+ @field #number useAsFoilprice
+]]
+local useAsRegprice=3
+local useAsFoilprice=5
 
 --local mkmtokenfile = "mkmtokens.example"
 --local mkmtokenfile = "mkmtokens.sandbox"
@@ -235,6 +244,8 @@ end -- function ImportPrice
  @function [parent=#site] Initialize
 ]]
 function site.Initialize( mode )
+	LHpi.Log(string.format("Importing %q prices into MA regular price column",site.priceTypes[useAsRegprice] or "AVG"))
+	LHpi.Log(string.format("Importing %q prices into MA foil price column",site.priceTypes[useAsFoilprice] or "LOWFOIL"))
 	if not require then
 		LHpi.Log("trying to work around Magic Album lua sandbox limitations...")
 		--emulate require(modname) using dofile; only works for lua files, not dlls.
@@ -363,16 +374,17 @@ function site.FetchSourceDataFromOAuth( url, details )
 	if code == 200 or code == 204 then
 	elseif code == 404 then
 		print("status=", LHpi.Tostring(status))
+		LHpi.Log("status=", LHpi.Tostring(status))
 	else
 		LHpi.Log(("headers=".. LHpi.Tostring(headers)))
-		LHpi.Log(("arguments=".. LHpi.Tostring(arguments)))
-		LHpi.Log(("post_body=".. LHpi.Tostring(post_body)))
+--		LHpi.Log(("arguments=".. LHpi.Tostring(arguments)))
+--		LHpi.Log(("post_body=".. LHpi.Tostring(post_body)))
 		LHpi.Log(("code=".. LHpi.Tostring(code)))
-		LHpi.Log(("BuildRequest:"))
-		local headers, arguments, post_body = site.oauth.client:BuildRequest( "GET", url )
-		LHpi.Log(("headers=".. LHpi.Tostring(headers)))
+--		LHpi.Log(("BuildRequest:"))
+--		local headers, arguments, post_body = site.oauth.client:BuildRequest( "GET", url )
+--		LHpi.Log(("headers=".. LHpi.Tostring(headers)))
 		LHpi.Log(("status=".. LHpi.Tostring(status)))
-		LHpi.Log(("body=".. LHpi.Tostring(body)))
+--		LHpi.Log(("body=".. LHpi.Tostring(body)))
 		--error (LHpi.Tostring(statusline))
 		print("status=", LHpi.Tostring(status))
 	end
@@ -625,7 +637,8 @@ end -- function site.BuildUrl
  @return #table { #number= #table { names= #table { #number (langid)= #string , ... }, price= #number , foil= #boolean , ... } , ... } 
 ]]
 function site.ParseHtmlData( foundstring , urldetails )
-	local priceType = site.priceTypes[priceToUse] or "AVG"
+	local regpriceType = site.priceTypes[useAsRegprice] or "AVG"
+	local foilpriceType = site.priceTypes[useAsFoilprice] or "LOWFOIL"
 	local product
 	if responseFormat == "json" then
 		product = Json.decode(foundstring)
@@ -637,8 +650,8 @@ function site.ParseHtmlData( foundstring , urldetails )
 	local newFoilCard = { names = {}, lang={}, pluginData={}, foil=true  }
 --	local regprice  = string.gsub( product.priceGuide[priceType] , "[,.]" , "" ) --nonfoil price, use AVG by default
 --	local foilprice = string.gsub( product.priceGuide["LOWFOIL"] , "[,.]" , "" ) --foil price
-	local regprice  = tonumber(product.priceGuide[priceType])*100 --nonfoil price, use AVG by default
-	local foilprice = tonumber(product.priceGuide["LOWFOIL"])*100 --foil price
+	local regprice  = tonumber(product.priceGuide[regpriceType])*100 --nonfoil price, use AVG by default
+	local foilprice = tonumber(product.priceGuide[foilpriceType])*100 --foil price
 	-- can just set names[1] to productName[1].productName, as productName reflects mkm ui langs, not card langs		
 	newCard.names[1] = product.name["1"].productName
 	newFoilCard.names[1] = product.name["1"].productName
@@ -678,9 +691,11 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 	if DEBUG then
 		LHpi.Log( "site.BCDpluginPre got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
 	end
-	
-	if "Land" == card.pluginData.rarity then
-		if card.pluginData.collectNr then
+		
+	if "Land" == card.pluginData.rarity
+	--or "Magic Premiere Shop Promos" == card.pluginData.set
+	then
+		if card.pluginData.collectNr and card.pluginData.set ~= "Zendikar" then
 			card.name = string.gsub( card.name,"%(Version %d+%)","("..card.pluginData.collectNr..")" )
 		else
 			card.name = string.gsub( card.name,"%(Version (%d+)%)","(%1)" )
@@ -694,7 +709,8 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 		or setid == 755
 		or setid == 757
 		or setid == 766
-		or setid == 21
+		--or setid == 40
+		--or setid == 21
 		then
 			card.name = string.gsub( card.name, "%(.+%)", "" )
 		end
@@ -708,6 +724,22 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 				card.name = card.name .. " (DROP not Tenth Edition)"
 			end
 		end
+	elseif setid ==  800 then -- THS
+		if card.pluginData.set == "Promos" then
+			if card.name == "Karametra's Acolyte" then
+				card.name = card.name .. " (Holiday Gift Box)"
+			else
+				card.name = card.name .. " (DROP not Theros)"
+			end
+		end
+	elseif setid ==  791 then -- RTR
+		if card.pluginData.set == "Promos" then
+			if card.name == "Dreg Mangler" then
+				card.name = card.name .. " (Holiday Gift Box)"
+			else
+				card.name = card.name .. " (DROP not Return to Ravnica)"
+			end
+		end
 	elseif setid == 680 then --Time Spiral
 		if card.pluginData.rarity == "Time Shifted" then
 			card.name = card.name .. " (DROP Timeshfted)"
@@ -715,6 +747,64 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 	elseif setid == 690 then --Time Spiral Timeshifted
 		if card.pluginData.rarity ~= "Time Shifted" then
 			card.name = card.name .. " (DROP not Timeshfted)"
+		end
+	elseif setid == 804 then -- Challenge Deck: Battle the Horde
+		if card.pluginData.set == "Born of the Gods" then
+			if card.name == "Altar of Mogis"
+			or card.name == "Consuming Rage"
+			or card.name == "Descend on the Prey"
+			or card.name == "Intervention of Keranos"
+			or card.name == "Massacre Totem"
+			or card.name == "Minotaur Goreseeker"
+			or card.name == "Minotaur Younghorn"
+			or card.name == "Mogis's Chosen"
+			or card.name == "Phoberos Reaver"
+			or card.name == "Plundered Statue"
+			or card.name == "Reckless Minotaur"
+			or card.name == "Refreshing Elixir"
+			or card.name == "Touch of the Horned God"
+			or card.name == "Unquenchable Fury"
+			or card.name == "Vitality Salve"
+			then
+				card.name = card.name .. " (nontrad)"
+			else
+				card.name = card.name .. " (DROP not Battle the Horde)"
+			end
+		end
+	elseif setid == 803 then -- Challenge Deck: Face the Hydra
+		if card.pluginData.set == "Theros" then
+			if card.name == "Disorienting Glower"
+			or card.name == "Distract the Hydra"
+			or card.name == "Grown from the Stump"
+			or card.name == "Hydra Head"
+			or card.name == "Hydra's Impenetrable Hide"
+			or card.name == "Neck Tangle"
+			or card.name == "Noxious Hydra Breath"
+			or card.name == "Ravenous Brute Head"
+			or card.name == "Savage Vigor Head"
+			or card.name == "Shrieking Titan Head"
+			or card.name == "Snapping Fang Head"
+			or card.name == "Strike the Weak Spot"
+			or card.name == "Swallow the Hero Whole"
+			or card.name == "Torn Between Heads"
+			or card.name == "Unified Lunge"
+			then
+				card.name = card.name .. " (nontrad)"
+			else
+				card.name = card.name .. " (DROP not Face the Hydra)"
+			end
+		end
+	elseif setid == 755 then -- DD: Jace vs Chandra
+		if card.name == "Chandra Nalaar (Version 1)"
+		or card.name == "Jace Beleren (Version 1)"
+		then
+			card.lang = { "ENG" }
+			card.name = string.gsub(card.name," %(Version 1%)","")
+		elseif card.name == "Chandra Nalaar (Version 2)"
+		or card.name == "Jace Beleren (Version 2)"
+		then
+			card.lang = { [8]="JPN" }
+			card.name = string.gsub(card.name," %(Version 2%)","")
 		end
 	elseif setid ==  390 then -- Starter 1999
 		if card.pluginData.set == "Oversized 6x9 Promos" then
@@ -724,48 +814,58 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 				card.name = card.name .. " (DROP not Starter 1999)"
 			end
 		end
-	elseif setid == 201 then
+	elseif setid == 201 then -- Renaissance/Rinascimento
 		if card.pluginData.set == "Renaissance" then
 			card.lang = { [3]="GER", [4]="FRA" }
 		elseif card.pluginData.set == "Rinascimento" then
 			card.lang = { [5]="ITA" }
 		end
-	elseif setid == 140 then
+	elseif setid == 140 then -- Revised (Unlimited)
 		if card.pluginData.set == "Revised" then
 			card.lang = { [1]="ENG" }
 		elseif card.pluginData.set == "Foreign White Bordered" then
 			card.lang = { [3]="GER", [4]="FRA", [5]="ITA" }
 		end
-	elseif setid == 43 then
+	elseif setid ==  50 then -- Full Box Promotion
+		if card.pluginData.set == "Promos" then
+			if card.name == "Ruthless Cullblade"
+			or card.name == "Pestilence Demon"
+			then
+				card.lang = { [8]="JPN" }
+			else
+				card.name = card.name .. " (DROP not Full Box Promotion)"
+			end
+		end
+	elseif setid == 43 then -- Two-Headed Giant Promo
 		if card.name ~= "Underworld Dreams" then
 			card.name = card.name .. " (DROP not Two-Headed Giant Promo)"
 		end
-	elseif setid == 42 then
+	elseif setid == 42 then -- Summer of Magic
 		if card.name == "Faerie Conclave"
 		or card.name == "Treetop Village"
 		then
 		else
-			card.name = card.name .. " (DROP not Summer of Magic Promo)"
+			card.name = card.name .. " (DROP not Summer of Magic)"
 		end
-	elseif setid == 40 then
+	elseif setid == 40 then -- Arena/Coloseo League
 		if card.pluginData.set == "Oversized 6x9 Promos" then
 			card.name = card.name .. " (oversized)"
+		--elseif card.pluginData.set == "Promos" then -- settweak
 		end
 	elseif setid == 33 then -- Championships Prizes
 		if card.pluginData.set == "DCI Promos" then
 			if card.name == "Balduvian Horde"
-			or card.name == "Geist of Saint Traft"
 			or card.name == "Vengevine"
 			then
 			else
 				card.name = card.name .. " (DROP not Championships Prizes)"
 			end
-		elseif card.pluginData == "Promos" then
+		elseif card.pluginData.set == "Promos" then
 			if card.name ~= "Geist of Saint Traft" then
 				card.name = card.name .. "(DROP not Championship Prizes)"
 			end
 		end
-	elseif setid == 32 then
+	elseif setid == 32 then -- Pro Tour Promos
 		if card.name == "Ajani Goldmane"
 		or card.name == "Avatar of Woe"
 		or card.name == "Eternal Dragon"
@@ -773,15 +873,19 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 		or card.name == "Treva, the Renewer"
 		then
 		else
-			card.name = card.name .. " (DROP not Pro Tour Promo)"
+			card.name = card.name .. " (DROP not Pro Tour Promos)"
 		end
-	elseif setid == 27 then
+	elseif setid == 27 then -- Alternate Art Lands
 		if card.pluginData.set == "APAC Lands" then
 			card.name = card.name .. " (APAC)"
 		elseif card.pluginData.set == "Euro Lands" then
 			card.name = card.name .. " (Euro)"
 		elseif card.pluginData.set == "Guru Lands" then
 			card.name = card.name .. " (Guru)"
+		elseif card.pluginData.set == "Promos" then
+			if card.name ~= "Magic Guru" then
+				card.name = card.name .. " (DROP not Guru)"
+			end
 		end
 	elseif setid ==  26 then -- Magic Game Day
 		if card.pluginData.set == "Gateway Promos" then
@@ -805,11 +909,24 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 				card.name = card.name .. " (DROP not Magic Game Day)"
 			end
 		end
-	elseif setid == 25 then
+	elseif setid == 25 then -- Judge Gift Cards
 		if card.name == "Elesh Norn, Grand Cenobite" then
 			card.lang = { [17]="PHY" }
+		else
+			card.lang[17] = nil
 		end
-	elseif setid == 22 then
+		if card.pluginData.set == "Promos" then
+			if card.name == "Centaur Token (Green 3/3)"
+			or card.name == "Golem Token (Artefact 2/2)"
+			then
+			else
+				card.name = card.name .. " (DROP not Judge Gift Cards)"
+			end
+		end
+	elseif setid == 22 then -- Prerelease Promos
+		for _,lid in ipairs({12,13,14,15,16}) do
+			card.lang[lid] = nil
+		end
 		if card.pluginData.set == "Prerelease Promos" then
 			if card.name == "Glory" then
 				card.lang = { [12]="HEB"}
@@ -824,7 +941,7 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 			end
 		elseif card.pluginData.set == "Oversized 6x9 Promos" then
 			if card.name == "Garruk the Slayer" then
-				card.nae = card.name .. " (oversized)"
+				card.name = card.name .. " (oversized)"
 			else
 				card.name = card.name .. " (DROP not Prerelease Promos)"
 			end
@@ -866,7 +983,7 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 	elseif setid == 21  then -- Release Promos
 		if card.pluginData.set == "Oversized 6x9 Promos" then
 			if card.name == "Incoming!" then
-				--card.name = card.name .. " (oversized)"
+				card.name = card.name .. " (oversized)"
 			else
 				card.name = card.name .. " (DROP not Release Promos)"
 			end
@@ -887,7 +1004,7 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 				card.name = card.name .. " (DROP not Release Promos)"
 			end
 		end
-	elseif setid == 15 then
+	elseif setid == 15 then -- Convention Promos
 		if card.pluginData.set == "San Diego Comic-Con 2013 Promos" then
 			card.name = card.name .. " (CC13)"
 		elseif card.pluginData.set == "San Diego Comic-Con 2014 Promos" then
@@ -910,8 +1027,18 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 			else
 				card.name = card.name .. " (DROP not Convention Promo)"
 			end
+		elseif card.pluginData.set == "Promos" then
+			if card.name ~= "Stealer of Secrets" then
+				card.name = card.name .. " (DROP not Convention Promo)"
+			end
+		elseif card.pluginData.set == "Dengeki Maoh Promos" then
+			if card.name == "Shepherd of the Lost" then
+				card.lang= { [8]="JPN" }
+			else
+				card.name = card.name .. " (DROP not Convention Promo)"
+			end
 		end
-	elseif setid == 10 then
+	elseif setid == 10 then -- Junior Series Promos
 		if card.pluginData.set == "Junior Series Promos" then
 			card.lang = { "ENG" }
 			card.name = card.name .. " (E)"
@@ -925,7 +1052,7 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 			card.lang = { "ENG" }
 			card.name = card.name .. " (J)"
 		end
-	elseif setid == 9 then
+	elseif setid == 9 then -- Video Game Promos
 		if card.pluginData.set == "Oversized 6x9 Promos" then
 			if card.name ~= "Aswan Jaguar" then
 				card.name = card.name .. " (DROP not Video Game Promo)"
@@ -934,12 +1061,22 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 	elseif setid == 8 then -- Stored Promos
 		if card.pluginData.set == "Walmart Promos" then
 			card.lang = { "ENG" }
-		end
-		if card.pluginData.set == "DCI Promos" then
+		elseif card.pluginData.set == "DCI Promos" then
 			if card.name == "Relentless Rats" then
 				card.lang = { [5]="ITA" }
 			elseif card.name ~= "Serra Angel" then
-				card.name = card.name .. " (DROP not )"
+				card.name = card.name .. " (DROP not Stores Promos)"
+			else
+				card.lang = { "ENG" }
+			end
+		elseif card.pluginData.set == "Promos" then
+			if card.name == "Goblin Chieftain"
+			or card.name == "Loam Lion"
+			or card.name == "Oran-Rief, the Vastwood"
+			then
+				card.lang = { [8]="JPN" }
+			else
+				card.name = card.name .. " (DROP not Stores Promos)"
 			end
 		end
 	elseif setid == 7 then -- Magazine Inserts
@@ -960,8 +1097,18 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 			card.lang={ "ENG" }
 		elseif card.pluginData.set == "The Duelist Promos" then
 			card.lang={ "ENG" }
+		elseif card.pluginData.set == "Promos" then
+			if card.name == "Jamuraan Lion" then
+				card.lang = { [3]="GER" }
+			elseif card.name == "Archangel"
+			or card.name == "Thorn Elemental"
+			then
+				card.lang = { [8]="JPN" }
+			else
+				card.name = card.name .. " (DROP not Magazine Inserts)"
+			end
 		end
-	elseif setid == 6 then
+	elseif setid == 6 then -- Comic Inserts
 		if card.pluginData.set == "Oversized 6x9 Promos" then
 			card.lang = { "ENG" }
 			if card.name ~= "Serra Angel (Version 2)" then
@@ -973,8 +1120,18 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 				card.lang = { "ENG" }
 		elseif card.pluginData.set == "IDW Promos" then
 				card.lang = { "ENG" }
+		elseif card.pluginData.set == "Promos" then
+			if card.name == "Darksteel Juggernaut"
+			or card.name == "Kuldotha Phoenix"
+			or card.name == "Phantasmal Dragon"
+			or card.name == "Shivan Dragon"
+			then
+				card.lang = { [8]="JPN" }
+			else
+				card.name = card.name .. " (DROP not Comic Inserts)"
+			end
 		end
-	elseif setid == 5 then
+	elseif setid == 5 then -- Book Inserts
 		if card.pluginData.set == "Harper Prism Promos" then
 			if card.name == "Mana Crypt (Version 2)" then
 				--card.name = "Mana Crypt"
@@ -985,7 +1142,7 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 				card.name = card.name .. " (DROP not Book Inserts)"
 			end
 		end
-	elseif setid == 2 then
+	elseif setid == 2 then -- DCI Legend Membership
 		if card.name == "Incinerate"
 		or card.name == "Counterspell"
 		then
@@ -993,7 +1150,6 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 			card.name = card.name .. " (DROP not DCI Legend Membership)"
 		end
 	end
-	
 	return card
 end -- function site.BCDpluginPre
 
@@ -1021,7 +1177,7 @@ function site.BCDpluginPost( card , setid , importfoil, importlangs )
 		end
 		card.name = card.name .. "(DROP settweaked to " .. site.settweak[setid][card.name] .. ")"
 		settweaked=1
-		--TODO save to file instead of dropping
+		--save to file instead of dropping would not help, as the sets are imported in semi-random order.
 	end -- site.settweak[setid]
 
 	
@@ -1039,7 +1195,7 @@ end -- function site.BCDpluginPost
 site.priceTypes = {	--Price guide entity
 	[1] = "SELL",	--Average price of articles ever sold of this product
 	[2] = "LOW",	--Current lowest non-foil price (all conditions)
-	[3] = "LOWEX+",	--Current lowest non-foil price (condition EX and better)
+	[3] = "LOWEX",	--Current lowest non-foil price (condition EX and better)
 	[4] = "LOWFOIL",--Current lowest foil price
 	[5] = "AVG",	--Current average non-foil price of all available articles of this product
 	[6] = "TREND",	--Trend of AVG 
@@ -1147,10 +1303,16 @@ site.sets = {
 [813]={id=813, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Khans%20of%20Tarkir"},--Khans of Tarkir
 [806]={id=806, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Journey%20into%20Nyx"},--Journey into Nyx
 [802]={id=802, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Born%20of%20the%20Gods"},--Born of the Gods
-[800]={id=800, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Theros"},--Theros
+[800]={id=800, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url={ -- Theros
+											"Theros",
+											"Promos", -- "Karametra's Acolyte (Holiday Gift Box)"
+											} },
 [795]={id=795, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Dragon%27s%20Maze"},--Dragon's Maze
 [793]={id=793, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Gatecrash"},--Gatecrash
-[791]={id=791, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Return%20to%20Ravnica"},--Return to Ravnica
+[791]={id=791, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url={ --Return to Ravnica
+											"Return%20to%20Ravnica",
+											"Promos", -- "Dreg Mangler (Holiday Gift Box)"
+											} },
 [786]={id=786, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Avacyn%20Restored"},--Avacyn Restored
 [784]={id=784, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Dark%20Ascension"},--Dark Ascension
 [782]={id=782, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT" }, fruc={ true }, url="Innistrad"},--Innistrad
@@ -1218,9 +1380,18 @@ site.sets = {
 [810]={id=810, lang={ "ENG" }, fruc={ true }, url="Modern%20Event%20Deck%202014"},--Modern Event Deck 2014
 [809]={id=809, lang={ "ENG" }, fruc={ true }, url="From%20the%20Vault:%20Annihilation"},--From the Vault: Annihilation
 [807]={id=807, lang={ "ENG",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Conspiracy"},--Conspiracy
-[805]={id=805, lang={ "ENG" }, fruc={ true }, url="Duel%20Decks:%20Jace%20vs.%20Vraska"},--Duel Decks: Jace vs. Vraska
-[804] = nil, -- "Challenge Deck: Battle the Horde" not available as singles 
-[803] = nil, -- "Challenge Deck: Face the Hydra" not available as singles
+[805]={id=805, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel%20Decks:%20Jace%20vs.%20Vraska"},--Duel Decks: Jace vs. Vraska
+--[[
+[0]={id=0, lang={ "ENG",[3]="GER" }, fruc={ true }, url={ -- Challenge Deck: Deicide
+"Journey%20into%20Nyx"
+} },
+]]
+[804]={id=804, lang={ "ENG",[3]="GER" }, fruc={ true }, url={ -- Challenge Deck: Battle the Horde
+"Born%20of%20the%20Gods"
+} },
+[803]={id=803, lang={ "ENG",[3]="GER" }, fruc={ true }, url={ -- Challenge Deck: Face the Hydra
+"Theros"
+} },
 [801]={id=801, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Commander%202013"},--Commander 2013
 [799]={id=799, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel%20Decks:%20Heroes%20vs.%20Monsters"},--Duel Decks: Heroes vs. Monsters
 [798]={id=798, lang={ "ENG" }, fruc={ true }, url="From%20the%20Vault:%20Twenty"},--From the Vault: Twenty
@@ -1277,26 +1448,35 @@ site.sets = {
 [70] ={id= 70, lang={ "ENG" }, fruc={ true }, url="Vanguard"},--Vanguard
 [69] ={id= 69, lang={ "ENG" }, fruc={ true }, url="Oversized%20Box%20Toppers"},--Oversized Box Toppers
 -- promosets
-[50] ={id= 50, lang={ "ENG",[3]="GER",[4]="FRA",[6]="POR",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Buy%20a%20Box%20Promos"},--Buy a Box Promos
+[50] ={id= 50, lang={ "ENG",[3]="GER",[4]="FRA",[6]="POR",[7]="SPA",[8]="JPN" }, fruc={ true }, url={ --Buy a Box Promos
+											"Buy%20a%20Box%20Promos",
+											"Promos", -- "Ruthless Cullblade (JPN)","Pestilence Demon (JPN)"
+											} },
 [45] ={id= 45, lang={ [8]="JPN" }, fruc={ true }, url="Magic%20Premiere%20Shop%20Promos"},--Magic Premiere Shop Promos
-[43] ={id= 43, lang=all, fruc={ true }, url="DCI%20Promos"}, -- Two-Headed Giant Promos: in DCI Promos
-[42] ={id= 42, lang=all, fruc={ true }, url="Gateway%20Promos"}, -- Summer of Magic Promos: in Gateway Promos
+[43] ={id= 43, lang={ "ENG" }, fruc={ true }, url="DCI%20Promos"}, -- Two-Headed Giant Promos: in DCI Promos
+[42] ={id= 42, lang={ "ENG" }, fruc={ true }, url="Gateway%20Promos"}, -- Summer of Magic Promos: in Gateway Promos
 [41] ={id= 41, lang={ "ENG" }, fruc={ true }, url="Happy%20Holidays%20Promos"},--Happy Holidays Promos
 [40] ={id= 40, lang={ "ENG",[3]="GER",[8]="JPN" }, fruc={ true }, url={ --Arena/Colosseo Leagues Promos
 											"Arena%20League%20Promos",--Arena League Promos
 											"Oversized%206x9%20Promos",--Oversized 6x9 Promos
+											"Promos", -- 6 Tokens
 											} },
-[33] ={id= 33, lang=all, fruc={ true }, url={ -- Championships Prizes
+[33] ={id= 33, lang={ "ENG" }, fruc={ true }, url={ -- Championships Prizes
 											"DCI%20Promos",--DCI Promos
 											"Promos", -- "Geist of Saint Traft"
 											} },
 [32] ={id= 32, lang={ "ENG",[8]="JPN" }, fruc={ true } , url="DCI%20Promos"}, -- Pro Tour Promos in DCI Promos
-[31] ={id= 31, lang=all, fruc={ true }, url={ -- Grand Prix Promos
+[31] ={id= 31, lang={ "ENG" }, fruc={ true }, url={ -- Grand Prix Promos
 											"DCI%20Promos",--DCI Promos
 											} },
 [30] ={id= 30, lang={ "ENG",[2]="RUS",[3]="GER",[5]="ITA",[7]="SPA" }, fruc={ true }, url="Friday%20Night%20Magic%20Promos"},--Friday Night Magic Promos
-[27] ={id= 27, lang=all, fruc={ true }, url={ "APAC%20Lands", "Guru%20Lands", "Euro%20Lands" } },--Alternate Art Lands: APAC Lands, Guru Lands, Euro Lands
-[26] ={id= 26, lang={ "ENG",[2]="RUS",[3]="GER" }, fruc={ true }, url={ -- "Magic Game Day"
+[27] ={id= 27, lang={ "ENG" }, fruc={ true }, url={ -- Alternate Art Lands
+											"APAC%20Lands",
+											"Euro%20Lands",
+											"Guru%20Lands",
+											"Promos", -- "Magic Guru" (not in set, but if anywhere, this would where it belonged
+											} },
+[26] ={id= 26, lang={ "ENG",[2]="RUS",[3]="GER",[7]="SPA" }, fruc={ true }, url={ -- "Magic Game Day"
 											"Game%20Day%20Promos", -- Game Day Promos
 											"Gateway%20Promos", -- "Naya Sojourners"
 											"Release%20Promos", -- "Reya Dawnbringer"
@@ -1304,7 +1484,10 @@ site.sets = {
 											"Born%20of%20the%20Gods", -- "The Vanquisher"
 											"Journey%20into%20Nyx", -- "The Champion"
 											} },
-[25] ={id= 25, lang={ "ENG",[17]="PHY" }, fruc={ true }, url="Judge%20Rewards%20Promos"},--Judge Rewards Promos
+[25] ={id= 25, lang={ "ENG",[3]="GER",[17]="PHY" }, fruc={ true }, url={ --Judge Gift Cards
+											"Judge%20Rewards%20Promos",
+											"Promos", -- Centaur Token
+											} },
 [24] ={id= 24, lang={ "ENG" }, fruc={ true }, url="Champs%20&%20States%20Promos"},--Champs & States Promos
 [23] ={id= 23, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Gateway%20Promos"},--Gateway Promos
 [22] ={id= 22, lang={ "ENG",[2]="RUS",[3]="GER",[7]="SPA",[12]="HEB",[13]="ARA",[14]="LAT",[15]="SAN",[16]="GRC" }, fruc={ true }, url={ --Prerelease Promos
@@ -1329,16 +1512,17 @@ site.sets = {
 											"San%20Diego%20Comic-Con%202014%20Promos",--San Diego Comic-Con 2014 Promos
 											"Oversized%206x9%20Promos", -- "Serra Angel (oversized)","Hurloon Minotaur (oversized)"
 											"DCI%20Promos", -- 6 cards
+											"Promos", -- "Stealer of Secrets" (Gamescon 2014, not yet in MA)
+											"Dengeki%20Maoh%20Promos", -- "Shepherd of the Lost" (Dengeki Character Festival)
 											} },
 [12] ={id= 12, lang={ [8]="JPN" }, fruc={ true }, url="Hobby%20Japan%20Commemorative%20Promos"},--Hobby Japan Commemorative Promos
-[11] ={id= 11, lang={ [8]="JPN" }, fruc={ true }, url={ -- Redemption Program Cards
-											} },
-[10] ={id= 10, lang={ "ENG",[8]="JPN" }, fruc={ true }, url={
+[11] = nil, -- Redemption Program Cards
+[10] ={id= 10, lang={ "ENG",[8]="JPN" }, fruc={ true }, url={ -- Junior Series Promos
 											"Junior%20Series%20Promos",--Junior Series Promos
 											"Junior%20Super%20Series%20Promos",--Junior Super Series Promos
 											"Japan%20Junior%20Tournament%20Promos",--Japan Junior Tournament Promos
 											"Magic%20Scholarship%20Series%20Promos",--Magic Scholarship Series Promos
-													} },
+											} },
 [9]=  {id=  9, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[7]="SPA" }, fruc={ true }, url={ -- Video Game Promos
 											"Duels%20of%20the%20Planeswalkers%20Promos",--Duels of the Planeswalkers Promos
 											"Oversized%206x9%20Promos", -- "Aswan Jaguar (oversized)"
@@ -1346,18 +1530,21 @@ site.sets = {
 [8]=  {id=  8, lang={ "ENG",[5]="ITA",[8]="JPN" }, fruc={ true }, url={ -- Stores Promos
 											"Walmart%20Promos", -- Walmart Promos
 											"DCI%20Promos", -- DCI Promos
-											} } ,
+											"Promos", -- 3 jp
+											} },
 [7]=  {id=  7, lang={ "ENG",[3]="GER",[8]="JPN" }, fruc={ true },	url={ -- "Magazine Inserts"
 											"The%20Duelist%20Promos",--The Duelist Promos
 											"CardZ%20Promos",--CardZ Promos
 											"TopDeck%20Promos",--TopDeck Promos
 											"Oversized%206x9%20Promos", -- 5 oversized
+											"Promos", -- 1 Kartefakt(de), 2 Gotta Magazine(jp)
 											} },
 [6]=  {id=  6, lang={ "ENG",[8]="JPN" }, fruc={ true }, url={ -- Comic Inserts
 											"Armada%20Comics",--Armada Comics
 											"Dengeki%20Maoh%20Promos",--Dengeki Maoh Promos
 											"IDW%20Promos",--IDW Promos
 											"Oversized%206x9%20Promos",--Oversized 6x9 Promos
+											"Promos", -- 4 jp
 											} },
 [5]=  {id=  5, lang={ "ENG",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, fruc={ true }, url={ -- Book Inserts
 											"Harper%20Prism%20Promos",--Harper Prism Promos
@@ -1481,6 +1668,9 @@ site.namereplace = {
 [802] = { -- Born of the Gods
 ["Unravel the Æther"]				= "Unravel the AEther",
 },
+[800] = { -- Theros
+["Karametra's Acolyte (Holiday Gift Box)"]	= "Karametra's Acolyte (Holiday Gift Box)",
+},
 [784] = { -- Dark Ascension
 ["Hinterland Hermit"] 				= "Hinterland Hermit|Hinterland Scourge",
 ["Mondronen Shaman"] 				= "Mondronen Shaman|Tovolar’s Magehunter",
@@ -1517,6 +1707,48 @@ site.namereplace = {
 ["Village Ironsmith"] 				= "Village Ironsmith|Ironfang",
 ["Grizzled Outcasts"] 				= "Grizzled Outcasts|Krallenhorde Wantons",
 ["Villagers of Estwald"] 			= "Villagers of Estwald|Howlpack of Estwald",
+},
+[762] = { --Zendikar
+["Plains (1)"]			= "Plains (230a)",
+["Plains (2)"]			= "Plains (230)",
+["Plains (3)"]			= "Plains (231a)",
+["Plains (4)"]			= "Plains (231)",
+["Plains (5)"]			= "Plains (232a)",
+["Plains (6)"]			= "Plains (232)",
+["Plains (7)"]			= "Plains (233a)",
+["Plains (8)"]			= "Plains (233)",
+["Island (1)"]			= "Island (234a)",
+["Island (2)"]			= "Island (234)",
+["Island (3)"]			= "Island (235a)",
+["Island (4)"]			= "Island (235)",
+["Island (5)"]			= "Island (236a)",
+["Island (6)"]			= "Island (236)",
+["Island (7)"]			= "Island (237a)",
+["Island (8)"]			= "Island (237)",
+["Swamp (1)"]			= "Swamp (238a)",
+["Swamp (2)"]			= "Swamp (238)",
+["Swamp (3)"]			= "Swamp (239a)",
+["Swamp (4)"]			= "Swamp (239)",
+["Swamp (5)"]			= "Swamp (240a)",
+["Swamp (6)"]			= "Swamp (240)",
+["Swamp (7)"]			= "Swamp (241a)",
+["Swamp (8)"]			= "Swamp (241)",
+["Mountain (1)"]		= "Mountain (242a)",
+["Mountain (2)"]		= "Mountain (242)",
+["Mountain (3)"]		= "Mountain (243a)",
+["Mountain (4)"]		= "Mountain (243)",
+["Mountain (5)"]		= "Mountain (244a)",
+["Mountain (6)"]		= "Mountain (244)",
+["Mountain (7)"]		= "Mountain (245a)",
+["Mountain (8)"]		= "Mountain (245)",
+["Forest (1)"]			= "Forest (246a)",
+["Forest (2)"]			= "Forest (246)",
+["Forest (3)"]			= "Forest (247a)",
+["Forest (4)"]			= "Forest (247)",
+["Forest (5)"]			= "Forest (248a)",
+["Forest (6)"]			= "Forest (248)",
+["Forest (7)"]			= "Forest (249a)",
+["Forest (8)"]			= "Forest (249)",
 },
 [620] = { -- Saviors of Kamigawa
 ["Sasaya, Orochi Ascendant"] 		= "Sasaya, Orochi Ascendant|Sasaya’s Essence",
@@ -1753,12 +1985,6 @@ site.namereplace = {
 [761] = { -- Planechase
 ["The Aether Flues"]				= "The Æther Flues",
 },
-[755] = { -- DD: Jace vs Chandra
-["Chandra Nalaar (1)"]			= "Chandra Nalaar",
-["Chandra Nalaar (2)"]			= "Chandra Nalaar (Manga)",
-["Jace Beleren (1)"]			= "Jace Beleren",
-["Jace Beleren (2)"]			= "Jace Beleren (Manga)",
-},
 [675] = { -- Coldsnap Theme Decks
 ["Plains (48)"]			= "Plains (369)",
 ["Plains (49)"]			= "Plains (370)",
@@ -1876,6 +2102,23 @@ site.namereplace = {
 ["Warrior's Charge (2)"]	= "Warrior's Charge",
 ["Warrior's Charge (1)"]	= "Warrior's Charge (ST)",
 },
+[225] = { -- Introductory Two-Player Set
+["Plains (42)"]			= "Plains (1)",
+["Plains (43)"]			= "Plains (2)",
+["Plains (44)"]			= "Plains (3)",
+["Island (26)"]			= "Island (1)",
+["Island (27)"]			= "Island (2)",
+["Island (28)"]			= "Island (3)",
+["Swamp (53)"]			= "Swamp (1)",
+["Swamp (54)"]			= "Swamp (2)",
+["Swamp (55)"]			= "Swamp (3)",
+["Mountain (34)"]		= "Mountain (1)",
+["Mountain (35)"]		= "Mountain (2)",
+["Mountain (36)"]		= "Mountain (3)",
+["Forest (18)"]			= "Forest (1)",
+["Forest (19)"]			= "Forest (2)",
+["Forest (20)"]			= "Forest (3)",
+},
 [69] = { -- Box Topper Cards
 ["Ambition's Cost"]				= "Ambition’s Cost",
 ["Avatar of Hope (1)"]			= "Avatar of Hope (8ED)",
@@ -1892,6 +2135,58 @@ site.namereplace = {
 ["Savannah Lions (2)"]			= "Savannah Lions (PRM)",
 ["Two-Headed Dragon (1)"]		= "Two-Headed Dragon (8ED)", 
 ["Two-Headed Dragon (2)"]		= "Two-Headed Dragon (PRM)", 
+},
+[45] = { -- Magic Premiere Shop Promos
+["Plains (7)"]		= "Plains (ALA)",
+["Plains (10)"]		= "Plains (ISD)",
+["Plains (6)"]		= "Plains (LRW)",
+["Plains (9)"]		= "Plains (SOM)",
+["Plains (5)"]		= "Plains (TSP)",
+["Plains (8)"]		= "Plains (ZEN)",
+["Plains (1)"]		= "Plains (Azorius)",
+["Plains (2)"]		= "Plains (Boros)",
+["Plains (3)"]		= "Plains (Orzhov)",
+["Plains (4)"]		= "Plains (Selesnya)",
+["Island (7)"]		= "Island (ALA)",
+["Island (10)"]		= "Island (ISD)",
+["Island (6)"]		= "Island (LRW)",
+["Island (9)"]		= "Island (SOM)",
+["Island (5)"]		= "Island (TSP)",
+["Island (8)"]		= "Island (ZEN)",
+["Island (1)"]		= "Island (Azorius)",
+["Island (2)"]		= "Island (Dimir)",
+["Island (3)"]		= "Island (Izzet)",
+["Island (4)"]		= "Island (Simic)",
+["Swamp (7)"]		= "Swamp (ALA)",
+["Swamp (10)"]		= "Swamp (ISD)",
+["Swamp (6)"]		= "Swamp (LRW)",
+["Swamp (9)"]		= "Swamp (SOM)",
+["Swamp (5)"]		= "Swamp (TSP)",
+["Swamp (8)"]		= "Swamp (ZEN)",
+["Swamp (3)"]		= "Swamp (Dimir)",
+["Swamp (2)"]		= "Swamp (Golgari)",
+["Swamp (4)"]		= "Swamp (Orzhov)",
+["Swamp (1)"]		= "Swamp (Rakdos)",
+["Mountain (7)"]	= "Mountain (ALA)",
+["Mountain (10)"]	= "Mountain (ISD)",
+["Mountain (6)"]	= "Mountain (LRW)",
+["Mountain (9)"]	= "Mountain (SOM)",
+["Mountain (5)"]	= "Mountain (TSP)",
+["Mountain (8)"]	= "Mountain (ZEN)",
+["Mountain (1)"]	= "Mountain (Boros)",
+["Mountain (2)"]	= "Mountain (Rakdos)",
+["Mountain (3)"]	= "Mountain (Gruul)",
+["Mountain (4)"]	= "Mountain (Izzet)",
+["Forest (7)"]		= "Forest (ALA)",
+["Forest (10)"]		= "Forest (ISD)",
+["Forest (6)"]		= "Forest (LRW)",
+["Forest (9)"]		= "Forest (SOM)",
+["Forest (5)"]		= "Forest (TSP)",
+["Forest (8)"]		= "Forest (ZEN)",
+["Forest (1)"]		= "Forest (Golgari)",
+["Forest (2)"]		= "Forest (Gruul)",
+["Forest (3)"]		= "Forest (Selesnya)",
+["Forest (4)"]		= "Forest (Simic)",
 },
 [40] = {
 ["Plains (1)"]		= "Plains (1996)",
@@ -1968,6 +2263,11 @@ site.namereplace = {
 ["Hydroblast (2) (oversized)"]				= "Hydroblast (4th) (oversized)",
 ["Pyroblast (1) (oversized)"]				= "Pyroblast (3rd) (oversized)",
 ["Pyroblast (2) (oversized)"]				= "Pyroblast (4th) (oversized)",
+["Knight Token (1 League)"]					= "Knight Token", -- RTR
+["Minotaur Token (Red 2/3)"]				= "Minotaur Token", -- JOU
+["Soldier Token (White 1/1 Enchantment)"]	= "Soldier Token (BNG)",
+["Soldier Token (White 1/1)"]				= "Soldier Token (THS)",
+["Soldier Token (1)"]						= "Soldier Token (GTC)",-- RW 1/1
 },
 [27] = { -- Alternate Art Lands
 ["Plains (1) (APAC)"]	= "Plains (APAC Red)",
@@ -2024,12 +2324,15 @@ site.namereplace = {
 ["Ravenous Demon"]				= "Ravenous Demon|Archdemon of Greed",
 ["Mayor of Avabruck"]			= "Mayor of Avabruck|Howlpack Alpha",
 ["Laquatus's Champion"]			= "Laquatus’s Champion",
+["Garruk the Slayer (oversized)"] = "Garruk the Slayer",
 },
 [21] = { -- Release Promos
-["Plots That Span Centuries"]	= "Plots that Span Centuries (Scheme)",
-["Mondronen Shaman"]			= "Mondronen Shaman|Tovolar’s Magehunter",
-["Ludevic's Test Subject"]		= "Ludevic’s Test Subject|Ludevic’s Abomination",
-["Budoka Pupil"]				= "Budoka Pupil|Ichiga, Who Topples Oaks",
+["Plots That Span Centuries"]		= "Plots that Span Centuries (Scheme)",
+["Mondronen Shaman"]				= "Mondronen Shaman|Tovolar’s Magehunter",
+["Ludevic's Test Subject"]			= "Ludevic’s Test Subject|Ludevic’s Abomination",
+["Budoka Pupil"]					= "Budoka Pupil|Ichiga, Who Topples Oaks",
+["Marit Lage Token (Black 20/20)"]	= "Marit Lage Token",
+["Incoming! (oversized)"]			= "Incoming!",
 },
 [20] = {  --Magic Player Rewards 
 ["Bear Token (39)"] 		= "Bear Token (ONS)",
@@ -2067,6 +2370,9 @@ site.namereplace = {
 ["Two-Headed Dragon (J)"]		= "Two-Headed Dragon",
 ["Elvish Lyrist (J)"]			= "Elvish Lyrist",
 ["Lord of Atlantis (J)"]		= "Lord of Atlantis",
+["Giant Growth (jjtp)"]			= "Giant Growth",
+["Two-Headed Dragon (jjtp)"]	= "Two-Headed Dragon",
+["Volcanic Hammer (jjtp)"]		= "Volcanic Hammer",
 },
 [7] = {
 ["Jester's Cap"]				= "Jester’s Cap",
@@ -2103,6 +2409,21 @@ site.settweak = {
 ["Bow of the Hunter"]			= "Prerelease Promos",
 ["The Destined"]				= "Release Promos",
 ["The Champion"]				= "Magic Game Day",
+["Impulsive Charge"]		= "Challenge Deck: Deicide",
+["Wild Maenads"]			= "Challenge Deck: Deicide",
+["Maddened Oread"]			= "Challenge Deck: Deicide",
+["Xenagos Ascended"]		= "Challenge Deck: Deicide",
+["Serpent Dancers"]			= "Challenge Deck: Deicide",
+["Xenagos's Scorn"]			= "Challenge Deck: Deicide",
+["Pheres-Band Revelers"]	= "Challenge Deck: Deicide",
+["Estatic Piper"]			= "Challenge Deck: Deicide",
+["Rollicking Throng"]		= "Challenge Deck: Deicide",
+["Impulsive Return"]		= "Challenge Deck: Deicide",
+["Impulsive Destruction"]	= "Challenge Deck: Deicide",
+["Xenagos's Strike"]		= "Challenge Deck: Deicide",
+["Rip to Pieces"]			= "Challenge Deck: Deicide",
+["Dance of Flame"]			= "Challenge Deck: Deicide",
+["Dance of Panic"]			= "Challenge Deck: Deicide",
 },
 [802] = { -- BNG
 ["The General"]					= "Prerelease Promos",
@@ -2112,6 +2433,21 @@ site.settweak = {
 ["The Provider"]				= "Prerelease Promos",
 ["The Explorer"]				= "Release Promos",
 ["The Vanquisher"]				= "Magic Game Day",
+["Altar of Mogis"]			= "Challenge Deck: Battle the Horde",
+["Consuming Rage"]			= "Challenge Deck: Battle the Horde",
+["Descend on the Prey"]		= "Challenge Deck: Battle the Horde",
+["Intervention of Keranos"]	= "Challenge Deck: Battle the Horde",
+["Massacre Totem"]			= "Challenge Deck: Battle the Horde",
+["Minotaur Goreseeker"]		= "Challenge Deck: Battle the Horde",
+["Minotaur Younghorn"]		= "Challenge Deck: Battle the Horde",
+["Mogis's Chosen"]			= "Challenge Deck: Battle the Horde",
+["Phoberos Reaver"]			= "Challenge Deck: Battle the Horde",
+["Plundered Statue"]		= "Challenge Deck: Battle the Horde",
+["Reckless Minotaur"]		= "Challenge Deck: Battle the Horde",
+["Refreshing Elixir"]		= "Challenge Deck: Battle the Horde",
+["Touch of the Horned God"]	= "Challenge Deck: Battle the Horde",
+["Unquenchable Fury"]		= "Challenge Deck: Battle the Horde",
+["Vitality Salve"]			= "Challenge Deck: Battle the Horde",
 },
 [800] = { -- THS
 ["The Protector"]				= "Prerelease Promos",
@@ -2121,18 +2457,29 @@ site.settweak = {
 ["The Hunter"]					= "Prerelease Promos",
 ["The Harvester"]				= "Release Promos",
 ["The Slayer"]					= "Magic Game Day",
-},
-[755] = { -- DD:Jace vs Chandra
---TODO right set, but JPN ?
-["Chandra Nalaar (Manga)"]		= "unknown",
-["Jace Beleren (Manga)"]		= "unknown",
+["Disorienting Glower"]			= "Challenge Deck: Face the Hydra",
+["Distract the Hydra"]			= "Challenge Deck: Face the Hydra",
+["Grown from the Stump"]		= "Challenge Deck: Face the Hydra",
+["Hydra Head"]					= "Challenge Deck: Face the Hydra",
+["Hydra's Impenetrable Hide"]	= "Challenge Deck: Face the Hydra",
+["Neck Tangle"]					= "Challenge Deck: Face the Hydra",
+["Noxious Hydra Breath"]		= "Challenge Deck: Face the Hydra",
+["Ravenous Brute Head"]			= "Challenge Deck: Face the Hydra",
+["Savage Vigor Head"]			= "Challenge Deck: Face the Hydra",
+["Shrieking Titan Head"]		= "Challenge Deck: Face the Hydra",
+["Snapping Fang Head"]			= "Challenge Deck: Face the Hydra",
+["Strike the Weak Spot"]		= "Challenge Deck: Face the Hydra",
+["Swallow the Hero Whole"]		= "Challenge Deck: Face the Hydra",
+["Torn Between Heads"]			= "Challenge Deck: Face the Hydra",
+["Unified Lunge"]				= "Challenge Deck: Face the Hydra",
 },
 [340] = { --Anthologies
---TODO unglued tokens already in unglued url?
-["Goblin"]						= "(Token) Unglued ?",
-["Pegasus"]						= "(Token) Unglued ?",
+--TODO unglued tokens already in unglued url. MKM bug?
+["Goblin"]						= "Unglued (Token)",
+["Pegasus"]						= "Unglued (Token)",
 },
-[40] = { -- Arena (here for Oversized%206x9%20Promos)
+[40] = { -- Arena/Colosseo Leagues Promos
+ --Oversized%206x9%20Promos
 ["Serra Angel (1) (oversized)"]		= "Convention Promos",
 ["Hurloon Minotaur (oversized)"]	= "Convention Promos",
 ["Aswan Jaguar (oversized)"]		= "Video Game Promos",
@@ -2145,33 +2492,55 @@ site.settweak = {
 ["Garruk the Slayer (oversized)"]	= "Prerelease Promos",
 ["Thorn Elemental (oversized)"]		= "Starter 1999",
 ["Incoming! (oversized)"]			= "Release Promo",
-},
-[33] = { -- Championship Prizes (here for "Promos")
---TODO sort us :)
---["Geist of Saint Traft"]		= "Championship Prizes",
+-- Promos
+["Geist of Saint Traft"]	= "Championship Prizes",
+["Dreg Mangler"]			= "RTR (Holiday Gift Box)",
+["Karametra's Acolyte"]		= "THS (Holiday Gift Box",
+["Angel(W 4/4)"]			= "Custom Tokens",
+--["Bird"]					= "League (DGM)",
+--["Goblin"]					= "League (M13)",
+--["Knight(1 League)"]		= "League (RTR)",
+--["Soldier(RW 1/1)"]			= "League? (GTC)",
+--["Sliver"]					= "League (M14)",
+--["Soldier(W 1/1)"]			= "League? (THS)",
+["Centaur"]					= "Judge (RTR)",
+["Stealer of Secrets"]		= "Convention Promos (Gamescon 2014)",
+["Ruthless Cullblade"]		= "Full Box Promotion (jp)",
+["Pestilence Demon"]		= "Full Box Promotion (jp)",
+["Goblin Chieftain"]		= "Stores Promos (jp)",
+["Loam Lion"]				= "Stores Promos (jp)",
+["Oran-Rief, the Vastwood"]	= "Stores Promos (jp)",
+["Jamuraan Lion"]			= "Magazine Inserts (de)",
+["Archangel"]				= "Magazine Inserts (jp)",
+["Darksteel Juggernaut"]	= "Comic Inserts (jp)",
+["Kuldotha Phoenix"]		= "Comic Inserts (jp)",
+["Phantasmal Dragon"]		= "Comic Inserts (jp)",
+["Shivan Dragon"]			= "Comic Inserts (jp)",
+["Magic Guru"]				= "Guru Lands",
+["Thorn Elemental"]			= "Magazine Inserts (jp)",
 },
 [31] = { -- Grand Prix Promos (here for DCI%20Promos)
 ["Ajani Goldmane"]			= "Pro Tour Promo",
 ["Avatar of Woe"]			= "Pro Tour Promo",
+["Eternal Dragon"]			= "Pro Tour Promo",
+["Mirari's Wake"]			= "Pro Tour Promo",
+["Treva, the Renewer"]		= "Pro Tour Promo",
 ["Balduvian Horde"]			= "Championship Prizes",
+["Vengevine"]				= "Championship Prizes",
 ["Bloodthrone Vampire"]		= "Convention Promos",
 ["Chandra's Fury"]			= "Covention Promos",
 ["Char"]					= "Covention Promos",
-["Counterspell"]			= "DCI Legend Membership",
-["Eternal Dragon"]			= "Pro Tour Promo",
+["Kor Skyfisher"]			= "Convention Promos",
+["Merfolk Mesmerist"]		= "Convention Promos",
+["Steward of Valeron"]		= "Convention Promos",
 ["Griselbrand"]				= "Prerelease Promos",
+["Counterspell"]			= "DCI Legend Membership",
 ["Incinerate"]				= "DCI Legend Membership",
 ["Jace Beleren"]			= "Book Inserts",
 ["Kamahl, Pit Fighter"]		= "Tenth Edition",--"ST"
-["Kor Skyfisher"]			= "Convention Promos",
-["Merfolk Mesmerist"]		= "Convention Promos",
-["Mirari's Wake"]			= "Pro Tour Promo",
 ["Relentless Rats"]			= "Stores Promos",--ITA
 ["Serra Angel"]				= "Stores Promos",
-["Steward of Valeron"]		= "Convention Promos",
-["Treva, the Renewer"]		= "Pro Tour Promo",
 ["Underworld Dreams"]		= "Two-Headed Giant Promo",
-["Vengevine"]				= "Championship Prizes",
 },
 [23] = { -- Gateway
 ["Naya Sojourners"]				= "Magic Game Day",
@@ -2183,6 +2552,9 @@ site.settweak = {
 },
 [21] = {
 ["Reya Dawnbringer"]			= "Magic Game Day"
+},
+[6] = { -- Comic Inserts (here for Dengeki%20Maoh%20Promos)
+["Shepherd of the Lost"]		= "Convention Promos",
 },
 } -- end table site.settweak
 
@@ -2303,19 +2675,18 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [630] = { pset={ dup=LHpi.Data.sets[630].cardcount.reg-7 }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[9]="SZH" }, failed={ dup=7 }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[9]="SZH" } },--7 cards exist only in ENG
 [550] = { pset={ dup=LHpi.Data.sets[550].cardcount.reg-2,[9]=LHpi.Data.sets[550].cardcount.reg-7 }, duppset={ [3]="GER",[4]="FRA",[6]="POR",[7]="SPA" }, failed={ dup=2, [9]=7 }, dupfail={ [3]="GER",[4]="FRA",[6]="POR",[7]="SPA" } },--2 cards do not exist in GER,FRA,POR,SPA; 7 in SZH
 [180] = { pset={ dup=LHpi.Data.sets[180].cardcount.reg,[6]=375 }, duppset={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[8]="JPN" }, failed={ [6]=3 } },
-[179] = { pset={ [6]=LHpi.Data.sets[179].cardcount.reg-3, [8]=LHpi.Data.sets[179].cardcount.reg}, failed={ [6]=3 } },--3 cards do not exist in POR
-[139] = { namereplaced=30 },
+[179] = { pset={ [6]=LHpi.Data.sets[179].cardcount.reg-3, [8]=LHpi.Data.sets[179].cardcount.reg}, failed={ [6]=3 } },--3 cards not in POR
 -- Expansions
-[813] = { pset={ dup=LHpi.Data.sets[813].cardcount.reg-5 }, failed={ dup=LHpi.Data.sets[813].cardcount.tok+5 }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, namereplaced=24, dropped=2 },--5 "Intro" variants only in ENG
-[806] = { pset={ dup=LHpi.Data.sets[806].cardcount.reg }, failed={ dup=LHpi.Data.sets[806].cardcount.tok }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=14 },
-[802] = { pset={ dup=LHpi.Data.sets[802].cardcount.reg }, failed={ dup=LHpi.Data.sets[802].cardcount.tok }, duppset={ [2]="RUS",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=14, namereplaced=2 },
-[800] = { pset={ dup=LHpi.Data.sets[800].cardcount.reg }, failed={ dup=LHpi.Data.sets[800].cardcount.tok }, duppset={ [2]="RUS",[7]="SPA" }, dupfail={ [2]="RUS",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=14 },
+[813] = { pset={ dup=LHpi.Data.sets[813].cardcount.reg-5 }, failed={ dup=LHpi.Data.sets[813].cardcount.tok+5 }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=2 },--5 "Intro" variants only in ENG
+[806] = { pset={ dup=LHpi.Data.sets[806].cardcount.reg }, failed={ dup=LHpi.Data.sets[806].cardcount.tok }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=44 },
+[802] = { pset={ dup=LHpi.Data.sets[802].cardcount.reg }, failed={ dup=LHpi.Data.sets[802].cardcount.tok }, duppset={ [2]="RUS",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=14 },
+[800] = { pset={ dup=LHpi.Data.sets[800].cardcount.reg-1,[3]=LHpi.Data.sets[800].cardcount.both-1,[4]=LHpi.Data.sets[800].cardcount.both-1,[5]=LHpi.Data.sets[800].cardcount.both-1,[6]=LHpi.Data.sets[800].cardcount.both-1 }, failed={ dup=LHpi.Data.sets[800].cardcount.tok+1,[3]=1,[4]=1,[5]=1,[6]=1 }, duppset={ [2]="RUS",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=62 },
 [795] = { pset={ dup=LHpi.Data.sets[795].cardcount.reg }, failed={ dup=LHpi.Data.sets[795].cardcount.tok }, duppset={ [2]="RUS",[3]="GER",[7]="SPA" }, dupfail={ [2]="RUS",[3]="GER",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
 [793] = { pset={ dup=LHpi.Data.sets[793].cardcount.reg }, failed={ dup=LHpi.Data.sets[793].cardcount.tok }, duppset={ [2]="RUS",[7]="SPA" }, dupfail={ [2]="RUS",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
-[791] = { pset={ dup=LHpi.Data.sets[791].cardcount.reg }, failed={ dup=LHpi.Data.sets[791].cardcount.tok }, duppset={ [2]="RUS",[7]="SPA" }, dupfail={ [2]="RUS",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
+[791] = { pset={ dup=LHpi.Data.sets[791].cardcount.reg-1,[3]=LHpi.Data.sets[791].cardcount.both-1,[4]=LHpi.Data.sets[791].cardcount.both-1,[5]=LHpi.Data.sets[791].cardcount.both-1,[6]=LHpi.Data.sets[791].cardcount.both-1 }, failed={ dup=LHpi.Data.sets[791].cardcount.tok+1,[3]=1,[4]=1,[5]=1,[6]=1 }, duppset={ [2]="RUS",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=48 },
 [786] = { pset={ [7]=LHpi.Data.sets[786].cardcount.reg }, failed= { dup=LHpi.Data.sets[786].cardcount.tok }, dupfail= { [7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
-[784] = { failed={ dup=1,[8]=LHpi.Data.sets[784].cardcount.tok+1,[9]=LHpi.Data.sets[784].cardcount.tok+1,[10]=LHpi.Data.sets[784].cardcount.tok+1,[11]=LHpi.Data.sets[784].cardcount.tok+1 }, dupfail={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, namereplaced=26 },--Double-Faced Card Proxy
-[782] = { failed={ dup=1,[8]=LHpi.Data.sets[782].cardcount.tok+1,[9]=LHpi.Data.sets[782].cardcount.tok+1,[10]=LHpi.Data.sets[782].cardcount.tok+1 }, dupfail={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, namereplaced=40 },--Double-Faced Card Proxy
+[784] = { failed={ dup=1,[8]=LHpi.Data.sets[784].cardcount.tok+1,[9]=LHpi.Data.sets[784].cardcount.tok+1,[10]=LHpi.Data.sets[784].cardcount.tok+1,[11]=LHpi.Data.sets[784].cardcount.tok+1 }, dupfail={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" } },--Double-Faced Card Proxy
+[782] = { failed={ dup=1,[8]=LHpi.Data.sets[782].cardcount.tok+1,[9]=LHpi.Data.sets[782].cardcount.tok+1,[10]=LHpi.Data.sets[782].cardcount.tok+1 }, dupfail={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" } },--Double-Faced Card Proxy
 [776] = { pset={ dup=LHpi.Data.sets[776].cardcount.reg }, failed={ dup=1, [8]=5,[9]=5,[10]=5 }, duppset={ [8]="JPN",[9]="SZH",[10]="ZHT" }, dupfail={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA", } },
 [775] = { pset={ dup=LHpi.Data.sets[775].cardcount.reg }, failed={ dup=1, [8]=6,[9]=6,[10]=6 }, duppset={ [8]="JPN",[9]="SZH",[10]="ZHT" }, dupfail={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA", } },
 [773] = { failed={ dup=1,[8]=LHpi.Data.sets[773].cardcount.tok+1,[9]=LHpi.Data.sets[773].cardcount.tok+1,[10]=LHpi.Data.sets[773].cardcount.tok+1 }, dupfail={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA", } },--Poison Counter
@@ -2332,75 +2703,55 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [730] = { failed={ dup=LHpi.Data.sets[730].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" } },
 [690] = { dropped=602 },--  301 cards non-Timeshifted
 [680] = { dropped=242 }, -- 121 cards Timeshifted
-[620] = { namereplaced=10 },
-[610] = { namereplaced=10 },
-[590] = { namereplaced=24 },
-[450] = { namereplaced=12 },
-[240] = { namereplaced=4 },
 [210] = { pset={ [6]=LHpi.Data.sets[210].cardcount.reg-1 }, failed= { [6]=1 } },-- no POR Timmerian Fiends
 [190] = { pset={ [6]=LHpi.Data.sets[190].cardcount.reg-1 }, failed= { [6]=1 } },-- no POR Amulet of Quoz
 -- special sets
-[814] = { pset={ dup=LHpi.Data.sets[814].cardcount.reg+LHpi.Data.sets[814].cardcount.repl }, duppset={ [3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN",[9]="SZH" }, failed={ dup=LHpi.Data.sets[814].cardcount.tok }, dupfail={ [3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN",[9]="SZH" }, namereplaced=26 },
+[814] = { pset={ dup=LHpi.Data.sets[814].cardcount.reg+LHpi.Data.sets[814].cardcount.repl }, duppset={ [3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN",[9]="SZH" }, failed={ dup=LHpi.Data.sets[814].cardcount.tok }, dupfail={ [3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN",[9]="SZH" } },
 [812] = { pset={ [8]=LHpi.Data.sets[812].cardcount.both } },
-[810] = { namereplaced=4 },
 [807] = { pset={ dup=LHpi.Data.sets[807].cardcount.reg+LHpi.Data.sets[807].cardcount.nontrad }, failed={ dup=LHpi.Data.sets[807].cardcount.tok }, duppset={ [8]="JPN",[9]="SZH" }, dupfail={ [8]="JPN",[9]="SZH" } },
-[801] = { namereplaced=102 },
+[805] = { failed={ [8]=LHpi.Data.sets[805].cardcount.tok } },
+[804] = { dropped=366 },
+[803] = { dropped=534 },
 [799] = { failed={ [8]=LHpi.Data.sets[799].cardcount.tok } },
 [794] = { failed={ [8]=LHpi.Data.sets[794].cardcount.tok } },
-[792] = { namereplaced=20 },
 [790] = { failed={ [8]=LHpi.Data.sets[790].cardcount.tok } },
-[787] = { namereplaced=2 },
-[785] = { failed={ [8]=LHpi.Data.sets[785].cardcount.tok },namereplaced=20 },
+[785] = { failed={ [8]=LHpi.Data.sets[785].cardcount.tok } },
 [781] = { pset={ dup=LHpi.Data.sets[781].cardcount.reg }, failed={ dup=LHpi.Data.sets[781].cardcount.tok }, duppset={ [3]="GER",[5]="ITA" }, dupfail={ [3]="GER",[5]="ITA" } },
-[778] = { namereplaced=102 },
 [777] = { pset={ [5]=LHpi.Data.sets[777].cardcount.reg }, failed={ [5]=LHpi.Data.sets[777].cardcount.tok } },
 [772] = { pset={ [5]=LHpi.Data.sets[772].cardcount.reg }, failed={ [5]=LHpi.Data.sets[772].cardcount.tok } },
-[769] = { namereplaced=32 },
-[768] = { namereplaced=32 },
-[766] = { namereplaced=2 },
-[761] = { namereplaced=2 },
-[755] = { pset={ [8]=LHpi.Data.sets[755].cardcount.both }, dropped=4, namereplaced=8 },
-[675] = { namereplaced=30 },
-[636] = { namereplaced=36 },
-[600] = { namereplaced=2 },
-[490] = { namereplaced=50 },
+[755] = { pset={ [8]=LHpi.Data.sets[755].cardcount.both } },
 [415] = { pset={ [7]=1 }, failed={ [7]=LHpi.Data.sets[415].cardcount.reg-1  } },
 [390] = { dropped=188 },
-[380] = { namereplaced=4 },
-[340] = { dropped=4, namereplaced=16 },
-[320] = { namereplaced=4 },
+[340] = { dropped=4 },
 [310] = { pset={ [5]=LHpi.Data.sets[310].cardcount.reg+1,[6]=49 }, failed={ [5]=1,[6]=LHpi.Data.sets[310].cardcount.reg-49 } },-- TODO why does ma.SetPrice(setid="310",langid="5",cardname="Ogre Berserker",cardversion="",regprice="0.14",foilprice="0",objtype="1") return 2 ?!
-[260] = { pset={ dup=LHpi.Data.sets[260].cardcount.reg-6 }, failed={ dup=6 }, duppset={ [3]="GER",[8]="JPN" }, dupfail={ [3]="GER",[8]="JPN" }, namereplaced=52 },
+[260] = { pset={ dup=LHpi.Data.sets[260].cardcount.reg-6 }, failed={ dup=6 }, duppset={ [3]="GER",[8]="JPN" }, dupfail={ [3]="GER",[8]="JPN" } },
 [201] = { pset={ [5]=69 } },
-[69]  = { namereplaced=30 },
 -- Promos
+[50]  = { pset={ [3]=19,[4]=1,[6]=1,[7]=5;[8]=4 }, failed={ [3]=3,[4]=21,[6]=21,[7]=17;[8]=20 }, dropped=46 },
+[45]  = { pset={ [8]=LHpi.Data.sets[45].cardcount.reg-1 } },-- "Jaya Ballard, Task Mage" missing
 [43]  = { dropped= 60 },
 [42]  = { dropped= 130 },
-[40]  = { pset={ LHpi.Data.sets[40].cardcount.reg+LHpi.Data.sets[40].cardcount.repl }, failed={ 3 }, namereplaced=148, dropped=24 },--Mad Auntie only JAP, missing Minotaur Token, Soldier Token
-[33]  = { pset={ 3 }, dropped=82 },-- all but 3 cards are one-of-a-kind
+[40]  = { pset={ LHpi.Data.sets[40].cardcount.all,[3]=LHpi.Data.sets[40].cardcount.tok,[8]=6 }, failed={ 4,[3]=170,[8]=169 }, dropped=62 },--Mad Auntie only JAP, missing Minotaur Token, 3 of 3 Soldier Tokens
+[33]  = { pset={ 3 }, dropped=106 },-- all but 3 cards are one-of-a-kind
 [32]  = { pset={ LHpi.Data.sets[32].cardcount.reg,[8]=1 }, failed={ [8]=LHpi.Data.sets[32].cardcount.reg-1 }, dropped=52 },
 [31]  = { dropped=42 },
-[30]  = { failed={ 3 } },--3 not yet in MA
-[27]  = { namereplaced=60 },
-[26]  = { dropped=1480 },
-[25]  = { pset={ LHpi.Data.sets[25].cardcount.reg,[17]=1 }, failed={ 5,[17]=LHpi.Data.sets[25].cardcount.all-1 },namereplaced=4 },-- 5 FullArt foil Basic lands not in MA
-[23]  = { namereplaced=12, dropped=6 },
-[24]  = { namereplaced=2 },
-[22]  = { pset={ [12]=1,[13]=1,[14]=1,[15]=1,[16]=1 }, failed={ 1 }, namereplaced=14, dropped=1478 },-- Laquatus's Champion only RUS,
-[21]  = { failed={ 1 }, namereplaced=8, dropped=1712 },-- Shivan Dragon only RUS
-[20]  = { namereplaced=20 },
-[15]  = { failed={ 6 }, namereplaced=14, dropped=236 },--6 SanDiego'14(not in MA);5SanDiego'13,2 oversized Caravan Tours
-[10]  = { pset= { 10+13+5,[8]=11 }, failed={ 11,[8]=10+13+5 }, namereplaced=28 },-- 10 JSS, 13 JSSP,11 JJTP, 5 MSSP; missing 5 APACJS (MA has ENG 32, JPN 11)
-[9]   = { pset={ [2]=3,[3]=12,[4]=3,[7]=3 }, dropped=188 },-- not all nonENG in MA
-[8]	  = { pset={ [5]=0,[8]=0 }, failed={ 2,[5]=11,[8]=11 }, dropped=58 },
-[7]   = { pset={ [3]=1-1,[8]=4-4 }, failed={ 4 },namereplaced=2, dropped=180 },-- fail 4 Lifecounter cards; MA has JPN 4 Gotta Magazine, GER 1 Kartefakt
-[6]   = { pset={ [8]=7-3 }, namereplaced=6, dropped=188 },
-[5]   = { namereplaced=4, dropped=60 },
+[30]  = { pset={ [2]=9,[3]=35,[5]=1,[7]=6 }, failed={ 3,[2]=167,[3]=141,[5]=175,[7]=170 } },--3 not yet in MA
+[27]  = { failed={ dup=1 }, dupfail= { "ENG" }, dropped=48 },-- "Magic Guru" not in MA
+[26]  = { pset={ [2]=2,[3]=24,[7]=4 }, failed={ [2]=48,[3]=26,[7]=46 }, dropped=1540 },
+[25]  = { pset={ LHpi.Data.sets[25].cardcount.reg,[3]=0,[17]=1 }, failed={ 5,[3]=92 }, dropped=50 },-- 5 FullArt foil Basic lands not in MA
+[23]  = { pset={ [3]=39-2,[4]=12,[5]=11,[7]=11,[8]=4 }, failed={ [3]=27,[4]=52,[5]=53,[7]=53,[8]=60 }, dropped=6 },-- "Fling (50 DCI)","Sylvan Ranger (51 DCI)" are version "1" in ENG, but "" in GER
+[22]  = { pset={ [2]=6,[3]=50,[7]=14,[12]=1,[13]=1,[14]=1,[15]=1,[16]=1 }, failed={ 1,[2]=140,[3]=96,[7]=132 }, dropped=1538 },-- Laquatus's Champion only RUS
+[21]  = { pset={ [2]=3,[3]=29,[4]=1,[5]=1,[7]=7,[8]=1 }, failed={ 1,[2]=51,[3]=25,[4]=53,[5]=53,[7]=47,[8]=53 }, dropped=1772 },-- Shivan Dragon only RUS
+[15]  = { pset={ [3]=1,[4]=2,[5]=3,[7]=2,[8]=2 }, failed={ 7,[3]=19,[4]=18,[5]=17,[7]=18,[8]=19 }, dropped=290 },--6 SanDiego'14(not in MA);5SanDiego'13,2 oversized Caravan Tours
+[10]  = { pset= { 10+13+5,[8]=11 }, failed={ 11,[8]=21 } },-- 10 JSS, 13 JSSP,11 JJTP, 5 MSSP; missing 5 APACJS (MA has ENG 32, JPN 11)
+[9]   = { pset={ [2]=3,[3]=12,[4]=3,[7]=3 }, failed={ [2]=12,[3]=3,[4]=12,[7]=12 }, dropped=188 },-- not all nonENG in MA
+[8]	  = { pset={ [5]=1,[8]=3 }, failed={ 2,[5]=0,[8]=0 }, dropped=102 },
+[7]   = { pset={ [3]=1,[8]=4-2 }, failed={ 4 }, dropped=224 },-- fail 4 Lifecounter cards; MA has JPN 4 Gotta Magazine, GER 1 Kartefakt
+[6]   = { pset={ [8]=7 }, dropped=232 },
+[5]   = { pset={ [4]=5,[5]=3,[6]=2,[7]=5 }, failed={ [4]=1,[5]=3,[6]=4,[7]=1 }, dropped=60 },
 [2]   = { dropped=2*29 },
 
---TODO check why averaging foilcard in duel decks. possibly no averaging should be necessarry, so error on any conflict.
--- override all foiltweak tables, no more averaging
--- averaging in core,expansion: 813(ktk)	762(ZEN)	450(Planeshift)	240(visions)
+--TODO remap regular/foilprice to any priceGuide entry and make configurable
 
 	}--end table site.expected
 	-- I'm too lazy to fill in site.expected myself, let the script do it ;-)
@@ -2411,18 +2762,25 @@ function site.SetExpected( importfoil , importlangs , importsets )
 					if importlangs[lid] then
 						site.expected[sid].pset[lid] = site.expected[sid].pset.dup or 0
 					end
-				end
+				end--for lid
 			site.expected[sid].duppset=nil
 			site.expected[sid].pset.dup=nil
-			end
+			end-- if site.expected[sid].pset
 			if site.expected[sid].failed and site.expected[sid].dupfail and site.expected[sid].failed.dup then			
 				for lid,lang in pairs(site.expected[sid].dupfail) do
 					if importlangs[lid] then
 						site.expected[sid].failed[lid] = site.expected[sid].failed.dup or 0
 					end
-				end
+				end--for lid
 			site.expected[sid].dupfail=nil
 			site.expected[sid].failed.dup=nil
+			end-- if site.expected[sid].failed
+		end--if site.expected[sid]
+		if site.namereplace[sid] then
+			if site.expected[sid] then
+				site.expected[sid].namereplaced=2*LHpi.Length(site.namereplace[sid])
+			else
+				site.expected[sid]= { namereplaced=2*LHpi.Length(site.namereplace[sid]) }
 			end
 		end
 	end--for sid,name

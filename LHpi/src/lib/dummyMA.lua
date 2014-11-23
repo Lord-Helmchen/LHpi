@@ -711,12 +711,12 @@ function main()
 		CHECKEXPECTED = true,
 		STRICTEXPECTED = true,
 		OFFLINE = true,
---		OFFLINE = false,
+		OFFLINE = false,
 		SAVELOG = true,
 		SAVEHTML = true,
 --		SAVEHTML = false,
 		DEBUG = true,
-		DEBUGFOUND = true,
+--		DEBUGFOUND = true,
 --		DEBUGVARIANTS = true,
 --		SAVETABLE=true,
 	}
@@ -749,7 +749,7 @@ function main()
 --	local importlangs = { [5] = "FOO" }
 --	local importlangs = dummy.alllangs
 --	local importsets = { [0] = "fakeset"; }
-	local importsets = { [40]="some set" }
+	local importsets = { [800]="some set" }
 --	local importsets = { [220]="foo";[800]="bar";[0]="baz";}
 --	local importsets = dummy.coresets
 --	local importsets = dummy.expansionsets

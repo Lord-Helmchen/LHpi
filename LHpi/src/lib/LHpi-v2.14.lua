@@ -980,7 +980,7 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 	card.name = string.gsub( card.name , " *(%(%d+%))" , " %1" )
 	card.name = string.gsub( card.name , " Nr%. -(%d+)" , " (%1)" )
 	card.name = string.gsub( card.name , " # ?(%d+)" , " (%1)" )
-	card.name = string.gsub( card.name , "[%[%(][vV]ersion (%d)[%]%)]" , "(%1)" )
+	card.name = string.gsub( card.name , "[%[%(][vV]ersion (%d+)[%]%)]" , "(%1)" )
 	--card.name = string.gsub( card.name , "%([vV]ersion (%d)%)" , "(%1)" )
 	card.name = string.gsub( card.name , "%((%d+)/%d+%)" , "(%1)" )
 	card.name = string.gsub( card.name , "%(0+(%d+)%)" , "(%1)")
@@ -1085,7 +1085,7 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 	--elseif string.find (card.name, "[tT][oO][kK][eE][nN]" ) then
 	--	card.objtype = 2
 	elseif string.find(card.name, "%([Nn][Oo][Nn][Tt][Rr][Aa][Dd]%.?[Ii]?[Tt]?[Ii]?[Oo]?[Nn]?[Aa]?[Ll]?%)") then
-		card.name = string.gsub(card.name,"%([Nn][Oo][Nn][Tt][Rr][Aa][Dd]%.?[Ii]?[Tt]?[Ii]?[Oo]?[Nn]?[Aa]?[Ll]?%)","(Nontrad)")
+		card.name = string.gsub(card.name,"%([Nn][Oo][Nn][Tt][Rr][Aa][Dd]%.?[Ii]?[Tt]?[Ii]?[Oo]?[Nn]?[Aa]?[Ll]?%)","")
 		objtype = 3
 	elseif string.find(card.name, "%([Ii][Nn][Ss]%.?[Ee]?[Rr]?[Tt]?%)") then
 		card.name = string.gsub(card.name,"%([Ii][Nn][Ss]%.?[Ee]?[Rr]?[Tt]?%)","")
@@ -1167,7 +1167,7 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 		card.name = string.gsub( card.name , "%(Go?ld%)" , "" )
 		card.name = string.gsub( card.name , "%(Multicolor%)" , "" )
 		card.name = string.gsub( card.name , "%([Sp][Pp][Tt]%)" , "" )
-		card.name = string.gsub( card.name , "%(%d+%)" , "" )
+		card.name = string.gsub( card.name , "%(%d+/?%d*%)" , "" )
 --		card.name = string.gsub( card.name , "  +" , " " )
 		card.name = string.gsub( card.name , "%s+" , " " )
 		card.name = string.gsub( card.name , "%(%)%s*$" , "" )
