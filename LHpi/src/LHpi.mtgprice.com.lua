@@ -29,10 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --[[ CHANGES
 2.14.5.5
 removed url to filename changes that are done by the library if OFFLINE 
-new regex
-reworked site.ParseHtmlData
-catchall variant handling in BDCPluginPost
-more promo sets in site.sets
 ]]
 
 -- options that control the amount of feedback/logging done by the script
