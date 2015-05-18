@@ -1099,7 +1099,7 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [797] = { namereplaced=4 },
 [779] = { namereplaced=2 },
 [770] = { namereplaced=8 },
-[720] = { pset={ [3]=383-1+6 }, failed={ [3]=1 }, namereplaced=3 },
+[720] = { pset={ LHpi.Data.sets[720].cardcount.both-1,[3]=LHpi.Data.sets[720].cardcount.both-2 }, failed={ 1,[3]=1 }, namereplaced=3 },
 [630] = { pset={ 359-9, [3]=352-2 }, namereplaced=2 },-- missing #s "S1" to "S9"
 [550] = { pset={ 357-7, [3]=355-5 }, namereplaced=7 },
 [460] = { namereplaced=7 },
@@ -1114,9 +1114,10 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [813] = { pset={ LHpi.Data.sets[813].cardcount.both-5, [3]=LHpi.Data.sets[813].cardcount.reg-5 }, failed={ 5, [3]=LHpi.Data.sets[813].cardcount.tok+5 }, namereplaced=10 },-- -5 Intro Deck variants
 [806] = { pset={ [3]=171-6 }, failed= { [3]=6 } }, -- -6 is tokens
 [802] = { namereplaced=6 },
-[800] = { namereplaced=8 },
+[800] = { pset={ LHpi.Data.sets[800].cardcount.both-1,[3]=LHpi.Data.sets[800].cardcount.both-1}, failed={ 1 }, namereplaced=8 },
 [795] = { pset={ [3]=157-1 }, failed= { [3]=1 }, namereplaced=1 }, -- -1 is token
 [793] = { namereplaced=1 },
+[791] = { pset={ LHpi.Data.sets[791].cardcount.both-1,[3]=LHpi.Data.sets[791].cardcount.both-1}, failed={ 1 } },
 [786] = { namereplaced=8 },
 [784] = { pset={ 161+1 }, failed={ [3]=1 }, namereplaced=8 }, --+1 is Checklist
 [782] = { pset={ 276+1 }, failed={ [3]=1 }, namereplaced=9 }, -- +1/fail is Checklist

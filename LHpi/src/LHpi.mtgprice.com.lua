@@ -29,6 +29,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --[[ CHANGES
 2.14.5.5
 removed url to filename changes that are done by the library if OFFLINE 
+new regex
+reworked site.ParseHtmlData
+catchall variant handling in BDCPluginPost
+more promo sets in site.sets
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -127,6 +131,7 @@ site={}
  it will be chopped into its parts by site.ParseHtmlData later. 
  @field [parent=#site] #string regex ]]
 site.regex = '<tr><td>(<a href ="/sets/[^>]+>[^<]+</a> </td><td>[$0-9.,%-]+</td><td>[$0-9.,%-]+</td>)</tr>'
+site.regex = '%{"cardId.-%}'
 
 --- @field #string currency		not used yet;default "$"
 site.currency = "$"
@@ -278,28 +283,44 @@ end -- function site.BuildUrl
  @return #table { #number= #table { names= #table { #number (langid)= #string , ... }, price= #number , foil= #boolean , ... } , ... } 
 ]]
 function site.ParseHtmlData( foundstring , urldetails )
---	local _start,_end,name = string.find(foundstring, '<a.->([^<]+)</a>' )
---	local _start,_end,price = string.find( foundstring , '[$€]([%d.,]+)' )
-	local _start,_end,name,fairPrice,bestPrice = string.find(foundstring,"<a.->([^<]+)</a>%s*%b<>%b<>([$.,%-%d]+)%b<>%b<>([$.,%-%d]+)" )
---print(foundstring)
---print(name)
---print(fairPrice)
---print(bestPrice)
+--	print(foundstring)
+	local _s,_e,name = string.find(foundstring,'"name":"([^"]+)",')
+	local _s,_e,isFoil = string.find(foundstring,'"isFoil":([^,]+),')
+	local _s,_e,fairPrice = string.find(foundstring,'"fair_price":([^,]+),')
+	local _s,_e,setName = string.find(foundstring,'"setName":"([^"]+)",')
+	local _s,_e,absoluteChangeSinceYesterday = string.find(foundstring,'"absoluteChangeSinceYesterday":([^,]+),')
+	local _s,_e,absoluteChangeSinceOneWeekAgo = string.find(foundstring,'"absoluteChangeSinceOneWeekAgo":([^,]+),')
+	local _s,_e,color = string.find(foundstring,'"color":"([^"]+)",')
+	local _s,_e,rarity = string.find(foundstring,'"rarity":"([^"]+)",')
+	local _s,_e,bestPrice = string.find(foundstring,'"lowestPrice":"([^"]+)",')
+--	print("name:",name,type(name))
+--	print("isFoil:",isFoil,type(isFoil))
+--	print("fairPrice:",fairPrice,type(fairPrice))
+--	print("setName:",setName,type(setName))
+--	print("absoluteChangeSinceYesterday:",absoluteChangeSinceYesterday,type(absoluteChangeSinceYesterday))
+--	print("absoluteChangeSinceOneWeekAgo:",absoluteChangeSinceOneWeekAgo,type(absoluteChangeSinceOneWeekAgo))
+--	print("color:",color,type(color))
+--	print("rarity:",rarity,type(rarity))
+--	print("bestPrice:",bestPrice,type(bestPrice))
 	local price
 	if fairOrBest == "best" then
 		price = bestPrice
 	else
 		price = fairPrice
 	end
-		
-	price = string.gsub( price , "[$,.-]" , "" )
-	price = tonumber( price )
---	price = tonumber( price ) or 0
---	local newCard = { names = { [urldetails.langid] = name }, price = { [urldetails.langid] = price } }
-	local newCard = { names = { [urldetails.langid] = name }, price = price }
-	if site.frucs[urldetails.frucid].isfoil and not site.frucs[urldetails.frucid].isnonfoil then
-		newCard.foil = true
+	local foil = nil
+	if isFoil == "true" then
+		foil = true
+	elseif isFoil == "false" then
+		foil = false
 	end
+	price = string.gsub( price , "[$,.-]" , "" )
+	price = tonumber( price ) or 0
+	local newCard = { names = { [urldetails.langid] = name }, price = price, foil=foil, pluginData={ set=setName, colour=color, rarity=rarity } }
+--	if site.frucs[urldetails.frucid].isfoil and not site.frucs[urldetails.frucid].isnonfoil then
+--		newCard.foil = true
+--	end
+	--print( "site.ParseHtmlData\t returns" .. LHpi.Tostring(newCard))
 	if DEBUG then
 		LHpi.Log( "site.ParseHtmlData\t returns" .. LHpi.Tostring(newCard) , 2 )
 	end
@@ -326,6 +347,7 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 	end
 
 	card.name = string.gsub( card.name , "AE" , "Æ")
+	card.name = string.gsub( card.name , "\\u0027" , "'")
 
 	return card
 end -- function site.BCDpluginPre
@@ -343,14 +365,43 @@ end -- function site.BCDpluginPre
  @return #table			modified card is passed back for further processing
  			{ name= #string , drop= #boolean, lang= #table , (optional) names= #table , variant= (#table or nil), regprice= #table , foilprice= #table }
 ]]
---function site.BCDpluginPost( card , setid , importfoil, importlangs )
---	if DEBUG then
---		LHpi.Log( "site.BCDpluginPost got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
---	end
---
---	card.pluginData=nil
---	return card
---end -- function site.BCDpluginPost
+function site.BCDpluginPost( card , setid , importfoil, importlangs )
+	if DEBUG then
+		LHpi.Log( "site.BCDpluginPost got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
+	end
+
+	local _s,_e,name,variant = string.find(card.name,"([^(]+) %((%d+)%)")
+	if variant then
+--		print(LHpi.Tostring(card))
+--		print("name",name)
+--		print("variant",variant)
+		variant = tonumber(variant)
+		local oldname = card.name
+		card.name = name
+		card.variant= {}
+		for nr=1, variant-1 do
+			card.variant[nr]=false
+		end
+		card.variant[variant]=variant
+		local objtype={}
+		objtype[variant]=card.objtype
+		card.objtype=objtype
+		local foilprice={}
+		local regprice={}
+		for lid,lang in pairs(card.lang) do
+			foilprice[variant]=card.foilprice[lid]
+			card.foilprice[lid]=foilprice				
+			regprice[variant]=card.regprice[lid]
+			card.regprice[lid]=regprice
+		end
+		if VERBOSE or DEBUG then
+			LHpi.Log((string.format( "variant catchall %q changed to %q with variant %s",oldname,card.name,LHpi.Tostring(card.variant) )), 1 )
+		end
+--		print(LHpi.Tostring(card))
+	end
+	card.pluginData=nil
+	return card
+end -- function site.BCDpluginPost
 
 -------------------------------------------------------------------------------------------------------------
 -- tables
@@ -561,31 +612,28 @@ site.sets = {
 [32] ={id =  32, lang = { [1]=true }, fruc = { true , true }, url = "Pro_Tour"},
 [31] ={id =  31, lang = { [1]=true }, fruc = { true , true }, url = "Grand_Prix"},
 [30] ={id =  30, lang = { [1]=true }, fruc = { true , true }, url = "Friday_Night_Magic"},
--- subsets of 27: "Euro_Land_Program" , "Guru" , "Asia Pacific Land Program"
---[27] ={id =  27, lang = { [1]=true }, fruc = { true , true }, url = ""},--Alternate Art Lands
+[27] ={id =  27, lang = { [1]=true }, fruc = { true , true }, url = {"Euro_Land_Program" , "Guru" , "Asia Pacific Land Program"} },--Alternate Art Lands
 [26] ={id =  26, lang = { [1]=true }, fruc = { true , true }, url = "Game_Day"},
 [25] ={id =  25, lang = { [1]=true }, fruc = { true , true }, url = "Judge_Gift_Program"},
---TODO half of the cards are foilonly
 [24] ={id =  24, lang = { [1]=true }, fruc = { true , true }, url = "Champs"},
 [23] ={id =  23, lang = { [1]=true }, fruc = { true , true }, url = "Gateway"},--Gateway & WPN Promos
 [22] ={id =  22, lang = { [1]=true }, fruc = { true , true }, url = "Prerelease_Events"},
-----TODO Release_Events is subset of 21
-[21] ={id =  21, lang = { [1]=true }, fruc = { true , true }, url = "Launch_Parties"},--Release & Launch Party Cards
+[21] ={id =  21, lang = { [1]=true }, fruc = { true , true }, url = {"Release_Events", "Launch_Parties"} },--Release & Launch Party Cards
 [20] ={id =  20, lang = { [1]=true }, fruc = { true , true }, url = "Player_Rewards"},--Magic Player Rewards
 --[15] ={id =  15, lang = { [1]=true }, fruc = {  }, url = ""},--Convention Promos
 --[12] ={id =  12, lang = { [1]=true }, fruc = {  }, url = ""},--Hobby Japan Commemorative Cards
 --[11] ={id =  11, lang = { [1]=true }, fruc = {  }, url = ""},--Redemption Program Cards
---[10] ={id =  10, lang = { [1]=true }, fruc = {  }, url = ""},--Junior Series Promos
---[9]  ={id =   9, lang = { [1]=true }, fruc = {  }, url = ""},--Video Game Promos
+--TODO what is "Super_Series" ? probably Junior Super Series
+[10] ={id =  10, lang = { [1]=true }, fruc = { true , true }, url = "Super_Series"},--Junior Series Promos
+[9]  ={id =   9, lang = { [1]=true }, fruc = { true , true }, url = "Media_Inserts"},--Video Game Promos
 --[8]  ={id =   8, lang = { [1]=true }, fruc = {  }, url = ""},--Stores Promos
---[7]  ={id =   7, lang = { [1]=true }, fruc = {  }, url = ""},--Magazine Inserts
---[6]  ={id =   6, lang = { [1]=true }, fruc = {  }, url = ""},--Comic Inserts
---[5]  ={id =   5, lang = { [1]=true }, fruc = {  }, url = ""},--Book Inserts
+[7]  ={id =   7, lang = { [1]=true }, fruc = { true , true }, url = "Media_Inserts"},--Magazine Inserts
+[6]  ={id =   6, lang = { [1]=true }, fruc = { true , true }, url = "Media_Inserts"},--Comic Inserts
+[5]  ={id =   5, lang = { [1]=true }, fruc = { true , true }, url = "Media_Inserts"},--Book Inserts
 --[4]  ={id =   4, lang = { [1]=true }, fruc = {  }, url = ""},--Ultra Rare Cards
 [2]  ={id =   2, lang = { [1]=true }, fruc = { true , true }, url = "Legend_Membership"},
 --TODO what is "15th_Anniversary" ?
 --TODO what is "World_Magic_Cup_Qualifier" ?
---TODO what is "Super_Series" ?
 --TODO sort out "Media_Inserts"
 } -- end table site.sets
 
@@ -717,6 +765,7 @@ site.namereplace = {
 ["Forest (2)"]			= "Forest (247)",
 ["Forest (3)"]			= "Forest (248)",
 ["Forest (4)"]			= "Forest (249)",
+["Consume SPirit"]		= "Consume Spirit",
 },
 [770]={--M11
 ["Plains (1)"]			= "Plains (230)",
@@ -772,6 +821,99 @@ site.namereplace = {
 ["Junun Efreet"]						= "Junún Efreet",
 ["El-Hajjaj"]							= "El-Hajjâj",
 },
+-- Expansions
+[784] = { -- Dark Ascension
+["Hinterland Hermit"] 				= "Hinterland Hermit|Hinterland Scourge",
+["Mondronen Shaman"] 				= "Mondronen Shaman|Tovolar’s Magehunter",
+["Soul Seizer"] 					= "Soul Seizer|Ghastly Haunting",
+["Lambholt Elder"] 					= "Lambholt Elder|Silverpelt Werewolf",
+["Ravenous Demon"] 					= "Ravenous Demon|Archdemon of Greed",
+["Elbrus, the Binding Blade"] 		= "Elbrus, the Binding Blade|Withengar Unbound",
+["Loyal Cathar"] 					= "Loyal Cathar|Unhallowed Cathar",
+["Chosen of Markov"] 				= "Chosen of Markov|Markov’s Servant",
+["Huntmaster of the Fells"] 		= "Huntmaster of the Fells|Ravager of the Fells",
+["Afflicted Deserter"] 				= "Afflicted Deserter|Werewolf Ransacker",
+["Chalice of Life"] 				= "Chalice of Life|Chalice of Death",
+["Wolfbitten Captive"] 				= "Wolfbitten Captive|Krallenhorde Killer",
+["Scorned Villager"]				= "Scorned Villager|Moonscarred Werewolf",
+},
+[782] = { -- Innistrad
+["Bloodline Keeper"] 				= "Bloodline Keeper|Lord of Lineage",
+["Ludevic's Test Subject"] 			= "Ludevic's Test Subject|Ludevic's Abomination",
+["Instigator Gang"] 				= "Instigator Gang|Wildblood Pack",
+["Kruin Outlaw"] 					= "Kruin Outlaw|Terror of Kruin Pass",
+["Daybreak Ranger"] 				= "Daybreak Ranger|Nightfall Predator",
+["Garruk Relentless"] 				= "Garruk Relentless|Garruk, the Veil-Cursed",
+["Mayor of Avabruck"] 				= "Mayor of Avabruck|Howlpack Alpha",
+["Cloistered Youth"] 				= "Cloistered Youth|Unholy Fiend",
+["Civilized Scholar"] 				= "Civilized Scholar|Homicidal Brute",
+["Screeching Bat"] 					= "Screeching Bat|Stalking Vampire",
+["Hanweir Watchkeep"] 				= "Hanweir Watchkeep|Bane of Hanweir",
+["Reckless Waif"] 					= "Reckless Waif|Merciless Predator",
+["Gatstaf Shepherd"] 				= "Gatstaf Shepherd|Gatstaf Howler",
+["Ulvenwald Mystics"] 				= "Ulvenwald Mystics|Ulvenwald Primordials",
+["Thraben Sentry"] 					= "Thraben Sentry|Thraben Militia",
+["Delver of Secrets"] 				= "Delver of Secrets|Insectile Aberration",
+["Tormented Pariah"] 				= "Tormented Pariah|Rampaging Werewolf",
+["Village Ironsmith"] 				= "Village Ironsmith|Ironfang",
+["Grizzled Outcasts"] 				= "Grizzled Outcasts|Krallenhorde Wantons",
+["Villagers of Estwald"] 			= "Villagers of Estwald|Howlpack of Estwald",
+},
+[766] = { -- New Phyrexia
+["Arm with Aether"]					= "Arm with Æther",
+},
+[754] = { -- Shards of Alara
+["Elspeth Knight-Errant"]			= "Elspeth, Knight-Errant",
+},
+[620] = { -- Saviors of Kamigawa
+["Sasaya, Orochi Ascendant"] 		= "Sasaya, Orochi Ascendant|Sasaya’s Essence",
+["Rune-Tail, Kitsune Ascendant"]	= "Rune-Tail, Kitsune Ascendant|Rune-Tail’s Essence",
+["Homura, Human Ascendant"] 		= "Homura, Human Ascendant|Homura’s Essence",
+["Kuon, Ogre Ascendant"] 			= "Kuon, Ogre Ascendant|Kuon’s Essence",
+["Erayo, Soratami Ascendant"] 		= "Erayo, Soratami Ascendant|Erayo’s Essence"
+},
+[610] = { -- Betrayers of Kamigawa
+["Hired Muscle"] 					= "Hired Muscle|Scarmaker",
+["Cunning Bandit"] 					= "Cunning Bandit|Azamuki, Treachery Incarnate",
+["Callow Jushi"] 					= "Callow Jushi|Jaraku the Interloper",
+["Faithful Squire"] 				= "Faithful Squire|Kaiso, Memory of Loyalty",
+["Budoka Pupil"] 					= "Budoka Pupil|Ichiga, Who Topples Oaks",
+},
+[590] = { -- Champions of Kamigawa
+["Student of Elements"]				= "Student of Elements|Tobita, Master of Winds",
+["Kitsune Mystic"]					= "Kitsune Mystic|Autumn-Tail, Kitsune Sage",
+["Initiate of Blood"]				= "Initiate of Blood|Goka the Unjust",
+["Bushi Tenderfoot"]				= "Bushi Tenderfoot|Kenzo the Hardhearted",
+["Budoka Gardener"]					= "Budoka Gardener|Dokai, Weaver of Life",
+["Nezumi Shortfang"]				= "Nezumi Shortfang|Stabwhisker the Odious",
+["Jushi Apprentice"]				= "Jushi Apprentice|Tomoya the Revealer",
+["Orochi Eggwatcher"]				= "Orochi Eggwatcher|Shidako, Broodmistress",
+["Nezumi Graverobber"]				= "Nezumi Graverobber|Nighteyes the Desecrator",
+["Akki Lavarunner"]					= "Akki Lavarunner|Tok-Tok, Volcano Born",
+["Brothers Yamazaki (1)"]			= "Brothers Yamazaki (160a)",
+["Brothers Yamazaki (2)"]			= "Brothers Yamazaki (160b)",
+},
+--Special
+[787] = { -- Planechase 2012
+["Norn's Dominion"]		= "Norn’s Dominion",
+},
+[492] = { -- Deckmasters
+["Lim-Dul's High Guard"]		= "Lim-Dûl's High Guard",
+},
+[310] = { -- Portal Second Age
+["Deja Vu"]		= "Déjà Vu",
+},
+-- Promo
+[22] = { -- Prerelease Promos
+["Ravenous Demon"]				= "Ravenous Demon|Archdemon of Greed",
+["Mayor of Avabruck"]			= "Mayor of Avabruck|Howlpack Alpha",
+["Laquatus's Champion"]			= "Laquatus’s Champion",
+},
+[21] = { -- Release Promos
+["Mondronen Shaman"]				= "Mondronen Shaman|Tovolar’s Magehunter",
+["Ludevic's Test Subject"]			= "Ludevic’s Test Subject|Ludevic’s Abomination",
+["Budoka Pupil"]					= "Budoka Pupil|Ichiga, Who Topples Oaks",
+},
 } -- end table site.namereplace
 
 --[[- card variant tables.
@@ -787,14 +929,16 @@ site.namereplace = {
  @field [parent=#site.variants] #table variant
 ]]
 site.variants = {
---[0] = { -- Basic Lands as example (setid 0 is not used)
---override=false,
---["Plains"] 					= { "Plains"	, { 1    , 2    , 3    , 4     } },
---["Island"] 					= { "Island" 	, { 1    , 2    , 3    , 4     } },
---["Swamp"] 					= { "Swamp"		, { 1    , 2    , 3    , 4     } },
---["Mountain"] 					= { "Mountain"	, { 1    , 2    , 3    , 4     } },
---["Forest"] 					= { "Forest" 	, { 1    , 2    , 3    , 4     } }
---},
+[10]  = { -- Junior Series
+["Elvish Champion"]				= { "Elvish Champion"	, { "E"	, "J" } },
+["Glorious Anthem"]				= { "Glorious Anthem"	, { "E"	, "J" , "U" } },
+["Royal Assassin"]				= { "Royal Assassin"	, { "E"	, "J" } },
+["Sakura-Tribe Elder"]			= { "Sakura-Tribe Elder", { "E"	, "J" , "U" } },
+["Shard Phoenix"]				= { "Shard Phoenix"		, { "E"	, "J" , "U" } },
+["Slith Firewalker"]			= { "Slith Firewalker"	, { "E"	, "J" } },
+["Soltari Priest"]				= { "Soltari Priest"	, { "E"	, "J" , "U" } },
+["Whirling Dervish"]			= { "Whirling Dervish"	, { "E"	, "J" , "U" } },
+	},	
 } -- end table site.variants
 
 --[[- foil status replacement tables.
@@ -845,33 +989,44 @@ function site.SetExpected( importfoil , importlangs , importsets )
 -- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
 -- @field [parent=#site.expected] #boolean or #table { #boolean,...} tokens
 	tokens = false,
---	tokens = { "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" },
 --- if site.expected.nontrad is true, LHpi.Data.sets[setid].cardcount.nontrad is added to pset default.
 -- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
 -- @field [parent=#site.expected] #boolean nontrad
-	nontrad = true,
+	nontrad = false,
 --- if site.expected.repl is true, LHpi.Data.sets[setid].cardcount.repl is added to pset default.
 -- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
 -- @field [parent=#site.expected] #boolean replica
-	replica = true,
+	replica = false,
 --TODO expect a lot of namereplacements, for now just expect fails
 -- Core Sets
 [808] = { pset={ LHpi.Data.sets[808].cardcount.reg-20 } },
-[797] = { pset={ LHpi.Data.sets[797].cardcount.reg }, namereplaced=40 },
-[788] = { pset={ LHpi.Data.sets[788].cardcount.reg }, namereplaced=40 },
-[779] = { pset={ LHpi.Data.sets[779].cardcount.reg }, namereplaced=40 },
-[770] = { pset={ LHpi.Data.sets[770].cardcount.reg }, namereplaced=60 },
-[759] = { pset={ LHpi.Data.sets[759].cardcount.reg-20 }, namereplaced=4 },
-[720] = { pset={ LHpi.Data.sets[720].cardcount.reg-20 }, failed={ 5 } },
-[630] = { pset={ LHpi.Data.sets[630].cardcount.reg-20-9 }, failed={ 5 } },-- missing #s "S1" to "S9"
-[550] = { pset={ LHpi.Data.sets[550].cardcount.reg-20 }, failed={ 5 } },
-[460] = { pset={ LHpi.Data.sets[460].cardcount.reg-20 }, failed={ 5 } },
-[360] = { pset={ LHpi.Data.sets[360].cardcount.reg-20 }, failed={ 5 } },
-[250] = { pset={ LHpi.Data.sets[250].cardcount.reg-20 }, failed={ 5 } },
-[180] = { pset={ LHpi.Data.sets[180].cardcount.reg-20 }, failed={ 5 } },
+--[797] = { pset={ LHpi.Data.sets[797].cardcount.reg }, namereplaced=40 },
+[788] = { failed={ 2 } },
+--[779] = { pset={ LHpi.Data.sets[779].cardcount.reg }, namereplaced=40 },
+--[770] = { pset={ LHpi.Data.sets[770].cardcount.reg }, namereplaced=60 },
+--[759] = { pset={ LHpi.Data.sets[759].cardcount.reg-20 }, namereplaced=4 },
+[720] = { pset={ LHpi.Data.sets[720].cardcount.reg-1 }, failed={ 1 } },
+--[630] = { pset={ LHpi.Data.sets[630].cardcount.reg-20-9 }, failed={ 5 } },-- missing #s "S1" to "S9"
+--[550] = { pset={ LHpi.Data.sets[550].cardcount.reg-20 }, failed={ 5 } },
+--[460] = { pset={ LHpi.Data.sets[460].cardcount.reg-20 }, failed={ 5 } },
+--[360] = { pset={ LHpi.Data.sets[360].cardcount.reg-20 }, failed={ 5 } },
+--[250] = { pset={ LHpi.Data.sets[250].cardcount.reg-20 }, failed={ 5 } },
+--[180] = { pset={ LHpi.Data.sets[180].cardcount.reg-20 }, failed={ 5 } },
 -- Expansions
+[813] = { pset={ LHpi.Data.sets[813].cardcount.reg-25 }, failed={ 5 } },
+[800] = { pset={ LHpi.Data.sets[800].cardcount.reg-1 }, failed={ 1 } },
 -- Special Sets
+[787] = { failed= { 1 } },
+[778] = { pset={ LHpi.Data.sets[778].cardcount.reg-2 }, failed={ LHpi.Data.sets[778].cardcount.repl+2 } },
+[762] = { pset={ LHpi.Data.sets[762].cardcount.reg-20 }, failed={ 20 } },
+[751] = { failed={ 15 } },
 -- Promos
+[41]  = { pset={ 7 } },
+[40]  = { pset={ 41 }, failed={ 6 } },
+[30]  = { pset={ 167 } },
+[20]  = { pset={ LHpi.Data.sets[20].cardcount.reg } },
+[9]   = { pset={ 12 }, failed={ 74 } },
+[5]   = { pset={ 80 } },
 
 --[798] = { pset={0}},
 --[797] = { namereplaced=4*5 },
@@ -882,8 +1037,30 @@ function site.SetExpected( importfoil , importlangs , importsets )
 --[560] = { pset={ LHpi.Data.sets[560].cardcount.reg-20 }, failed={ 5 } },
 --[807] = { pset={ LHpi.Data.sets[807].cardcount.reg+LHpi.Data.sets[807].cardcount.nontrad } },
 --[766] = { pset={ LHpi.Data.sets[766].cardcount.reg-6 }, failed={ 2 } },
---[26]  = { pset={ 40 }, foiltweaked=22 },
+--[26]  = { pset={  }, failed={  }, foiltweaked=22 },
 --[] = { pset={ LHpi.Data.sets[].cardcount.reg-20 }, failed={  } },
 	}--end table site.expected
+	for sid,name in pairs(importsets) do
+		if not site.expected.sid then
+			site.expected.sid = {}
+		end
+		if site.namereplace[sid] then
+			local namereplaced=0
+			for fid,fruc in pairs(site.frucs) do
+				if site.sets[sid].fruc[fid] then
+					namereplaced = namereplaced + LHpi.Length(site.namereplace[sid])
+				end
+			end
+			if namereplaced > 0 then
+				site.expected[sid].namereplaced=namereplaced
+			end
+		end
+		if site.foiltweak[sid] then
+			site.expected[sid].foiltweaked=LHpi.Length(site.foiltweak[sid])
+		end
+		if site.expected.sid == {} then
+			site.expected.sid = nil
+		end
+	end--for sid,name
 end--function site.SetExpected()
 --EOF

@@ -668,10 +668,14 @@ site.namereplace = {
 --[690] = { -- Time Spiral Timeshifted
 --["XXValor"]								= "Valor",
 --},
+[680] = { -- Time Spiral
+["AEtherflame Wall(Ætherflame Wall)"]	= "Ætherflame Wall",
+["AEther Web(Æther Web)"]				= "Æther Web",
+},
 [610] = { -- Betrayers of Kamigawa
 ["Hired Muscle"] 						= "Hired Muscle|Scarmaker",
-["Callow Jushi"] 						= "Callow Jushi|Jaraku the Interloper",
 },
+["Callow Jushi"] 						= "Callow Jushi|Jaraku the Interloper",
 [520] = { -- Onslaught
 ["AEther Charge (Æther Charge)"]		= "Æther Charge",
 },
@@ -814,7 +818,7 @@ function site.SetExpected( importfoil , importlangs , importsets )
 --- if site.expected.tokens is true, LHpi.Data.sets[setid].cardcount.tok is added to pset default.
 -- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
 -- @field [parent=#site.expected] #boolean or #table { #boolean,...} tokens
-	tokens = false,
+	tokens = { true , [9]=false },
 --- if site.expected.nontrad is true, LHpi.Data.sets[setid].cardcount.nontrad is added to pset default.
 -- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
 -- @field [parent=#site.expected] #boolean nontrad
@@ -829,26 +833,26 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [788] = { pset={ [9]=249 }, failed={[9]=11} },-- fail SZH tokens
 [779] = { pset={ [9]=249 }, failed={[9]=7} },-- fail SZH tokens
 [770] = { namereplaced=4, pset={ [9]=249 }, failed={[9]=6} },-- fail SZH tokens
-[759] = { pset={ [9]=249-20 }, failed={[9]=8}, dropped=9 },-- no SZH lands, fail SZH tokens
-[720] = { pset={ [9]=383-20 }, failed={[9]=6}, dropped=4 }, -- no SZH lands, fail SZH tokens	
+[759] = { pset={ [9]=LHpi.Data.sets[759].cardcount.reg-20 }, failed={[9]=LHpi.Data.sets[759].cardcount.tok }, dropped=8 },-- no SZH lands, fail SZH tokens
+[720] = { pset={ [1]=LHpi.Data.sets[720].cardcount.both-1,[9]=LHpi.Data.sets[720].cardcount.reg-21 }, failed={ [1]=1,[9]=7}, dropped=4 }, -- no Kamahl (ST), no SZH lands	
 [630] = { pset={ 359-31 } },
 [550] = { pset={ 357-27 } },
 [460] = { pset={ 350-20 }, dropped=3 },
 [360] = { pset={ 350-20 }, dropped=17 },
-[250] = { pset={ 449-20 }, dropped=46 },
+[250] = { pset={ 449-20 }, dropped=45 },
 [180] = { pset={ 378-15 }, dropped=81 },
-[140] = { pset={ 306-15 }, dropped=30 },
+[140] = { pset={ 306-15 }, dropped=29 },
 [110] = { dropped=1 },
 [100] = { pset={ 302-19 } },
-[90]  = {namereplaced=4},
+[90]  = { namereplaced=4},
 -- Expansions
-[813] = {pset={ LHpi.Data.sets[813].cardcount.both-5, [9]=LHpi.Data.sets[813].cardcount.reg-5 }, failed={ 5, [9]=LHpi.Data.sets[813].cardcount.tok+5 }, namereplaced=8 },-- -5 Intro Deck variants
-[806] = {pset={[9]=165}, failed={[9]=6}},-- fail SZH tokens
-[802] = {namereplaced=8, pset={[9]=165}, failed={[9]=11}},-- fail SZH tokens
-[800] = {namereplaced=10, pset={[9]=249}, failed={[9]=11}},-- fail SZH tokens
-[795] = { namereplaced=4, pset={ [9]=156 }, failed={[9]=1} },-- fail SZH tokens
+[813] = { pset={ LHpi.Data.sets[813].cardcount.both-5, [9]=LHpi.Data.sets[813].cardcount.reg-5 }, failed={ 5, [9]=LHpi.Data.sets[813].cardcount.tok+5 }, namereplaced=8 },-- -5 Intro Deck variants
+[806] = { failed={ [9]=LHpi.Data.sets[806].cardcount.tok }, dropped=1 },
+[802] = { namereplaced=8, pset={[9]=165}, failed={[9]=11}},-- fail SZH tokens
+[800] = { pset={ [1]=LHpi.Data.sets[800].cardcount.both-1,[9]=LHpi.Data.sets[800].cardcount.reg-1 }, failed={ 1,[9]=LHpi.Data.sets[800].cardcount.tok+1 }, namereplaced=10 },-- no Holiday Gift Box
+[795] = { namereplaced=4, pset={ [9]=LHpi.Data.sets[795].cardcount.reg }, failed={ [9]=LHpi.Data.sets[795].cardcount.tok} },-- fail SZH token, ENG token missing
 [793] = { pset={ [9]=249 }, failed={[9]=8} },-- fail SZH tokens
-[791] = { pset={ [9]=274 }, failed={[9]=12} },-- fail SZH tokens
+[791] = { pset={ [1]=LHpi.Data.sets[791].cardcount.both-1,[9]=LHpi.Data.sets[791].cardcount.reg-1 }, failed={ 1,[9]=LHpi.Data.sets[791].cardcount.tok+1 } },-- no Holiday Gift Box
 [786] = { pset={ 252-1, [9]=244-1 }, failed={1, [9]=LHpi.Data.sets[786].cardcount.tok+1}, namereplaced=8 },-- missing 1 swamp, fail SZH tokens
 [784] = { pset={ [9]=LHpi.Data.sets[784].cardcount.reg }, failed={[9]=3} },-- fail SZH tokens
 [782] = { pset={ LHpi.Data.sets[782].cardcount.both+1, [9]=LHpi.Data.sets[782].cardcount.reg }, failed={ [9]=LHpi.Data.sets[782].cardcount.tok }, namereplaced=11 },-- +1 is Checklist
@@ -857,7 +861,7 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [773] = { pset={[9]=LHpi.Data.sets[773].cardcount.reg }, namereplaced=4, failed={1, [9]=LHpi.Data.sets[773].cardcount.tok+1} },-- fail SZH tokens, +1 is Checklist
 [767] = { pset={ [9]=248 }, failed={[9]=7}, namereplaced=6 },-- fail SZH tokens
 [765] = { pset={ [9]=145 } },-- no SZH tokens
-[762] = { pset={ [9]=249 }, dropped=1 },-- no SZH tokens
+[762] = { pset={ LHpi.Data.sets[762].cardcount.both-20,[9]=LHpi.Data.sets[762].cardcount.reg-20 }, failed={ 20,[9]=20 } },-- 20 non-fullart BLands missing
 [758] = { pset={ [9]=145 }, failed={[9]=4} },-- fail SZH tokens
 [756] = { pset={ [9]=145 } },-- no SZH tokens
 [754] = { pset={ [9]=249 }, failed={[9]=9}, namereplaced=1 },-- fail SZH tokens
@@ -865,13 +869,13 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [751] = { pset={ [9]=301-20 }, failed={[9]=12}, namereplaced=8, dropped=1 },-- fail SZH tokens, no SZH lands
 [750] = { pset={ [9]=150 } },-- no SZH tokens
 [730] = { pset={ [9]=301-1 }, failed={[9]=11}, dropped=2, namereplaced=4 },-- -1 is missing "Changeling Berserker" (SZH), fail SZH tokens
-[710] = { dropped=3 },
+[710] = { dropped=2 },
 [700] = { dropped=2 },
 [690] = { dropped=1 },
-[680] = { pset={ [9]=5 }, dropped=1 },
-[670] = { dropped=3 },
+[680] = { pset={ [9]=281 }, dropped=1, namereplaced=6 },
+[670] = { dropped=2 },
 [660] = { dropped=1 },
-[640] = { dropped=1 },
+--[640] = { dropped=1 },
 [620] = { dropped=1 },
 [610] = { dropped=2, namereplaced=4 },
 --[590] = { dropped=1 },
@@ -889,7 +893,7 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [430] = { dropped=95 },
 [420] = { pset={ 143-60 }, dropped=8 },
 [410] = { pset={ 143-1 }, dropped=7 },
-[400] = { pset={ 350-20 }, dropped=16 },
+[400] = { pset={ 350-20 }, dropped=15 },
 [370] = { dropped=4 },
 [350] = { dropped=9 },
 [330] = { pset={ 350-20 }, dropped=30 }, -- no lands
@@ -898,27 +902,27 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [280] = { pset={ 350-20 }, dropped=52 },
 [270] = { dropped=8 },
 [240] = { dropped=8 },
-[230] = { pset={ 350-21 }, dropped=67 },
-[220] = { dropped=10 },
+[230] = { pset={ 350-21 }, dropped=65 },
+[220] = { dropped=9 },
 [210] = { dropped=6 },
 [190] = { pset={ 383-15 }, dropped=79 },-- no basic lands
 [170] = { dropped=17 },
 [160] = { dropped=7 },
 [150] = { dropped=21, namereplaced=1 },
 [130] = { dropped=7, namereplaced=1 },
-[120] = { dropped=11 },
+[120] = { dropped=7 },
 -- special sets
 [812] = { foiltweaked=2 },
 [810] = { namereplaced=2 },
 [807] = { pset={ LHpi.Data.sets[807].cardcount.both+LHpi.Data.sets[807].cardcount.nontrad }, namereplaced=2 },
 [805] = { namereplaced=2, foiltweaked=2, pset={ 89-1 } }, -- -1 token
-[801] = { pset={ LHpi.Data.sets[801].cardcount.all-1 }, foiltweaked=15, namereplaced=4 },-- which one missing?
+[801] = { foiltweaked=15, namereplaced=4 },
 [796] = { namereplaced=6},
 [794] = { pset={ 81-12-1 } },-- -16 basic lands, -1 token
-[790] = { pset={ 91-16-1 } },-- -16 basic lands, -1 token
+[790] = { pset={ LHpi.Data.sets[790].cardcount.reg-16 } },-- -16 basic lands
 [787] = { pset={ LHpi.Data.sets[787].cardcount.reg-1+LHpi.Data.sets[787].cardcount.nontrad }, namereplaced=1 },-- missing Pollenbright Wings 
 [785] = { pset={ 79-2 } },-- -2 tokens
-[781] = { pset={ LHpi.Data.sets[781].cardcount.reg-2 }, failed= { 1 }, foiltweaked=2 },
+[781] = { pset={ LHpi.Data.sets[781].cardcount.reg-1 }, failed= { 1 }, foiltweaked=2 },--Forest (38) missing
 [780] = { namereplaced=1},
 [778] = { pset={ LHpi.Data.sets[778].cardcount.all-14-1 }, failed={ LHpi.Data.sets[778].cardcount.repl-1 }, foiltweaked=LHpi.Data.sets[778].cardcount.repl },-- missing 14/15 regular Commanders and "Forgotten Cave"
 [772] = { pset={ 80-8-1 } },-- -8 basic lands, -1 token

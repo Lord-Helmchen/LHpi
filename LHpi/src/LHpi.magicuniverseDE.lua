@@ -996,12 +996,12 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [797] = { namereplaced=3 },
 [788] = { namereplaced=1 },
 [770] = { namereplaced=2 },
-[720] = { pset={ [3]=389-1 }, failed={ [3]=1 } },
+[720] = { pset={ LHpi.Data.sets[720].cardcount.both-1,[3]=LHpi.Data.sets[720].cardcount.both-2 }, failed={ 1,[3]=2 } },
 [630] = { pset={ 359-20, [3]=359-20-7 }, failed={ [3]=7 } },
 [550] = { pset={ 357-19, [3]=357-19-2 }, failed={ 3, [3]=2+3 } },-- 3 foil swamps missing
 [460] = { pset={ 350-130, [3]=350-130 }, dropped=2 }, --no commons
 [180] = { pset={ 378-136-2, [3]=378-136-2 }, dropped=2, failed={[3]=1} }, --no commons
-[140] = { pset={ LHpi.Data.sets[140].cardcount.reg-1, [3]=47, [4]=1 }, dropped=201, namereplaced=4 },-- ENG missing Counterspell
+[140] = { pset={ LHpi.Data.sets[140].cardcount.reg-1, [3]=47, [4]=1 }, dropped=202, namereplaced=4 },-- ENG missing Counterspell
 [139] = { dropped=9, namereplaced=19 },
 [110] = { pset={ 302-24 }, dropped=106, namereplaced=1 },
 [100] = { pset={ 302-134 },	failed={ 8 }, dropped=352, namereplaced=1 },
@@ -1010,20 +1010,21 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [813] = { pset={ LHpi.Data.sets[813].cardcount.both-5, [3]=LHpi.Data.sets[813].cardcount.reg-5 }, failed={ 5, [3]=LHpi.Data.sets[813].cardcount.tok+5}, namereplaced=4 },-- -5 Intro Deck variants
 [806] = { pset={ [3]=165 }, failed={ [3]=6}, namereplaced=2 },--GER tokens 
 [802] = { namereplaced=4 },
-[800] = { namereplaced=4 },
+[800] = { pset={ LHpi.Data.sets[800].cardcount.both-1,[3]=LHpi.Data.sets[800].cardcount.both-1 }, failed={ 1,[3]=1 }, namereplaced=4 },
 [795] = { pset={ [3]=157-1 }, failed ={ [3]=1} }, -- -1/fail is elemental token
 [793] = { namereplaced=1 },
+[791] = { pset={ LHpi.Data.sets[791].cardcount.both-1,[3]=LHpi.Data.sets[791].cardcount.both-1 }, failed={ 1,[3]=1 } },
 [786] = { namereplaced=5 },
 [784] = { pset={ 161+1 }, failed={ [3]=1 }, namereplaced=27 },-- +1/fail is checklist
 [782] = { pset={ 276+1 }, failed={ [3]=1}, namereplaced=46 },-- +1/fail is checklist
 [775] = { failed={ 1, [3]=1 }, namereplaced=1 },-- fail is Poison Counter
 [773] = { failed={ 1, [3]=1 }, namereplaced=3 },-- fail is Poison Counter
 [767] = { namereplaced=3 },
-[762] = { namereplaced=1 },
+[762] = { pset={ LHpi.Data.sets[762].cardcount.both-20,[3]=LHpi.Data.sets[762].cardcount.both-20 }, namereplaced=1 },
 [751] = { namereplaced=4 },
 [750] = { namereplaced=1 },
 [730] = { namereplaced=5 },
-[690] = { failed={ 301-15,[3]=301-15 } },
+[690] = { failed={ 299,[3]=299 } },
 [680] = { failed={ 121,[3]=121 }, namereplaced=2 },
 [670] = { namereplaced=1 },
 [640] = { namereplaced=5 },
@@ -1041,13 +1042,13 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [330] = { dropped=2 },
 [300] = { dropped=1 },
 [290] = { dropped=2 },
-[280] = { dropped=1 },
+[280] = { dropped=2 },
 [220] = { namereplaced=3 },
 [190] = { pset={ 383-3, [3]=383-3 }, dropped=1 },-- -3 plains
 [160] = { dropped=9 },
 [150] = { pset={ [5]=19 }, dropped=87 },
 [130] = { dropped=54 },
-[120] = { namereplaced=4 },
+[120] = { pset={ LHpi.Data.sets[120].cardcount.reg-1 }, failed={ 1 }, namereplaced=4 },
 -- special sets
 [807] = { pset={ LHpi.Data.sets[807].cardcount.all }, namereplaced=1},
 [801] = { pset={ LHpi.Data.sets[801].cardcount.all, [3]=LHpi.Data.sets[801].cardcount.all }, foiltweaked=15, namereplaced=5 },
