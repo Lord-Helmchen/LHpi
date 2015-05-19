@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.14
+2.14 (unreleased)
 GetSourceData split into GetSourceData and ParseSourceData.
 this change is completely transparent to existing sitescripts, but having GetSourceData seperated allows to use it from the sitescript for special cases.
 LHpi.GetSourceData( sourceurl,urldetails )
@@ -36,7 +36,7 @@ LHpi.ParseSourceData( sourcedata,sourceurl,urldetails )
 * does the parsing previously done by GetSourceData and returns the #table sourceTable
 * shortcut return nil for sourcedata==nil
 BuildCardData
-* counts namereplace and foiltweak even if card is dopped
+* counts namereplace and foiltweak even if card is dropped
 Logtable no longer strictly requires #table arguments
 MainImportCycle fixed CHECKEXPECTED handling for semi-available languages
 removed some leftover commented-out code
@@ -47,7 +47,9 @@ DoImport
 * changed site.expected.EXPECTREPL to site.expected.replica
 * all three can be #boolean (like before) or #table { [langid]=#boolean,... }
 
-
+2.15
+Split Initialize() from DoImport(importfoil , importlangs , importsets)
+always run Initialize() before returning LHpi library table.
 ]]
 
 --TODO count averaging events with counter attached to prices
@@ -56,7 +58,7 @@ DoImport
 local LHpi = {}
 ---	LHpi library version
 -- @field [parent=#LHpi] #string version
-LHpi.version = "2.14"
+LHpi.version = "2.15"
 
 --[[- "main" function called by Magic Album; just display error and return.
  Called by Magic Album to import prices. Parameters are passed from MA.
@@ -76,18 +78,14 @@ function ImportPrice( importfoil , importlangs , importsets )
 	error( "LHpi-v" .. LHpi.version .. " is a library. Please select a LHpi-sitescript instead!" )
 end -- function ImportPrice
 
---[[- "main" function called by LHpi sitescript.
- Parameters are passed through sitescript's ImportPrice from Magic Album.
- This is all that a sitescript should need to do in its ImportPrice once LHpi library has been executed
-  
- @function [parent=#LHpi] DoImport
- @param #string importfoil	"Y"|"N"|"O"
- @param #table importlangs	{ #number (langid)= #string , ... }
- @param #table importsets	{ #number (setid)= #string , ... }
-]]
-
-function LHpi.DoImport (importfoil , importlangs , importsets)
---TODO move initializing to seperate function?
+--[[- Prepare library for use before returning LHpi namespace.
+ Set sensible defaults for unset or missing options,
+ configure LHpi behaviour and prevent undefined logfile locations
+ This should eventually enable us to get rid of most global variables.
+]]  
+function LHpi.Initialize()
+	--LHpi usually resides in MagicAlbum\\Prices. Allow for global workdir to explicitly set otherwise.
+	LHpi.workdir = workdir or "Prices\\"
 	--default values for feedback options
 	if VERBOSE==nil then VERBOSE = false end
 	if LOGDROPS==nil then LOGDROPS = false end
@@ -103,39 +101,30 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 	if SAVEHTML==nil then SAVEHTML = false end
 	if SAVELOG==nil then SAVELOG = true end
 	if SAVETABLE==nil then SAVETABLE = false end
-	-- create empty dummy fields for undefined sitescript fields to allow graceful exit
-	if not site then site = {} end
-	if DEBUG and ((not site.langs) or (not next(site.langs)) ) then error("undefined site.langs!") end
-	if not site.langs then site.langs = {} end
-	if DEBUG and ((not site.sets) or (not next(site.sets)) ) then error("undefined site.sets!") end
-	if not site.sets then site.sets = {} end
-	if DEBUG and ((not site.frucs) or (not next(site.frucs)) ) then error("undefined site.frucs!") end
-	if not site.frucs then site.frucs = {} end
-	if DEBUG and ((not site.regex) or site.regex == "" ) then error("undefined site.regex!") end
-	if not site.regex then site.regex = "" end
+--TODO if possible, get rid of scriptname in favor of logFileName and sourceDataDir
 	if not scriptname then
 	--- should always be similar to the sitescript filename !
 	-- @field [parent=#global] #string scriptname
-		local _s,_e,myname = string.find( ( ma.GetFile( "Magic Album.log" ) or "" ) , "Starting Lua script .-([^\\]+%.lua)$" )
+		local _s,_e,myname = string.find( ( pcall(ma.GetFile( "Magic Album.log" )) or "" ) , "Starting Lua script .-([^\\]+%.lua)$" )
 		if myname and myname ~= "" then
 			scriptname = myname
 		else -- use hardcoded scriptname as fallback
 			scriptname = "LHpi.SITESCRIPT_NAME_NOT_SET-v" .. LHpi.version .. ".lua"
 		end
 	end -- if
-
-	if DEBUG and ((not dataver) or site.dataver == "" ) then error("undefined dataver!") end
-	if not dataver then dataver = "5" end
-	---	LHpi static set data
-	--@field [parent=#LHpi] #table Data
-	LHpi.Data = LHpi.LoadData(dataver)
-	-- read user supplied parameters and modify site.sets table
-	local supImportfoil,supImportlangs, supImportsets = LHpi.ProcessUserParams( importfoil , importlangs , importsets )
-	-- set sensible defaults or throw error on missing sitescript fields or functions
+	LHpi.logFile = LHpi.workdir.."LHpi.log" -- use global LHpi.log unless configured otherwise
+	if SAVELOG~=false then
+		if scriptname then
+			LHpi.logFile = LHpi.workdir .. string.gsub( scriptname , "lua$" , "log" )
+		end
+--		if site.logfile then -- allow sitescripts to explicitely set log file name
+--			LHpi.logFile = site.logfile
+--		end
+	end
 	if not savepath then
 	--- savepath for OFFLINE (read) and SAVEHTML,SAVETABLE (write). must point to an existing directory relative to MA's root.
 	-- @field [parent=#global] #string savepath
-		savepath = "Prices\\" .. string.gsub( scriptname , "%-?v?[%d%.]*%.lua$" , "" ) .. "\\"
+		savepath = LHpi.workdir .. string.gsub( scriptname , "%-?v?[%d%.]*%.lua$" , "" ) .. "\\"
 	end -- if
 	if SAVEHTML or SAVETABLE then
 		ma.PutFile(savepath .. "testfolderwritable" , "true", 0 )
@@ -150,6 +139,64 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 			end
 		end -- if not folderwritable
 	end -- if SAVEHTML
+
+end--function Initialize
+
+--[[- "main" function called by LHpi sitescript.
+ Parameters are passed through sitescript's ImportPrice from Magic Album.
+ This is all that a sitescript should need to do in its ImportPrice once LHpi library has been executed
+  
+ @function [parent=#LHpi] DoImport
+ @param #string importfoil	"Y"|"N"|"O"
+ @param #table importlangs	{ #number (langid)= #string , ... }
+ @param #table importsets	{ #number (setid)= #string , ... }
+]]
+function LHpi.DoImport (importfoil , importlangs , importsets)
+	--load LHpi.Data
+	if DEBUG and ((not dataver) or site.dataver == "" ) then error("undefined dataver!") end
+	if not dataver then dataver = "5" end
+	---	LHpi static set data
+	--@field [parent=#LHpi] #table Data
+	LHpi.Data = LHpi.LoadData(dataver)
+	-- create empty dummy fields for undefined sitescript fields to allow graceful exit
+	if not site then site = {} end
+	if DEBUG and ((not site.langs) or (not next(site.langs)) ) then error("undefined site.langs!") end
+	if not site.langs then site.langs = {} end
+	if DEBUG and ((not site.sets) or (not next(site.sets)) ) then error("undefined site.sets!") end
+	if not site.sets then site.sets = {} end
+	if DEBUG and ((not site.frucs) or (not next(site.frucs)) ) then error("undefined site.frucs!") end
+	if not site.frucs then site.frucs = {} end
+	if DEBUG and ((not site.regex) or site.regex == "" ) then error("undefined site.regex!") end
+	if not site.regex then site.regex = "" end
+	-- read user supplied parameters and modify site.sets table
+	local supImportfoil,supImportlangs, supImportsets = LHpi.ProcessUserParams( importfoil , importlangs , importsets )
+	-- set sensible defaults or throw error on missing sitescript fields or functions
+	if not site.BuildUrl then
+		function site.BuildUrl( setid,langid,frucid,offline )
+			local errormsg = "sitescript " .. scriptname .. ": function site.BuildUrl not implemented!" 
+			ma.Log( "!!critical error: " .. errormsg )
+			error( errormsg )
+		end	-- function
+	end -- if
+	if not site.ParseHtmlData then
+		function site.ParseHtmlData( foundstring )
+			local errormsg = "sitescript " .. scriptname .. ": function site.ParseHtmlData not implemented!" 
+			ma.Log( "!!critical error: " .. errormsg )
+			error( errormsg )
+		end	-- function
+	end -- if
+	-- Don't need to define defaults here as long as BuildCardData checks for their existence before calling them.	
+	--	if not site.BCDpluginPre then
+	--		function site.BCDpluginPre ( card , setid )
+	--			return card,namereplaced,foiltweaked
+	--		end -- function
+	--	end -- if
+	--	if not site.BCDpluginPost then
+	--		function site.BCDpluginPost( card , setid )
+	--			card.pluginData = nil
+	--			return card,namereplaced,foiltweaked
+	--		end -- function
+	--	end -- if
 	if not site.encoding then site.encoding = "cp1252" end
 	if not site.currency then site.currency = "$" end
 	if not site.namereplace then site.namereplace={} end
@@ -218,32 +265,6 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 			end -- for
 		end -- for sid,_setname
 	end -- if CHECKEXPECTED
-	if not site.BuildUrl then
-		function site.BuildUrl( setid,langid,frucid,offline )
-			local errormsg = "sitescript " .. scriptname .. ": function site.BuildUrl not implemented!" 
-			ma.Log( "!!critical error: " .. errormsg )
-			error( errormsg )
-		end	-- function
-	end -- if
-	if not site.ParseHtmlData then
-		function site.ParseHtmlData( foundstring )
-			local errormsg = "sitescript " .. scriptname .. ": function site.ParseHtmlData not implemented!" 
-			ma.Log( "!!critical error: " .. errormsg )
-			error( errormsg )
-		end	-- function
-	end -- if
-	-- Don't need to define defaults here as long as BuildCardData checks for their existence before calling them.	
-	--	if not site.BCDpluginPre then
-	--		function site.BCDpluginPre ( card , setid )
-	--			return card,namereplaced,foiltweaked
-	--		end -- function
-	--	end -- if
-	--	if not site.BCDpluginPost then
-	--		function site.BCDpluginPost( card , setid )
-	--			card.pluginData = nil
-	--			return card,namereplaced,foiltweaked
-	--		end -- function
-	--	end -- if
 	
 	-- build sourceList of urls/files to fetch
 	local sourceList, sourceCount = LHpi.ListSources( supImportfoil , supImportlangs , supImportsets )
@@ -561,8 +582,8 @@ function LHpi.LoadData( version )
 	local Data=nil
 	ma.SetProgress( "Loading LHpi.Data", 0 )
 	do -- load LHpi predefined set data from external file
-		local dataname = "Prices\\lib\\LHpi.Data-v" .. version .. ".lua"
-		local olddataname = "Prices\\LHpi.Data-v" .. version .. ".lua"
+		local dataname = LHpi.workdir.."lib\\LHpi.Data-v" .. version .. ".lua"
+		local olddataname = LHpi.workdir.."LHpi.Data-v" .. version .. ".lua"
 		local LHpiData = ma.GetFile( dataname )
 		local oldLHpiData = ma.GetFile ( olddataname )
 		if oldLHpiData then
@@ -596,7 +617,7 @@ end--function LHpi.LoadData
 
 --[[- read MA suplied parameters and configure script instance.
  returns shortened versions of the ma supplied global parameters
- by strips unsupported (by sitescript) langs and sets;
+ by stripping unsupported (by sitescript) langs and sets;
  and modifies global site.sets to exclude unwanted langs, frucs and sets
 
  @function [parent=#LHpi] ProcessUserParams
@@ -1841,15 +1862,7 @@ function LHpi.Log( str , l , f , a )
 --if DEBUG then Log() end loops
 	local loglevel = l or 0
 	local apnd = a or 1
-	local logfile = "Prices\\LHpi.log" -- fallback if global #string scriptname is missing
-	if SAVELOG~=false then
-		if scriptname then
-			logfile = "Prices\\" .. string.gsub( scriptname , "lua$" , "log" )
-		end
-	end
-	if f then
-		logfile = f
-	end
+	local logfile = f or LHpi.logFile
 	if loglevel == 1 then
 		str = " " .. str
 	elseif loglevel == 2 then
@@ -1942,6 +1955,7 @@ function LHpi.Logtable( tbl , str , l )
 	end
 end -- function LHpi.Logtable
 
+LHpi.Initialize()
 --LHpi.Log( "\239\187\191LHpi library loaded and executed successfully" , 0 , nil , 0 ) -- add unicode BOM to beginning of logfile
 LHpi.Log( "LHpi library " .. LHpi.version .. " loaded and executed successfully." , 0 , nil , 0 )
 return LHpi

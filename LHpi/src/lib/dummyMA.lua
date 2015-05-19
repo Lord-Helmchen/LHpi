@@ -27,6 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --[[ CHANGES
 added 814
 fixed dummy.forceEnv
+
+added dummy.CompareSiteSets (moved from LHpi.magickartenmarkt.lua)
 ]]
 
 --TODO make most dummy functions local
@@ -93,7 +95,8 @@ end
 -- @return #string file OR nil instead on error
 function ma.GetFile(filepath)
 	print(string.format("ma.GetFile(%s)", filepath) )
-	local handle = io.open(filepath,"r")
+	local handle,err = io.open(filepath,"r")
+	if err then print("GetFile error: " .. tostring(err)) end
 	local file = nil
     if handle then
 		local temp = io.input()	-- save current file
@@ -103,7 +106,7 @@ function ma.GetFile(filepath)
 		io.input(temp)			-- restore previous current file
 	end
 	return file
-end
+end--function ma.GetFile
 
 --- PutFile.
 -- Saves data to the file. For security reasons the file is placed inside the Magic Album folder.
@@ -122,12 +125,13 @@ function ma.PutFile(filepath, data, append)
 		print(string.format("ma.PutFile(%s ,DATA, append=%q)",filepath, tostring(append) ) )
 	end
 	local a = append or 0
-	local handle
+	local handle,err
 	if append == 0 then
-		handle = io.open(filepath,"w")	-- get file handle in new file mode
+		handle,err = io.open(filepath,"w")	-- get file handle in new file mode
 	else
-		handle = io.open(filepath,"a")	-- get file handle in append mode
+		handle,err = io.open(filepath,"a")	-- get file handle in append mode
 	end
+	if err then print("PutFile error: " .. tostring(err)) end	
 	local temp = io.output()	-- save current file
 	io.output( handle )			-- open a new current file
 	io.write( data )	
@@ -481,6 +485,27 @@ function dummy.CompareDataSets(mapath)
 	end
 end--function CompareDataSets
 
+--[[- compare site.sets with dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets.
+finds sets from dummy's lists that are not in site.sets.
+
+ @function [parent=#dummy] CompareSiteSets
+]]
+function dummy.CompareSiteSets()
+	local dummySets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
+	local missing = {}
+	for sid,name in pairs(dummySets) do
+		if site.sets[sid] then
+			--print(string.format("found %3i : %q",sid,name) )
+		else
+			table.insert(missing,{ id=sid, name=name})
+		end
+	end
+	print(#missing .. " sets from dummy missing in site.sets:")
+	for i,set in pairs(missing) do
+		print(string.format("[%3i] = %q;",set.id,set.name) )
+	end
+end--function CompareSiteSets
+
 --- @field [parent=#dummy] #table alllangs
 dummy.alllangs = {
  [1]  = "English";
@@ -711,12 +736,12 @@ function main()
 		CHECKEXPECTED = true,
 		STRICTEXPECTED = true,
 		OFFLINE = true,
-		OFFLINE = false,
+--		OFFLINE = false,
 		SAVELOG = true,
 		SAVEHTML = true,
 --		SAVEHTML = false,
 		DEBUG = true,
---		DEBUGFOUND = true,
+		DEBUGFOUND = true,
 --		DEBUGVARIANTS = true,
 --		SAVETABLE=true,
 	}
@@ -733,7 +758,7 @@ function main()
 	}
 	-- select a predefined script to be tested
 --	dummy.fakesitescript()
-	local script=scripts[8]
+	local script=scripts[7]
 	dummy.loadscript(script.name,script.path,script.savepath)
 
 	-- only load library (and Data)
@@ -747,7 +772,7 @@ function main()
 	local importfoil = "y"
 	local importlangs = { [1] = "eng" }
 --	local importlangs = { [5] = "FOO" }
---	local importlangs = dummy.alllangs
+	local importlangs = dummy.alllangs
 --	local importsets = { [0] = "fakeset"; }
 	local importsets = { [800]="some set" }
 --	local importsets = { [220]="foo";[800]="bar";[0]="baz";}

@@ -81,9 +81,9 @@ local mkmtokenfile = "mkmtokens.DarkHelmet"
 local responseFormat = "json"
 
 ---
-local mkmexample = false
-local widgetonly = true
-local sandbox = false
+--mkmexample = true
+widgetonly = true
+sandbox = false
 
 --- also complain if drop,namereplace or foiltweak count differs; default false
 -- @field [parent=#global] #boolean STRICTEXPECTED
@@ -123,7 +123,7 @@ OFFLINE = true
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.14"
+libver = "2.15"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
 dataver = "5"
@@ -140,8 +140,9 @@ scriptname = "LHpi.magickartenmarkt-v".. libver .. "." .. dataver .. "." .. scri
 
 ---	LHpi library
 -- will be loaded by ImportPrice
+-- do not delete already present LHpi (needed for helper mode)
 -- @field [parent=#global] #table LHpi
-LHpi = {}
+LHpi = LHpi or {}
 
 --[[- Site specific configuration
  Settings that define the source site's structure and functions that depend on it
@@ -244,6 +245,13 @@ end -- function ImportPrice
  @function [parent=#site] Initialize
 ]]
 function site.Initialize( mode )
+	if mode.helper then
+		site.workdir = workdir
+	else
+		if OFFLINE~=true then
+			error("LHpi.magickartenmarkt only works in OFFLINE mode. Use LHpi.mkm-helper.lua to fetch source data.")
+		end	
+	end
 	LHpi.Log(string.format("Importing %q prices into MA regular price column",site.priceTypes[useAsRegprice] or "AVG"))
 	LHpi.Log(string.format("Importing %q prices into MA foil price column",site.priceTypes[useAsFoilprice] or "LOWFOIL"))
 	if not require then
@@ -272,7 +280,7 @@ function site.Initialize( mode )
 		error("xml parsing not implemented yet")
 		--Xml = require "luaxml"
 	end
-	if OFFLINE then
+	if OFFLINE and (not mode.helper) then
 		--skip OAuth preparation
 		--when launched from ma, dll loading is not possible.
 	else 
@@ -281,16 +289,11 @@ function site.Initialize( mode )
 		site.oauth = {}
 		site.oauth.client, site.oauth.params = site.PrepareOAuth()
 	end
-	if mode.testOAuth then
-		site.OAuthTest( site.oauth.params )
+	
+	if mode.helper then
+		print("LHpi.magickartenmarkt.lua running in helper mode")
 	end
-	if mode.checksets then
-		site.CompareSiteSets()
-	end
-	if mode.getsets then
-		local expansionList = site.FetchExpansionList()
-		site.ParseExpansions(expansionList )
-	end
+	
 	--create an empty file to hold missorted cards
 	-- that is, the mkm expansion does not match the MA set
 		LHpi.Log("site.sets = {",0,"missorted."..responseFormat,0 )
@@ -307,7 +310,7 @@ ideally, tokens/secrets should be read from a file instead of being hardcoded.
  @return #table params	oauth parameters
 ]]
 function site.PrepareOAuth()
-	local tokens = "Prices\\lib\\" .. mkmtokenfile
+	local tokens = site.workdir.."lib\\" .. mkmtokenfile
 	tokens = ma.GetFile(tokens)
 	if not tokens then error("magiccardmarket token file %q not found!") end
 	tokens = Json.decode(tokens)
@@ -370,6 +373,7 @@ function site.FetchSourceDataFromOAuth( url, details )
 		--error("stopped before actually contacting the server")
 		print("PerformRequest:")
 	end
+	
 	local code, headers, status, body = site.oauth.client:PerformRequest( "GET", url )
 	if code == 200 or code == 204 then
 	elseif code == 404 then
@@ -380,9 +384,9 @@ function site.FetchSourceDataFromOAuth( url, details )
 --		LHpi.Log(("arguments=".. LHpi.Tostring(arguments)))
 --		LHpi.Log(("post_body=".. LHpi.Tostring(post_body)))
 		LHpi.Log(("code=".. LHpi.Tostring(code)))
---		LHpi.Log(("BuildRequest:"))
---		local headers, arguments, post_body = site.oauth.client:BuildRequest( "GET", url )
---		LHpi.Log(("headers=".. LHpi.Tostring(headers)))
+		LHpi.Log(("BuildRequest:"))
+		local headers, arguments, post_body = site.oauth.client:BuildRequest( "GET", url )
+		LHpi.Log(("headers=".. LHpi.Tostring(headers)))
 		LHpi.Log(("status=".. LHpi.Tostring(status)))
 --		LHpi.Log(("body=".. LHpi.Tostring(body)))
 		--error (LHpi.Tostring(statusline))
@@ -396,6 +400,7 @@ end--function site.FetchSourceDataFromOAuth
  @return #string list		List of expansions, in xml or json format
 ]]
 function site.FetchExpansionList()
+	if not dummy then error("FetchExpansionList needs to be run from dummyMA!") end
 	local xmldata
 	local url = "www.mkmapi.eu/ws/v1.1"
  	if sandbox then
