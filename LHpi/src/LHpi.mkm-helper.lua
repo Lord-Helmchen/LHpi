@@ -40,6 +40,9 @@ mode.getsets=true
 
 --  Don't change anything below this line unless you know what you're doing :-) --
 
+workdir="src\\" 
+-- mode.workdir="Prices\\" -- this is default in LHpi lib
+
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
 libver = "2.15"
@@ -66,10 +69,6 @@ LHpi = {}
 -- site namespace is taken by LHpi.magickartenmarkt.lua
 -- @type helper
 helper={}
-
-workdir="src\\" 
--- helper.workdir="Prices\\" -- this is default in LHpi lib
-
 
 --[[- "main" function.
  called by Magic Album to import prices. Parameters are passed from MA.
@@ -119,8 +118,6 @@ function main(mode)
 	end
 	print("main() finished")
 end--function main
-
-
 
 
 --[[- fetch list of expansions from mkmapi

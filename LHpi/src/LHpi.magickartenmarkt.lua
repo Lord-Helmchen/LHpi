@@ -189,7 +189,6 @@ site.encoding="utf8"
 	-- will be passed to site.Initialize to trigger nonstandard modes of operation	
 ]]
 function ImportPrice( importfoil , importlangs , importsets , scriptmode)
-	scriptmode = scriptmode or {}
 	if SAVELOG~=false then
 		ma.Log( "Check " .. scriptname .. ".log for detailed information" )
 	end
@@ -245,27 +244,31 @@ end -- function ImportPrice
  @function [parent=#site] Initialize
 ]]
 function site.Initialize( mode )
+print(LHpi.Tostring(mode))
 	if mode.helper then
-		site.workdir = workdir
+		--site.workdir = mode.workdir
 	else
+		--site.workdir = "Prices\\"
 		if OFFLINE~=true then
-			error("LHpi.magickartenmarkt only works in OFFLINE mode. Use LHpi.mkm-helper.lua to fetch source data.")
+--			error("LHpi.magickartenmarkt only works in OFFLINE mode. Use LHpi.mkm-helper.lua to fetch source data.")
 		end	
 	end
+	site.workdir = workdir or "Prices\\"
+	print(site.workdir)
 	LHpi.Log(string.format("Importing %q prices into MA regular price column",site.priceTypes[useAsRegprice] or "AVG"))
 	LHpi.Log(string.format("Importing %q prices into MA foil price column",site.priceTypes[useAsFoilprice] or "LOWFOIL"))
 	if not require then
 		LHpi.Log("trying to work around Magic Album lua sandbox limitations...")
 		--emulate require(modname) using dofile; only works for lua files, not dlls.
-		local packagePath = 'Prices\\lib\\ext\\'
+		local packagePath = site.workdir..'lib\\ext\\'
 		require = function (fname)
 			local donefile
 			donefile = dofile( packagePath .. fname .. ".lua" )
 			return donefile
 		end-- function require
 	else
-		package.path = 'Prices\\lib\\ext\\?.lua;' .. package.path
-		package.cpath= 'Prices\\lib\\bin\\?.dll;' .. package.cpath
+		package.path = site.workdir..'lib\\ext\\?.lua;' .. package.path
+		package.cpath= site.workdir..'lib\\bin\\?.dll;' .. package.cpath
 		--print(package.path.."\n"..package.cpath)
 	end
 	if mode.json then
@@ -292,6 +295,10 @@ function site.Initialize( mode )
 	
 	if mode.helper then
 		print("LHpi.magickartenmarkt.lua running in helper mode")
+	end
+	if mode.getsets then
+		local expansionList = site.FetchExpansionList()
+		site.ParseExpansions(expansionList )
 	end
 	
 	--create an empty file to hold missorted cards
@@ -470,111 +477,6 @@ function site.ParseExpansions(list)
 		LHpi.Log(string, 0,file )
 	LHpi.Log("\t}\n--end table site.sets",0,file)
 end
-
---[[- compare site.sets with dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets.
-finds sets from dummy's lists that are not in site.sets.
-
- @function [parent=#site] CompareSiteSets
-]]
-function site.CompareSiteSets()
-	if not dummy then error("CompareSiteSetsneeds to be run from dummyMA!") end
-	local dummySets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
-	local missing = {}
-	for sid,name in pairs(dummySets) do
-		if site.sets[sid] then
-			--print(string.format("found %3i : %q",sid,name) )
-		else
-			table.insert(missing,{ id=sid, name=name})
-		end
-	end
-	print(#missing .. " sets from dummy missing in site.sets:")
-	for i,set in pairs(missing) do
-		print(string.format("[%3i] = %q;",set.id,set.name) )
-	end
-end--function CompareSiteSets
-
-
---[[- test OAuth implementation
- @function [parent=#site] OAuthTest
- @param #table params
-]]
-function site.OAuthTest( params )
-	print("site.OAuthTest started")
-	print(LHpi.Tostring(params))
-
-	-- "manual" Authorization header construction
-	local Crypto = require "crypto"
-	local Base64 = require "base64"
-	--
-	-- Like URL-encoding, but following OAuth's specific semantics
-	local function oauth_encode(val)
-		return val:gsub('[^-._~a-zA-Z0-9]', function(letter)
-			return string.format("%%%02x", letter:byte()):upper()
-		end)
-	end
-
-	params.oauth_timestamp = params.oauth_timestamp or tostring(os.time())
-	params.oauth_nonce = params.oauth_nonce or Crypto.hmac.digest("sha1", tostring(math.random()) .. "random" .. tostring(os.time()), "keyyyy")
-
-	local baseString = "GET&" .. oauth_encode( params.url ) .. "&"
-	print(baseString)
-	local paramString = "oauth_consumer_key=" .. oauth_encode(params.oauth_consumer_key) .. "&"
-					..	"oauth_nonce=" .. oauth_encode(params.oauth_nonce) .. "&"
-					..	"oauth_signature_method=" .. oauth_encode(params.oauth_signature_method) .. "&"
-					..	"oauth_timestamp=" .. oauth_encode(params.oauth_timestamp) .. "&"
-					..	"oauth_token=" .. oauth_encode(params.oauth_token) .. "&"
-					..	"oauth_version=" .. oauth_encode(params.oauth_version) .. ""
-	paramString = oauth_encode(paramString)
-	print(paramString)
-	baseString = baseString .. paramString
-	print(baseString)
-	local signingKey = oauth_encode(params.appSecret) .. "&" .. oauth_encode(params.accessTokenSecret)
-	print(signingKey)--ok until here
-	local rawSignature = Crypto.hmac.digest("sha1", baseString, signingKey, true)
-	print(rawSignature)
-	local signature = Base64.encode( rawSignature )
-	print(signature)
-	local authString = "Authorization: Oauth "
-		..	"realm=\"" .. oauth_encode(params.url) .. "\", "
-		..	"oauth_consumer_key=\"" .. oauth_encode(params.oauth_consumer_key) .. "\", "
-		..	"oauth_nonce=\"" .. oauth_encode(params.oauth_nonce) .. "\", "
-		..	"oauth_signature_method=\"" .. oauth_encode(params.oauth_signature_method) .. "\", "
-		..	"oauth_timestamp=\"" .. oauth_encode(params.oauth_timestamp) .. "\", "
-		..	"oauth_token=\"" .. oauth_encode(params.oauth_token) .. "\", "
-		..	"oauth_version=\"" .. oauth_encode(params.oauth_version) .. "\", "
-		..  "oauth_signature=\"" .. signature .. "\""
-	print(authString)
-
-	-- OAuth library use
-	local OAuth = require "OAuth"
-	--print(LHpi.Tostring(params))
-	local args
-	if params.oauth_timestamp and params.oauth_nonce then
-		args = { timestamp = params.oauth_timestamp, nonce = params.oauth_nonce }
-		params.oauth_timestamp = nil
-		params.oauth_nonce = nil
-	end
-	local client = OAuth.new(params.oauth_consumer_key, params.appSecret, {} )
-	--client.SetToken( client, params.oauth_token )
-	client:SetToken( params.oauth_token )
-	--client.SetTokenSecret(client, params.accessTokenSecret)
-	client:SetTokenSecret( params.accessTokenSecret)
-	print("BuildRequest:")
-	--local headers, arguments, post_body = client.BuildRequest( client, "GET", params.url, args )
-	local headers, arguments, post_body = client:BuildRequest( "GET", params.url, args )
-	print("headers=", LHpi.Tostring(headers))
-	print("arguments=", LHpi.Tostring(arguments))
-	print("post_body=", LHpi.Tostring(post_body))
-
-	error("stopped before actually contacting the server")
-	print("PerformRequest:")
-	--local response_code, response_headers, response_status_line, response_body = client.PerformRequest( client, "GET", params.url, args )
-	local response_code, response_headers, response_status_line, response_body = client.PerformRequest( "GET", params.url, args )
-	print("code=" .. LHpi.Tostring(response_code))
-	print("headers=", LHpi.Tostring(response_headers))
-	print("status_line=", LHpi.Tostring(response_status_line))
-	print("body=", LHpi.Tostring(response_body))
-end--function OAuthTest
 
 --[[-  build source url/filename.
  Has to be done in sitescript since url structure is site specific.

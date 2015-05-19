@@ -82,6 +82,8 @@ end -- function ImportPrice
  Set sensible defaults for unset or missing options,
  configure LHpi behaviour and prevent undefined logfile locations
  This should eventually enable us to get rid of most global variables.
+ 
+ @function [parent=#LHpi] Initialize
 ]]  
 function LHpi.Initialize()
 	--LHpi usually resides in MagicAlbum\\Prices. Allow for global workdir to explicitly set otherwise.

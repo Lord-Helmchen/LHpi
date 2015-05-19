@@ -736,7 +736,7 @@ function main()
 		CHECKEXPECTED = true,
 		STRICTEXPECTED = true,
 		OFFLINE = true,
---		OFFLINE = false,
+		OFFLINE = false,
 		SAVELOG = true,
 		SAVEHTML = true,
 --		SAVEHTML = false,
@@ -758,7 +758,7 @@ function main()
 	}
 	-- select a predefined script to be tested
 --	dummy.fakesitescript()
-	local script=scripts[7]
+	local script=scripts[8]
 	dummy.loadscript(script.name,script.path,script.savepath)
 
 	-- only load library (and Data)
@@ -783,7 +783,8 @@ function main()
 	-- now try to break the script :-)
 	--require = nil--test sandbox workaround
 --	LHpi.DoImport(importfoil, importlangs, importsets)
-	ImportPrice( importfoil, importlangs, importsets )
+--	ImportPrice( importfoil, importlangs, importsets )
+	ImportPrice( importfoil, importlangs, importsets , { getsets=true })
 
 	-- demo LHpi helper functions:
 --	print(LHpi.Tostring( "this is a string." ))
