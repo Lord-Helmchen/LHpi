@@ -218,6 +218,9 @@ dummy.version = "0.5"
 @return #table LHpi library object
 ]]
 function dummy.loadlibonly(libver,path,savepath)
+	if libver>2.14 and (not _VERSION == "Lua 5.1") then
+		error("this is only for legacy libver < 2.14 without global workdir support!")
+	end
 	local LHpi = {}
 	local path = path or ""
 	local savepath = savepath or ""
@@ -259,7 +262,7 @@ function dummy.loadlibonly(libver,path,savepath)
 		end	-- if not LHpilib else
 	end -- do load LHpi library
 	collectgarbage() -- we now have LHpi table with all its functions inside, let's clear LHpilib and execlib() from memory
-	LHpi.Log( "LHpi lib is ready to use." )
+	print( "LHpi lib is ready to use." )
 	return LHpi
 end -- function dummy.loadlibonly
 
@@ -421,11 +424,18 @@ end--function dummy.performancetest
 --[[- compare dummy's set tables with Prices/Database/Sets.txt.
 Before using this function, you need to convert Sets.txt from UCS-2 to UTF-8.
  @function [parent=#dummy] CompareDummySets
- @param #string mapath	path to MA
  @param #number libver
+ @param #string mapath	path to MA
 ]]
 function dummy.CompareDummySets(mapath,libver)
-	local LHpi = dummy.loadlibonly(libver or 2.14,dummy.path,dummy.savepath)
+	if not LHpi then
+		if libver < 2.15 then
+		dummy.loadlibonly(libver,workdir,dummy.savepath)
+		else
+			LHpi = dofile(workdir.."lib\\LHpi-v"..libver..".lua")
+			LHpi.Log( "LHpi lib is ready to use." ,1)
+		end
+	end
 	local setsTxt = ma.GetFile(mapath.."\\Database\\Sets.txt")
 	setsTxt= setsTxt:gsub( "^\239\187\191" , "" )
 	--local s,e,firstline = string.find(setsTxt,"([^\n]+)")
@@ -448,38 +458,43 @@ function dummy.CompareDummySets(mapath,libver)
 	for i,set in pairs(missing) do
 		print(string.format("[%3i] = %q;",set.id,set.name) )
 	end
-end--function CompareSetlist 
+end--function CompareDummySets
 
---[[- compare LHpi.Data.sets with Prices/Database/Sets.txt
-Before using this function, you need to convert Sets.txt from UCS-2 to UTF-8.
+--[[- compare LHpi.Data.sets with dummy's set tables.
 
  @function [parent=#dummy] CompareDataSets
- @param #string mapath	path to MA
  @param #number libver
  @param #number dataver
 ]]
-function dummy.CompareDataSets(mapath)
-	local LHpi = dummy.loadlibonly(libver or 2.14,dummy.path,dummy.savepath)
-	local Data = LHpi.LoadData(dataver or 5)
-	local setsTxt = ma.GetFile(mapath.."\\Database\\Sets.txt")
-	setsTxt= setsTxt:gsub( "^\239\187\191" , "" )
-	
-	--local s,e,firstline = string.find(setsTxt,"([^\n]+)")
-	--print(LHpi.ByteRep(firstline))
-	local revDummySets = {}
-	for sid,set in pairs(Data.sets) do
-		revDummySets[Data.sets[sid].name] = sid
+function dummy.CompareDataSets(libver,dataver)
+print(libver)
+	if not LHpi then
+		if libver < 2.15 then
+			LHpi = dummy.loadlibonly(libver,workdir,dummy.savepath)
+			LHpi.Data = LHpi.LoadData(dataver or 5)
+		else
+print("foo")
+			LHpi = dofile(workdir.."lib\\LHpi-v"..libver..".lua")
+			LHpi.Log( "LHpi lib is ready to use." ,1)
+		end
+	end
+--	local setsTxt = ma.GetFile(mapath.."\\Database\\Sets.txt")
+--	setsTxt= setsTxt:gsub( "^\239\187\191" , "" )
+	local dummySets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
+	local revDataSets = {}
+	for sid,set in pairs(LHpi.Data.sets) do
+		revDataSets[LHpi.Data.sets[sid].name] = sid
 	end--for id,name
 	local missing = {}
-	for sid,name in string.gmatch( setsTxt, "(%d+)%s+([^\n]+)\n") do
+	for sid,name in pairs(dummySets) do
 		--print( string.format("sid %3i : %s",sid,name) )
-		if revDummySets[name] then
+		if revDataSets[name] then
 			--print(string.format("found %3i : %q",sid,name) )
 		else
 			table.insert(missing,{ id=sid, name=name})
 		end
 	end
-	print(#missing .. " sets from Database/Sets.txt missing in LHpi.Data:")
+	print(#missing .. " sets from dummy's set list missing in LHpi.Data:")
 	for i,set in pairs(missing) do
 		print(string.format("[%3i] = %q;",set.id,set.name) )
 	end
@@ -528,6 +543,9 @@ dummy.alllangs = {
 
 --- @field [parent=#dummy] #table promosets
 dummy.promosets = {
+ [55] = "Ugin’s Fate Promos";
+ [53] = "Holiday Gift Box Promos";
+ [52] = "Intro Pack Promos";
  [50] = "Full Box Promotion";
  [45] = "Magic Premiere Shop";
  [42] = "Summer of Magic Promos";
@@ -561,6 +579,11 @@ dummy.promosets = {
 
 --- @field [parent=#dummy] #table specialsets
 dummy.specialsets = {
+ [821] = "Challenge Deck: Defeat a God";
+ [820] = "Duel Decks: Elspeth vs. Kiora";
+ [819] = "Modern Masters 2015 Edition";
+ [817] = "Duel Decks: Anthology";
+ [815] = "Fate Reforged Clash Pack";
  [814] = "Commander 2014 Edition"; 
  [812] = "Duel Decks: Speed vs. Cunning";
  [811] = "Magic 2015 Clash Pack";
@@ -624,6 +647,8 @@ dummy.specialsets = {
 }
 --- @field [parent=#dummy] #table expansionsets
 dummy.expansionsets = {
+ [818] = "Dragons of Tarkir";
+ [816] = "Fate Reforged";
  [813] = "Khans of Tarkir";
  [806] = "Journey into Nyx";
  [802] = "Born of the Gods";
@@ -722,10 +747,15 @@ dummy.coresets = {
 function main()
 	print("dummy says: Hello " .. _VERSION .. "!")
 	local t1 = os.clock()
-	--adjust paths if not developing inside "Magic Album\Prices"
-	dummy.path="src\\"
+	--- global working directory to allow operation outside of MA\Prices hierarchy
+	-- @field [parent=#global] workdir
+	workdir="src\\"
+	local libver=2.15
+	local dataver=5
+	
 	--don't keep a seperate dev savepath, though
 	dummy.savepath = "src\\..\\..\\..\\Magic Album\\Prices"
+	site = { scriptname=scriptname, dataver=dataver, logfile=logfile or nil, savepath=dummy.savepath or nil }
 	--package.path = 'src\\lib\\ext\\?.lua;' .. package.path
 	--package.cpath= 'src\\lib\\bin\\?.dll;' .. package.cpath
 	dummy.env={--define debug enviroment options
@@ -746,23 +776,23 @@ function main()
 --		SAVETABLE=true,
 	}
 	local scripts={
-		[0]={name="lib\\LHpi.sitescriptTemplate-v2.14.5.12.lua",path=dummy.path,savepath=dummy.savepath},
-		[1]={name="LHpi.mtgmintcard.lua",path=dummy.path,savepath=dummy.savepath},
-		[2]={name="LHpi.magicuniverseDE.lua",path=dummy.path,savepath=dummy.savepath},
-		[3]={name="LHpi.trader-onlineDE.lua",path=dummy.path,savepath=dummy.savepath},
-		[4]={name="LHpi.tcgplayerPriceGuide.lua",path=dummy.path,savepath=dummy.savepath},
+		[0]={name="lib\\LHpi.sitescriptTemplate-v2.14.5.12.lua",path=workdir,savepath=dummy.savepath},
+		[1]={name="LHpi.mtgmintcard.lua",path=workdir,savepath=dummy.savepath},
+		[2]={name="LHpi.magicuniverseDE.lua",path=workdir,savepath=dummy.savepath},
+		[3]={name="LHpi.trader-onlineDE.lua",path=workdir,savepath=dummy.savepath},
+		[4]={name="LHpi.tcgplayerPriceGuide.lua",path=workdir,savepath=dummy.savepath},
 		[5]={name="\\MTG Mint Card.lua",path=dummy.savepath,savepath=dummy.savepath},
 		[6]={name="\\Import Prices.lua",path=dummy.savepath,savepath=dummy.savepath},
-		[7]={name="LHpi.mtgprice.com.lua",path=dummy.path,savepath=dummy.savepath},
-		[8]={name="LHpi.magickartenmarkt.lua",path=dummy.path,savepath=dummy.savepath},
+		[7]={name="LHpi.mtgprice.com.lua",path=workdir,savepath=dummy.savepath},
+		[8]={name="LHpi.magickartenmarkt.lua",path=workdir,savepath=dummy.savepath},
 	}
 	-- select a predefined script to be tested
 --	dummy.fakesitescript()
-	local script=scripts[8]
-	dummy.loadscript(script.name,script.path,script.savepath)
+--	local script=scripts[8]
+--	dummy.loadscript(script.name,script.path,script.savepath)
 
 	-- only load library (and Data)
---	LHpi = dummy.loadlibonly(2.14,dummy.path,dummy.savepath)
+--	LHpi = dummy.loadlibonly(2.14,workdir,dummy.savepath)
 --	LHpi.Data = LHpi.LoadData(5)
 
 	-- force debug enviroment options
@@ -781,19 +811,17 @@ function main()
 --	local importsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 
 	-- now try to break the script :-)
-	--require = nil--test sandbox workaround
 --	LHpi.DoImport(importfoil, importlangs, importsets)
 --	ImportPrice( importfoil, importlangs, importsets )
-	ImportPrice( importfoil, importlangs, importsets , { getsets=true })
 
 	-- demo LHpi helper functions:
---	print(LHpi.Tostring( "this is a string." ))
+--	print(LHpi.Tostring( { ["this"]=1, is=2, [3]="a", ["table"]="string" } ))
 --	print(LHpi.ByteRep("Zwölffüßler"))
 
 	-- utility functions from dummy:
 --	TestPerformance(10,script,importfoil,importlangs,importsets,"time.log")
---	dummy.CompareDummySets(dummy.savepath.."\\..",2.14)
---	dummy.CompareDataSets(dummy.savepath.."\\..",2.14,5)
+--	dummy.CompareDummySets(dummy.savepath.."\\..",2.15)
+	dummy.CompareDataSets(2.15,5)
 
 	-- use ProFi to profile the script
 --	ProFi = require 'ProFi'
@@ -816,5 +844,6 @@ function main()
 	print("dummy says: Goodbye lua!")
 end--main()
 
-main()
+local ret = main()
+print(tostring(ret))
 --EOF

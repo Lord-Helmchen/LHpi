@@ -312,36 +312,5 @@ site.sets = {
  @param nil
 ]]
 function site.SetExpected()
---[[- table of expected results.
- as of script release. Used as sanity check during sitescript development and source of insanity afterwards ;-)
- For each setid, if unset defaults to expect all cards to be set.
- 
-  fields are for subtables indexed by #number setid.
- { #number (setid)= #table { #table pset= #table { #number (langid)= #number, ... }, #table failed= #table { #number (langid)= #number, ... }, dropped= #number , namereplaced= #number , foiltweaked= #number } , ... }
- 
- @type site.expected
- @field #table pset				{ #number (langid)= #number, ... } (optional) default depends on site.expected.EXPECTTOKENS
- @field #table failed			{ #number (langid)= #number, ... } (optional) default { 0 , ... }
- @field #number dropped			(optional) default 0
- @field #number namereplaced	(optional) default 0
- @field #number foiltweaked		(optional) default 0
- ]]
-	site.expected = {
---- pset defaults to LHpi.Data.sets[setid].cardcount.reg, if available and not set otherwise here.
---  LHpi.Data.sets[setid]cardcount has 6 fields you can use avoid hardcoded numbers here: { reg, tok, both, nontr, repl, all }.
-
---- if EXPECTTOKENS is true, LHpi.Data.sets[setid].cardcount.tok is added to pset default.
--- @field [parent=#site.expected] #boolean EXPECTTOKENS
-	EXPECTTOKENS = false,
---- if EXPECTNONTRAD is true, LHpi.Data.sets[setid].cardcount.nontrad is added to pset default.
--- @field [parent=#site.expected] #boolean EXPECTNONTRAD
-	EXPECTNONTRAD = true,
---- if EXPECTREPL is true, LHpi.Data.sets[setid].cardcount.repl is added to pset default.
--- @field [parent=#site.expected] #boolean EXPECTREPL
-	EXPECTREPL = true,
--- -- Core sets
---[808] = { pset={ LHpi.Data.sets[808].cardcount.reg+LHpi.Data.sets[808].cardcount.tok, nil, LHpi.Data.sets[808].cardcount.reg }, failed={ 0, nil, LHpi.Data.sets[808].cardcount.tok }, dropped=1 },
---[788] = { pset={ 249+11, nil, 249 }, failed={ 0, nil, 11 }, dropped=0, namereplaced=1, foiltweaked=0 }, -- M2013
-	}--end table site.expected
 end--function site.SetExpected()
 --EOF

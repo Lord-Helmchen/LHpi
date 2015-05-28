@@ -33,6 +33,8 @@ migrate to other sitescripts:
 
 ]]
 
+--TODO check if site.BuildUrl param offline is/should be deprecated
+
 -- options that control the amount of feedback/logging done by the script
 
 --- more detailed log; default false
@@ -81,9 +83,8 @@ local mkmtokenfile = "mkmtokens.DarkHelmet"
 local responseFormat = "json"
 
 ---
---mkmexample = true
-widgetonly = true
-sandbox = false
+local widgetonly = false
+--local sandbox = true
 
 --- also complain if drop,namereplace or foiltweak count differs; default false
 -- @field [parent=#global] #boolean STRICTEXPECTED
@@ -122,21 +123,27 @@ OFFLINE = true
 --DEBUGVARIANTS = true
 
 --- revision of the LHpi library to use
--- @field [parent=#global] #string libver
-libver = "2.15"
+-- @field #string libver
+local libver = "2.15"
 --- revision of the LHpi library datafile to use
--- @field [parent=#global] #string dataver
-dataver = "5"
+-- @field #string dataver
+local dataver = "5"
 --- sitescript revision number
--- @field [parent=#global] string scriptver
-scriptver = "2"
+-- @field  string scriptver
+local scriptver = "2"
 --- should be similar to the script's filename. Used for loging and savepath.
--- @field [parent=#global] #string scriptname
-scriptname = "LHpi.magickartenmarkt-v".. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
+-- @field  #string scriptname
+local scriptname = "LHpi.magickartenmarkt-v".. libver .. "." .. site.dataver .. "." .. scriptver .. ".lua"
 --- savepath for OFFLINE (read) and SAVEHTML (write). must point to an existing directory relative to MA's root.
 -- set by LHpi lib unless specified here.
--- @field [parent=#global] #string savepath
---savepath = "Prices\\" .. string.gsub( scriptname , "%-v%d+%.%d+%.lua$" , "" ) .. "\\"
+-- @field  #string savepath
+--local savepath = "Prices\\" .. string.gsub( scriptname , "%-v%d+%.%d+%.lua$" , "" ) .. "\\"
+local savepath = nil
+--- log file name. can be set explicitely via site.logfile or automatically.
+-- defaults to LHpi.log unless SAVELOG is true.
+-- @field #string logfile
+--local logfile = "Prices\\" .. string.gsub( site.scriptname , "lua$" , "log" )
+local logfile = nil
 
 ---	LHpi library
 -- will be loaded by ImportPrice
@@ -145,10 +152,17 @@ scriptname = "LHpi.magickartenmarkt-v".. libver .. "." .. dataver .. "." .. scri
 LHpi = LHpi or {}
 
 --[[- Site specific configuration
- Settings that define the source site's structure and functions that depend on it
+ Settings that define the source site's structure and functions that depend on it,
+ as well as some properties of the sitescript.
  
- @type site ]]
-site={}
+ @type site
+ @field #string scriptname
+ @field #string dataver
+ @field #string logfile (optional)
+ @field #string savepath (optional)
+ @field #boolean sandbox 
+]]
+site={ scriptname=scriptname, dataver=dataver, logfile=logfile or nil, savepath=savepath or nil , sandbox=sandbox}
 
 --[[- regex matches shall include all info about a single card that one html-file has,
  i.e. "*CARDNAME*FOILSTATUS*PRICE*".
@@ -222,10 +236,10 @@ function ImportPrice( importfoil , importlangs , importsets , scriptmode)
 			end
 			LHpi = execlib()
 		end	-- if not LHpilib else
-		LHpi.Log(loglater)
+		LHpi.Log(loglater ,0)
 	end -- do load LHpi library
 	collectgarbage() -- we now have LHpi table with all its functions inside, let's clear LHpilib and execlib() from memory
-	LHpi.Log( "LHpi lib is ready to use." )
+	LHpi.Log( "LHpi lib is ready to use." ,0)
 	site.Initialize( scriptmode ) -- keep site-specific stuff out of ImportPrice
 	LHpi.DoImport (importfoil , importlangs , importsets)
 	ma.Log( "End of Lua script " .. scriptname )
@@ -233,32 +247,38 @@ end -- function ImportPrice
 
 --[[- prepare script
  Do stuff here that needs to be done between loading the Library and calling LHpi.DoImport.
- At this point, LHpi's functions are avalable, but default values for missing fields have not yet been set.
+ At this point, LHpi's functions are available and OPTIONS are set,
+ but default values for functions and other missing fields have not yet been set.
  
  for LHpi.mkm, we need to configure and prepare the oauth client.
-@param #table mode { #boolean listsets, boolean checksets, ... }
-	-- nil if called by Magic Album
-	-- testOAuth	tests the OAuth implementation
-	-- checksets	compares site.sets with setlist from dummyMA
-	-- getsets		fetches available expansions from server and saves a site.sets template.
+@param #table mode { #boolean helper, ... }
+	-- nil 			if called by Magic Album
+	-- helper		true if called as library by LHpi.mkm-helper
  @function [parent=#site] Initialize
 ]]
 function site.Initialize( mode )
-print(LHpi.Tostring(mode))
-	if mode.helper then
-		--site.workdir = mode.workdir
-	else
+	if mode == nil then
 		--site.workdir = "Prices\\"
 		if OFFLINE~=true then
---			error("LHpi.magickartenmarkt only works in OFFLINE mode. Use LHpi.mkm-helper.lua to fetch source data.")
-		end	
+			error("LHpi.magickartenmarkt only works in OFFLINE mode. Use LHpi.mkm-helper.lua to fetch source data.")
+		end
+	else
+		if mode.helper then
+			print("LHpi.magickartenmarkt.lua running in helper mode")
+			--prevent sitescript from overwriting LHpi lib
+			function ImportPrice()
+				error("ImportPrice disabled by helper mode!")
+			end
+			LHpi.Log(scriptname .. " running as helper. ImportPrice() deleted." ,1)
+		end
 	end
 	site.workdir = workdir or "Prices\\"
-	print(site.workdir)
-	LHpi.Log(string.format("Importing %q prices into MA regular price column",site.priceTypes[useAsRegprice] or "AVG"))
-	LHpi.Log(string.format("Importing %q prices into MA foil price column",site.priceTypes[useAsFoilprice] or "LOWFOIL"))
+	useAsRegprice = useAsRegprice or 3
+	useAsFoilprice = useAsFoilprice or 5	
+	LHpi.Log(string.format("Importing %q prices into MA regular price column",site.priceTypes[useAsRegprice]) ,1)
+	LHpi.Log(string.format("Importing %q prices into MA foil price column",site.priceTypes[useAsFoilprice]) ,1)
 	if not require then
-		LHpi.Log("trying to work around Magic Album lua sandbox limitations...")
+		LHpi.Log("trying to work around Magic Album lua sandbox limitations..." ,1)
 		--emulate require(modname) using dofile; only works for lua files, not dlls.
 		local packagePath = site.workdir..'lib\\ext\\'
 		require = function (fname)
@@ -292,20 +312,12 @@ print(LHpi.Tostring(mode))
 		site.oauth = {}
 		site.oauth.client, site.oauth.params = site.PrepareOAuth()
 	end
-	
-	if mode.helper then
-		print("LHpi.magickartenmarkt.lua running in helper mode")
-	end
-	if mode.getsets then
-		local expansionList = site.FetchExpansionList()
-		site.ParseExpansions(expansionList )
-	end
-	
-	--create an empty file to hold missorted cards
-	-- that is, the mkm expansion does not match the MA set
-		LHpi.Log("site.sets = {",0,"missorted."..responseFormat,0 )
+	if not mode.helper then
+		--create an empty file to hold missorted cards
+		-- that is, the mkm expansion does not match the MA set
+		LHpi.Log("site.sets = {" ,0 , "missorted."..responseFormat , 0 )-- new missorted.json
 		site.settweak = site.settweak or {}
-	--error("break")
+	end
 end
 
 
@@ -336,7 +348,7 @@ function site.PrepareOAuth()
 	--at least try not to leak the tokens :)
 	tokens = nil
 	collectgarbage()
-	if mkmexample then
+	if mkmtokenfile == "mkmtokens.example" then
 		params = { -- set to values from example at https://www.mkmapi.eu/ws/documentation/API:Auth_OAuthHeader
 			oauth_version = "1.0",
 			oauth_signature_method = "HMAC-SHA1",
@@ -353,7 +365,7 @@ function site.PrepareOAuth()
 	client:SetToken( params.oauth_token )
 	client:SetTokenSecret( params.accessTokenSecret)
 
-	LHpi.Log("OAuth prepared")
+	LHpi.Log("OAuth prepared" ,1)
 	return client, params
 end--function PrepareOAuth
 
@@ -368,114 +380,53 @@ end--function PrepareOAuth
  @return #string body		source data in xml or json format
  @return #string status		http(s) status code and response
 ]]
-function site.FetchSourceDataFromOAuth( url, details )
+function site.FetchSourceDataFromOAuth( url )
+	if sandbox then
+		url = "sandbox." .. url
+	else
+		url = "www." .. url
+	end--if sandbox
 	url = "https://" .. url
-	if DEBUG then
-		print("site.FetchSourceDataFromOAuth started for url " .. url )
-		print("BuildRequest:")
-		local headers, arguments, post_body = site.oauth.client:BuildRequest( "GET", url )
-		print("headers=", LHpi.Tostring(headers))
-		print("arguments=", LHpi.Tostring(arguments))
-		print("post_body=", LHpi.Tostring(post_body))
-		--error("stopped before actually contacting the server")
-		print("PerformRequest:")
-	end
+	LHpi.Log("site.FetchSourceDataFromOAuth started for url " .. url ,2)
+--	if DEBUG then
+--		print("BuildRequest:")
+--		local headers, arguments, post_body = site.oauth.client:BuildRequest( "GET", url )
+--		print("headers=", LHpi.Tostring(headers))
+--		print("arguments=", LHpi.Tostring(arguments))
+--		print("post_body=", LHpi.Tostring(post_body))
+--		--error("stopped before actually contacting the server")
+--		print("PerformRequest:")
+--	end
 	
 	local code, headers, status, body = site.oauth.client:PerformRequest( "GET", url )
 	if code == 200 or code == 204 then
-	elseif code == 404 then
-		print("status=", LHpi.Tostring(status))
-		LHpi.Log("status=", LHpi.Tostring(status))
+		LHpi.Log("status=".. LHpi.Tostring(status) ,2)
+		return body, status
 	else
-		LHpi.Log(("headers=".. LHpi.Tostring(headers)))
---		LHpi.Log(("arguments=".. LHpi.Tostring(arguments)))
---		LHpi.Log(("post_body=".. LHpi.Tostring(post_body)))
-		LHpi.Log(("code=".. LHpi.Tostring(code)))
-		LHpi.Log(("BuildRequest:"))
-		local headers, arguments, post_body = site.oauth.client:BuildRequest( "GET", url )
-		LHpi.Log(("headers=".. LHpi.Tostring(headers)))
-		LHpi.Log(("status=".. LHpi.Tostring(status)))
---		LHpi.Log(("body=".. LHpi.Tostring(body)))
-		--error (LHpi.Tostring(statusline))
+		LHpi.Log("status=".. LHpi.Tostring(status) ,1)
 		print("status=", LHpi.Tostring(status))
 	end
-		return body, status
+	if code == 206 then
+		error("206 Partial Content not implemented yet")
+	elseif code==401 then
+		if DEBUG then
+			error("401 Unauthorized - check url and OAuth!")
+		end
+	elseif code == 400 then
+		print("reply="..LHpi.Tostring(body))
+		LHpi.Log("reply="..LHpi.Tostring(body) ,2)
+	else
+		LHpi.Log(("headers=".. LHpi.Tostring(headers)) ,2)
+		--error (LHpi.Tostring(statusline))
+	end
+		return nil, status
 end--function site.FetchSourceDataFromOAuth
 
---[[- fetch list of expansions from mkmapi
- @function [parent=#site] FetchExpansionList
- @return #string list		List of expansions, in xml or json format
-]]
-function site.FetchExpansionList()
-	if not dummy then error("FetchExpansionList needs to be run from dummyMA!") end
-	local xmldata
-	local url = "www.mkmapi.eu/ws/v1.1"
- 	if sandbox then
- 		url = "sandbox.mkmapi.eu/ws/v1.1"
- 	end
-	url = url .. "/output." .. (responseFormat or "json") .. "/expansion/1"
-	local urldetails={ oauth=true }
-	xmldata = LHpi.GetSourceData ( url , urldetails )
-	return xmldata
-end--function
-
---[[- Parse list of expansions and prepare a site.sets template.
-Still leaves much to do, but it helped :)
- @function [parent=#site] ParseExpansionList
- @param #string list		List of expansions, as returned from site.FetchExpansionList
- @return nil, but saves to file
-]]
-function site.ParseExpansions(list)
-	if not dummy then error("ParseExpansions needs to be run from dummyMA!") end
-	local file = "setsTemplate.txt"
-	local expansions
-	if responseFormat == "json" then
-		expansions = Json.decode(list).expansion
-	else
-		error("nothing here for xml yet")
-	end
-	local setcats = { "coresets", "expansionsets", "specialsets", "promosets" }
-	LHpi.Log("site.sets = {",0,file,0 )
-	for _,setcat in ipairs(setcats) do
-		local setNames = dummy[setcat]
-		local revSets = {}
-		for id,name in pairs(setNames) do
-			revSets[name] = id
-		end--for id,name
-		local sets,sortSets = {},{}
-		for i,expansion in pairs(expansions) do
-			if revSets[expansion.name] then
-				local id = revSets[expansion.name]
-				sets[id] = { id = id , name = expansion.name, mkmId=expansion.idExpansion, url=expansion.name }
-				table.insert(sortSets,id)
-				expansions[i]=nil
-			end--if revSets
-		end--for i,expansion
-		table.sort(sortSets, function(a, b) return a > b end)
-		LHpi.Log("-- ".. setcat ,0,file)
-		for i,sid in ipairs(sortSets) do
-			local string = string.format("[%i]={id=%3i, lang={ true,[2]=true,[3]=true,[4]=true,[5]=true,[6]=true,[7]=true,[8]=true,[9]=true,[10]=true,[11]=true }, fruc={ true }, url=%q},--%s",sid,sid,sets[sid].url,sets[sid].name )
-			print(string)
-			LHpi.Log(string, 0,file )
-		end--for i,sid
-	end--for setcat
-		LHpi.Log("-- unknown" ,0,file)
-		for i,expansion in pairs(expansions) do
-			local url=expansion.name
-			local string = string.format("[%i]={id=%3i, lang={ true,[2]=true,[3]=true,[4]=true,[5]=true,[6]=true,[7]=true,[8]=true,[9]=true,[10]=true,[11]=true }, fruc={ true }, url=%q},--%s",0,0,url,expansion.name )
-			print(string)
-			LHpi.Log(string, 0,file )
-		end--for i,sid
-		LHpi.Log("-- catchall" ,0,file)
-		local urls="{ "
-		for i,expansion in pairs(expansions) do
-			urls = urls .. "\"" .. expansion.name .. "\","
-		end--for i,sid
-		urls = urls .. "},"
-		local string = string.format("[%i]={id=%3i, lang={ true,[2]=true,[3]=true,[4]=true,[5]=true,[6]=true,[7]=true,[8]=true,[9]=true,[10]=true,[11]=true }, fruc={ true }, url=%s},--%s",999,999,urls,"catchall")
-		print(string)
-		LHpi.Log(string, 0,file )
-	LHpi.Log("\t}\n--end table site.sets",0,file)
+-- Like URL-encoding, but following MKM and OAuth's specific semantics
+local function oauth_encode(val)
+	return val:gsub('[^-._~a-zA-Z0-9:&]', function(letter)
+		return string.format("%%%02x", letter:byte()):upper()
+	end)
 end
 
 --[[-  build source url/filename.
@@ -485,6 +436,16 @@ end
  foilonly and isfile fields can be nil and then are assumed to be false.
  while isfile is read and interpreted by the library, foilonly is not.
  Its only here as a convenient shortcut to set card.foil in your site.ParseHtmlData  
+
+ !ONLY IN LHpi.magickartenmarkt:
+ !Only build the mkm api request and set oauth flag. This way, we keep the urls human-readable and non-random
+ !so we can store the files and retrieve them later in OFFLINE mode.
+ !LHpi.GetSourceData calls site.FetchSourceDataFromOAuth to construct, sign and send/receive OAuth requests, triggered by the flag.
+ !"www." or "sandbox." is prefixed in site.FetchSourceDataFromOAuth.
+ !if setid=="list", return the url to request a list of expansions. 
+ !Alternatively, it can be called as site.BuildUrl(#table setid), 
+ !where setid is not a numerical set id, but a Json.decod'ed mkm Expansion or Product Entity.
+ !as Requests based on these Entities are unique, the return value for mkm modes is #string
  
  @function [parent=#site] BuildUrl
  @param #number setid		see site.sets
@@ -494,25 +455,38 @@ end
  @return #table { #string (url)= #table { isfile= #boolean, (optional) foilonly= #boolean, (optional) setid= #number, (optional) langid= #number, (optional) frucid= #number } , ... }
 ]]
 function site.BuildUrl( setid,langid,frucid,offline )
-	-- Only build the baseURL and set oauth flag. This way, we keep the urls human-readably and non-random
-	-- so we can store the files and retrieve them later in OFFLINE mode.
-	-- LHpi.GetSourceData calls site.FetchSourceDataFromOAuth to construct, sign and send/receive OAuth requests, triggered by the flag.
+	local url = "mkmapi.eu/ws/v1.1/output." .. responseFormat
 	local container = {}
-	local url = "www.mkmapi.eu/ws/v1.1"
-	if sandbox then
-		url = "sandbox.mkmapi.eu/ws/v1.1"
-	end--if sandbox
-	url = url .. "/output." .. (responseFormat or "json") .. "/expansion/1"
 	local urls
-	if "table" == type(site.sets[setid].url) then
-		urls = site.sets[setid].url
-	else
-		urls = { site.sets[setid].url }
-	end--if "table"
+	if type(setid)=="table" then-- mkm mode
+		if setid.idExpansion then
+			url = url .. "/expansion/1/"
+			local name = oauth_encode(setid.name)
+			--local name = setid.name
+			return url .. name
+		elseif setid.idProduct then
+			url = url .. "/product/"
+			return url .. setid.idProduct
+		else
+			error(LHpi.Tostring(setid))
+		end
+--	elseif setid=="skip" then
+--		return { }
+	elseif setid=="list" then --request Expansion entities for all expansions
+		return url .. "/expansion/1"
+	else -- usual LHpi behaviour
+		url = url .. "/expansion/1"
+		if  type(site.sets[setid].url) == "table" then
+			urls = site.sets[setid].url
+		else
+			urls = { site.sets[setid].url }
+		end--if type(site.sets[setid].url)
 	for _i,seturl in pairs(urls) do
 		container[url .. "/" .. seturl] = { oauth=true }
 	end--for _i,seturl
 	return container
+	end--if type(setid)
+	error("reached unreachable state")	
 end -- function site.BuildUrl
 
 --[[-  get data from foundstring.
@@ -544,8 +518,8 @@ end -- function site.BuildUrl
  @return #table { #number= #table { names= #table { #number (langid)= #string , ... }, price= #number , foil= #boolean , ... } , ... } 
 ]]
 function site.ParseHtmlData( foundstring , urldetails )
-	local regpriceType = site.priceTypes[useAsRegprice] or "AVG"
-	local foilpriceType = site.priceTypes[useAsFoilprice] or "LOWFOIL"
+	local regpriceType = site.priceTypes[useAsRegprice]
+	local foilpriceType = site.priceTypes[useAsFoilprice]
 	local product
 	if responseFormat == "json" then
 		product = Json.decode(foundstring)
@@ -595,10 +569,7 @@ end -- function site.ParseHtmlData
  			{ name= #string , (optional) drop= #boolean , lang= #table , (optional) names= #table , (optional) pluginData= #table , (preset fields) }
 ]]
 function site.BCDpluginPre ( card, setid, importfoil, importlangs )
-	if DEBUG then
-		LHpi.Log( "site.BCDpluginPre got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
-	end
-		
+	LHpi.Log( "site.BCDpluginPre got " .. LHpi.Tostring( card ) .. " from set " .. setid ,2)		
 	if "Land" == card.pluginData.rarity
 	--or "Magic Premiere Shop Promos" == card.pluginData.set
 	then
@@ -1074,13 +1045,11 @@ end -- function site.BCDpluginPre
  			{ name= #string , drop= #boolean, lang= #table , (optional) names= #table , variant= (#table or nil), regprice= #table , foilprice= #table }
 ]]
 function site.BCDpluginPost( card , setid , importfoil, importlangs )
-	if DEBUG then
-		LHpi.Log( "site.BCDpluginPost got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
-	end
+	LHpi.Log( "site.BCDpluginPost got " .. LHpi.Tostring( card ) .. " from set " .. setid ,2)
 	--TODO migrate settweak to library?
 	if site.settweak[setid] and site.settweak[setid][card.name] then
-		if LOGSETTWEAK or DEBUG then
-			LHpi.Log( string.format( "settweak saved %s with new set %s" ,card.name, site.settweak[setid][card.name] ), 1 )
+		if LOGSETTWEAK then
+			LHpi.Log( string.format( "settweak saved %s with new set %s" ,card.name, site.settweak[setid][card.name] ) ,0)
 		end
 		card.name = card.name .. "(DROP settweaked to " .. site.settweak[setid][card.name] .. ")"
 		settweaked=1
@@ -1207,6 +1176,8 @@ site.sets = {
 [100]={id=100, lang={ "ENG" }, fruc={ true }, url="Beta"},--Beta
 [90] ={id= 90, lang={ "ENG" }, fruc={ true }, url="Alpha"},--Alpha
 -- expansionsets
+[818]={id=818, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Dragons%20of%20Tarkir"},--Dragons of Tarkir
+[816]={id=816, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Fate%20Reforged"},--Fate Reforged
 [813]={id=813, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Khans%20of%20Tarkir"},--Khans of Tarkir
 [806]={id=806, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Journey%20into%20Nyx"},--Journey into Nyx
 [802]={id=802, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Born%20of%20the%20Gods"},--Born of the Gods
@@ -2560,7 +2531,7 @@ function site.SetExpected( importfoil , importlangs , importsets )
 
 --- if EXPECTTOKENS is true, LHpi.Data.sets[setid].cardcount.tok is added to pset default.
 -- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
--- @field [parent=#site.expected] #boolean or #table { #boolean,...} tokens
+-- @field [parent=#site.expected] #boolean tokens
 --	tokens = true,
 	tokens = { "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" },
 --- if EXPECTNONTRAD is true, LHpi.Data.sets[setid].cardcount.nontrad is added to pset default.

@@ -31,44 +31,50 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 seperated price data retrival from LHpi.magickartenmarkt.lua
 ]]
 
--- options that control the script's behaviour.
-
-local mode={}
-mode.json=true
-mode.xml=nil--not implemented. use json.
-mode.getsets=true
-
 --  Don't change anything below this line unless you know what you're doing :-) --
 
+--- global working directory to allow operation outside of MA\Prices hierarchy
+-- @field [parent=#global] workdir
 workdir="src\\" 
--- mode.workdir="Prices\\" -- this is default in LHpi lib
+-- workdir="Prices\\" -- this is default in LHpi lib
 
 --- revision of the LHpi library to use
--- @field [parent=#global] #string libver
-libver = "2.15"
+-- @field #string libver
+local libver = "2.15"
 --- revision of the LHpi library datafile to use
--- @field [parent=#global] #string dataver
-dataver = "5"
+-- @field #string dataver
+local dataver = "5"
 --- sitescript revision number
--- @field [parent=#global] string scriptver
-scriptver = "1"
+-- @field string scriptver
+local scriptver = "1"
 --- should be similar to the script's filename. Used for loging and savepath.
--- @field [parent=#global] #string scriptname
-scriptname = "LHpi.mkm-downloader-v".. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
+-- @field #string scriptname
+local scriptname = "LHpi.mkm-helper-v".. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
 --- savepath for OFFLINE (read) and SAVEHTML (write). must point to an existing directory relative to MA's root.
 -- set by LHpi lib unless specified here.
--- @field [parent=#global] #string savepath
---savepath = "Prices\\" .. string.gsub( scriptname , "%-v%d+%.%d+%.lua$" , "" ) .. "\\"
+-- @field  #string savepath
+--local savepath = "Prices\\" .. string.gsub( scriptname , "%-v%d+%.%d+%.lua$" , "" ) .. "\\"
+local savepath = workdir .. "..\\" .. "LHpi.magickartenmarkt" .. "\\"
+--- log file name. can be set explicitely via site.logfile or automatically.
+-- defaults to LHpi.log unless SAVELOG is true.
+-- @field #string logfile
+local logfile = workdir .. string.gsub( scriptname , "lua$" , "log" )
 
 ---	LHpi library
 -- will be loaded by LoadLib()
 -- @field [parent=#global] #table LHpi
 LHpi = {}
 
---- helper namespace
--- site namespace is taken by LHpi.magickartenmarkt.lua
--- @type helper
-helper={}
+--[[- helper namespace
+ site namespace is taken by LHpi.magickartenmarkt.lua
+ 
+ @type helper
+ @field #string scriptname
+ @field #string dataver
+ @field #string logfile (optional)
+ @field #string savepath (optional)
+]]
+helper={ scriptname=scriptname, dataver=dataver, logfile=logfile or nil, savepath=savepath or nil }
 
 --[[- "main" function.
  called by Magic Album to import prices. Parameters are passed from MA.
@@ -83,76 +89,261 @@ helper={}
  @param #table importsets	{ #number (setid)= #string , ... }
 	-- parameter passed from Magic Album
 	-- array of sets the script should import, represented as pairs { #number = #string } (see "Database\Sets.txt").
- @param #table scriptmode { #boolean listsets, boolean checksets, ... }
-	-- nil if called by Magic Album
-	-- will be passed to site.Initialize to trigger nonstandard modes of operation	
 ]]
-function ImportPrice( importfoil , importlangs , importsets , scriptmode)
+function ImportPrice( importfoil , importlangs , importsets )
 	ma.Log( "Called mkm download helper script instead of site script. Raising error to inform user via dialog box." )
-	ma.Log( "Helper scripts should probably be in \\lib subdir to prevent this." )
-	LHpi.Log( LHpi.Tostring( importfoil ) )
-	LHpi.Log( LHpi.Tostring( importlangs ) )
-	LHpi.Log( LHpi.Tostring( importsets ) )
-	error( scriptname .. " does not work from within MA. Please run it from a seperate lua interpreter and use LHpi.magickartenmarkt.lua in OFFLINE mode!" )
-
+	LHpi.Log( LHpi.Tostring( importfoil ) ,1)
+	LHpi.Log( LHpi.Tostring( importlangs ) ,1)
+	LHpi.Log( LHpi.Tostring( importsets ) ,1)
+	error( scriptname .. " does not work from within MA. Please run it from a seperate Lua interpreter and use LHpi.magickartenmarkt.lua in OFFLINE mode!" )
 end -- function ImportPrice
 
-function main(mode)
-	mode = mode or {}
-	mode.helper=true
+function main( mode )
+--TODO select mode (downloadl-std,downloadl-all,boostervalue-std,boostervalue-all) via filenameoptions
+	if mode==nil then
+--		mode = { download=true, sets="standard" }
+--		mode = { download=true, sets=nil }
+		mode = { boostervalue=true, sets="standard" }
+	end
+	if "table" ~= type (mode) then
+		local m=mode
+		mode = { [m]=true }
+	end
+	
 	package.path = workdir..'lib\\ext\\?.lua;' .. package.path
 	package.cpath= workdir..'lib\\bin\\?.dll;' .. package.cpath
 	--print(package.path.."\n"..package.cpath)
+	site = { scriptname=scriptname, dataver=dataver, logfile=logfile or nil, savepath=savepath or nil }
 	LHpi = dofile(workdir.."lib\\LHpi-v"..libver..".lua")
-	LHpi.Log( "LHpi lib is ready to use." )
+	LHpi.Log( "LHpi lib is ready to use." ,1)
 	dofile(workdir.."LHpi.magickartenmarkt.lua")
-	OFFLINE=false
-	site.Initialize(mode)
-	
-	DEBUG=true
-	-- primitive tests (use local mkmexample = false and local mkmtokenfile = "mkmtokens.example" in LHpi.magickartenmarkt.lua)
-	--helper.OAuthTest( site.oauth.params )
-	if mode.getsets then
-		local expansionList = helper.FetchExpansionList()
-		helper.ParseExpansions(expansionList )
+	site.Initialize({helper=true})
+
+if site.sandbox then
+	LHpi.savepath = workdir .. "..\\" .. "LHpi.magickartenmarkt.sandbox" .. "\\"
+end
+
+	if mode.testoauth then
+		-- basic tests (use local mkmtokenfile = "mkmtokens.example" in LHpi.magickartenmarkt.lua)
+		DEBUG=true
+		helper.OAuthTest( site.oauth.params )
+		return ("testoauth done")
 	end
-	print("main() finished")
+	if mode.setlist then
+		local expansionList = helper.FetchExpansionList()
+		local file = file or "setsTemplate.txt"
+		helper.ParseExpansions(expansionList,file )
+		LHpi.Log("site.sets template saved to " .. file ,0)
+		return ("setlist done")
+	end
+
+	local sets
+	if "string"==type(mode.sets) then
+		mode.sets=string.lower(mode.sets)
+	end
+	if mode.sets=="all" then
+		sets=site.sets
+	elseif ( mode.sets=="std" ) or ( mode.sets=="standard" ) then
+		sets = { -- standard as of May 2015
+			[818] = "Dragons of Tarkir";
+			[816] =	"Fate Reforged";
+			[813] = "Khans of Tarkir";
+			[808] = "Magic 2015";
+			[806] = "Journey into Nyx";
+			[802] = "Born of the Gods";
+			[800] = "Theros";
+		} 
+--	else
+--		sets = {}
+	end
+	
+	if mode.download then
+		helper.GetSourceData(sets)
+		return ("download done")
+	end
+
+	if mode.boostervalue then
+		helper.ExpectedBoosterValue(sets)
+		return("boostervalue done")
+	end
+	
+	return("main() finished")
 end--function main
 
+--[[- download and save source data.
+ site.sets can be used as parameter, but any table with MA setids as index can be used.
+ If setlist is nil, a list of all available expansions is fetched from the server and all are downloaded.
+ 
+ @function [parent=#helper] GetSourceData
+ @param #table setlist (optional) { #number sid= #string name } list of sets to download
+]]
+function helper.GetSourceData(sets)
+	
+	ma.PutFile(LHpi.savepath .. "testfolderwritable" , "true", 0 )
+	local folderwritable = ma.GetFile( LHpi.savepath .. "testfolderwritable" )
+	if not folderwritable then
+		error( "failed to write file to savepath " .. LHpi.savepath .. "!" )
+	end -- if not folderwritable
+	local s = SAVEHTML
+	local o = OFFLINE
+	OFFLINE=false
+	SAVEHTML=true
+	local seturls={}
+	if sets then
+		for sid,set in pairs(sets) do
+			local urls = site.BuildUrl( sid )
+			for url,details in pairs(urls) do
+				seturls[url]=details
+			end--for url
+		end--for sid,set
+	else -- fetch list of available expansions and download all
+		sets = helper.FetchExpansionList()
+		sets = Json.decode(sets).expansion
+		for _,exp in pairs(sets) do
+			local request = site.BuildUrl( exp )
+			if string.find(exp.name,"Janosch") or string.find(exp.name,"Jakub") or string.find(exp.name,"Peer") then
+				print(exp.name .. " encoding Problem results in 401 Unauthorized")
+			else--this is what should happen
+				seturls[request]={oauth=true}
+			end--401 exceptions
+		end--for _,exp
+	end--if sets
+	
+	for url,details in pairs(seturls) do
+		local setdata = LHpi.GetSourceData( url , details )
+		if setdata then
+			LHpi.Log("integrating priceGuide entries into " .. url ,1)
+print("integrating priceGuide entries into " .. url)
+			setdata = Json.decode(setdata)
+			for cid,card in pairs(setdata.card) do
+				local cardurl = site.BuildUrl(card)
+print("fetching single card from " .. cardurl)
+				local proddata,status = site.FetchSourceDataFromOAuth( cardurl )
+				if proddata then
+					proddata = Json.decode(proddata).product
+				end--if proddata
+				setdata.card[cid].priceGuide=proddata.priceGuide
+			end--for cid,card
+			setdata = Json.encode(setdata)
+			url = string.gsub(url, '[/\\:%*%?<>|"]', "_")
+			LHpi.Log( "Saving rebuilt source to file: \"" .. (LHpi.savepath or "") .. url .. "\"" ,1)
+print( "Saving rebuilt source to file: \"" .. (LHpi.savepath or "") .. url .. "\"")
+			ma.PutFile( (LHpi.savepath or "") .. url , setdata , 0 )
+		else
+			LHpi.Log("no data from "..url ,1)
+print("no data from "..url ,1)
+		end--if setdata
+	end--for url,details
+	OFFLINE=o
+	SAVEHTML=s
+end--function GetSourceData
 
 --[[- fetch list of expansions from mkmapi
  @function [parent=#helper] FetchExpansionList
  @return #string list		List of expansions, in xml or json format
 ]]
 function helper.FetchExpansionList()
-	local xmldata
-	local url = "www.mkmapi.eu/ws/v1.1"
- 	if sandbox then
- 		url = "sandbox.mkmapi.eu/ws/v1.1"
- 	end
-	url = url .. "/output." .. (responseFormat or "json") .. "/expansion/1"
+	local setlist
+	local url = site.BuildUrl( "list" )
 	local urldetails={ oauth=true }
-	xmldata = LHpi.GetSourceData ( url , urldetails )
-	return xmldata
-end--function
+	setlist = LHpi.GetSourceData ( url , urldetails )
+	if not setlist then
+		error(string.format("Expansion list not found at %s (OFFLINE=%s)",LHpi.Tostring(url),tostring(OFFLINE)) )
+	end
+	return setlist
+end--function FetchExpansionList
+
+--[[- determine the Expected Value of a booster from chosen sets.
+ site.sets can be used as parameter, but any table with MA setids as index can be used.
+ 
+ @function [parent=#helper] ExpectedBoosterValue
+ @param #table setlist { #number sid= #string name } list of sets to work on
+]]
+function helper.ExpectedBoosterValue(sets)
+	local resultstrings = {}
+	for sid,set in pairs(sets) do
+		local values
+		local urls = site.BuildUrl(sid)
+		for url,details in pairs(urls) do
+			local sourcedata = LHpi.GetSourceData(url,details)
+			if sourcedata then
+--				sourcedata = Json.decode(sourcedata).card
+				sourcedata = Json.decode(sourcedata)
+				for _,card in pairs(sourcedata) do
+					if not card.category then
+						print(sid .. " :not card.category!")
+						break
+					end
+					resultstrings[sid]={rareSlot="",booster=""}
+					if not values then values={} end
+					if card.category.categoryName~="Magic Single" then
+						print(LHpi.Tostring(card.category))
+					else
+						if not values[card.rarity] then
+							values[card.rarity]={ count=0, sum={} }
+						end--if not values[card.rarity]
+						values[card.rarity].count=values[card.rarity].count+1
+						if card.priceGuide~=nil then
+							for ptype,value in pairs(card.priceGuide) do
+								if not values[card.rarity].sum[ptype] then
+									values[card.rarity].sum[ptype]=0
+								end--if not values[card.rarity].sum[ptype]
+								values[card.rarity].sum[ptype]=values[card.rarity].sum[ptype]+value
+							end--for ptype,value
+						end--if card.priceGuide
+					end--if card.category.categoryName
+				end--for _,card
+			else
+				print("no data for ["..sid.."] ")
+			end--if sourcedata
+		end--for url,details
+		if values then
+			for rarity,_ in pairs(values) do
+				values[rarity].average={}
+				for ptype,_ in pairs(values[rarity].sum) do
+					values[rarity].average[ptype]=values[rarity].sum[ptype]/values[rarity].count
+				end--for ptype,_
+			end--for rarity,_
+			values.EV={}
+			for ptype,_ in pairs(values["Rare"].average) do
+				values.EV[ptype]={ }
+				values.EV[ptype].RMonly=(values["Rare"].average[ptype]+7/8)+(values["Mythic"].average[ptype]/8)
+				values.EV[ptype].MRUC=values.EV[ptype].RMonly+(values["Uncommon"].average[ptype]*3)+(values["Common"].average[ptype]*10)
+				values.EV[ptype].MRUCL=values.EV[ptype].MRUC+values["Land"].average[ptype]
+			end--for ptype,_
+			--print(sid .. " : Rare " .. LHpi.Tostring(values["Rare"]) .. " Mythic " .. LHpi.Tostring(values["Mythic"]))
+			resultstrings[sid].rareSlot=(string.format("%20s: EW RareSlot AVG=%2.3f SELL=%2.3f TREND=%2.3f LOWEX=%2.3f",set,values.EV["AVG"].RMonly,values.EV["SELL"].RMonly,values.EV["TREND"].RMonly,values.EV["LOWEX"].RMonly))
+			resultstrings[sid].booster=(string.format("%20s: EW Booster  AVG=%2.3f SELL=%2.3f TREND=%2.3f LOWEX=%2.3f",set,values.EV["AVG"].MRUCL,values.EV["SELL"].MRUCL,values.EV["TREND"].MRUCL,values.EV["LOWEX"].MRUCL))
+		end--if values
+		--return("early")
+	end--for sid,set
+	for sid,result in pairs(resultstrings) do
+		print(result.rareSlot)
+	end
+	print()
+	for sid,result in pairs(resultstrings) do
+		print(result.booster)
+	end
+	
+end--function ExpectedBoosterValue
 
 --[[- Parse list of expansions and prepare a site.sets template.
 Still leaves much to do, but it helped :)
  @function [parent=#helper] ParseExpansionList
- @param #string list		List of expansions, as returned from helper.FetchExpansionList
+ @param #table list		list of expansions, as returned by helper.FetchExpansionList()
  @return nil, but saves to file
 ]]
-function helper.ParseExpansions(list)
+function helper.ParseExpansions(list,file)
 	if not dummy then error("ParseExpansions needs to be run from dummyMA!") end
-	local file = "setsTemplate.txt"
+	local file = file or "setsTemplate.txt"
 	local expansions
-	if responseFormat == "json" then
-		expansions = Json.decode(list).expansion
-	else
+	if responseFormat == "xml" then
 		error("nothing here for xml yet")
+	else
+		expansions = Json.decode(list).expansion
 	end
 	local setcats = { "coresets", "expansionsets", "specialsets", "promosets" }
-	LHpi.Log("site.sets = {",0,file,0 )
+	LHpi.Log("site.sets = {",0,file,0 )--
 	for _,setcat in ipairs(setcats) do
 		local setNames = dummy[setcat]
 		local revSets = {}
@@ -169,21 +360,21 @@ function helper.ParseExpansions(list)
 			end--if revSets
 		end--for i,expansion
 		table.sort(sortSets, function(a, b) return a > b end)
-		LHpi.Log("-- ".. setcat ,0,file)
+		LHpi.Log("-- ".. setcat ,0,file)--
 		for i,sid in ipairs(sortSets) do
 			local string = string.format("[%i]={id=%3i, lang={ true,[2]=true,[3]=true,[4]=true,[5]=true,[6]=true,[7]=true,[8]=true,[9]=true,[10]=true,[11]=true }, fruc={ true }, url=%q},--%s",sid,sid,sets[sid].url,sets[sid].name )
 			print(string)
-			LHpi.Log(string, 0,file )
+			LHpi.Log(string, 0,file )--
 		end--for i,sid
 	end--for setcat
-		LHpi.Log("-- unknown" ,0,file)
+		LHpi.Log("-- unknown" ,0,file)--
 		for i,expansion in pairs(expansions) do
 			local url=expansion.name
 			local string = string.format("[%i]={id=%3i, lang={ true,[2]=true,[3]=true,[4]=true,[5]=true,[6]=true,[7]=true,[8]=true,[9]=true,[10]=true,[11]=true }, fruc={ true }, url=%q},--%s",0,0,url,expansion.name )
 			print(string)
-			LHpi.Log(string, 0,file )
+			LHpi.Log(string, 0,file )--
 		end--for i,sid
-		LHpi.Log("-- catchall" ,0,file)
+		LHpi.Log("-- catchall" ,0,file)--
 		local urls="{ "
 		for i,expansion in pairs(expansions) do
 			urls = urls .. "\"" .. expansion.name .. "\","
@@ -191,8 +382,8 @@ function helper.ParseExpansions(list)
 		urls = urls .. "},"
 		local string = string.format("[%i]={id=%3i, lang={ true,[2]=true,[3]=true,[4]=true,[5]=true,[6]=true,[7]=true,[8]=true,[9]=true,[10]=true,[11]=true }, fruc={ true }, url=%s},--%s",999,999,urls,"catchall")
 		print(string)
-		LHpi.Log(string, 0,file )
-	LHpi.Log("\t}\n--end table site.sets",0,file)
+		LHpi.Log(string, 0,file )--
+	LHpi.Log("\t}\n--end table site.sets",0,file)--
 end
 
 --[[- test OAuth implementation
@@ -296,7 +487,9 @@ if not ma then
 	-- @param #string filepath
 	-- @return #string file OR nil instead on error
 	function ma.GetFile(filepath)
-		print(string.format("ma.GetFile(%s)", filepath) )
+		if DEBUG then
+			print(string.format("ma.GetFile(%s)", filepath) )
+		end
 		local handle,err = io.open(filepath,"r")
 		if err then print("GetFile error: " .. tostring(err)) end
 		local file = nil
@@ -323,8 +516,10 @@ if not ma then
 	-- @param #string data
 	-- @param #number append nil or 0 for overwrite
 	function ma.PutFile(filepath, data, append)
-		if not string.find(filepath,"log") then
-			print(string.format("ma.PutFile(%s ,DATA, append=%q)",filepath, tostring(append) ) )
+		if DEBUG then
+			if not string.find(filepath,"log") then
+				print(string.format("ma.PutFile(%s ,DATA, append=%q)",filepath, tostring(append) ) )
+			end
 		end
 		local a = append or 0
 		local handle,err
@@ -372,5 +567,6 @@ if not ma then
 end--if not ma
 
 --run main function
-main(mode)
+local retval = main()
+print(LHpi.Tostring(retval))
 --EOF
