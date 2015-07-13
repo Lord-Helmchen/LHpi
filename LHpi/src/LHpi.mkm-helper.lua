@@ -28,7 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-seperated price data retrival from LHpi.magickartenmarkt.lua
+Initial release, no changelog yet
+* seperated price data retrival from LHpi.magickartenmarkt.lua
 ]]
 
 --  Don't change anything below this line unless you know what you're doing :-) --
@@ -101,9 +102,9 @@ end -- function ImportPrice
 function main( mode )
 --TODO select mode (downloadl-std,downloadl-all,boostervalue-std,boostervalue-all) via filenameoptions
 	if mode==nil then
---		mode = { download=true, sets="standard" }
+		mode = { download=true, sets="standard" }
 --		mode = { download=true, sets=nil }
-		mode = { boostervalue=true, sets="standard" }
+--		mode = { boostervalue=true, sets="standard" }
 	end
 	if "table" ~= type (mode) then
 		local m=mode
@@ -145,6 +146,7 @@ end
 		sets=site.sets
 	elseif ( mode.sets=="std" ) or ( mode.sets=="standard" ) then
 		sets = { -- standard as of May 2015
+--			[] = "Magic Origins";
 			[818] = "Dragons of Tarkir";
 			[816] =	"Fate Reforged";
 			[813] = "Khans of Tarkir";

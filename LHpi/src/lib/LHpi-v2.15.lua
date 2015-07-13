@@ -26,26 +26,44 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 --[[ CHANGES
 2.14 (unreleased)
+cardcount.nontr renamed to cardcount.nontrad
 GetSourceData split into GetSourceData and ParseSourceData.
-this change is completely transparent to existing sitescripts, but having GetSourceData seperated allows to use it from the sitescript for special cases.
+* this change is completely transparent to existing sitescripts, but having GetSourceData seperated allows to use it from the sitescript for special cases.
 LHpi.GetSourceData( sourceurl,urldetails )
+* defer fetching to sitescript for oauth
 * now returns #string sourcedata
 * converts url to filename if OFFLINE
 * fixed savepath==nil handling (needed when called before DoImport has run)
+* Log https status if not ok
 LHpi.ParseSourceData( sourcedata,sourceurl,urldetails )
 * does the parsing previously done by GetSourceData and returns the #table sourceTable
 * shortcut return nil for sourcedata==nil
-BuildCardData
+* now strictly expect site.ParseHtmlData to return card.price as #number (and not #table, as was possible before)
+* do not sanitize nor check card.regprice or card.foilpriceBuildCardData
 * counts namereplace and foiltweak even if card is dropped
-Logtable no longer strictly requires #table arguments
-MainImportCycle fixed CHECKEXPECTED handling for semi-available languages
-removed some leftover commented-out code
-improved some comments and log msgs
+BuildCardData
+* remove "(nontrad)","(replica)","(plane)","(scheme)","(conspiracy)" and
+"(oversized)" card.name infixes when no longer needed
+* set objecttype replica for 105,106,69
+* improved Token suffix handling
+* keeps "Replica" suffix for variants
+* removes "Insert" suffix
+* keep (oversized) in set [40]
+SetPrice
+* objtype infixe handling improved
+Logtable
+* no longer strictly requires #table arguments
+MainImportCycle
+* fixed CHECKEXPECTED handling for semi-available languages
 DoImport
 * changed site.expected.EXPECTTOKENS to site.expected.tokens
 * changed site.expected.EXPECTNONTRAD to site.expected.nontrad
 * changed site.expected.EXPECTREPL to site.expected.replica
 * all three can be #boolean (like before) or #table { [langid]=#boolean,... }
+* DoImport passes supImportfoil,supImportlangs,supImportsets to site.SetExpected
+* fixed expected defaults and checks
+removed some leftover commented-out code
+improved some comments and log msgs
 
 2.15
 Split Initialize() from DoImport(importfoil , importlangs , importsets)
@@ -180,7 +198,7 @@ function LHpi.Initialize()
 	--- savepath for OFFLINE (read) and SAVEHTML,SAVETABLE (write). must point to an existing directory relative to MA's root.
 	-- @field [parent=#LHpi] #string savepath
 	if site.savepath then
-		LHpi.savepath = site.savepath
+		LHpi.savepath = site.savepath .. "\\"
 	else
 		LHpi.savepath = LHpi.workdir .. string.gsub( site.scriptname , "%-?v?[%d%.]*%.lua$" , "" ) .. "\\"
 	end -- if

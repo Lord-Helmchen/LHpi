@@ -25,10 +25,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-added 814
+new	dummy.CompareDummySets(mapath,libver)
+new	dummy.CompareDataSets(mapath,libver,dataver)
+new dummy.CompareSiteSets (moved from LHpi.magickartenmarkt.lua)
+error handling in ma.GetFile and ma.Putfile
+for libver > 2.14 and Lua 5.2, use dofile instead of homemade loader
+CompareDataSets compares with dummy's set tales instead of Database/Sets.txt
+use global workdir as introduced in 2.15
+added 52,53,55,814,815,816,817,818,819,820,821
 fixed dummy.forceEnv
+fixed savepath handling
 
-added dummy.CompareSiteSets (moved from LHpi.magickartenmarkt.lua)
 ]]
 
 --TODO make most dummy functions local
@@ -430,7 +437,7 @@ Before using this function, you need to convert Sets.txt from UCS-2 to UTF-8.
 function dummy.CompareDummySets(mapath,libver)
 	if not LHpi then
 		if libver < 2.15 then
-		dummy.loadlibonly(libver,workdir,dummy.savepath)
+		dummy.loadlibonly(libver,workdir,savepath)
 		else
 			LHpi = dofile(workdir.."lib\\LHpi-v"..libver..".lua")
 			LHpi.Log( "LHpi lib is ready to use." ,1)
@@ -470,7 +477,7 @@ function dummy.CompareDataSets(libver,dataver)
 print(libver)
 	if not LHpi then
 		if libver < 2.15 then
-			LHpi = dummy.loadlibonly(libver,workdir,dummy.savepath)
+			LHpi = dummy.loadlibonly(libver,workdir,savepath)
 			LHpi.Data = LHpi.LoadData(dataver or 5)
 		else
 print("foo")
@@ -754,8 +761,8 @@ function main()
 	local dataver=5
 	
 	--don't keep a seperate dev savepath, though
-	dummy.savepath = "src\\..\\..\\..\\Magic Album\\Prices"
-	site = { scriptname=scriptname, dataver=dataver, logfile=logfile or nil, savepath=dummy.savepath or nil }
+	savepath = "src\\..\\..\\..\\Magic Album\\Prices"
+	site = { scriptname=scriptname, dataver=dataver, logfile=logfile or nil, savepath=savepath or nil }
 	--package.path = 'src\\lib\\ext\\?.lua;' .. package.path
 	--package.cpath= 'src\\lib\\bin\\?.dll;' .. package.cpath
 	dummy.env={--define debug enviroment options
@@ -766,33 +773,36 @@ function main()
 		CHECKEXPECTED = true,
 		STRICTEXPECTED = true,
 		OFFLINE = true,
-		OFFLINE = false,
+--		OFFLINE = false,
 		SAVELOG = true,
-		SAVEHTML = true,
---		SAVEHTML = false,
+--		SAVEHTML = true,
+		SAVEHTML = false,
 		DEBUG = true,
 		DEBUGFOUND = true,
 --		DEBUGVARIANTS = true,
 --		SAVETABLE=true,
 	}
 	local scripts={
-		[0]={name="lib\\LHpi.sitescriptTemplate-v2.14.5.12.lua",path=workdir,savepath=dummy.savepath},
-		[1]={name="LHpi.mtgmintcard.lua",path=workdir,savepath=dummy.savepath},
-		[2]={name="LHpi.magicuniverseDE.lua",path=workdir,savepath=dummy.savepath},
-		[3]={name="LHpi.trader-onlineDE.lua",path=workdir,savepath=dummy.savepath},
-		[4]={name="LHpi.tcgplayerPriceGuide.lua",path=workdir,savepath=dummy.savepath},
-		[5]={name="\\MTG Mint Card.lua",path=dummy.savepath,savepath=dummy.savepath},
-		[6]={name="\\Import Prices.lua",path=dummy.savepath,savepath=dummy.savepath},
-		[7]={name="LHpi.mtgprice.com.lua",path=workdir,savepath=dummy.savepath},
-		[8]={name="LHpi.magickartenmarkt.lua",path=workdir,savepath=dummy.savepath},
+		[0]={name="lib\\LHpi.sitescriptTemplate-v2.14.5.12.lua",path=workdir,savepath=savepath},
+		[1]={name="LHpi.mtgmintcard.lua",path=workdir,savepath=savepath},
+		[2]={name="LHpi.magicuniverseDE.lua",path=workdir,savepath=savepath},
+		[3]={name="LHpi.trader-onlineDE.lua",path=workdir,savepath=savepath},
+		[4]={name="LHpi.tcgplayerPriceGuide.lua",path=workdir,savepath=savepath},
+		[5]={name="\\MTG Mint Card.lua",path=savepath,savepath=savepath},
+		[6]={name="\\Import Prices.lua",path=savepath,savepath=savepath},
+		[7]={name="LHpi.mtgprice.com.lua",path=workdir,savepath=savepath},
+		[8]={name="LHpi.magickartenmarkt.lua",path=workdir,savepath=savepath.."\\LHpi.magickartenmarkt"},
 	}
+	
 	-- select a predefined script to be tested
 --	dummy.fakesitescript()
 --	local script=scripts[8]
+--	savepath=script.savepath
 --	dummy.loadscript(script.name,script.path,script.savepath)
+--	dofile(workdir .. script.name)
 
 	-- only load library (and Data)
---	LHpi = dummy.loadlibonly(2.14,workdir,dummy.savepath)
+--	LHpi = dummy.loadlibonly(2.14,workdir,savepath)
 --	LHpi.Data = LHpi.LoadData(5)
 
 	-- force debug enviroment options
@@ -804,8 +814,9 @@ function main()
 --	local importlangs = { [5] = "FOO" }
 	local importlangs = dummy.alllangs
 --	local importsets = { [0] = "fakeset"; }
-	local importsets = { [800]="some set" }
+--	local importsets = { [800]="some set" }
 --	local importsets = { [220]="foo";[800]="bar";[0]="baz";}
+	local importsets = { [808] = "Magic 2015"; [806] = "Journey into Nyx"; [802] = "Born of the Gods"; [800] = "Theros"; }
 --	local importsets = dummy.coresets
 --	local importsets = dummy.expansionsets
 --	local importsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
@@ -820,13 +831,13 @@ function main()
 
 	-- utility functions from dummy:
 --	TestPerformance(10,script,importfoil,importlangs,importsets,"time.log")
---	dummy.CompareDummySets(dummy.savepath.."\\..",2.15)
+--	dummy.CompareDummySets(savepath.."\\..",2.15)
 	dummy.CompareDataSets(2.15,5)
 
 	-- use ProFi to profile the script
 --	ProFi = require 'ProFi'
 --	ProFi:start()
-	--
+--	--
 --	ImportPrice( importfoil, importlangs, importsets )
 	--profile single function only
 --	package.path = 'src\\lib\\ext\\?.lua;' .. package.path
@@ -835,7 +846,7 @@ function main()
 --	local urldetails = { setid=808, langid=1, frucid=1 }
 --	local foundstring = '{"idProduct":7923,"idMetaproduct":2248,"idGame":1,"countReprints":2,"name":{"1":{"idLanguage":1,"languageName":"English","productName":"Fyndhorn Druid (Version 2)"},"2":{"idLanguage":2,"languageName":"French","productName":"Druide cordellien (Version 2)"},"3":{"idLanguage":3,"languageName":"German","productName":"Fyndhorndruide (Version 2)"},"4":{"idLanguage":4,"languageName":"Spanish","productName":"Druida de Fyndhorn (Version 2)"},"5":{"idLanguage":5,"languageName":"Italian","productName":"Druido di Fyndhorn (Version 2)"}},"website":"\\/Products\\/Singles\\/Alliances\\/Fyndhorn+Druid+%28Version+2%29","image":".\\/img\\/cards\\/Alliances\\/fyndhorn_druid2.jpg","category":{"idCategory":1,"categoryName":"Magic Single"},"priceGuide":{"SELL":0.05,"LOW":0.02,"LOWEX":0.02,"LOWFOIL":0,"AVG":0.1,"TREND":0.05},"expansion":"Alliances","expIcon":13,"number":null,"rarity":"Common","countArticles":466,"countFoils":0}'
 --	site.ParseHtmlData( foundstring , urldetails )
-	--	
+--	--	
 --	ProFi:stop()
 --	ProFi:writeReport( 'MyProfilingReport.txt' )
 	

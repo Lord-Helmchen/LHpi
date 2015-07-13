@@ -27,6 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
+Initial release, no changelog yet
+
 migrate to other sitescripts:
 *Initialize()
 *site.priceTypes Table and local global option
@@ -67,8 +69,8 @@ LOGFOILTWEAK = true
  @field #number useAsRegprice
  @field #number useAsFoilprice
 ]]
-local useAsRegprice=3
-local useAsFoilprice=5
+local useAsRegprice=5
+local useAsFoilprice=6
 
 --local mkmtokenfile = "mkmtokens.example"
 --local mkmtokenfile = "mkmtokens.sandbox"
@@ -133,17 +135,17 @@ local dataver = "5"
 local scriptver = "2"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field  #string scriptname
-local scriptname = "LHpi.magickartenmarkt-v".. libver .. "." .. site.dataver .. "." .. scriptver .. ".lua"
+local scriptname = "LHpi.magickartenmarkt-v".. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
 --- savepath for OFFLINE (read) and SAVEHTML (write). must point to an existing directory relative to MA's root.
 -- set by LHpi lib unless specified here.
 -- @field  #string savepath
 --local savepath = "Prices\\" .. string.gsub( scriptname , "%-v%d+%.%d+%.lua$" , "" ) .. "\\"
-local savepath = nil
+local savepath = savepath
 --- log file name. can be set explicitely via site.logfile or automatically.
 -- defaults to LHpi.log unless SAVELOG is true.
 -- @field #string logfile
 --local logfile = "Prices\\" .. string.gsub( site.scriptname , "lua$" , "log" )
-local logfile = nil
+local logfile = logfile
 
 ---	LHpi library
 -- will be loaded by ImportPrice
@@ -169,7 +171,8 @@ site={ scriptname=scriptname, dataver=dataver, logfile=logfile or nil, savepath=
  it will be chopped into its parts by site.ParseHtmlData later. 
  @field [parent=#site] #string regex
 ]]
-site.regex = '{"idProduct".-"countFoils":%d+}'
+--site.regex = '{"idProduct".-"countFoils":%d+}'
+site.regex = '.(%b{})'
 
 --- resultregex can be used to display in the Log how many card the source file claims to contain
 -- @field #string resultregex
@@ -258,6 +261,7 @@ end -- function ImportPrice
 ]]
 function site.Initialize( mode )
 	if mode == nil then
+		mode = {}
 		--site.workdir = "Prices\\"
 		if OFFLINE~=true then
 			error("LHpi.magickartenmarkt only works in OFFLINE mode. Use LHpi.mkm-helper.lua to fetch source data.")
@@ -318,6 +322,7 @@ function site.Initialize( mode )
 		LHpi.Log("site.sets = {" ,0 , "missorted."..responseFormat , 0 )-- new missorted.json
 		site.settweak = site.settweak or {}
 	end
+
 end
 
 
@@ -526,13 +531,12 @@ function site.ParseHtmlData( foundstring , urldetails )
 	else
 		error("nothing here for xml yet")
 	end
+	if not product.idProduct then
+		return { }
+	end 
 	--print(LHpi.Tostring(product.name))
 	local newCard = 	{ names = {}, lang={}, pluginData={}, foil=false }
 	local newFoilCard = { names = {}, lang={}, pluginData={}, foil=true  }
---	local regprice  = string.gsub( product.priceGuide[priceType] , "[,.]" , "" ) --nonfoil price, use AVG by default
---	local foilprice = string.gsub( product.priceGuide["LOWFOIL"] , "[,.]" , "" ) --foil price
-	local regprice  = tonumber(product.priceGuide[regpriceType])*100 --nonfoil price, use AVG by default
-	local foilprice = tonumber(product.priceGuide[foilpriceType])*100 --foil price
 	-- can just set names[1] to productName[1].productName, as productName reflects mkm ui langs, not card langs		
 	newCard.names[1] = product.name["1"].productName
 	newFoilCard.names[1] = product.name["1"].productName
@@ -541,6 +545,10 @@ function site.ParseHtmlData( foundstring , urldetails )
 	--	newCard.names[langid] = prodName.productName
 	--	newFoilCard.names[langid] = prodName.productName
 	--end--for i,prodName
+--	local regprice  = string.gsub( product.priceGuide[priceType] , "[,.]" , "" ) --nonfoil price, use AVG by default
+--	local foilprice = string.gsub( product.priceGuide["LOWFOIL"] , "[,.]" , "" ) --foil price
+	local regprice  = tonumber(product.priceGuide[regpriceType])*100 --nonfoil price, use AVG by default
+	local foilprice = tonumber(product.priceGuide[foilpriceType])*100 --foil price
 	for lid,lang in pairs(site.sets[urldetails.setid].lang) do
 		if site.sets[urldetails.setid].lang[lid] then
 			newCard.lang[lid] = LHpi.Data.languages[lid].abbr
@@ -602,14 +610,14 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 				card.name = card.name .. " (DROP not Tenth Edition)"
 			end
 		end
-	elseif setid ==  800 then -- THS
-		if card.pluginData.set == "Promos" then
-			if card.name == "Karametra's Acolyte" then
-				card.name = card.name .. " (Holiday Gift Box)"
-			else
-				card.name = card.name .. " (DROP not Theros)"
-			end
-		end
+--	elseif setid ==  800 then -- THS
+--		if card.pluginData.set == "Promos" then
+--			if card.name == "Karametra's Acolyte" then
+--				card.name = card.name .. " (Holiday Gift Box)"
+--			else
+--				card.name = card.name .. " (DROP not Theros)"
+--			end
+--		end
 	elseif setid ==  791 then -- RTR
 		if card.pluginData.set == "Promos" then
 			if card.name == "Dreg Mangler" then
@@ -1183,7 +1191,7 @@ site.sets = {
 [802]={id=802, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Born%20of%20the%20Gods"},--Born of the Gods
 [800]={id=800, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url={ -- Theros
 											"Theros",
-											"Promos", -- "Karametra's Acolyte (Holiday Gift Box)"
+--											"Promos", -- "Karametra's Acolyte (Holiday Gift Box)"
 											} },
 [795]={id=795, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Dragon%27s%20Maze"},--Dragon's Maze
 [793]={id=793, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Gatecrash"},--Gatecrash
@@ -1546,9 +1554,9 @@ site.namereplace = {
 [802] = { -- Born of the Gods
 ["Unravel the Æther"]				= "Unravel the AEther",
 },
-[800] = { -- Theros
-["Karametra's Acolyte (Holiday Gift Box)"]	= "Karametra's Acolyte (Holiday Gift Box)",
-},
+--[800] = { -- Theros
+--["Karametra's Acolyte (Holiday Gift Box)"]	= "Karametra's Acolyte (Holiday Gift Box)",
+--},
 [784] = { -- Dark Ascension
 ["Hinterland Hermit"] 				= "Hinterland Hermit|Hinterland Scourge",
 ["Mondronen Shaman"] 				= "Mondronen Shaman|Tovolar’s Magehunter",
@@ -2543,7 +2551,7 @@ function site.SetExpected( importfoil , importlangs , importsets )
 -- @field [parent=#site.expected] #boolean replica
 	replica = true,
 -- Core sets
-[808] = { pset={ dup=LHpi.Data.sets[808].cardcount.reg }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, failed={ dup=LHpi.Data.sets[808].cardcount.tok }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
+[808] = { pset={ dup=LHpi.Data.sets[808].cardcount.reg }, duppset={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, failed={ dup=LHpi.Data.sets[808].cardcount.tok }, dupfail={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
 [797] = { pset={ dup=LHpi.Data.sets[797].cardcount.reg }, failed={ dup=LHpi.Data.sets[797].cardcount.tok }, duppset={ [2]="RUS",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
 [788] = { pset={ dup=LHpi.Data.sets[788].cardcount.reg }, failed={ dup=LHpi.Data.sets[788].cardcount.tok }, duppset={ [7]="SPA" }, dupfail={ [7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
 [779] = { failed={ dup=LHpi.Data.sets[779].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH",[10]="ZHT" } },
@@ -2556,9 +2564,9 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [179] = { pset={ [6]=LHpi.Data.sets[179].cardcount.reg-3, [8]=LHpi.Data.sets[179].cardcount.reg}, failed={ [6]=3 } },--3 cards not in POR
 -- Expansions
 [813] = { pset={ dup=LHpi.Data.sets[813].cardcount.reg-5 }, failed={ dup=LHpi.Data.sets[813].cardcount.tok+5 }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=2 },--5 "Intro" variants only in ENG
-[806] = { pset={ dup=LHpi.Data.sets[806].cardcount.reg }, failed={ dup=LHpi.Data.sets[806].cardcount.tok }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=44 },
-[802] = { pset={ dup=LHpi.Data.sets[802].cardcount.reg }, failed={ dup=LHpi.Data.sets[802].cardcount.tok }, duppset={ [2]="RUS",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=14 },
-[800] = { pset={ dup=LHpi.Data.sets[800].cardcount.reg-1,[3]=LHpi.Data.sets[800].cardcount.both-1,[4]=LHpi.Data.sets[800].cardcount.both-1,[5]=LHpi.Data.sets[800].cardcount.both-1,[6]=LHpi.Data.sets[800].cardcount.both-1 }, failed={ dup=LHpi.Data.sets[800].cardcount.tok+1,[3]=1,[4]=1,[5]=1,[6]=1 }, duppset={ [2]="RUS",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=62 },
+[806] = { pset={ dup=LHpi.Data.sets[806].cardcount.reg }, failed={ dup=LHpi.Data.sets[806].cardcount.tok }, duppset={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=44 },
+[802] = { pset={ dup=LHpi.Data.sets[802].cardcount.reg }, failed={ dup=LHpi.Data.sets[802].cardcount.tok }, duppset={ [4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=2*22 },
+[800] = { pset={ dup=LHpi.Data.sets[800].cardcount.reg }, failed={ dup=LHpi.Data.sets[800].cardcount.tok }, duppset={ [7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=62 },
 [795] = { pset={ dup=LHpi.Data.sets[795].cardcount.reg }, failed={ dup=LHpi.Data.sets[795].cardcount.tok }, duppset={ [2]="RUS",[3]="GER",[7]="SPA" }, dupfail={ [2]="RUS",[3]="GER",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
 [793] = { pset={ dup=LHpi.Data.sets[793].cardcount.reg }, failed={ dup=LHpi.Data.sets[793].cardcount.tok }, duppset={ [2]="RUS",[7]="SPA" }, dupfail={ [2]="RUS",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
 [791] = { pset={ dup=LHpi.Data.sets[791].cardcount.reg-1,[3]=LHpi.Data.sets[791].cardcount.both-1,[4]=LHpi.Data.sets[791].cardcount.both-1,[5]=LHpi.Data.sets[791].cardcount.both-1,[6]=LHpi.Data.sets[791].cardcount.both-1 }, failed={ dup=LHpi.Data.sets[791].cardcount.tok+1,[3]=1,[4]=1,[5]=1,[6]=1 }, duppset={ [2]="RUS",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=48 },

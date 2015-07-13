@@ -29,10 +29,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 --[[ CHANGES
 v6
+fixed set names
+added lang [17]="Phyrexian"
+new 814
 fixed names for 21,40,814
+fixed variants for 69,787,201[ITA],43,758,764,766,781,800
 variant table for 45,40,33,27,26,25,22,15
 foiltweak table for 33,26,22
-cardcount fixed/updated in promo sets
+cardcount fixed/updated in 800,791,762,105,106,9,promo sets
 ]]
 
 
@@ -758,7 +762,7 @@ Expansions = nil,
 	},
 },
 [800] = { name="Theros",
-	cardcount={ reg = 249+1, tok = 11 },
+	cardcount={ reg = 249, tok = 11 },
 	variants={
 ["Plains"] 						= { "Plains"	, { 1    , 2    , 3    , 4     } },
 ["Island"] 						= { "Island" 	, { 1    , 2    , 3    , 4     } },
@@ -793,8 +797,8 @@ Expansions = nil,
 ["Soldat Token (2)"]			= { "Soldat Token"	, { 1    , false, false } },
 ["Soldat Token (3)"]			= { "Soldat Token"	, { false, 2    , false } },
 ["Soldat Token (7)"]			= { "Soldat Token"	, { false, false, 3     } },
-["Karametra's Acolyte"]						= { "Karametra's Acolyte"	, { ""   , false              } },
-["Karametra's Acolyte (Holiday Gift Box)"]	= { "Karametra's Acolyte"	, { false, "Holiday Gift Box" } },
+--["Karametra's Acolyte"]						= { "Karametra's Acolyte"	, { ""   , false              } },
+--["Karametra's Acolyte (Holiday Gift Box)"]	= { "Karametra's Acolyte"	, { false, "Holiday Gift Box" } },
 	},
 },
 [795] = { name="Dragon’s Maze",
@@ -4740,6 +4744,6 @@ for sid,set in pairs(Data.sets) do
 end -- for sid,count
 
 --LHpi.Log( "LHpi.Data loaded and executed successfully." , 0 , nil )
-ma.Log( "LHpi.Data loaded and executed successfully." )
+--ma.Log( "LHpi.Data loaded and executed successfully." )
 return Data
 --EOF
