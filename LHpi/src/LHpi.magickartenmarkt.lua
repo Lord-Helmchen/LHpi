@@ -11,7 +11,7 @@ If you want to contact me about the script, try its release thread in http://www
 
 @module LHpi.site
 @author Christian Harms
-@copyright 2012-2014 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
+@copyright 2012-2015 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
 @release This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -33,7 +33,7 @@ migrate to other sitescripts:
 *Initialize()
 *site.priceTypes Table and local global option
 workdir support
-site.LoadLib seperated from ImportPrice
+site.LoadLib split from ImportPrice
 no longer check for lib and Data in deprecated location
 site.Initialize loads LHpi lib if not yet available (needed if ImportPrice is not called)
 new site.FetchExpansionList() 
@@ -133,7 +133,7 @@ OFFLINE = true
 local libver = "2.15"
 --- revision of the LHpi library datafile to use
 -- @field #string dataver
-local dataver = "5"
+local dataver = "6"
 --- sitescript revision number
 -- @field  string scriptver
 local scriptver = "2"
@@ -278,6 +278,8 @@ end--function site.LoadLib
 @param #table mode { #boolean helper, ... }
 	-- nil 			if called by Magic Album
 	-- helper		true if called as library by LHpi.mkm-helper
+	-- mode.json or mode.xml	to select mkm response format (default json, xml not implemented)
+	-- mode.update	true to run update helper functions
  @function [parent=#site] Initialize
 ]]
 function site.Initialize( mode )
@@ -293,22 +295,16 @@ function site.Initialize( mode )
 		LHpi = site.LoadLib()
 	end
 	LHpi.Log(site.scriptname.." started site.Initialize():",1)
-	print(tostring(OFFLINE))
-	print(tostring(mode.helper))
 	if OFFLINE~=true and (not mode.helper ) then--allow or mode.update later
 		error("LHpi.magickartenmarkt only works in OFFLINE mode. Use LHpi.mkm-helper.lua to fetch source data.")
 	end
-	if mode == nil then
-		mode = {}
-	else
-		if mode.helper then
-			print("starting LHpi.magickartenmarkt.lua in helper mode")
-			--prevent sitescript from overwriting LHpi lib
-			function ImportPrice()
-				error("ImportPrice disabled by helper mode!")
-			end
-			LHpi.Log(scriptname .. " running as helper. ImportPrice() deleted." ,1)
+	if mode.helper then
+		print("starting LHpi.magickartenmarkt.lua in helper mode")
+		--prevent sitescript from overwriting LHpi lib
+		function ImportPrice()
+			error("ImportPrice disabled by helper mode!")
 		end
+		LHpi.Log(scriptname .. " running as helper. ImportPrice() deleted." ,1)
 	end
 	useAsRegprice = useAsRegprice or 3
 	useAsFoilprice = useAsFoilprice or 5	
@@ -360,7 +356,6 @@ function site.Initialize( mode )
 	 	dummy.ListUnknownUrls(site.FetchExpansionList(),dummy.CompareSiteSets())
 		return
 	end
-
 end
 
 
@@ -532,7 +527,7 @@ function site.BuildUrl( setid,langid,frucid,offline )
 	error("reached unreachable state")	
 end -- function site.BuildUrl
 
---[[- fetch list of expansions from mkmapi.
+--[[- fetch list of expansions from mkmapi to be used by update helper functions.
  The returned table shall contain at least the sets' name and LHpi-comnpatible urlsuffix,
  so it can be processed by dummy.ListUnknownUrls.
  @function [parent=#site] FetchExpansionList
@@ -540,7 +535,7 @@ end -- function site.BuildUrl
 ]]
 function site.FetchExpansionList()
 	if OFFLINE then
-		LHpi.Log("OFFLINE mode active. Expansion list may not be up-to-date.")
+		LHpi.Log("OFFLINE mode active. Expansion list may not be up-to-date." ,1)
 	end
 	local expansions
 	local url = site.BuildUrl( "list" )
@@ -2600,16 +2595,16 @@ function site.SetExpected( importfoil , importlangs , importsets )
 --- pset defaults to LHpi.Data.sets[setid].cardcount.reg, if available and not set otherwise here.
 --  LHpi.Data.sets[setid]cardcount has 6 fields you can use to avoid hardcoded numbers here: { reg, tok, both, nontrad, repl, all }.
 
---- if EXPECTTOKENS is true, LHpi.Data.sets[setid].cardcount.tok is added to pset default.
+--- if site.expected.tokens is true, LHpi.Data.sets[setid].cardcount.tok is added to pset default.
 -- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
--- @field [parent=#site.expected] #boolean tokens
+-- @field [parent=#site.expected] #boolean or #table { #boolean,...} tokens
 --	tokens = true,
 	tokens = { "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" },
---- if EXPECTNONTRAD is true, LHpi.Data.sets[setid].cardcount.nontrad is added to pset default.
+--- if site.expected.nontrad is true, LHpi.Data.sets[setid].cardcount.nontrad is added to pset default.
 -- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
 -- @field [parent=#site.expected] #boolean nontrad
 	nontrad = true,
---- if EXPECTREPL is true, LHpi.Data.sets[setid].cardcount.repl is added to pset default.
+--- if site.expected.replica is true, LHpi.Data.sets[setid].cardcount.repl is added to pset default.
 -- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
 -- @field [parent=#site.expected] #boolean replica
 	replica = true,

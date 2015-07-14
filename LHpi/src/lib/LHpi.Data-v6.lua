@@ -12,7 +12,7 @@ If you want to contact me about the script, try its release thread in http://www
 
 @module LHpi.Data
 @author Christian Harms
-@copyright 2012-2014 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
+@copyright 2012-2015 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
 @release This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
