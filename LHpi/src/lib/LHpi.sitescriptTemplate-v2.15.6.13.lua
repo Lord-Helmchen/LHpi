@@ -188,6 +188,7 @@ function ImportPrice( importfoil , importlangs , importsets , scriptmode)
 	end
 	ma.SetProgress( "Loading LHpi library", 0 )
 	local loglater
+	LHpi, loglater = site.LoadLib()
 	collectgarbage() -- we now have LHpi table with all its functions inside, let's clear LHpilib and execlib() from memory
 	if loglater then
 		LHpi.Log(loglater ,0)
@@ -206,6 +207,7 @@ end -- function ImportPrice
 function site.LoadLib()
 	local LHpi
 	local libname = site.workdir .. "lib\\LHpi-v" .. libver .. ".lua"
+	local loglater
 	local LHpilib = ma.GetFile( libname )
 	if tonumber(libver) < 2.15 then
 		loglater = ""
@@ -245,6 +247,7 @@ end--function site.LoadLib
  
 @param #table mode { #boolean flags for nonstandard modes of operation }
 	-- nil if called by Magic Album
+	-- mode.update	true to run update helper functions
  @function [parent=#site] Initialize
 ]]
 function site.Initialize( mode )
@@ -338,25 +341,36 @@ This will be used by site.FetchExpansionList().
  @function [parent=#site] FetchExpansionList
  @return #table  @return #table { #number= #table { name= #string , urlsuffix= #string , ... }
 ]]
---function site.FetchExpansionList()
+function site.FetchExpansionList()
 --	if OFFLINE then
 --		LHpi.Log("OFFLINE mode active. Expansion list may not be up-to-date." ,1)
 --	end
 --	local expansionSource
 --	local url = site.BuildUrl( "list" )
---	expansions = LHpi.GetSourceData ( url , urldetails )
+--	expansionSource = LHpi.GetSourceData ( url , urldetails )
 --	if not expansionSource then
 --		error(string.format("Expansion list not found at %s (OFFLINE=%s)",LHpi.Tostring(url),tostring(OFFLINE)) )
 --	end
+	-- parse expansion source and build the table here
+	
+	-- This implementation is only to help updating the template.
+	-- You should probably delete it and implement it for the site if you want to use the update helper mode.
+	local expansionSource = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
+	local expansions = {}
+	for sid,name in pairs(expansionSource) do
+		expansions[sid]={name=name, urlsuffix = LHpi.OAuthEncode(name)}
+	end
+
 --	
---	-- parse expansion source and build the table here
 --	for i,expansion in pairs(expansions) do
 --		expansions[i].urlsuffix = LHpi.OAuthEncode(expansion.name)
---	end
---	
---	return expansions
---end--function site.FetchExpansionList
-
+--	end	
+	return expansions
+end--function site.FetchExpansionList
+--[[- format string to use in dummy.ListUnknownUrls update helper function.
+ @field [parent=#site] #string updateFormatString ]]
+site.updateFormatString = "[%i]={id=%3i, lang = { [1]=true }, fruc = { true , true }, url = %q},--%s"
+						
 --[[-  get data from foundstring.
  Has to be done in sitescript since html raw data structure is site specific.
  To allow returning more than one card here (foil and nonfoil versions are considered seperate cards at this stage!),
@@ -517,95 +531,102 @@ site.langs = {
 ]]
 site.sets = {
 -- Core Sets
-[808]={id = 808, lang = { [1]=true }, fruc = { true , true }, url = "M15"},
-[797]={id = 797, lang = { [1]=true }, fruc = { true , true }, url = "M14"},
-[788]={id = 788, lang = { [1]=true }, fruc = { true , true }, url = "M13"},
-[779]={id = 779, lang = { [1]=true }, fruc = { true , true }, url = "M12"},
-[770]={id = 770, lang = { [1]=true }, fruc = { true , true }, url = "M11"},
-[759]={id = 759, lang = { [1]=true }, fruc = { true , true }, url = "M10"},
-[720]={id = 720, lang = { [1]=true }, fruc = { true , true }, url = "10E"},
-[630]={id = 630, lang = { [1]=true }, fruc = { true , true }, url = "9ED"},
-[550]={id = 550, lang = { [1]=true }, fruc = { true , true }, url = "8ED"},
-[460]={id = 460, lang = { [1]=true }, fruc = { true , true }, url = "7ED"},
-[360]={id = 360, lang = { [1]=true }, fruc = { true , true }, url = "6ED"},
-[250]={id = 250, lang = { [1]=true }, fruc = { false, true }, url = "5ED"},
-[180]={id = 180, lang = { [1]=true }, fruc = { false, true }, url = "4ED"},
-[141]={id = 141, lang = { [1]=true }, fruc = { false, true }, url = "RSM"},--Revised Summer Magic
-[140]={id = 140, lang = { [1]=true }, fruc = { false, true }, url = "3ED"},--Revised
-[139]={id = 139, lang = { [3]=true }, fruc = { false, true }, url = "RLD"},--Revised Limited Deutsch
-[110]={id = 110, lang = { [1]=true }, fruc = { false, true }, url = "2ED"},--Unlimited
-[100]={id = 100, lang = { [1]=true }, fruc = { false, true }, url = "LEB"},--Beta
-[90] ={id =  90, lang = { [1]=true }, fruc = { false, true }, url = "LEA"},--Alpha
+[808]={id=808, lang = { [1]=true }, fruc = { true , true }, url = "M15"},--Magic 2015
+[797]={id=797, lang = { [1]=true }, fruc = { true , true }, url = "M14"},--Magic 2014
+[788]={id=788, lang = { [1]=true }, fruc = { true , true }, url = "M13"},--Magic 2013
+[779]={id=779, lang = { [1]=true }, fruc = { true , true }, url = "M12"},--Magic 2012
+[770]={id=770, lang = { [1]=true }, fruc = { true , true }, url = "M11"},--Magic 2011
+[759]={id=759, lang = { [1]=true }, fruc = { true , true }, url = "M10"},--Magic 2010
+[720]={id=720, lang = { [1]=true }, fruc = { true , true }, url = "10E"},--Tenth Edition
+[630]={id=630, lang = { [1]=true }, fruc = { true , true }, url = "9ED"},--9th Edition
+[550]={id=550, lang = { [1]=true }, fruc = { true , true }, url = "8ED"},--8th Edition
+[460]={id=460, lang = { [1]=true }, fruc = { true , true }, url = "7ED"},--7th Edition
+[360]={id=360, lang = { [1]=true }, fruc = { true , true }, url = "6ED"},--6th Edition
+[250]={id=250, lang = { [1]=true }, fruc = { false, true }, url = "5ED"},--5th Edition
+[180]={id=180, lang = { [1]=true }, fruc = { false, true }, url = "4ED"},--4th Edition
+[179]={id=179, lang = { [1]=true }, fruc = { false, true }, url = "4EF"},--4th Edition (FBB)
+[141]={id=141, lang = { [1]=true }, fruc = { false, true }, url = "RSM"},--Revised Summer Magic
+[140]={id=140, lang = { [1]=true }, fruc = { false, true }, url = "3ED"},--Revised
+[139]={id=139, lang = { [3]=true }, fruc = { false, true }, url = "RLD"},--Revised Limited Edition (FBB)
+[110]={id=110, lang = { [1]=true }, fruc = { false, true }, url = "2ED"},--Unlimited
+[100]={id=100, lang = { [1]=true }, fruc = { false, true }, url = "LEB"},--Beta
+[90] ={id= 90, lang = { [1]=true }, fruc = { false, true }, url = "LEA"},--Alpha
 -- Expansions
-[813]={id = 813, lang = { [1]=true }, fruc = { true , true }, url = "KTK"},--Khans of Tarkir
-[806]={id = 806, lang = { [1]=true }, fruc = { true , true }, url = "JOU"},--Journey into Nyx
-[802]={id = 802, lang = { [1]=true }, fruc = { true , true }, url = "BNG"},--Born of the Gods
-[800]={id = 800, lang = { [1]=true }, fruc = { true , true }, url = "THS"},--Theros
-[795]={id = 795, lang = { [1]=true }, fruc = { true , true }, url = "DGM"},--Dragon's Maze
-[793]={id = 793, lang = { [1]=true }, fruc = { true , true }, url = "GTC"},--Gatecrash
-[791]={id = 791, lang = { [1]=true }, fruc = { true , true }, url = "RTR"},--Return to Ravnica
-[786]={id = 786, lang = { [1]=true }, fruc = { true , true }, url = "AVR"},--Avacyn Restored
-[784]={id = 784, lang = { [1]=true }, fruc = { true , true }, url = "DKA"},--Dark Ascension
-[782]={id = 782, lang = { [1]=true }, fruc = { true , true }, url = "ISD"},--Inistrad
-[776]={id = 776, lang = { [1]=true }, fruc = { true , true }, url = "NPH"},--New Phyrexia
-[775]={id = 775, lang = { [1]=true }, fruc = { true , true }, url = "MBS"},--Mirrodin Besieged
-[773]={id = 773, lang = { [1]=true }, fruc = { true , true }, url = "SOM"},--Scars of Mirrodin
-[767]={id = 767, lang = { [1]=true }, fruc = { true , true }, url = "ROE"},--Rise of the Eldrazi
-[765]={id = 765, lang = { [1]=true }, fruc = { true , true }, url = "WWK"},--Worldwake
-[762]={id = 762, lang = { [1]=true }, fruc = { true , true }, url = "ZEN"},--Zendikar
-[758]={id = 758, lang = { [1]=true }, fruc = { true , true }, url = "ARB"},--Alara Reborn
-[756]={id = 756, lang = { [1]=true }, fruc = { true , true }, url = "CON"},--Conflux
-[754]={id = 754, lang = { [1]=true }, fruc = { true , true }, url = "ALA"},--Shards of Alara
-[752]={id = 752, lang = { [1]=true }, fruc = { true , true }, url = "EVE"},--Eventide
-[751]={id = 751, lang = { [1]=true }, fruc = { true , true }, url = "SHM"},--Shadowmoor
-[750]={id = 750, lang = { [1]=true }, fruc = { true , true }, url = "MOR"},--Morningtide
-[730]={id = 730, lang = { [1]=true }, fruc = { true , true }, url = "LRW"},--Lorwyn
-[710]={id = 710, lang = { [1]=true }, fruc = { true , true }, url = "FUT"},--Future Sight
-[700]={id = 700, lang = { [1]=true }, fruc = { true , true }, url = "PLC"},--Planar Chaos
-[690]={id = 690, lang = { [1]=true }, fruc = { true , true }, url = "TSB"},--Time Spiral Timeshifted
-[680]={id = 680, lang = { [1]=true }, fruc = { true , true }, url = "TSP"},--Time Spiral
-[670]={id = 670, lang = { [1]=true }, fruc = { true , true }, url = "CSP"},--Coldsnap
-[660]={id = 660, lang = { [1]=true }, fruc = { true , true }, url = "DIS"},--Dissension
-[650]={id = 650, lang = { [1]=true }, fruc = { true , true }, url = "GPT"},--Guildpact
-[640]={id = 640, lang = { [1]=true }, fruc = { true , true }, url = "RAV"},--Ravnica:
-[620]={id = 620, lang = { [1]=true }, fruc = { true , true }, url = "SOK"},--Saviors of Kamigawa
-[610]={id = 610, lang = { [1]=true }, fruc = { true , true }, url = "BOK"},--Betrayers of Kamigawa
-[590]={id = 590, lang = { [1]=true }, fruc = { true , true }, url = "CHK"},--Champions of Kamigawa
-[580]={id = 580, lang = { [1]=true }, fruc = { true , true }, url = "5DN"},--Fifth Dawn
-[570]={id = 570, lang = { [1]=true }, fruc = { true , true }, url = "DST"},--Darksteel
-[560]={id = 560, lang = { [1]=true }, fruc = { true , true }, url = "MRD"},--Mirrodin
-[540]={id = 540, lang = { [1]=true }, fruc = { true , true }, url = "SCG"},--Scourge
-[530]={id = 530, lang = { [1]=true }, fruc = { true , true }, url = "LGN"},--Legions
-[520]={id = 520, lang = { [1]=true }, fruc = { true , true }, url = "ONS"},--Onslaught
-[510]={id = 510, lang = { [1]=true }, fruc = { true , true }, url = "JUD"},--Judgment
-[500]={id = 500, lang = { [1]=true }, fruc = { true , true }, url = "TOR"},--Torment
-[480]={id = 480, lang = { [1]=true }, fruc = { true , true }, url = "ODY"},--Odyssey
-[470]={id = 470, lang = { [1]=true }, fruc = { true , true }, url = "APC"},--Apocalypse
-[450]={id = 450, lang = { [1]=true }, fruc = { true , true }, url = "PLS"},--Planeshift
-[430]={id = 430, lang = { [1]=true }, fruc = { true , true }, url = "INV"},--Invasion
-[420]={id = 420, lang = { [1]=true }, fruc = { true , true }, url = "PCY"},--Prophecy
-[410]={id = 410, lang = { [1]=true }, fruc = { true , true }, url = "NEM"},--Nemesis
-[400]={id = 400, lang = { [1]=true }, fruc = { true , true }, url = "MMQ"},--Mercadian Masques
-[370]={id = 370, lang = { [1]=true }, fruc = { true , true }, url = "UDS"},--Urza's Destiny 
-[350]={id = 350, lang = { [1]=true }, fruc = { true , true }, url = "ULG"},--Urza's Legacy
-[330]={id = 330, lang = { [1]=true }, fruc = { false, true }, url = "USG"},--Urza's Saga
-[300]={id = 300, lang = { [1]=true }, fruc = { false, true }, url = "EXO"},--Exodus
-[290]={id = 290, lang = { [1]=true }, fruc = { false, true }, url = "STH"},--Stronghold
-[280]={id = 280, lang = { [1]=true }, fruc = { false, true }, url = "TMP"},--Tempest
-[270]={id = 270, lang = { [1]=true }, fruc = { false, true }, url = "WTH"},--Weatherlight
-[240]={id = 240, lang = { [1]=true }, fruc = { false, true }, url = "VIS"},--Visions
-[230]={id = 230, lang = { [1]=true }, fruc = { false, true }, url = "MIR"},--Mirage
-[220]={id = 220, lang = { [1]=true }, fruc = { false, true }, url = "ALL"},--Alliances
-[210]={id = 210, lang = { [1]=true }, fruc = { false, true }, url = "HML"},--Homelands
-[190]={id = 190, lang = { [1]=true }, fruc = { false, true }, url = "ICE"},--Ice Age
-[170]={id = 170, lang = { [1]=true }, fruc = { false, true }, url = "FEM"},--Fallen Empire
-[160]={id = 160, lang = { [1]=true }, fruc = { false, true }, url = "DRK"},--The Dark
-[150]={id = 150, lang = { [1]=true }, fruc = { false, true }, url = "LEG"},--Legends
-[130]={id = 130, lang = { [1]=true }, fruc = { false, true }, url = "ATQ"},--Antiquities
-[120]={id = 120, lang = { [1]=true }, fruc = { false, true }, url = "ARN"},--Arabian Nights
+[818]={id=818, lang = { [1]=true }, fruc = { true , true }, url = "DTK"},--Dragons of Tarkir
+[816]={id=816, lang = { [1]=true }, fruc = { true , true }, url = "FRF"},--Fate Reforged
+[813]={id=813, lang = { [1]=true }, fruc = { true , true }, url = "KTK"},--Khans of Tarkir
+[806]={id=806, lang = { [1]=true }, fruc = { true , true }, url = "JOU"},--Journey into Nyx
+[802]={id=802, lang = { [1]=true }, fruc = { true , true }, url = "BNG"},--Born of the Gods
+[800]={id=800, lang = { [1]=true }, fruc = { true , true }, url = "THS"},--Theros
+[795]={id=795, lang = { [1]=true }, fruc = { true , true }, url = "DGM"},--Dragon's Maze
+[793]={id=793, lang = { [1]=true }, fruc = { true , true }, url = "GTC"},--Gatecrash
+[791]={id=791, lang = { [1]=true }, fruc = { true , true }, url = "RTR"},--Return to Ravnica
+[786]={id=786, lang = { [1]=true }, fruc = { true , true }, url = "AVR"},--Avacyn Restored
+[784]={id=784, lang = { [1]=true }, fruc = { true , true }, url = "DKA"},--Dark Ascension
+[782]={id=782, lang = { [1]=true }, fruc = { true , true }, url = "ISD"},--Innistrad
+[776]={id=776, lang = { [1]=true }, fruc = { true , true }, url = "NPH"},--New Phyrexia
+[775]={id=775, lang = { [1]=true }, fruc = { true , true }, url = "MBS"},--Mirrodin Besieged
+[773]={id=773, lang = { [1]=true }, fruc = { true , true }, url = "SOM"},--Scars of Mirrodin
+[767]={id=767, lang = { [1]=true }, fruc = { true , true }, url = "ROE"},--Rise of the Eldrazi
+[765]={id=765, lang = { [1]=true }, fruc = { true , true }, url = "WWK"},--Worldwake
+[762]={id=762, lang = { [1]=true }, fruc = { true , true }, url = "ZEN"},--Zendikar
+[758]={id=758, lang = { [1]=true }, fruc = { true , true }, url = "ARB"},--Alara Reborn
+[756]={id=756, lang = { [1]=true }, fruc = { true , true }, url = "CON"},--Conflux
+[754]={id=754, lang = { [1]=true }, fruc = { true , true }, url = "ALA"},--Shards of Alara
+[752]={id=752, lang = { [1]=true }, fruc = { true , true }, url = "EVE"},--Eventide
+[751]={id=751, lang = { [1]=true }, fruc = { true , true }, url = "SHM"},--Shadowmoor
+[750]={id=750, lang = { [1]=true }, fruc = { true , true }, url = "MOR"},--Morningtide
+[730]={id=730, lang = { [1]=true }, fruc = { true , true }, url = "LRW"},--Lorwyn
+[710]={id=710, lang = { [1]=true }, fruc = { true , true }, url = "FUT"},--Future Sight
+[700]={id=700, lang = { [1]=true }, fruc = { true , true }, url = "PLC"},--Planar Chaos
+[690]={id=690, lang = { [1]=true }, fruc = { true , true }, url = "TSB"},--Time Spiral Timeshifted
+[680]={id=680, lang = { [1]=true }, fruc = { true , true }, url = "TSP"},--Time Spiral
+[670]={id=670, lang = { [1]=true }, fruc = { true , true }, url = "CSP"},--Coldsnap
+[660]={id=660, lang = { [1]=true }, fruc = { true , true }, url = "DIS"},--Dissension
+[650]={id=650, lang = { [1]=true }, fruc = { true , true }, url = "GPT"},--Guildpact
+[640]={id=640, lang = { [1]=true }, fruc = { true , true }, url = "RAV"},--Ravnica:
+[620]={id=620, lang = { [1]=true }, fruc = { true , true }, url = "SOK"},--Saviors of Kamigawa
+[610]={id=610, lang = { [1]=true }, fruc = { true , true }, url = "BOK"},--Betrayers of Kamigawa
+[590]={id=590, lang = { [1]=true }, fruc = { true , true }, url = "CHK"},--Champions of Kamigawa
+[580]={id=580, lang = { [1]=true }, fruc = { true , true }, url = "5DN"},--Fifth Dawn
+[570]={id=570, lang = { [1]=true }, fruc = { true , true }, url = "DST"},--Darksteel
+[560]={id=560, lang = { [1]=true }, fruc = { true , true }, url = "MRD"},--Mirrodin
+[540]={id=540, lang = { [1]=true }, fruc = { true , true }, url = "SCG"},--Scourge
+[530]={id=530, lang = { [1]=true }, fruc = { true , true }, url = "LGN"},--Legions
+[520]={id=520, lang = { [1]=true }, fruc = { true , true }, url = "ONS"},--Onslaught
+[510]={id=510, lang = { [1]=true }, fruc = { true , true }, url = "JUD"},--Judgment
+[500]={id=500, lang = { [1]=true }, fruc = { true , true }, url = "TOR"},--Torment
+[480]={id=480, lang = { [1]=true }, fruc = { true , true }, url = "ODY"},--Odyssey
+[470]={id=470, lang = { [1]=true }, fruc = { true , true }, url = "APC"},--Apocalypse
+[450]={id=450, lang = { [1]=true }, fruc = { true , true }, url = "PLS"},--Planeshift
+[430]={id=430, lang = { [1]=true }, fruc = { true , true }, url = "INV"},--Invasion
+[420]={id=420, lang = { [1]=true }, fruc = { true , true }, url = "PCY"},--Prophecy
+[410]={id=410, lang = { [1]=true }, fruc = { true , true }, url = "NEM"},--Nemesis
+[400]={id=400, lang = { [1]=true }, fruc = { true , true }, url = "MMQ"},--Mercadian Masques
+[370]={id=370, lang = { [1]=true }, fruc = { true , true }, url = "UDS"},--Urza’s Destiny
+[350]={id=350, lang = { [1]=true }, fruc = { true , true }, url = "ULG"},--Urza’s Legacy
+[330]={id=330, lang = { [1]=true }, fruc = { false, true }, url = "USG"},--Urza’s Saga
+[300]={id=300, lang = { [1]=true }, fruc = { false, true }, url = "EXO"},--Exodus
+[290]={id=290, lang = { [1]=true }, fruc = { false, true }, url = "STH"},--Stronghold
+[280]={id=280, lang = { [1]=true }, fruc = { false, true }, url = "TMP"},--Tempest
+[270]={id=270, lang = { [1]=true }, fruc = { false, true }, url = "WTH"},--Weatherlight
+[240]={id=240, lang = { [1]=true }, fruc = { false, true }, url = "VIS"},--Visions
+[230]={id=230, lang = { [1]=true }, fruc = { false, true }, url = "MIR"},--Mirage
+[220]={id=220, lang = { [1]=true }, fruc = { false, true }, url = "ALL"},--Alliances
+[210]={id=210, lang = { [1]=true }, fruc = { false, true }, url = "HML"},--Homelands
+[190]={id=190, lang = { [1]=true }, fruc = { false, true }, url = "ICE"},--Ice Age
+[170]={id=170, lang = { [1]=true }, fruc = { false, true }, url = "FEM"},--Fallen Empires
+[160]={id=160, lang = { [1]=true }, fruc = { false, true }, url = "DRK"},--The Dark
+[150]={id=150, lang = { [1]=true }, fruc = { false, true }, url = "LEG"},--Legends
+[130]={id=130, lang = { [1]=true }, fruc = { false, true }, url = "ATQ"},--Antiquities
+[120]={id=120, lang = { [1]=true }, fruc = { false, true }, url = "ARN"},--Arabian Nights
 -- special sets
---[  0]={id=  0, lang = { [1]=true }, fruc = { false, true }, url = ""},--Duel Decks: Anthology
---[814]={id=814, lang = { [1]=true }, fruc = { false, true }, url = ""},--Commander 2014
+--[821]={id=821, lang = { [1]=true }, fruc = { false, true }, url = ""},--Challenge Deck: Defeat a God
+--[820]={id=820, lang = { [1]=true }, fruc = { false, true }, url = ""},--Duel Decks: Elspeth vs. Kiora
+[819]={id=819, lang = { [1]=true }, fruc = { true , true }, url = "MM2"},--Modern Masters 2015 Edition
+--[817]={id=817, lang = { [1]=true }, fruc = { false, true }, url = ""},--Duel Decks: Anthology
+--[815]={id=815, lang = { [1]=true }, fruc = { true , true }, url = "Fate%20Reforged%20Clash%20Pack"},--Fate Reforged Clash Pack
+[814]={id=814, lang = { [1]=true }, fruc = { false, true }, url = "C14"},--Commander 2014
 --[812]={id=812, lang = { [1]=true }, fruc = { false, true }, url = ""},--Duel Decks: Speed vs. Cunning
 --[811]={id=811, lang = { [1]=true }, fruc = { true , false}, url = ""},--Magic 2015 Clash Pack
 --[810]={id=810, lang = { [1]=true }, fruc = { false, true }, url = ""},--Modern Event Deck 2014
@@ -614,86 +635,90 @@ site.sets = {
 --[805]={id=805, lang = { [1]=true }, fruc = { false, true }, url = "DDM"},--Duel Decks: Jace vs. Vraska
 --[804]={id=804, lang = { [1]=true }, fruc = { false, true }, url = ""},--Challenge Deck: Battle the Horde
 --[803]={id=803, lang = { [1]=true }, fruc = { false, true }, url = ""},--Challenge Deck: Face the Hydra
---[801]={id = 801, lang = { [1]=true }, fruc = { true , true }, url = "C13"},--Commander 2013
---[799]={id = 799, lang = { [1]=true }, fruc = { false, true }, url = "DDL"},--Duel Decks: Heroes vs. Monsters
---[798]={id = 798, lang = { [1]=true }, fruc = { true , false}, url = "V13"},--From the Vault: Twenty
-[796]={id = 796, lang = { [1]=true }, fruc = { true , true }, url = "MMA"},--Modern Masters
---[794]={id = 794, lang = { [1]=true }, fruc = { false, true }, url = "DDK"},--Duel Decks: Sorin vs. Tibalt
---[792]={id = 792, lang = { [1]=true }, fruc = { true , false}, url = "CM1"},--Commander’s Arsenal
---[790]={id = 790, lang = { [1]=true }, fruc = { false, true }, url = "DDJ"},--Duel Decks: Izzet vs. Golgari
---[789]={id = 789, lang = { [1]=true }, fruc = { true , false}, url = "V12"},--From the Vault: Realms
---[787]={id = 787, lang = { [1]=true }, fruc = { false, true }, url = "PC2"},--Planechase 2012
---[785]={id = 785, lang = { [1]=true }, fruc = { false, true }, url = "DDI"},--Duel Decks: Venser vs. Koth
---[783]={id = 783, lang = { [1]=true }, fruc = { true , false}, url = "PD3"},--Premium Deck Series: Graveborn
---[781]={id = 781, lang = { [1]=true }, fruc = { false, true }, url = "DDH"},--Duel Decks: Ajani vs. Nicol Bolas
---[780]={id = 780, lang = { [1]=true }, fruc = { true , false}, url = "V11"},--From the Vault: Legends
---[778]={id = 778, lang = { [1]=true }, fruc = { false, true }, url = "CMD"},--Commander
---[777]={id = 777, lang = { [1]=true }, fruc = { false, true }, url = "DDG"},--Duel Decks: Knights vs. Dragons
---[774]={id = 774, lang = { [1]=true }, fruc = { true , false}, url = "PD2"},--Premium Deck Series: Fire and Lightning
---[772]={id = 772, lang = { [1]=true }, fruc = { false, true }, url = "DDF"},--Duel Decks: Elspeth vs. Tezzeret
---[771]={id = 771, lang = { [1]=true }, fruc = { true , false}, url = "V10"},--From the Vault: Relics
---[769]={id = 769, lang = { [1]=true }, fruc = { false, true }, url = "ARC"},--Archenemy   
---[768]={id = 768, lang = { [1]=true }, fruc = { false, true }, url = "DPA"},--Duels of the Planeswalkers
---[766]={id = 766, lang = { [1]=true }, fruc = { false, true }, url = "DDE"},--Duel Decks: Phyrexia vs. The Coalition
---[764]={id = 764, lang = { [1]=true }, fruc = { true , false}, url = "H09"},--Premium Deck Series: Slivers
---[763]={id = 763, lang = { [1]=true }, fruc = { false, true }, url = "DDD"},--Duel Decks: Garruk vs. Liliana
---[761]={id = 761, lang = { [1]=true }, fruc = { false, true }, url = "HOP"},--Planechase
---[760]={id = 760, lang = { [1]=true }, fruc = { true , false}, url = "V09"},--From the Vault: Exiled
---[757]={id = 757, lang = { [1]=true }, fruc = { false, true }, url = "DDC"},--Duel Decks: Divine vs. Demonic
---[755]={id = 755, lang = { [1]=true }, fruc = { false, true }, url = "DD2"},--Duel Decks: Jace vs. Chandra
---[753]={id = 753, lang = { [1]=true }, fruc = { true , false}, url = "DRB"},--From the Vault: Dragons
---[740]={id = 740, lang = { [1]=true }, fruc = { false, true }, url = "EVG"},--Duel Decks: Elves vs. Goblins   
---[675]={id = 675, lang = { [1]=true }, fruc = { false, true }, url = ""},--Coldsnap Theme Decks
---[635]={id = 635, lang = { [1]=false,[4]=true,[5]=true,[7]=true }, fruc = { false, true }, url = ""},--Magic Encyclopedia
-[600]={id = 600, lang = { [1]=true }, fruc = { true , true }, url = "UNH"},--Unhinged
---[490]={id = 490, lang = { [1]=true }, fruc = { false, true }, url = "DKM"},--Deckmaster
---[440]={id = 440, lang = { [1]=true }, fruc = { false, true }, url = "BTD"},--Beatdown Box Set
---[415]={id = 415, lang = { [1]=true }, fruc = { false, true }, url = "S00"},--Starter 2000   
---[405]={id = 405, lang = { [1]=true }, fruc = { false, true }, url = ""},--Battle Royale Box Set
---[390]={id = 390, lang = { [1]=true }, fruc = { false, true }, url = "S99"},--Starter 1999
-[380]={id = 380, lang = { [1]=true }, fruc = { false, true }, url = "PTK"},--Portal Three Kingdoms   
---[340]={id = 340, lang = { [1]=true }, fruc = { false, true }, url = "ATH"},--Anthologies
-[320]={id = 320, lang = { [1]=true }, fruc = { false, true }, url = "UGL"},--Unglued
-[310]={id = 310, lang = { [1]=true }, fruc = { false, true }, url = "P02"},--Portal Second Age   
-[260]={id = 260, lang = { [1]=true }, fruc = { false, true }, url = "POR"},--Portal
---[235]={id = 235, lang = { [1]=true }, fruc = { false, true }, url = ""},--Multiverse Gift Box
---[225]={id = 225, lang = { [1]=true }, fruc = { false, true }, url = ""},--Introductory Two-Player Set
---[201]={id = 201, lang = { [1]=false,[3]=true,[4]=true,[5]=true }, fruc = { false, true }, url = ""},--Renaissance
-[200]={id = 200, lang = { [1]=true }, fruc = { false, true }, url = "CHR"},--Chronicles
---[106]={id = 106, lang = { [1]=true }, fruc = { true , true }, url = ""},--Collectors’ Edition (International)
---[105]={id = 105, lang = { [1]=true }, fruc = { true , true }, url = ""},--Collectors’ Edition (Domestic)
---[70] ={id =  70, lang = { [1]=true }, fruc = { false, true }, url = "VAN"},--Vanguard
---[69] ={id =  69, lang = { [1]=true }, fruc = { false, true }, url = ""},--Box Topper Cards
+--[801]={id=801, lang = { [1]=true }, fruc = { true , true }, url = "C13"},--Commander 2013
+--[799]={id=799, lang = { [1]=true }, fruc = { false, true }, url = "DDL"},--Duel Decks: Heroes vs. Monsters
+--[798]={id=798, lang = { [1]=true }, fruc = { true , false}, url = "V13"},--From the Vault: Twenty
+[796]={id=796, lang = { [1]=true }, fruc = { true , true }, url = "MMA"},--Modern Masters
+--[794]={id=794, lang = { [1]=true }, fruc = { false, true }, url = "DDK"},--Duel Decks: Sorin vs. Tibalt
+--[792]={id=792, lang = { [1]=true }, fruc = { true , false}, url = "CM1"},--Commander’s Arsenal
+--[790]={id=790, lang = { [1]=true }, fruc = { false, true }, url = "DDJ"},--Duel Decks: Izzet vs. Golgari
+--[789]={id=789, lang = { [1]=true }, fruc = { true , false}, url = "V12"},--From the Vault: Realms
+--[787]={id=787, lang = { [1]=true }, fruc = { false, true }, url = "PC2"},--Planechase 2012
+--[785]={id=785, lang = { [1]=true }, fruc = { false, true }, url = "DDI"},--Duel Decks: Venser vs. Koth
+--[783]={id=783, lang = { [1]=true }, fruc = { true , false}, url = "PD3"},--Premium Deck Series: Graveborn
+--[781]={id=781, lang = { [1]=true }, fruc = { false, true }, url = "DDH"},--Duel Decks: Ajani vs. Nicol Bolas
+--[780]={id=780, lang = { [1]=true }, fruc = { true , false}, url = "V11"},--From the Vault: Legends
+--[778]={id=778, lang = { [1]=true }, fruc = { false, true }, url = "CMD"},--Commander
+--[777]={id=777, lang = { [1]=true }, fruc = { false, true }, url = "DDG"},--Duel Decks: Knights vs. Dragons
+--[774]={id=774, lang = { [1]=true }, fruc = { true , false}, url = "PD2"},--Premium Deck Series: Fire & Lightning
+--[772]={id=772, lang = { [1]=true }, fruc = { false, true }, url = "DDF"},--Duel Decks: Elspeth vs. Tezzeret
+--[771]={id=771, lang = { [1]=true }, fruc = { true , false}, url = "V10"},--From the Vault: Relics
+--[769]={id=769, lang = { [1]=true }, fruc = { false, true }, url = "ARC"},--Archenemy
+--[768]={id=768, lang = { [1]=true }, fruc = { false, true }, url = "DPA"},--Duels of the Planeswalkers
+--[766]={id=766, lang = { [1]=true }, fruc = { false, true }, url = "DDE"},--Duel Decks: Phyrexia vs. The Coalition
+--[764]={id=764, lang = { [1]=true }, fruc = { true , false}, url = "H09"},--Premium Deck Series: Slivers
+--[763]={id=763, lang = { [1]=true }, fruc = { false, true }, url = "DDD"},--Duel Decks: Garruk vs. Liliana
+--[761]={id=761, lang = { [1]=true }, fruc = { false, true }, url = "HOP"},--Planechase
+--[760]={id=760, lang = { [1]=true }, fruc = { true , false}, url = "V09"},--From the Vault: Exiled
+--[757]={id=757, lang = { [1]=true }, fruc = { false, true }, url = "DDC"},--Duel Decks: Divine vs. Demonic
+--[755]={id=755, lang = { [1]=true }, fruc = { false, true }, url = "DD2"},--Duel Decks: Jace vs. Chandra
+--[753]={id=753, lang = { [1]=true }, fruc = { true , false}, url = "DRB"},--From the Vault: Dragons
+--[740]={id=740, lang = { [1]=true }, fruc = { false, true }, url = "EVG"},--Duel Decks: Elves vs. Goblins
+--[675]={id=675, lang = { [1]=true }, fruc = { false, true }, url = ""},--Coldsnap Theme Decks
+--[636]={id=636, lang = { [1]=true }, fruc = { true , true }, url = ""},--Salvat 2011
+--[635]={id=635, lang = { [1]=false,[4]=true,[5]=true,[7]=true }, fruc = { false, true }, url = ""},--Magic Encyclopedia
+[600]={id=600, lang = { [1]=true }, fruc = { true , true }, url = "UNH"},--Unhinged
+--[490]={id=490, lang = { [1]=true }, fruc = { false, true }, url = "DKM"},--Deckmasters
+--[440]={id=440, lang = { [1]=true }, fruc = { false, true }, url = "BTD"},--Beatdown Box Set
+--[415]={id=415, lang = { [1]=true }, fruc = { false, true }, url = "S00"},--Starter 2000
+--[405]={id=405, lang = { [1]=true }, fruc = { false, true }, url = ""},--Battle Royale Box Set
+--[390]={id=390, lang = { [1]=true }, fruc = { false, true }, url = "S99"},--Starter 1999
+[380]={id=380, lang = { [1]=true }, fruc = { false, true }, url = "PTK"},--Portal Three Kingdoms
+--[340]={id=340, lang = { [1]=true }, fruc = { false, true }, url = "ATH"},--Anthologies
+[320]={id=320, lang = { [1]=true }, fruc = { false, true }, url = "UGL"},--Unglued
+[310]={id=310, lang = { [1]=true }, fruc = { false, true }, url = "P02"},--Portal Second Age
+[260]={id=260, lang = { [1]=true }, fruc = { false, true }, url = "POR"},--Portal
+--[235]={id=235, lang = { [1]=true }, fruc = { false, true }, url = ""},--Multiverse Gift Box
+--[225]={id=225, lang = { [1]=true }, fruc = { false, true }, url = ""},--Introductory Two-Player Set
+--[201]={id=201, lang = { [1]=false,[3]=true,[4]=true,[5]=true }, fruc = { false, true }, url = ""},--Renaissance
+[200]={id=200, lang = { [1]=true }, fruc = { false, true }, url = "CHR"},--Chronicles
+--[106]={id=106, lang = { [1]=true }, fruc = { true , true }, url = ""},--Collectors’ Edition (International)
+--[105]={id=105, lang = { [1]=true }, fruc = { true , true }, url = ""},--Collectors’ Edition (Domestic)
+--[70] ={id= 70, lang = { [1]=true }, fruc = { false, true }, url = "VAN"},--Vanguard
+--[69] ={id= 69, lang = { [1]=true }, fruc = { false, true }, url = ""},--Box Topper Cards
 -- Promo Cards
---[50] ={id =  50, lang = { [1]=true }, fruc = { true }, url = ""},--Full Box Promotion
---[45] ={id =  45, lang = { [1]=true }, fruc = { true }, url = ""},--Magic Premiere Shop
---[43] ={id =  43, lang = { [1]=true }, fruc = { true }, url = ""},--Two-Headed Giant Promos
---[42] ={id =  42, lang = { [1]=true }, fruc = { true }, url = ""},--Summer of Magic Promos
---[41] ={id =  41, lang = { [1]=true }, fruc = { true }, url = ""},--Happy Holidays Promos
---[40] ={id =  40, lang = { [1]=true }, fruc = { true }, url = ""},--Arena Promos
---[33] ={id =  33, lang = { [1]=true }, fruc = { true }, url = ""},--Championships Prizes
---[32] ={id =  32, lang = { [1]=true }, fruc = { true }, url = ""},--Pro Tour Promos
---[31] ={id =  31, lang = { [1]=true }, fruc = { true }, url = ""},--Grand Prix Promos
---[30] ={id =  30, lang = { [1]=true }, fruc = { true }, url = ""},--FNM Promos
---[27] ={id =  27, lang = { [1]=true }, fruc = { true }, url = ""},--Alternate Art Lands
---[26] ={id =  26, lang = { [1]=true }, fruc = { true }, url = ""},--Game Day Promos
---[25] ={id =  25, lang = { [1]=true }, fruc = { true }, url = ""},--Judge Promos
---[24] ={id =  24, lang = { [1]=true }, fruc = { true }, url = ""},--Champs Promos
---[23] ={id =  23, lang = { [1]=true }, fruc = { true }, url = ""},--Gateway & WPN Promos
---[22] ={id =  22, lang = { [1]=true }, fruc = { true }, url = ""},--Prerelease Cards
---[21] ={id =  21, lang = { [1]=true }, fruc = { true }, url = ""},--Release & Launch Party Cards
---[20] ={id =  20, lang = { [1]=true }, fruc = { true }, url = ""},--Magic Player Rewards
---[15] ={id =  15, lang = { [1]=true }, fruc = { true }, url = ""},--Convention Promos
---[12] ={id =  12, lang = { [1]=true }, fruc = { true }, url = ""},--Hobby Japan Commemorative Cards
---[11] ={id =  11, lang = { [1]=true }, fruc = { true }, url = ""},--Redemption Program Cards
---[10] ={id =  10, lang = { [1]=true }, fruc = { true }, url = ""},--Junior Series Promos
---[9]  ={id =   9, lang = { [1]=true }, fruc = { true }, url = ""},--Video Game Promos
---[8]  ={id =   8, lang = { [1]=true }, fruc = { true }, url = ""},--Stores Promos
---[7]  ={id =   7, lang = { [1]=true }, fruc = { true }, url = ""},--Magazine Inserts
---[6]  ={id =   6, lang = { [1]=true }, fruc = { true }, url = ""},--Comic Inserts
---[5]  ={id =   5, lang = { [1]=true }, fruc = { true }, url = ""},--Book Inserts
---[4]  ={id =   4, lang = { [1]=true }, fruc = { true }, url = ""},--Ultra Rare Cards
---[2]  ={id =   2, lang = { [1]=true }, fruc = { true }, url = ""},--DCI Legend Membership
+--[55] ={id= 55, lang = { [1]=true }, fruc = { true , true }, url = ""},--Ugin’s Fate Promos
+--[53] ={id= 53, lang = { [1]=true }, fruc = { true , true }, url = ""},--Holiday Gift Box Promos
+--[52] ={id= 52, lang = { [1]=true }, fruc = { true , true }, url = ""},--Intro Pack Promos
+--[50] ={id= 50, lang = { [1]=true }, fruc = { true }, url = ""},--Full Box Promotion
+--[45] ={id= 45, lang = { [1]=true }, fruc = { true }, url = ""},--Magic Premiere Shop
+--[43] ={id= 43, lang = { [1]=true }, fruc = { true }, url = ""},--Two-Headed Giant Promos
+--[42] ={id= 42, lang = { [1]=true }, fruc = { true }, url = ""},--Summer of Magic Promos
+--[41] ={id= 41, lang = { [1]=true }, fruc = { true }, url = ""},--Happy Holidays Promos
+--[40] ={id= 40, lang = { [1]=true }, fruc = { true }, url = ""},--Arena Promos
+--[33] ={id= 33, lang = { [1]=true }, fruc = { true }, url = ""},--Championships Prizes
+--[32] ={id= 32, lang = { [1]=true }, fruc = { true }, url = ""},--Pro Tour Promos
+--[31] ={id= 31, lang = { [1]=true }, fruc = { true }, url = ""},--Grand Prix Promos
+--[30] ={id= 30, lang = { [1]=true }, fruc = { true }, url = ""},--Friday Night Magic Promos
+--[27] ={id= 27, lang = { [1]=true }, fruc = { true }, url = ""},--Alternate Art Lands
+--[26] ={id= 26, lang = { [1]=true }, fruc = { true }, url = ""},--Game Day Promos
+--[25] ={id= 25, lang = { [1]=true }, fruc = { true }, url = ""},--Judge Promos
+--[24] ={id= 24, lang = { [1]=true }, fruc = { true }, url = ""},--Champs Promos
+--[23] ={id= 23, lang = { [1]=true }, fruc = { true }, url = ""},--Gateway & WPN Promos
+--[22] ={id= 22, lang = { [1]=true }, fruc = { true }, url = ""},--Prerelease Cards
+--[21] ={id= 21, lang = { [1]=true }, fruc = { true }, url = ""},--Release & Launch Parties Promos
+--[20] ={id= 20, lang = { [1]=true }, fruc = { true }, url = ""},--Magic Player Rewards
+--[15] ={id= 15, lang = { [1]=true }, fruc = { true }, url = ""},--Convention Promos
+--[12] ={id= 12, lang = { [1]=true }, fruc = { true }, url = ""},--Hobby Japan Commemorative Cards
+--[11] ={id= 11, lang = { [1]=true }, fruc = { true }, url = ""},--Redemption Program Cards
+--[10] ={id= 10, lang = { [1]=true }, fruc = { true }, url = ""},--Junior Series Promos
+--[9]  ={id=  9, lang = { [1]=true }, fruc = { true }, url = ""},--Video Game Promos
+--[8]  ={id=  8, lang = { [1]=true }, fruc = { true }, url = ""},--Stores Promos
+--[7]  ={id=  7, lang = { [1]=true }, fruc = { true }, url = ""},--Magazine Inserts
+--[6]  ={id=  6, lang = { [1]=true }, fruc = { true }, url = ""},--Comic Inserts
+--[5]  ={id=  5, lang = { [1]=true }, fruc = { true }, url = ""},--Book Inserts
+--[4]  ={id=  4, lang = { [1]=true }, fruc = { true }, url = ""},--Ultra Rare Cards
+--[2]  ={id=  2, lang = { [1]=true }, fruc = { true }, url = ""},--DCI Legend Membership
 } -- end table site.sets
 
 --[[- card name replacement tables.

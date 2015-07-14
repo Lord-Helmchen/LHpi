@@ -610,14 +610,15 @@ function dummy.ListUnknownUrls(expansions,missing,file)
 			table.sort(sortSets, function(a, b) return a > b end)
 			LHpi.Log("-- ".. setcat ,0,file)--
 			for i,sid in ipairs(sortSets) do
-				local string = string.format("[%i]={id=%3i, lang={ true,[2]=true,[3]=true,[4]=true,[5]=true,[6]=true,[7]=true,[8]=true,[9]=true,[10]=true,[11]=true }, fruc={ true }, url=%q},--%s",sid,sid,sets[sid].urlsuffix,sets[sid].name )
+--TODO externalize formatstring
+				local string = string.format(site.updateFormatString,sid,sid,sets[sid].urlsuffix,sets[sid].name )
 				--print(string)
 				LHpi.Log(string, 0,file )--
 			end--for i,sid
 		end--for setcat
 		LHpi.Log("-- unknown" ,0,file)--
 		for i,expansion in pairs(expansions) do
-			local string = string.format("[%i]={id=%3i, lang={ true,[2]=true,[3]=true,[4]=true,[5]=true,[6]=true,[7]=true,[8]=true,[9]=true,[10]=true,[11]=true }, fruc={ true }, url=%q},--%s",0,0,expansion.urlsuffix,expansion.name )
+			local string = string.format(site.updateFormatString,0,0,expansion.urlsuffix,expansion.name )
 			--print(string)
 			LHpi.Log(string, 0,file )--
 		end--for i,sid
@@ -859,7 +860,7 @@ function main()
 	-- @field [parent=#global] workdir
 	workdir="src\\"
 	local libver=2.15
-	local dataver=5
+	local dataver=6
 	
 	--don't keep a seperate dev savepath, though
 	mapath = "..\\..\\..\\Magic Album\\"
@@ -885,7 +886,7 @@ function main()
 	dummy.forceEnv()
 	
 	local scripts={
-		[0]={name="lib\\LHpi.sitescriptTemplate-v2.14.5.12.lua",path=workdir,savepath=mapath},
+		[0]={name="lib\\LHpi.sitescriptTemplate-v2.15.6.13.lua"},
 		[1]={name="LHpi.mtgmintcard.lua",path=workdir,savepath=mapath},
 		[2]={name="LHpi.magicuniverseDE.lua",path=workdir,savepath=mapath},
 		[3]={name="LHpi.trader-onlineDE.lua",path=workdir,savepath=mapath},
@@ -899,7 +900,7 @@ function main()
 	
 	-- select a predefined script to be tested
 --	dummy.fakesitescript()
-	local script=scripts[8]
+	local script=scripts[0]
 	--dummy.loadscript(script.name,script.path,script.savepath)--deprecated
 	savepath=script.savepath
 	dofile(workdir..script.name)

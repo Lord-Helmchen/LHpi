@@ -237,6 +237,7 @@ end -- function ImportPrice
 function site.LoadLib()
 	local LHpi
 	local libname = site.workdir .. "lib\\LHpi-v" .. libver .. ".lua"
+	local loglater
 	local LHpilib = ma.GetFile( libname )
 	if tonumber(libver) < 2.15 then
 		loglater = ""
@@ -550,6 +551,10 @@ function site.FetchExpansionList()
 	end
 	return expansions
 end--function site.FetchExpansionList
+
+--[[- format string to use in dummy.ListUnknownUrls update helper function.
+ @field [parent=#site] #string updateFormatString ]]
+site.updateFormatString = "[%i]={id=%3i, lang={ true,[2]=true,[3]=true,[4]=true,[5]=true,[6]=true,[7]=true,[8]=true,[9]=true,[10]=true,[11]=true }, fruc={ true }, url=%q},--%s"
 
 --[[-  get data from foundstring.
  Has to be done in sitescript since html raw data structure is site specific.
