@@ -51,15 +51,16 @@ local scriptver = "1"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field #string scriptname
 local scriptname = "LHpi.mkm-helper-v".. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
---- savepath for OFFLINE (read) and SAVEHTML (write). must point to an existing directory relative to MA's root.
+--- savepath for OFFLINE (read) and SAVEHTML (write). must point to an existing directory relative to MA\\Prices.
 -- set by LHpi lib unless specified here.
 -- @field  #string savepath
---local savepath = "Prices\\" .. string.gsub( scriptname , "%-v%d+%.%d+%.lua$" , "" ) .. "\\"
-local savepath = workdir .. "..\\" .. "LHpi.magickartenmarkt" .. "\\"
+--local savepath = string.gsub( scriptname , "%-v%d+%.%d+%.lua$" , "" ) .. "\\"
+local savepath = savepath or "LHpi.magickartenmarkt\\"
 --- log file name. can be set explicitely via site.logfile or automatically.
 -- defaults to LHpi.log unless SAVELOG is true.
 -- @field #string logfile
-local logfile = workdir .. string.gsub( scriptname , "lua$" , "log" )
+--local logfile = string.gsub( scriptname , "lua$" , "log" )
+local logfile = logfile or nil
 
 ---	LHpi library
 -- will be loaded by LoadLib()
@@ -101,6 +102,7 @@ end -- function ImportPrice
 
 function main( mode )
 --TODO select mode (downloadl-std,downloadl-all,boostervalue-std,boostervalue-all) via filenameoptions
+	print("mode="..tostring(mode))
 	if mode==nil then
 		mode = { download=true, sets="standard" }
 --		mode = { download=true, sets=nil }
@@ -111,33 +113,6 @@ function main( mode )
 		mode = { [m]=true }
 	end
 	
-	package.path = workdir..'lib\\ext\\?.lua;' .. package.path
-	package.cpath= workdir..'lib\\bin\\?.dll;' .. package.cpath
-	--print(package.path.."\n"..package.cpath)
-	site = { scriptname=scriptname, dataver=dataver, logfile=logfile or nil, savepath=savepath or nil }
-	LHpi = dofile(workdir.."lib\\LHpi-v"..libver..".lua")
-	LHpi.Log( "LHpi lib is ready to use." ,1)
-	dofile(workdir.."LHpi.magickartenmarkt.lua")
-	site.Initialize({helper=true})
-
-if site.sandbox then
-	LHpi.savepath = workdir .. "..\\" .. "LHpi.magickartenmarkt.sandbox" .. "\\"
-end
-
-	if mode.testoauth then
-		-- basic tests (use local mkmtokenfile = "mkmtokens.example" in LHpi.magickartenmarkt.lua)
-		DEBUG=true
-		helper.OAuthTest( site.oauth.params )
-		return ("testoauth done")
-	end
-	if mode.setlist then
-		local expansionList = helper.FetchExpansionList()
-		local file = file or "setsTemplate.txt"
-		helper.ParseExpansions(expansionList,file )
-		LHpi.Log("site.sets template saved to " .. file ,0)
-		return ("setlist done")
-	end
-
 	local sets
 	if "string"==type(mode.sets) then
 		mode.sets=string.lower(mode.sets)
@@ -159,17 +134,35 @@ end
 --		sets = {}
 	end
 	
-	if mode.download then
+	package.path = workdir..'lib\\ext\\?.lua;' .. package.path
+	package.cpath= workdir..'lib\\bin\\?.dll;' .. package.cpath
+	--print(package.path.."\n"..package.cpath)
+	site = { scriptname=scriptname, dataver=dataver, logfile=logfile or nil, savepath=savepath or nil }
+	LHpi = dofile(workdir.."lib\\LHpi-v"..libver..".lua")
+	LHpi.Log( "LHpi lib is ready for use." ,1)
+	dofile(workdir.."LHpi.magickartenmarkt.lua")
+	site.logfile =string.gsub(LHpi.logfile,"src\\","")
+	site.savepath=helper.savepath
+	site.Initialize({helper=true})
+	if site.sandbox then
+		LHpi.savepath = workdir .. "..\\" .. "LHpi.magickartenmarkt.sandbox" .. "\\"
+	end
+	if mode.helper then
+		return ("mkm-helper running in helper mode (passive)")
+	elseif mode.testoauth then
+		-- basic tests (use local mkmtokenfile = "mkmtokens.example" in LHpi.magickartenmarkt.lua)
+		DEBUG=true
+		helper.OAuthTest( site.oauth.params )
+		return ("testoauth done")
+	elseif mode.download then
 		helper.GetSourceData(sets)
 		return ("download done")
-	end
-
-	if mode.boostervalue then
+	elseif mode.boostervalue then
 		helper.ExpectedBoosterValue(sets)
 		return("boostervalue done")
 	end
 	
-	return("main() finished")
+	return("mkm-helper.main() finished")
 end--function main
 
 --[[- download and save source data.
@@ -239,21 +232,6 @@ print("no data from "..url ,1)
 	OFFLINE=o
 	SAVEHTML=s
 end--function GetSourceData
-
---[[- fetch list of expansions from mkmapi
- @function [parent=#helper] FetchExpansionList
- @return #string list		List of expansions, in xml or json format
-]]
-function helper.FetchExpansionList()
-	local setlist
-	local url = site.BuildUrl( "list" )
-	local urldetails={ oauth=true }
-	setlist = LHpi.GetSourceData ( url , urldetails )
-	if not setlist then
-		error(string.format("Expansion list not found at %s (OFFLINE=%s)",LHpi.Tostring(url),tostring(OFFLINE)) )
-	end
-	return setlist
-end--function FetchExpansionList
 
 --[[- determine the Expected Value of a booster from chosen sets.
  site.sets can be used as parameter, but any table with MA setids as index can be used.
@@ -329,65 +307,6 @@ function helper.ExpectedBoosterValue(sets)
 	
 end--function ExpectedBoosterValue
 
---[[- Parse list of expansions and prepare a site.sets template.
-Still leaves much to do, but it helped :)
- @function [parent=#helper] ParseExpansionList
- @param #table list		list of expansions, as returned by helper.FetchExpansionList()
- @return nil, but saves to file
-]]
-function helper.ParseExpansions(list,file)
-	if not dummy then error("ParseExpansions needs to be run from dummyMA!") end
-	local file = file or "setsTemplate.txt"
-	local expansions
-	if responseFormat == "xml" then
-		error("nothing here for xml yet")
-	else
-		expansions = Json.decode(list).expansion
-	end
-	local setcats = { "coresets", "expansionsets", "specialsets", "promosets" }
-	LHpi.Log("site.sets = {",0,file,0 )--
-	for _,setcat in ipairs(setcats) do
-		local setNames = dummy[setcat]
-		local revSets = {}
-		for id,name in pairs(setNames) do
-			revSets[name] = id
-		end--for id,name
-		local sets,sortSets = {},{}
-		for i,expansion in pairs(expansions) do
-			if revSets[expansion.name] then
-				local id = revSets[expansion.name]
-				sets[id] = { id = id , name = expansion.name, mkmId=expansion.idExpansion, url=expansion.name }
-				table.insert(sortSets,id)
-				expansions[i]=nil
-			end--if revSets
-		end--for i,expansion
-		table.sort(sortSets, function(a, b) return a > b end)
-		LHpi.Log("-- ".. setcat ,0,file)--
-		for i,sid in ipairs(sortSets) do
-			local string = string.format("[%i]={id=%3i, lang={ true,[2]=true,[3]=true,[4]=true,[5]=true,[6]=true,[7]=true,[8]=true,[9]=true,[10]=true,[11]=true }, fruc={ true }, url=%q},--%s",sid,sid,sets[sid].url,sets[sid].name )
-			print(string)
-			LHpi.Log(string, 0,file )--
-		end--for i,sid
-	end--for setcat
-		LHpi.Log("-- unknown" ,0,file)--
-		for i,expansion in pairs(expansions) do
-			local url=expansion.name
-			local string = string.format("[%i]={id=%3i, lang={ true,[2]=true,[3]=true,[4]=true,[5]=true,[6]=true,[7]=true,[8]=true,[9]=true,[10]=true,[11]=true }, fruc={ true }, url=%q},--%s",0,0,url,expansion.name )
-			print(string)
-			LHpi.Log(string, 0,file )--
-		end--for i,sid
-		LHpi.Log("-- catchall" ,0,file)--
-		local urls="{ "
-		for i,expansion in pairs(expansions) do
-			urls = urls .. "\"" .. expansion.name .. "\","
-		end--for i,sid
-		urls = urls .. "},"
-		local string = string.format("[%i]={id=%3i, lang={ true,[2]=true,[3]=true,[4]=true,[5]=true,[6]=true,[7]=true,[8]=true,[9]=true,[10]=true,[11]=true }, fruc={ true }, url=%s},--%s",999,999,urls,"catchall")
-		print(string)
-		LHpi.Log(string, 0,file )--
-	LHpi.Log("\t}\n--end table site.sets",0,file)--
-end
-
 --[[- test OAuth implementation
  @function [parent=#helper] OAuthTest
  @param #table params
@@ -399,44 +318,37 @@ function helper.OAuthTest( params )
 	-- "manual" Authorization header construction
 	local Crypto = require "crypto"
 	local Base64 = require "base64"
-	--
-	-- Like URL-encoding, but following OAuth's specific semantics
-	local function oauth_encode(val)
-		return val:gsub('[^-._~a-zA-Z0-9]', function(letter)
-			return string.format("%%%02x", letter:byte()):upper()
-		end)
-	end
 
 	params.oauth_timestamp = params.oauth_timestamp or tostring(os.time())
 	params.oauth_nonce = params.oauth_nonce or Crypto.hmac.digest("sha1", tostring(math.random()) .. "random" .. tostring(os.time()), "keyyyy")
 
 print(params.url)
-	local baseString = "GET&" .. oauth_encode( params.url ) .. "&"
+	local baseString = "GET&" .. LHpi.OAuthEncode( params.url ) .. "&"
 	print(baseString)
-	local paramString = "oauth_consumer_key=" .. oauth_encode(params.oauth_consumer_key) .. "&"
-					..	"oauth_nonce=" .. oauth_encode(params.oauth_nonce) .. "&"
-					..	"oauth_signature_method=" .. oauth_encode(params.oauth_signature_method) .. "&"
-					..	"oauth_timestamp=" .. oauth_encode(params.oauth_timestamp) .. "&"
-					..	"oauth_token=" .. oauth_encode(params.oauth_token) .. "&"
-					..	"oauth_version=" .. oauth_encode(params.oauth_version) .. ""
-	paramString = oauth_encode(paramString)
+	local paramString = "oauth_consumer_key=" .. LHpi.OAuthEncode(params.oauth_consumer_key) .. "&"
+					..	"oauth_nonce=" .. LHpi.OAuthEncode(params.oauth_nonce) .. "&"
+					..	"oauth_signature_method=" .. LHpi.OAuthEncode(params.oauth_signature_method) .. "&"
+					..	"oauth_timestamp=" .. LHpi.OAuthEncode(params.oauth_timestamp) .. "&"
+					..	"oauth_token=" .. LHpi.OAuthEncode(params.oauth_token) .. "&"
+					..	"oauth_version=" .. LHpi.OAuthEncode(params.oauth_version) .. ""
+	paramString = LHpi.OAuthEncode(paramString)
 	print(paramString)
 	baseString = baseString .. paramString
 	print(baseString)
-	local signingKey = oauth_encode(params.appSecret) .. "&" .. oauth_encode(params.accessTokenSecret)
+	local signingKey = LHpi.OAuthEncode(params.appSecret) .. "&" .. LHpi.OAuthEncode(params.accessTokenSecret)
 	print(signingKey)--ok until here
 	local rawSignature = Crypto.hmac.digest("sha1", baseString, signingKey, true)
 	print(rawSignature)
 	local signature = Base64.encode( rawSignature )
 	print(signature)
 	local authString = "Authorization: Oauth "
-		..	"realm=\"" .. oauth_encode(params.url) .. "\", "
-		..	"oauth_consumer_key=\"" .. oauth_encode(params.oauth_consumer_key) .. "\", "
-		..	"oauth_nonce=\"" .. oauth_encode(params.oauth_nonce) .. "\", "
-		..	"oauth_signature_method=\"" .. oauth_encode(params.oauth_signature_method) .. "\", "
-		..	"oauth_timestamp=\"" .. oauth_encode(params.oauth_timestamp) .. "\", "
-		..	"oauth_token=\"" .. oauth_encode(params.oauth_token) .. "\", "
-		..	"oauth_version=\"" .. oauth_encode(params.oauth_version) .. "\", "
+		..	"realm=\"" .. LHpi.OAuthEncode(params.url) .. "\", "
+		..	"oauth_consumer_key=\"" .. LHpi.OAuthEncode(params.oauth_consumer_key) .. "\", "
+		..	"oauth_nonce=\"" .. LHpi.OAuthEncode(params.oauth_nonce) .. "\", "
+		..	"oauth_signature_method=\"" .. LHpi.OAuthEncode(params.oauth_signature_method) .. "\", "
+		..	"oauth_timestamp=\"" .. LHpi.OAuthEncode(params.oauth_timestamp) .. "\", "
+		..	"oauth_token=\"" .. LHpi.OAuthEncode(params.oauth_token) .. "\", "
+		..	"oauth_version=\"" .. LHpi.OAuthEncode(params.oauth_version) .. "\", "
 		..  "oauth_signature=\"" .. signature .. "\""
 	print(authString)
 
@@ -470,7 +382,6 @@ print(params.url)
 	print("status_line=", LHpi.Tostring(response_status_line))
 	print("body=", LHpi.Tostring(response_body))
 end--function OAuthTest
-
 
 --- define ma namespace to recycle code from sitescripts and dummy.
 if not ma then
@@ -569,6 +480,6 @@ if not ma then
 end--if not ma
 
 --run main function
-local retval = main()
+local retval = main(MODE)
 print(LHpi.Tostring(retval))
 --EOF

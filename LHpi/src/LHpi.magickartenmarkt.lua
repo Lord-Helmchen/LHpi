@@ -32,7 +32,11 @@ Initial release, no changelog yet
 migrate to other sitescripts:
 *Initialize()
 *site.priceTypes Table and local global option
-
+workdir support
+site.LoadLib seperated from ImportPrice
+no longer check for lib and Data in deprecated location
+site.Initialize loads LHpi lib if not yet available (needed if ImportPrice is not called)
+new site.FetchExpansionList() 
 ]]
 
 --TODO check if site.BuildUrl param offline is/should be deprecated
@@ -141,8 +145,8 @@ local scriptname = "LHpi.magickartenmarkt-v".. libver .. "." .. dataver .. "." .
 -- @field  #string savepath
 --local savepath = "Prices\\" .. string.gsub( scriptname , "%-v%d+%.%d+%.lua$" , "" ) .. "\\"
 local savepath = savepath
---- log file name. can be set explicitely via site.logfile or automatically.
--- defaults to LHpi.log unless SAVELOG is true.
+--- log file name. must point to (nonexisting or writable) file in existing directory relative to MA's root.
+-- set by LHpi lib unless specified here. Defaults to LHpi.log unless SAVELOG is true.
 -- @field #string logfile
 --local logfile = "Prices\\" .. string.gsub( site.scriptname , "lua$" , "log" )
 local logfile = logfile
@@ -188,6 +192,9 @@ site.currency = "€"
 --- @field #string encoding		default "cp1252"
 site.encoding="utf8"
 
+--- support for global workdir, if used outside of Magic Album/Prices folder. do not change here.
+site.workdir = workdir or "Prices\\"
+
 --[[- "main" function.
  called by Magic Album to import prices. Parameters are passed from MA.
  
@@ -210,12 +217,31 @@ function ImportPrice( importfoil , importlangs , importsets , scriptmode)
 		ma.Log( "Check " .. scriptname .. ".log for detailed information" )
 	end
 	ma.SetProgress( "Loading LHpi library", 0 )
-	do -- load LHpi library from external file
-		local libname = "Prices\\lib\\LHpi-v" .. libver .. ".lua"
-		local LHpilib = ma.GetFile( libname )
+	local loglater
+	LHpi, loglater = site.LoadLib()
+	collectgarbage() -- we now have LHpi table with all its functions inside, let's clear LHpilib and execlib() from memory
+	if loglater then
+		LHpi.Log(loglater ,0)
+	end
+	LHpi.Log( "LHpi lib is ready for use." ,0)
+	site.Initialize( scriptmode ) -- keep site-specific stuff out of ImportPrice
+	LHpi.DoImport (importfoil , importlangs , importsets)
+	ma.Log( "End of Lua script " .. scriptname )
+end -- function ImportPrice
+
+--[[- load LHpi library from external file
+@function [parent=#site] LoadLib
+@return #table LHpi library object
+@return #string log concatenated strings to be logged when LHpi is available
+]]
+function site.LoadLib()
+	local LHpi
+	local libname = site.workdir .. "lib\\LHpi-v" .. libver .. ".lua"
+	local LHpilib = ma.GetFile( libname )
+	if tonumber(libver) < 2.15 then
+		loglater = ""
 		local oldlibname = "Prices\\LHpi-v" .. libver .. ".lua"
 		local oldLHpilib = ma.GetFile ( oldlibname )
-		local loglater = ""
 		if oldLHpilib then
 			if DEBUG then
 				error("LHpi library found in deprecated location. Please move it to Prices\\lib subdirectory!")
@@ -226,27 +252,22 @@ function ImportPrice( importfoil , importlangs , importsets , scriptmode)
 				LHpilib = oldLHpilib
 			end
 		end
-		if not LHpilib then
-			error( "LHpi library " .. libname .. " not found." )
-		else -- execute LHpilib to make LHpi.* available
-			LHpilib = string.gsub( LHpilib , "^\239\187\191" , "" ) -- remove unicode BOM (0xEF, 0xBB, 0xBF) for files tainted by it :)
-			if VERBOSE then
-				ma.Log( "LHpi library " .. libname .. " loaded and ready for execution." )
-			end
-			local execlib,errormsg = load( LHpilib , "=(load) LHpi library" )
-			if not execlib then
-				error( errormsg )
-			end
-			LHpi = execlib()
-		end	-- if not LHpilib else
-		LHpi.Log(loglater ,0)
-	end -- do load LHpi library
-	collectgarbage() -- we now have LHpi table with all its functions inside, let's clear LHpilib and execlib() from memory
-	LHpi.Log( "LHpi lib is ready to use." ,0)
-	site.Initialize( scriptmode ) -- keep site-specific stuff out of ImportPrice
-	LHpi.DoImport (importfoil , importlangs , importsets)
-	ma.Log( "End of Lua script " .. scriptname )
-end -- function ImportPrice
+	end
+	if not LHpilib then
+		error( "LHpi library " .. libname .. " not found." )
+	else -- execute LHpilib to make LHpi.* available
+		LHpilib = string.gsub( LHpilib , "^\239\187\191" , "" ) -- remove unicode BOM (0xEF, 0xBB, 0xBF) for files tainted by it :)
+		if VERBOSE then
+			ma.Log( "LHpi library " .. libname .. " loaded and ready for execution." )
+		end
+		local execlib,errormsg = load( LHpilib , "=(load) LHpi library" )
+		if not execlib then
+			error( errormsg )
+		end
+		LHpi = execlib()
+	end	-- if not LHpilib else
+	return LHpi, loglater
+end--function site.LoadLib
 
 --[[- prepare script
  Do stuff here that needs to be done between loading the Library and calling LHpi.DoImport.
@@ -262,13 +283,26 @@ end -- function ImportPrice
 function site.Initialize( mode )
 	if mode == nil then
 		mode = {}
-		--site.workdir = "Prices\\"
-		if OFFLINE~=true then
-			error("LHpi.magickartenmarkt only works in OFFLINE mode. Use LHpi.mkm-helper.lua to fetch source data.")
-		end
+	elseif "table" ~= type(mode) then
+		local m=mode
+		mode = { [m]=true }
+	end
+	if not LHpi or not LHpi.version then
+		--error("LHpi library not loaded!")
+		print("LHpi lib not available, loading it now...")
+		LHpi = site.LoadLib()
+	end
+	LHpi.Log(site.scriptname.." started site.Initialize():",1)
+	print(tostring(OFFLINE))
+	print(tostring(mode.helper))
+	if OFFLINE~=true and (not mode.helper ) then--allow or mode.update later
+		error("LHpi.magickartenmarkt only works in OFFLINE mode. Use LHpi.mkm-helper.lua to fetch source data.")
+	end
+	if mode == nil then
+		mode = {}
 	else
 		if mode.helper then
-			print("LHpi.magickartenmarkt.lua running in helper mode")
+			print("starting LHpi.magickartenmarkt.lua in helper mode")
 			--prevent sitescript from overwriting LHpi lib
 			function ImportPrice()
 				error("ImportPrice disabled by helper mode!")
@@ -276,7 +310,6 @@ function site.Initialize( mode )
 			LHpi.Log(scriptname .. " running as helper. ImportPrice() deleted." ,1)
 		end
 	end
-	site.workdir = workdir or "Prices\\"
 	useAsRegprice = useAsRegprice or 3
 	useAsFoilprice = useAsFoilprice or 5	
 	LHpi.Log(string.format("Importing %q prices into MA regular price column",site.priceTypes[useAsRegprice]) ,1)
@@ -321,6 +354,11 @@ function site.Initialize( mode )
 		-- that is, the mkm expansion does not match the MA set
 		LHpi.Log("site.sets = {" ,0 , "missorted."..responseFormat , 0 )-- new missorted.json
 		site.settweak = site.settweak or {}
+	end
+	if mode.update then
+		if not dummy then error("ListUnknownUrls needs to be run from dummyMA!") end
+	 	dummy.ListUnknownUrls(site.FetchExpansionList(),dummy.CompareSiteSets())
+		return
 	end
 
 end
@@ -428,7 +466,7 @@ function site.FetchSourceDataFromOAuth( url )
 end--function site.FetchSourceDataFromOAuth
 
 -- Like URL-encoding, but following MKM and OAuth's specific semantics
-local function oauth_encode(val)
+local function OauthEncode(val)
 	return val:gsub('[^-._~a-zA-Z0-9:&]', function(letter)
 		return string.format("%%%02x", letter:byte()):upper()
 	end)
@@ -466,7 +504,7 @@ function site.BuildUrl( setid,langid,frucid,offline )
 	if type(setid)=="table" then-- mkm mode
 		if setid.idExpansion then
 			url = url .. "/expansion/1/"
-			local name = oauth_encode(setid.name)
+			local name = OauthEncode(setid.name)
 			--local name = setid.name
 			return url .. name
 		elseif setid.idProduct then
@@ -493,6 +531,30 @@ function site.BuildUrl( setid,langid,frucid,offline )
 	end--if type(setid)
 	error("reached unreachable state")	
 end -- function site.BuildUrl
+
+--[[- fetch list of expansions from mkmapi.
+ The returned table shall contain at least the sets' name and LHpi-comnpatible urlsuffix,
+ so it can be processed by dummy.ListUnknownUrls.
+ @function [parent=#site] FetchExpansionList
+ @return #table  @return #table { #number= #table { name= #string , urlsuffix= #string , ... }
+]]
+function site.FetchExpansionList()
+	if OFFLINE then
+		LHpi.Log("OFFLINE mode active. Expansion list may not be up-to-date.")
+	end
+	local expansions
+	local url = site.BuildUrl( "list" )
+	local urldetails={ oauth=true }
+	expansions = LHpi.GetSourceData ( url , urldetails )
+	if not expansions then
+		error(string.format("Expansion list not found at %s (OFFLINE=%s)",LHpi.Tostring(url),tostring(OFFLINE)) )
+	end
+	expansions = Json.decode(expansions).expansion
+	for i,expansion in pairs(expansions) do
+		expansions[i].urlsuffix = LHpi.OAuthEncode(expansion.name)
+	end
+	return expansions
+end--function site.FetchExpansionList
 
 --[[-  get data from foundstring.
  Has to be done in sitescript since html raw data structure is site specific.
@@ -1439,75 +1501,76 @@ site.sets = {
 [4]  =nil, -- Ultra Rare Cards
 [2]  ={id=  2, lang={ "ENG" }, fruc={ true }, url="DCI%20Promos"},-- DCI Legend Membership in DCI Promos
 -- unknown
---[0]={id=  0, lang=all, fruc={ true }, url="Simplified%20Chinese%20Alternate%20Art%20Cards"},--Simplified Chinese Alternate Art Cards
---[0]={id=  0, lang=all, fruc={ true }, url="Misprints"},--Misprints
---[0]={id=  0, lang=all, fruc={ true }, url={-- these are preconstructed decks
---										"Pro%20Tour%201996:%20Mark%20Justice",--Pro Tour 1996: Mark Justice
---										"Pro%20Tour%201996:%20Michael%20Locanto",--Pro Tour 1996: Michael Locanto
---										"Pro%20Tour%201996:%20Bertrand%20Lestree",--Pro Tour 1996: Bertrand Lestree
---										"Pro%20Tour%201996:%20Preston%20Poulter",--Pro Tour 1996: Preston Poulter
---										"Pro%20Tour%201996:%20Eric%20Tam",--Pro Tour 1996: Eric Tam
---										"Pro%20Tour%201996:%20Shawn%20Regnier",--Pro Tour 1996: Shawn Regnier
---										"Pro%20Tour%201996:%20George%20Baxter",--Pro Tour 1996: George Baxter
---										"Pro%20Tour%201996:%20Leon%20Lindback",--Pro Tour 1996: Leon Lindback
---										} },
---[0]={id=  0, lang=all, fruc={ true }, url={"World%20Championship%20Decks",--World Championship Decks
---										"WCD%201997:%20Svend%20Geertsen",--WCD 1997: Svend Geertsen
---										"WCD%201997:%20Jakub%20Slemr",--WCD 1997: Jakub Slemr
---										"WCD%201997:%20Janosch%20Kuhn",--WCD 1997: Janosch Kuhn
---										"WCD%201997:%20Paul%20McCabe",--WCD 1997: Paul McCabe
---										"WCD%201998:%20Brian%20Selden",--WCD 1998: Brian Selden
---										"WCD%201998:%20Randy%20Buehler",--WCD 1998: Randy Buehler
---										"WCD%201998:%20Brian%20Hacker",--WCD 1998: Brian Hacker
---										"WCD%201998:%20Ben%20Rubin",--WCD 1998: Ben Rubin
---										"WCD%201999:%20Jakub%20Slemr",--WCD 1999: Jakub Šlemr
---										"WCD%201999:%20Matt%20Linde",--WCD 1999: Matt Linde
---										"WCD%201999:%20Mark%20Le%20Pine",--WCD 1999: Mark Le Pine
---										"WCD%201999:%20Kai%20Budde",--WCD 1999: Kai Budde
---										"WCD%202000:%20Janosch%20uhn",--WCD 2000: Janosch Kühn
---										"WCD%202000:%20Jon%20Finkel",--WCD 2000: Jon Finkel
---										"WCD%202000:%20Nicolas%20Labarre",--WCD 2000: Nicolas Labarre
---										"WCD%202000:%20Tom%20Van%20de%20Logt",--WCD 2000: Tom Van de Logt
---										"WCD%202001:%20Alex%20Borteh",--WCD 2001: Alex Borteh
---										"WCD%202001:%20Tom%20van%20de%20Logt",--WCD 2001: Tom van de Logt
---										"WCD%202001:%20Jan%20Tomcani",--WCD 2001: Jan Tomcani
---										"WCD%202001:%20Antoine%20Ruel",--WCD 2001: Antoine Ruel
---										"WCD%202002:%20Carlos%20Romao",--WCD 2002: Carlos Romao
---										"WCD%202002:%20Sim%20Han%20How",--WCD 2002: Sim Han How
---										"WCD%202002:%20Raphael%20Levy",--WCD 2002: Raphael Levy
---										"WCD%202002:%20Brian%20Kibler",--WCD 2002: Brian Kibler
---										"WCD%202003:%20Dave%20Humpherys",--WCD 2003: Dave Humpherys
---										"WCD%202003:%20Daniel%20Zink",--WCD 2003: Daniel Zink
---										"WCD%202003:%20Peer%20Kroger",--WCD 2003: Peer Kröger
---										"WCD%202003:%20Wolfgang%20Eder",--WCD 2003: Wolfgang Eder
---										"WCD%202004:%20Gabriel%20Nassif",--WCD 2004: Gabriel Nassif
---										"WCD%202004:%20Manuel%20Bevand",--WCD 2004: Manuel Bevand
---										"WCD%202004:%20Aeo%20Paquette",--WCD 2004: Aeo Paquette
---										"WCD%202004:%20Julien%20Nuijten",--WCD 2004: Julien Nuijten
---} },
---[0]={id=  0, lang=all, fruc={ true }, url="Ultra-Pro%20Puzzle%20Cards"},--Ultra-Pro Puzzle Cards
---[0]={id=  0, lang=all, fruc={ true }, url="Filler%20Cards"},--Filler Cards
---[0]={id=  0, lang=all, fruc={ true }, url="Blank%20Cards"},--Blank Cards
---[0]={id=  0, lang=all, fruc={ true }, url={ -- actual Pro-Players on baseballcard-like cards
---										"2005%20Player%20Cards",--2005 Player Cards
---										"2006%20Player%20Cards",--2006 Player Cards
---										"2007%20Player%20Cards",--2007 Player Cards
---										} },
---[0]={id=  0, lang=all, fruc={ true }, url={ -- custom tokens
---										"Custom%20Tokens",--Custom Tokens
---										"Revista%20Serra%20Promos",--Revista Serra Promos
---										"Your%20Move%20Games%20Tokens",--Your Move Games Tokens
---										"Tierra%20Media%20Tokens",--Tierra Media Tokens
---										"TokyoMTG%20Products",--TokyoMTG Products
---										"Mystic%20Shop%20Products",--Mystic Shop Products
---										"JingHe%20Age:%202002%20Tokens",--JingHe Age: 2002 Tokens
---										"JingHe%20Age:%20MtG%2010th%20Anniversary%20Tokens",--JingHe Age: MtG 10th Anniversary Tokens
---										"Starcity%20Games:%20Commemorative%20Tokens",--Starcity Games: Commemorative Tokens
---										"Starcity%20Games:%20Creature%20Collection",--Starcity Games: Creature Collection
---										"Starcity%20Games:%20Justin%20Treadway%20Tokens",--Starcity Games: Justin Treadway Tokens
---										"Starcity%20Games:%20Kristen%20Plescow%20Tokens",--Starcity Games: Kristen Plescow Tokens
---										"Starcity%20Games:%20Token%20Series%20One",--Starcity Games: Token Series One
---										} },
+-- uncomment these while running helper.FindUnknownUrls
+[9991]={id=  0, lang=all, fruc={ true }, url="Simplified%20Chinese%20Alternate%20Art%20Cards"},--Simplified Chinese Alternate Art Cards
+[9992]={id=  0, lang=all, fruc={ true }, url="Misprints"},--Misprints
+[9993]={id=  0, lang=all, fruc={ true }, url={-- these are preconstructed decks
+										"Pro%20Tour%201996:%20Mark%20Justice",--Pro Tour 1996: Mark Justice
+										"Pro%20Tour%201996:%20Michael%20Locanto",--Pro Tour 1996: Michael Locanto
+										"Pro%20Tour%201996:%20Bertrand%20Lestree",--Pro Tour 1996: Bertrand Lestree
+										"Pro%20Tour%201996:%20Preston%20Poulter",--Pro Tour 1996: Preston Poulter
+										"Pro%20Tour%201996:%20Eric%20Tam",--Pro Tour 1996: Eric Tam
+										"Pro%20Tour%201996:%20Shawn%20Regnier",--Pro Tour 1996: Shawn Regnier
+										"Pro%20Tour%201996:%20George%20Baxter",--Pro Tour 1996: George Baxter
+										"Pro%20Tour%201996:%20Leon%20Lindback",--Pro Tour 1996: Leon Lindback
+										} },
+[9994]={id=  0, lang=all, fruc={ true }, url={"World%20Championship%20Decks",--World Championship Decks
+										"WCD%201997:%20Svend%20Geertsen",--WCD 1997: Svend Geertsen
+										"WCD%201997:%20Jakub%20Slemr",--WCD 1997: Jakub Slemr
+										"WCD%201997:%20Janosch%20Kuhn",--WCD 1997: Janosch Kuhn
+										"WCD%201997:%20Paul%20McCabe",--WCD 1997: Paul McCabe
+										"WCD%201998:%20Brian%20Selden",--WCD 1998: Brian Selden
+										"WCD%201998:%20Randy%20Buehler",--WCD 1998: Randy Buehler
+										"WCD%201998:%20Brian%20Hacker",--WCD 1998: Brian Hacker
+										"WCD%201998:%20Ben%20Rubin",--WCD 1998: Ben Rubin
+										"WCD%201999:%20Jakub%20Slemr",--WCD 1999: Jakub Šlemr
+										"WCD%201999:%20Matt%20Linde",--WCD 1999: Matt Linde
+										"WCD%201999:%20Mark%20Le%20Pine",--WCD 1999: Mark Le Pine
+										"WCD%201999:%20Kai%20Budde",--WCD 1999: Kai Budde
+										"WCD%202000:%20Janosch%20uhn",--WCD 2000: Janosch Kühn
+										"WCD%202000:%20Jon%20Finkel",--WCD 2000: Jon Finkel
+										"WCD%202000:%20Nicolas%20Labarre",--WCD 2000: Nicolas Labarre
+										"WCD%202000:%20Tom%20Van%20de%20Logt",--WCD 2000: Tom Van de Logt
+										"WCD%202001:%20Alex%20Borteh",--WCD 2001: Alex Borteh
+										"WCD%202001:%20Tom%20van%20de%20Logt",--WCD 2001: Tom van de Logt
+										"WCD%202001:%20Jan%20Tomcani",--WCD 2001: Jan Tomcani
+										"WCD%202001:%20Antoine%20Ruel",--WCD 2001: Antoine Ruel
+										"WCD%202002:%20Carlos%20Romao",--WCD 2002: Carlos Romao
+										"WCD%202002:%20Sim%20Han%20How",--WCD 2002: Sim Han How
+										"WCD%202002:%20Raphael%20Levy",--WCD 2002: Raphael Levy
+										"WCD%202002:%20Brian%20Kibler",--WCD 2002: Brian Kibler
+										"WCD%202003:%20Dave%20Humpherys",--WCD 2003: Dave Humpherys
+										"WCD%202003:%20Daniel%20Zink",--WCD 2003: Daniel Zink
+										"WCD%202003:%20Peer%20Kroger",--WCD 2003: Peer Kröger
+										"WCD%202003:%20Wolfgang%20Eder",--WCD 2003: Wolfgang Eder
+										"WCD%202004:%20Gabriel%20Nassif",--WCD 2004: Gabriel Nassif
+										"WCD%202004:%20Manuel%20Bevand",--WCD 2004: Manuel Bevand
+										"WCD%202004:%20Aeo%20Paquette",--WCD 2004: Aeo Paquette
+										"WCD%202004:%20Julien%20Nuijten",--WCD 2004: Julien Nuijten
+} },
+[9995]={id=  0, lang=all, fruc={ true }, url="Ultra-Pro%20Puzzle%20Cards"},--Ultra-Pro Puzzle Cards
+[9996]={id=  0, lang=all, fruc={ true }, url="Filler%20Cards"},--Filler Cards
+[9997]={id=  0, lang=all, fruc={ true }, url="Blank%20Cards"},--Blank Cards
+[9998]={id=  0, lang=all, fruc={ true }, url={ -- actual Pro-Players on baseballcard-like cards
+										"2005%20Player%20Cards",--2005 Player Cards
+										"2006%20Player%20Cards",--2006 Player Cards
+										"2007%20Player%20Cards",--2007 Player Cards
+										} },
+[9999]={id=  0, lang=all, fruc={ true }, url={ -- custom tokens
+										"Custom%20Tokens",--Custom Tokens
+										"Revista%20Serra%20Promos",--Revista Serra Promos
+										"Your%20Move%20Games%20Tokens",--Your Move Games Tokens
+										"Tierra%20Media%20Tokens",--Tierra Media Tokens
+										"TokyoMTG%20Products",--TokyoMTG Products
+										"Mystic%20Shop%20Products",--Mystic Shop Products
+										"JingHe%20Age:%202002%20Tokens",--JingHe Age: 2002 Tokens
+										"JingHe%20Age:%20MtG%2010th%20Anniversary%20Tokens",--JingHe Age: MtG 10th Anniversary Tokens
+										"Starcity%20Games:%20Commemorative%20Tokens",--Starcity Games: Commemorative Tokens
+										"Starcity%20Games:%20Creature%20Collection",--Starcity Games: Creature Collection
+										"Starcity%20Games:%20Justin%20Treadway%20Tokens",--Starcity Games: Justin Treadway Tokens
+										"Starcity%20Games:%20Kristen%20Plescow%20Tokens",--Starcity Games: Kristen Plescow Tokens
+										"Starcity%20Games:%20Token%20Series%20One",--Starcity Games: Token Series One
+										} },
 	}
 --end table site.sets
 
@@ -2671,4 +2734,5 @@ function site.SetExpected( importfoil , importlangs , importsets )
 		end
 	end--for sid,name
 end--function site.SetExpected()
+ma.Log(site.scriptname .. " loaded.")
 --EOF

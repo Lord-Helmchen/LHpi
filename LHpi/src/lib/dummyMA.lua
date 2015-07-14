@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 new	dummy.CompareDummySets(mapath,libver)
 new	dummy.CompareDataSets(mapath,libver,dataver)
 new dummy.CompareSiteSets (moved from LHpi.magickartenmarkt.lua)
+new dummy.ListUnknownUrls(expansions,missing,file) (moved from LHpi.mkm-helper.lua)
 error handling in ma.GetFile and ma.Putfile
 for libver > 2.14 and Lua 5.2, use dofile instead of homemade loader
 CompareDataSets compares with dummy's set tales instead of Database/Sets.txt
@@ -35,7 +36,9 @@ use global workdir as introduced in 2.15
 added 52,53,55,814,815,816,817,818,819,820,821
 fixed dummy.forceEnv
 fixed savepath handling
-
+deprecated dummy.loadlibonly and dummy.loadscript
+dummy.mergetables no longer changes param #table teins
+update helper functions ouput to log instead od stdout 
 ]]
 
 --TODO make most dummy functions local
@@ -225,12 +228,14 @@ dummy.version = "0.5"
 @return #table LHpi library object
 ]]
 function dummy.loadlibonly(libver,path,savepath)
-	if libver>2.14 and (not _VERSION == "Lua 5.1") then
-		error("this is only for legacy libver < 2.14 without global workdir support!")
-	end
-	local LHpi = {}
 	local path = path or ""
 	local savepath = savepath or ""
+	if libver>2.14 and not (_VERSION == "Lua 5.1") then
+		ma.Log("loadlibonly is only for legacy libver < 2.14 without global workdir support!")
+		ma.Log('you can simply do \'LHpi = dofile(workdir.."lib\\\\LHpi-v"..libver..".lua")\'')
+		return dofile(path.."lib\\LHpi-v"..libver..".lua")
+	end
+	local LHpi = {}
 	do -- load LHpi library from external file
 		local libname = path .. "lib\\LHpi-v" .. libver .. ".lua"
 		local LHpilib = ma.GetFile( libname )
@@ -269,7 +274,7 @@ function dummy.loadlibonly(libver,path,savepath)
 		end	-- if not LHpilib else
 	end -- do load LHpi library
 	collectgarbage() -- we now have LHpi table with all its functions inside, let's clear LHpilib and execlib() from memory
-	print( "LHpi lib is ready to use." )
+	print( "LHpi lib is ready for use." )
 	return LHpi
 end -- function dummy.loadlibonly
 
@@ -289,6 +294,13 @@ function dummy.loadscript(scriptname,path,savepath)
 		if not scriptfile then
 			error( "script " .. scriptname .. " not found at " .. path .. "." )
 		else
+			local _,_,libver = string.find(scriptfile,'local libver = "(2.15)"')
+			if tonumber(libver)>2.14 and not (_VERSION == "Lua 5.1") then
+				ma.Log("loadscript is only for legacy libver < 2.14 without global workdir support!")
+				ma.Log("you can simply do \'dofile(workdir..\""..scriptname.."\")\'")
+				dofile(path..scriptname)
+				return
+			end
 			scriptfile = string.gsub( scriptfile , "^\239\187\191" , "" ) -- remove unicode BOM (0xEF, 0xBB, 0xBF) for files tainted by it :)
 			if _VERSION == "Lua 5.1" then
 				-- not only do we need to change the way the sitescript is loaded,
@@ -367,20 +379,24 @@ end--function dummy.fakesitescript
 ]]
 --TODO move mergetables from dummy to LHpi.helpers once library loads by require
 function dummy.mergetables (teins,tzwei,tdrei,tvier)
+	local tmerged= {}
+	for k,v in pairs(teins) do 
+		tmerged[k] = v
+	end
 	for k,v in pairs(tzwei) do 
-		teins[k] = v
+		tmerged[k] = v
 	end
 	if tdrei then
 		for k,v in pairs(tdrei) do 
-			teins[k] = v
+			tmerged[k] = v
 		end
 	end	 
 	if tvier then
 		for k,v in pairs(tvier) do 
-			teins[k] = v
+			tmerged[k] = v
 		end
 	end	 
-	return teins
+	return tmerged
 end-- function dummy.mergetables
 
 --[[- force debug enviroment
@@ -435,13 +451,15 @@ Before using this function, you need to convert Sets.txt from UCS-2 to UTF-8.
  @param #string mapath	path to MA
 ]]
 function dummy.CompareDummySets(mapath,libver)
-	if not LHpi then
+	if not LHpi or not LHpi.version then
 		if libver < 2.15 then
-		dummy.loadlibonly(libver,workdir,savepath)
+			dummy.loadlibonly(libver,workdir,savepath)
 		else
 			LHpi = dofile(workdir.."lib\\LHpi-v"..libver..".lua")
-			LHpi.Log( "LHpi lib is ready to use." ,1)
+			LHpi.Log( "LHpi lib is ready for use." ,1)
 		end
+	else
+		print("LHpi v"..LHpi.version.." already loaded as "..tostring(LHpi))
 	end
 	local setsTxt = ma.GetFile(mapath.."\\Database\\Sets.txt")
 	setsTxt= setsTxt:gsub( "^\239\187\191" , "" )
@@ -461,9 +479,10 @@ function dummy.CompareDummySets(mapath,libver)
 			table.insert(missing,{ id=sid, name=name})
 		end
 	end
-	print(#missing .. " sets from Database/Sets.txt missing in dummy:")
+	
+	LHpi.Log(#missing .. " sets from Database/Sets.txt missing in dummy:" ,0)
 	for i,set in pairs(missing) do
-		print(string.format("[%3i] = %q;",set.id,set.name) )
+		LHpi.Log(string.format("[%3i] = %q;",set.id,set.name) ,0)
 	end
 end--function CompareDummySets
 
@@ -474,16 +493,21 @@ end--function CompareDummySets
  @param #number dataver
 ]]
 function dummy.CompareDataSets(libver,dataver)
-print(libver)
-	if not LHpi then
+	if not LHpi or not LHpi.version then
 		if libver < 2.15 then
 			LHpi = dummy.loadlibonly(libver,workdir,savepath)
-			LHpi.Data = LHpi.LoadData(dataver or 5)
 		else
-print("foo")
 			LHpi = dofile(workdir.."lib\\LHpi-v"..libver..".lua")
-			LHpi.Log( "LHpi lib is ready to use." ,1)
+			LHpi.Log( "LHpi lib is ready for use." ,1)
 		end
+	else
+		print("LHpi v"..LHpi.version.." already loaded as "..tostring(LHpi))
+	end
+	if not LHpi.Data or not LHpi.Data.version then
+		LHpi.Data = LHpi.LoadData(dataver or 5)
+		LHpi.Log( "LHpi.Data is ready for use." ,1)
+	else
+		print("LHpi.Data v"..LHpi.Data.version.." already loaded as "..tostring(LHpi.Data))
 	end
 --	local setsTxt = ma.GetFile(mapath.."\\Database\\Sets.txt")
 --	setsTxt= setsTxt:gsub( "^\239\187\191" , "" )
@@ -501,9 +525,9 @@ print("foo")
 			table.insert(missing,{ id=sid, name=name})
 		end
 	end
-	print(#missing .. " sets from dummy's set list missing in LHpi.Data:")
+	LHpi.Log(#missing .. " sets from dummy's set list missing in LHpi.Data:" ,0)
 	for i,set in pairs(missing) do
-		print(string.format("[%3i] = %q;",set.id,set.name) )
+		LHpi.Log(string.format("[%3i] = %q;",set.id,set.name) ,0)
 	end
 end--function CompareDataSets
 
@@ -515,6 +539,10 @@ finds sets from dummy's lists that are not in site.sets.
 function dummy.CompareSiteSets()
 	local dummySets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 	local missing = {}
+	if not site.sets then
+		print ("site.sets is "..tostring(site.sets))
+		return
+	end
 	for sid,name in pairs(dummySets) do
 		if site.sets[sid] then
 			--print(string.format("found %3i : %q",sid,name) )
@@ -522,11 +550,84 @@ function dummy.CompareSiteSets()
 			table.insert(missing,{ id=sid, name=name})
 		end
 	end
-	print(#missing .. " sets from dummy missing in site.sets:")
+	LHpi.Log(#missing .. " sets from dummy missing in site.sets:" ,0)
 	for i,set in pairs(missing) do
-		print(string.format("[%3i] = %q;",set.id,set.name) )
+		LHpi.Log(string.format("[%3i] = %q;",set.id,set.name) ,0)
 	end
+	return(missing)
 end--function CompareSiteSets
+
+--[[- list mkm expansions names that are not used as url for any set in site.sets and prepare a site.sets template.
+ @function [parent=#dummy] ListUnknownUrls
+ @param #table expansions		list of expansions, as returned by helper.FetchExpansionList()
+ @param #table missing	list of sets that are not in site.sets, as returned by dummy.CompareSiteSets()
+ @param #string file	(optional) filename to save to, defaults to logfile
+ @return nil, but saves to file
+]]
+function dummy.ListUnknownUrls(expansions,missing,file)
+	if file then
+		LHpi.Log("site.sets = {",0,file,0 )--
+	else
+		-- insert to normal logfile
+		LHpi.Log("-----\nAdd to site.sets :",0 )--
+	end
+	local revMissing = {}
+	for _,set in pairs(missing) do
+		revMissing[set.name] = set.id
+	end--for id,name
+	local knownUrls = {}
+	for sid,set in pairs(site.sets) do
+		if "table"==type(set.url) then
+			for _,url in ipairs(set.url) do
+				knownUrls[url]=true
+			end
+		else
+			knownUrls[set.url]=true
+		end
+	end
+	for i,expansion in pairs(expansions) do
+		if knownUrls[expansion.urlsuffix] then
+			expansions[i]=nil
+		end
+	end
+	--now prepare site.sets entries for expansions that are not in any site.sets entry
+		local setcats = { "coresets", "expansionsets", "specialsets", "promosets" }
+		for _,setcat in ipairs(setcats) do
+			local setNames = dummy[setcat]
+			local revSets = {}
+			for id,name in pairs(setNames) do
+				revSets[name] = id
+			end--for id,name
+			local sets,sortSets = {},{}
+			for i,expansion in pairs(expansions) do
+				if revSets[expansion.name] then
+					local sid = revSets[expansion.name]
+					sets[sid] = { id = sid , name = expansion.name, mkmId=expansion.idExpansion, urlsuffix=expansion.urlsuffix }
+					table.insert(sortSets,sid)
+					expansions[i]=nil
+				end--if revSets
+			end--for i,expansion
+			table.sort(sortSets, function(a, b) return a > b end)
+			LHpi.Log("-- ".. setcat ,0,file)--
+			for i,sid in ipairs(sortSets) do
+				local string = string.format("[%i]={id=%3i, lang={ true,[2]=true,[3]=true,[4]=true,[5]=true,[6]=true,[7]=true,[8]=true,[9]=true,[10]=true,[11]=true }, fruc={ true }, url=%q},--%s",sid,sid,sets[sid].urlsuffix,sets[sid].name )
+				--print(string)
+				LHpi.Log(string, 0,file )--
+			end--for i,sid
+		end--for setcat
+		LHpi.Log("-- unknown" ,0,file)--
+		for i,expansion in pairs(expansions) do
+			local string = string.format("[%i]={id=%3i, lang={ true,[2]=true,[3]=true,[4]=true,[5]=true,[6]=true,[7]=true,[8]=true,[9]=true,[10]=true,[11]=true }, fruc={ true }, url=%q},--%s",0,0,expansion.urlsuffix,expansion.name )
+			--print(string)
+			LHpi.Log(string, 0,file )--
+		end--for i,sid
+	if file then
+		LHpi.Log("	}\n--end table site.sets",0,file )--
+	else
+		-- insert to normal logfile
+		LHpi.Log("-----",0 )--
+	end
+end
 
 --- @field [parent=#dummy] #table alllangs
 dummy.alllangs = {
@@ -761,8 +862,7 @@ function main()
 	local dataver=5
 	
 	--don't keep a seperate dev savepath, though
-	savepath = "src\\..\\..\\..\\Magic Album\\Prices"
-	site = { scriptname=scriptname, dataver=dataver, logfile=logfile or nil, savepath=savepath or nil }
+	mapath = "..\\..\\..\\Magic Album\\"
 	--package.path = 'src\\lib\\ext\\?.lua;' .. package.path
 	--package.cpath= 'src\\lib\\bin\\?.dll;' .. package.cpath
 	dummy.env={--define debug enviroment options
@@ -782,28 +882,34 @@ function main()
 --		DEBUGVARIANTS = true,
 --		SAVETABLE=true,
 	}
+	dummy.forceEnv()
+	
 	local scripts={
-		[0]={name="lib\\LHpi.sitescriptTemplate-v2.14.5.12.lua",path=workdir,savepath=savepath},
-		[1]={name="LHpi.mtgmintcard.lua",path=workdir,savepath=savepath},
-		[2]={name="LHpi.magicuniverseDE.lua",path=workdir,savepath=savepath},
-		[3]={name="LHpi.trader-onlineDE.lua",path=workdir,savepath=savepath},
-		[4]={name="LHpi.tcgplayerPriceGuide.lua",path=workdir,savepath=savepath},
-		[5]={name="\\MTG Mint Card.lua",path=savepath,savepath=savepath},
-		[6]={name="\\Import Prices.lua",path=savepath,savepath=savepath},
-		[7]={name="LHpi.mtgprice.com.lua",path=workdir,savepath=savepath},
-		[8]={name="LHpi.magickartenmarkt.lua",path=workdir,savepath=savepath.."\\LHpi.magickartenmarkt"},
+		[0]={name="lib\\LHpi.sitescriptTemplate-v2.14.5.12.lua",path=workdir,savepath=mapath},
+		[1]={name="LHpi.mtgmintcard.lua",path=workdir,savepath=mapath},
+		[2]={name="LHpi.magicuniverseDE.lua",path=workdir,savepath=mapath},
+		[3]={name="LHpi.trader-onlineDE.lua",path=workdir,savepath=mapath},
+		[4]={name="LHpi.tcgplayerPriceGuide.lua",path=workdir,savepath=mapath},
+		[5]={name="\\MTG Mint Card.lua",path=savepath,mapath=mapath},
+		[6]={name="\\Import Prices.lua",path=mapath,savepath=mapath},
+		[7]={name="LHpi.mtgprice.com.lua",path=workdir,savepath=mapath},
+		[8]={name="LHpi.magickartenmarkt.lua",savepath=mapath.."Prices\\LHpi.magickartenmarkt\\"},
+		[9]={name="LHpi.mkm-helper.lua",savepath=mapath.."Prices\\LHpi.magickartenmarkt\\"},
 	}
 	
 	-- select a predefined script to be tested
 --	dummy.fakesitescript()
---	local script=scripts[8]
---	savepath=script.savepath
---	dummy.loadscript(script.name,script.path,script.savepath)
---	dofile(workdir .. script.name)
-
+	local script=scripts[8]
+	--dummy.loadscript(script.name,script.path,script.savepath)--deprecated
+	savepath=script.savepath
+	dofile(workdir..script.name)
+	
 	-- only load library (and Data)
---	LHpi = dummy.loadlibonly(2.14,workdir,savepath)
---	LHpi.Data = LHpi.LoadData(5)
+	--LHpi = dummy.loadlibonly(libver,workdir,script.savepath)--deprecated
+--	LHpi = dofile(workdir.."lib\\LHpi-v"..libver..".lua")
+
+	--prepare sitescript (not needed for mkm-helper)
+	site.Initialize({update=true})
 
 	-- force debug enviroment options
 	dummy.forceEnv(dummy.env)
@@ -830,9 +936,13 @@ function main()
 --	print(LHpi.ByteRep("Zwölffüßler"))
 
 	-- utility functions from dummy:
---	TestPerformance(10,script,importfoil,importlangs,importsets,"time.log")
---	dummy.CompareDummySets(savepath.."\\..",2.15)
-	dummy.CompareDataSets(2.15,5)
+	--TestPerformance(10,script,importfoil,importlangs,importsets,"time.log")
+	--dofile(workdir .. "LHpi.mkm-helper.lua")
+--	dummy.CompareDummySets(mapath,2.15)
+--	dummy.CompareDataSets(2.15,5)
+--	--dummy.CompareSiteSets()
+-- 	dummy.ListUnknownUrls(site.FetchExpansionList(),dummy.CompareSiteSets())
+
 
 	-- use ProFi to profile the script
 --	ProFi = require 'ProFi'

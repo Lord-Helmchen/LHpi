@@ -72,7 +72,9 @@ scriptname,savepath,logfile change from global to local (in site and LHpi)
 Log now filters out VERBOSE and DEBUG lines by loglevel param to save "if DEBUG then Log() end" conditionals
 *those conditionals have been cut and loglevel has been set for all existing LHpi.Log calls
 DEBUGVARIANTS=true no longer sets DEBUG=false, instead remembers and restores previous DEBUG state
-
+new LHpi.OAuthEncode(s) moved here from mkm-helper
+workdir fixes
+no longer check for Data in deprecated location
 ]]
 
 --TODO count averaging events with counter attached to prices
@@ -192,13 +194,13 @@ function LHpi.Initialize()
 			LHpi.logfile = LHpi.workdir .. string.gsub( site.scriptname , "lua$" , "log" )
 		end
 		if site.logfile then -- allow sitescripts to explicitely set log file name
-			LHpi.logfile = site.logfile
+			LHpi.logfile = LHpi.workdir .. site.logfile
 		end
 	end
 	--- savepath for OFFLINE (read) and SAVEHTML,SAVETABLE (write). must point to an existing directory relative to MA's root.
 	-- @field [parent=#LHpi] #string savepath
 	if site.savepath then
-		LHpi.savepath = site.savepath .. "\\"
+		LHpi.savepath = LHpi.workdir .. site.savepath .. "\\"
 	else
 		LHpi.savepath = LHpi.workdir .. string.gsub( site.scriptname , "%-?v?[%d%.]*%.lua$" , "" ) .. "\\"
 	end -- if
@@ -620,17 +622,19 @@ function LHpi.LoadData( version )
 	ma.SetProgress( "Loading LHpi.Data", 0 )
 	do -- load LHpi predefined set data from external file
 		local dataname = LHpi.workdir.."lib\\LHpi.Data-v" .. version .. ".lua"
-		local olddataname = LHpi.workdir.."LHpi.Data-v" .. version .. ".lua"
 		local LHpiData = ma.GetFile( dataname )
-		local oldLHpiData = ma.GetFile ( olddataname )
-		if oldLHpiData then
-			if DEBUG then
-				error("LHpi.Data found in deprecated location. Please move it to Prices\\lib subdirectory!")
-			end
-			LHpi.Log("LHpi.Data found in deprecated location." ,0 )
-			if not LHpiData then
-				LHpi.Log( "Using file in old location as fallback." ,1)
-				LHpiData = oldLHpiData
+		if tonumber(LHpi.version) < 2.15 then
+			local olddataname = LHpi.workdir.."LHpi.Data-v" .. version .. ".lua"
+			local oldLHpiData = ma.GetFile ( olddataname )
+			if oldLHpiData then
+				if DEBUG then
+					error("LHpi.Data found in deprecated location. Please move it to Prices\\lib subdirectory!")
+				end
+				LHpi.Log("LHpi.Data found in deprecated location." ,0 )
+				if not LHpiData then
+					LHpi.Log( "Using file in old location as fallback." ,1)
+					LHpiData = oldLHpiData
+				end
 			end
 		end
 		if not LHpiData then
@@ -828,7 +832,7 @@ function LHpi.GetSourceData( url , details ) --
 		end
 		if not sourcedata or sourcedata == "" then
 			LHpi.Log( "!! site.FetchSourceDataFromOAuth failed for " .. url ,0)
-			LHpi.Log("server response " .. status ,1)
+			LHpi.Log("server response " .. tostring(status) ,1)
 			return nil,status
 		end		
 	else -- get htmldata from online source
@@ -1933,8 +1937,20 @@ function LHpi.Logtable( tbl , str , l )
 	end
 end -- function LHpi.Logtable
 
+--[[- Like URL-encoding, but following MKM and OAuth's specific semantics
+ @function [parent=#LHpi] OAuthEncode
+ @param #string s
+ @return #string
+]]
+function LHpi.OAuthEncode(s)
+	return s:gsub('[^-._~a-zA-Z0-9:&]', function(letter)
+		return string.format("%%%02x", letter:byte()):upper()
+	end)
+end--function LHpi.OAuthEncode
+
 LHpi.Initialize()
 --LHpi.Log( "\239\187\191LHpi library loaded and executed successfully" , 0 , nil , 0 ) -- add unicode BOM to beginning of logfile
 LHpi.Log( "LHpi library " .. LHpi.version .. " loaded and executed successfully." , 0 , nil ,0)
+ma.Log("LHpi library " .. LHpi.version .. " loaded.")
 return LHpi
 --EOF
