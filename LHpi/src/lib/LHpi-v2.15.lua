@@ -160,6 +160,10 @@ function LHpi.Initialize()
 		---@field [parent=#global] DEBUGVARIANTS
 		DEBUGVARIANTS = false
 	end
+	if STRICTOBJTYPE==nil then
+		---@field [parent=#global] STRICTOBJTYPE
+		STRICTOBJTYPE = true
+	end
 	if OFFLINE==nil then
 		---@field [parent=#global] OFFLINE
 		OFFLINE = false
