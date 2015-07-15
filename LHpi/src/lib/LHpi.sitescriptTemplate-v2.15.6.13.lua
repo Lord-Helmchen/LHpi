@@ -38,7 +38,6 @@ no longer check for lib and Data in deprecated location
 removed site.CompareSiteSets
 optional site.BuildUrl("list") behaviour
 new optional function site.FetchExpansionList
-site.BuildUrl supports multiple urls per set
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -319,26 +318,18 @@ This will be used by site.FetchExpansionList().
 --	if setid=="list" then --return url to get a list of available expansions
 --		return url .. "&expansions"
 --	else -- usual LHpi behaviour
---		url = url ..  .. site.setprefix
---		if  type(site.sets[setid].url) == "table" then
---			urls = site.sets[setid].url
---		else
---			urls = { site.sets[setid].url }
---		end--if type(site.sets[setid].url)
---		for _i,seturl in pairs(urls) do
---			seturl = url .. seturl .. site.langprefix .. site.langs[langid].url .. site.frucprefix .. site.frucs[frucid].url .. site.suffix
---			local details = {}
---			if offline then
---				--LHpi.GetDourceData already does:
---				--seturl = string.gsub(seturl, '[/\\:%*%?<>|"]', "_")
---				--details.isfile = true
---			end -- if offline 
---			if site.frucs[frucid].isfoil and not site.frucs[frucid].isnonfoil then
---				detals.foilonly = true
---			end--if
+--		url = url ..  .. site.setprefix .. site.sets[setid].url .. site.langprefix .. site.langs[langid].url .. site.frucprefix .. site.frucs[frucid].url .. site.suffix
+--		local details = {}
+--		if offline then
+--		--LHpi.GetDourceData already does:
+--		--url = string.gsub(url, '[/\\:%*%?<>|"]', "_")
+--		--details.isfile = true
+--		end -- if offline 
+--		if site.frucs[frucid].isfoil and not site.frucs[frucid].isnonfoil then
+--			detals.foilonly = true
+--		end--if
 --		
---			container[seturl] = details
---		end--for
+--		container[url] = details
 --		return container
 --	end--if type(setid)
 --end -- function site.BuildUrl
@@ -699,42 +690,35 @@ site.sets = {
 --[55] ={id= 55, lang = { [1]=true }, fruc = { true , true }, url = ""},--Ugin’s Fate Promos
 --[53] ={id= 53, lang = { [1]=true }, fruc = { true , true }, url = ""},--Holiday Gift Box Promos
 --[52] ={id= 52, lang = { [1]=true }, fruc = { true , true }, url = ""},--Intro Pack Promos
---[50] ={id= 50, lang = { [1]=true }, fruc = { true , true }, url = ""},--Full Box Promotion
---[45] ={id= 45, lang = { [1]=true }, fruc = { true , true }, url = ""},--Magic Premiere Shop
---[43] ={id= 43, lang = { [1]=true }, fruc = { true , true }, url = ""},--Two-Headed Giant Promos
---[42] ={id= 42, lang = { [1]=true }, fruc = { true , true }, url = ""},--Summer of Magic Promos
---[41] ={id= 41, lang = { [1]=true }, fruc = { true , true }, url = ""},--Happy Holidays Promos
---[40] ={id= 40, lang = { [1]=true }, fruc = { true , true }, url = ""},--Arena Promos
---[33] ={id= 33, lang = { [1]=true }, fruc = { true , true }, url = ""},--Championships Prizes
---[32] ={id= 32, lang = { [1]=true }, fruc = { true , true }, url = ""},--Pro Tour Promos
---[31] ={id= 31, lang = { [1]=true }, fruc = { true , true }, url = ""},--Grand Prix Promos
---[30] ={id= 30, lang = { [1]=true }, fruc = { true , true }, url = ""},--Friday Night Magic Promos
---[27] ={id= 27, lang = { [1]=true }, fruc = { true , true }, url = { --Alternate Art Lands
---															"",--Asian-Pacific Lands
---															"",--European Lands
---															"",--Guru Lands
---															} },
---[26] ={id= 26, lang = { [1]=true }, fruc = { true , true }, url = ""},--Game Day Promos
---[25] ={id= 25, lang = { [1]=true }, fruc = { true , true }, url = ""},--Judge Promos
---[24] ={id= 24, lang = { [1]=true }, fruc = { true , true }, url = ""},--Champs Promos
---[23] ={id= 23, lang = { [1]=true }, fruc = { true , true }, url = { --Gateway & WPN Promos
---														"",--Gateway Promos
---														"",--WPN Promos
---														} },
---[22] ={id= 22, lang = { [1]=true }, fruc = { true , true }, url = ""},--Prerelease Cards
---[21] ={id= 21, lang = { [1]=true }, fruc = { true , true }, url = ""},--Release & Launch Parties Promos
---[20] ={id= 20, lang = { [1]=true }, fruc = { true , true }, url = ""},--Magic Player Rewards
---[15] ={id= 15, lang = { [1]=true }, fruc = { true , true }, url = ""},--Convention Promos
---[12] ={id= 12, lang = { [1]=true }, fruc = { true , true }, url = ""},--Hobby Japan Commemorative Cards
---[11] ={id= 11, lang = { [1]=true }, fruc = { true , true }, url = ""},--Redemption Program Cards
---[10] ={id= 10, lang = { [1]=true }, fruc = { true , true }, url = ""},--Junior Series Promos
---[9]  ={id=  9, lang = { [1]=true }, fruc = { true , true }, url = ""},--Video Game Promos
---[8]  ={id=  8, lang = { [1]=true }, fruc = { true , true }, url = ""},--Stores Promos
---[7]  ={id=  7, lang = { [1]=true }, fruc = { true , true }, url = ""},--Magazine Inserts
---[6]  ={id=  6, lang = { [1]=true }, fruc = { true , true }, url = ""},--Comic Inserts
---[5]  ={id=  5, lang = { [1]=true }, fruc = { true , true }, url = ""},--Book Inserts
---[4]  ={id=  4, lang = { [1]=true }, fruc = { true , true }, url = ""},--Ultra Rare Cards
---[2]  ={id=  2, lang = { [1]=true }, fruc = { true , true }, url = ""},--DCI Legend Membership
+--[50] ={id= 50, lang = { [1]=true }, fruc = { true }, url = ""},--Full Box Promotion
+--[45] ={id= 45, lang = { [1]=true }, fruc = { true }, url = ""},--Magic Premiere Shop
+--[43] ={id= 43, lang = { [1]=true }, fruc = { true }, url = ""},--Two-Headed Giant Promos
+--[42] ={id= 42, lang = { [1]=true }, fruc = { true }, url = ""},--Summer of Magic Promos
+--[41] ={id= 41, lang = { [1]=true }, fruc = { true }, url = ""},--Happy Holidays Promos
+--[40] ={id= 40, lang = { [1]=true }, fruc = { true }, url = ""},--Arena Promos
+--[33] ={id= 33, lang = { [1]=true }, fruc = { true }, url = ""},--Championships Prizes
+--[32] ={id= 32, lang = { [1]=true }, fruc = { true }, url = ""},--Pro Tour Promos
+--[31] ={id= 31, lang = { [1]=true }, fruc = { true }, url = ""},--Grand Prix Promos
+--[30] ={id= 30, lang = { [1]=true }, fruc = { true }, url = ""},--Friday Night Magic Promos
+--[27] ={id= 27, lang = { [1]=true }, fruc = { true }, url = ""},--Alternate Art Lands
+--[26] ={id= 26, lang = { [1]=true }, fruc = { true }, url = ""},--Game Day Promos
+--[25] ={id= 25, lang = { [1]=true }, fruc = { true }, url = ""},--Judge Promos
+--[24] ={id= 24, lang = { [1]=true }, fruc = { true }, url = ""},--Champs Promos
+--[23] ={id= 23, lang = { [1]=true }, fruc = { true }, url = ""},--Gateway & WPN Promos
+--[22] ={id= 22, lang = { [1]=true }, fruc = { true }, url = ""},--Prerelease Cards
+--[21] ={id= 21, lang = { [1]=true }, fruc = { true }, url = ""},--Release & Launch Parties Promos
+--[20] ={id= 20, lang = { [1]=true }, fruc = { true }, url = ""},--Magic Player Rewards
+--[15] ={id= 15, lang = { [1]=true }, fruc = { true }, url = ""},--Convention Promos
+--[12] ={id= 12, lang = { [1]=true }, fruc = { true }, url = ""},--Hobby Japan Commemorative Cards
+--[11] ={id= 11, lang = { [1]=true }, fruc = { true }, url = ""},--Redemption Program Cards
+--[10] ={id= 10, lang = { [1]=true }, fruc = { true }, url = ""},--Junior Series Promos
+--[9]  ={id=  9, lang = { [1]=true }, fruc = { true }, url = ""},--Video Game Promos
+--[8]  ={id=  8, lang = { [1]=true }, fruc = { true }, url = ""},--Stores Promos
+--[7]  ={id=  7, lang = { [1]=true }, fruc = { true }, url = ""},--Magazine Inserts
+--[6]  ={id=  6, lang = { [1]=true }, fruc = { true }, url = ""},--Comic Inserts
+--[5]  ={id=  5, lang = { [1]=true }, fruc = { true }, url = ""},--Book Inserts
+--[4]  ={id=  4, lang = { [1]=true }, fruc = { true }, url = ""},--Ultra Rare Cards
+--[2]  ={id=  2, lang = { [1]=true }, fruc = { true }, url = ""},--DCI Legend Membership
 } -- end table site.sets
 
 --[[- card name replacement tables.
