@@ -8,7 +8,7 @@ If you want to contact me about the script, try its release thread in http://www
 
 @module LHpi.site
 @author Christian Harms
-@copyright 2012-2014 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
+@copyright 2012-2015 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
 @release This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -25,7 +25,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 --[[ CHANGES
 2.14.5.14
-removed url to filename changes that are done by the library if OFFLINE 
+removed url to filename changes that are done by the library if OFFLINE
+2.15.6.14
+new features from template/mkm branch
+site.BuildUrl supports multiple urls per set
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -101,10 +104,10 @@ SAVEHTML = true
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.14"
+libver = "2.15"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
-dataver = "5"
+dataver = "6"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
 scriptver = "14"
@@ -115,13 +118,20 @@ scriptname = "LHpi.tcgplayerPriceGuide-v" .. libver .. "." .. dataver .. "." .. 
 ---	LHpi library
 -- will be loaded by ImportPrice
 -- @field [parent=#global] #table LHpi
-LHpi = {}
+LHpi = {} or {}
 
 --[[- Site specific configuration
- Settings that define the source site's structure and functions that depend on it
+ Settings that define the source site's structure and functions that depend on it,
+ as well as some properties of the sitescript.
  
- @type site ]]
-site={}
+ @type site
+ @field #string scriptname
+ @field #string dataver
+ @field #string logfile (optional)
+ @field #string savepath (optional)
+ @field #boolean sandbox 
+]]
+site={ scriptname=scriptname, dataver=dataver, logfile=logfile or nil, savepath=savepath or nil , sandbox=sandbox}
 
 --[[- regex matches shall include all info about a single card that one html-file has,
  i.e. "*CARDNAME*FOILSTATUS*PRICE*".
@@ -129,6 +139,9 @@ site={}
  @field [parent=#site] #string regex ]]
 site.regex = '<TR height=20>(.-)</TR>'
 
+
+--- support for global workdir, if used outside of Magic Album/Prices folder. do not change here.
+site.workdir = workdir or "Prices\\"
 
 --[[- "main" function.
  called by Magic Album to import prices. Parameters are passed from MA.
@@ -153,12 +166,32 @@ function ImportPrice( importfoil , importlangs , importsets , scriptmode)
 		ma.Log( "Check " .. scriptname .. ".log for detailed information" )
 	end
 	ma.SetProgress( "Loading LHpi library", 0 )
-	do -- load LHpi library from external file
-		local libname = "Prices\\lib\\LHpi-v" .. libver .. ".lua"
-		local LHpilib = ma.GetFile( libname )
+	local loglater
+	LHpi, loglater = site.LoadLib()
+	collectgarbage() -- we now have LHpi table with all its functions inside, let's clear LHpilib and execlib() from memory
+	if loglater then
+		LHpi.Log(loglater ,0)
+	end
+	LHpi.Log( "LHpi lib is ready for use." )
+	site.Initialize( scriptmode ) -- keep site-specific stuff out of ImportPrice
+	LHpi.DoImport (importfoil , importlangs , importsets)
+	ma.Log( "End of Lua script " .. scriptname )
+end -- function ImportPrice
+
+--[[- load LHpi library from external file
+@function [parent=#site] LoadLib
+@return #table LHpi library object
+@return #string log concatenated strings to be logged when LHpi is available
+]]
+function site.LoadLib()
+	local LHpi
+	local libname = site.workdir .. "lib\\LHpi-v" .. libver .. ".lua"
+	local loglater
+	local LHpilib = ma.GetFile( libname )
+	if tonumber(libver) < 2.15 then
+		loglater = ""
 		local oldlibname = "Prices\\LHpi-v" .. libver .. ".lua"
 		local oldLHpilib = ma.GetFile ( oldlibname )
-		local loglater = ""
 		if oldLHpilib then
 			if DEBUG then
 				error("LHpi library found in deprecated location. Please move it to Prices\\lib subdirectory!")
@@ -169,43 +202,54 @@ function ImportPrice( importfoil , importlangs , importsets , scriptmode)
 				LHpilib = oldLHpilib
 			end
 		end
-		if not LHpilib then
-			error( "LHpi library " .. libname .. " not found." )
-		else -- execute LHpilib to make LHpi.* available
-			LHpilib = string.gsub( LHpilib , "^\239\187\191" , "" ) -- remove unicode BOM (0xEF, 0xBB, 0xBF) for files tainted by it :)
-			if VERBOSE then
-				ma.Log( "LHpi library " .. libname .. " loaded and ready for execution." )
-			end
-			local execlib,errormsg = load( LHpilib , "=(load) LHpi library" )
-			if not execlib then
-				error( errormsg )
-			end
-			LHpi = execlib()
-		end	-- if not LHpilib else
-		LHpi.Log(loglater)
-	end -- do load LHpi library
-	collectgarbage() -- we now have LHpi table with all its functions inside, let's clear LHpilib and execlib() from memory
-	LHpi.Log( "LHpi lib is ready to use." )
-	site.Initialize( scriptmode ) -- keep site-specific stuff out of ImportPrice
-	LHpi.Log("Importing " .. site.himelo[himelo] .. " prices. Columns available are " .. LHpi.Tostring(site.himelo) , 1 )
-	LHpi.DoImport (importfoil , importlangs , importsets)
-	ma.Log( "End of Lua script " .. scriptname )
-end -- function ImportPrice
+	end
+	if not LHpilib then
+		error( "LHpi library " .. libname .. " not found." )
+	else -- execute LHpilib to make LHpi.* available
+		LHpilib = string.gsub( LHpilib , "^\239\187\191" , "" ) -- remove unicode BOM (0xEF, 0xBB, 0xBF) for files tainted by it :)
+		if VERBOSE then
+			ma.Log( "LHpi library " .. libname .. " loaded and ready for execution." )
+		end
+		local execlib,errormsg = load( LHpilib , "=(load) LHpi library" )
+		if not execlib then
+			error( errormsg )
+		end
+		LHpi = execlib()
+	end	-- if not LHpilib else
+	return LHpi, loglater
+end--function site.LoadLib
 
 --[[- prepare script
  Do stuff here that needs to be done between loading the Library and calling LHpi.DoImport.
- At this point, LHpi's functions are avalable, but default values for missing fields have not yet been set.
+ At this point, LHpi's functions are available and OPTIONS are set,
+ but default values for functions and other missing fields have not yet been set.
  
- for LHpi.mkm, we need to configure and prepare the oauth client.
-@param #table mode { #boolean listsets, boolean checksets, ... }
+@param #table mode { #boolean flags for nonstandard modes of operation }
 	-- nil if called by Magic Album
-	-- testOAuth	tests the OAuth implementation
-	-- checksets	compares site.sets with setlist from dummyMA
-	-- getsets		fetches available expansions from server and saves a site.sets template.
+	-- mode.update	true to run update helper functions
  @function [parent=#site] Initialize
 ]]
 function site.Initialize( mode )
-end
+	if mode == nil then
+		mode = {}
+	elseif "table" ~= type(mode) then
+		local m=mode
+		mode = { [m]=true }
+	end
+	if not LHpi or not LHpi.version then
+		--error("LHpi library not loaded!")
+		print("LHpi lib not available, loading it now...")
+		LHpi = site.LoadLib()
+	end
+	LHpi.Log(site.scriptname.." started site.Initialize():",1)
+	LHpi.Log("Importing " .. site.himelo[himelo] .. " prices. Columns available are " .. LHpi.Tostring(site.himelo) , 1 )
+	
+	if mode.update then
+		if not dummy then error("ListUnknownUrls needs to be run from dummyMA!") end
+	 	dummy.ListUnknownUrls(site.FetchExpansionList(),dummy.CompareSiteSets())
+		return
+	end
+end--function site.Initialize
 
 --[[-  build source url/filename.
  Has to be done in sitescript since url structure is site specific.
@@ -213,7 +257,10 @@ end
 
  foilonly and isfile fields can be nil and then are assumed to be false.
  while isfile is read and interpreted by the library, foilonly is not.
- Its only here as a convenient shortcut to set card.foil in your site.ParseHtmlData  
+ Its only here as a convenient shortcut to set card.foil in your site.ParseHtmlData
+
+Optionally, for setid=="list", you can return an url with a list of available sets.
+This will be used by site.FetchExpansionList().
  
  @function [parent=#site] BuildUrl
  @param #number setid		see site.sets
@@ -223,26 +270,57 @@ end
  @return #table { #string (url)= #table { isfile= #boolean, (optional) foilonly= #boolean, (optional) setid= #number, (optional) langid= #number, (optional) frucid= #number } , ... }
 ]]
 function site.BuildUrl( setid,langid,frucid,offline )
-	site.domain = "magic.tcgplayer.com/db/"
-	site.file = "price_guide.asp"
+	site.domain = "magic.tcgplayer.com/"
+	site.file = "db/price_guide.asp"
 	site.setprefix = "?setname="
 	
 	local container = {}
-	local url = site.domain .. site.file .. site.setprefix .. site.sets[setid].url
---	if offline then
---		url = string.gsub( url, "%?", "_" )
---		url = string.gsub( url, "/", "_" )
---		container[url] = { isfile = true}
---	else
-		container[url] = {}
---	end -- if offline 
-	if LHpi.Data.sets[setid].foilonly then
-		container[url].foilonly = true
-	else
-		container[url].foilonly = false -- just to make the point :)
+	if setid=="list" then --request price guide expansion list 
+		return site.domain .. "magic_price_guides.asp"
+	else -- usual LHpi behaviour
+		local url = site.domain .. site.file .. site.setprefix
+		if  type(site.sets[setid].url) == "table" then
+			urls = site.sets[setid].url
+		else
+			urls = { site.sets[setid].url }
+		end--if type(site.sets[setid].url)
+		for _i,seturl in pairs(urls) do
+			container[url .. seturl] = {}
+			if LHpi.Data.sets[setid].foilonly then
+				container[url .. seturl].foilonly = true
+			else
+				container[url .. seturl].foilonly = false -- just to make the point :)
+			end
+		end--for _i,seturl
 	end
 	return container
 end -- function site.BuildUrl
+
+--[[- fetch list of expansions to be used by update helper functions.
+ The returned table shall contain at least the sets' name and LHpi-comnpatible urlsuffix,
+ so it can be processed by dummy.ListUnknownUrls.
+ Implementing this function is optional and may not be possible for some sites.
+ @function [parent=#site] FetchExpansionList
+ @return #table  @return #table { #number= #table { name= #string , urlsuffix= #string , ... }
+]]
+function site.FetchExpansionList()
+	local expansions = {}
+	local url = site.BuildUrl( "list" )
+	local expansionSource = LHpi.GetSourceData ( url , urldetails )
+	if not expansionSource then
+		error(string.format("Expansion list not found at %s (OFFLINE=%s)",LHpi.Tostring(url),tostring(OFFLINE)) )
+	end
+	local setregex = '<img [^>]+>[^<]*<a.-href="([^"]+)">([^<]+)</a><BR>'
+	for url,name in string.gmatch( expansionSource , setregex) do
+		_,_,url=string.find(url,"setName=([^&]-)&")
+		url=string.gsub(url,"-"," ")
+		table.insert(expansions, { name=name, urlsuffix=LHpi.OAuthEncode(url)})
+	end
+	return expansions
+end--function FetchExpansionList
+--[[- format string to use in dummy.ListUnknownUrls update helper function.
+ @field [parent=#site] #string updateFormatString ]]
+site.updateFormatString = "[%i]={id = %3i, lang = { true }, fruc = { true }, url = %q},--%s"
 
 --[[-  get data from foundstring.
  Has to be done in sitescript since html raw data structure is site specific.
@@ -406,172 +484,192 @@ site.frucs = {
 ]]
 site.sets = {
 -- Core Sets
-[808]={id = 808, lang = { true }, fruc = { true }, url = "Magic%202015%20(M15)"},
-[797]={id = 797, lang = { true }, fruc = { true }, url = "Magic%202014%20(M14)"},
-[788]={id = 788, lang = { true }, fruc = { true }, url = "Magic%202013%20(M13)"},
-[779]={id = 779, lang = { true }, fruc = { true }, url = "Magic%202012%20(M12)"},
-[770]={id = 770, lang = { true }, fruc = { true }, url = "Magic%202011%20(M11)"},
-[759]={id = 759, lang = { true }, fruc = { true }, url = "Magic%202010%20(M10)"},
-[720]={id = 720, lang = { true }, fruc = { true }, url = "10th%20Edition"},
-[630]={id = 630, lang = { true }, fruc = { true }, url = "9th%20Edition"},
-[550]={id = 550, lang = { true }, fruc = { true }, url = "8th%20Edition"},
-[460]={id = 460, lang = { true }, fruc = { true }, url = "7th%20Edition"},
-[360]={id = 360, lang = { true }, fruc = { true }, url = "Classic%20Sixth%20Edition"},
-[250]={id = 250, lang = { true }, fruc = { true }, url = "Fifth%20Edition"},
-[180]={id = 180, lang = { true }, fruc = { true }, url = "Fourth%20Edition"},
+[808]={id = 808, lang = { true }, fruc = { true }, url = "Magic%202015%20(M15)"},--Magic 2015 (M15)
+[797]={id = 797, lang = { true }, fruc = { true }, url = "Magic%202014%20(M14)"},--Magic 2014 (M14)
+[788]={id = 788, lang = { true }, fruc = { true }, url = "Magic%202013%20(M13)"},--Magic 2013 (M13)
+[779]={id = 779, lang = { true }, fruc = { true }, url = "Magic%202012%20(M12)"},--Magic 2012 (M12)
+[770]={id = 770, lang = { true }, fruc = { true }, url = "Magic%202011%20(M11)"},--Magic 2011 (M11)
+[759]={id = 759, lang = { true }, fruc = { true }, url = "Magic%202010%20(M10)"},--Magic 2010 (M10)
+[720]={id = 720, lang = { true }, fruc = { true }, url = "10th%20edition"},--Tenth Edition
+[630]={id = 630, lang = { true }, fruc = { true }, url = "9th%20Edition"},--Ninth Edition
+[550]={id = 550, lang = { true }, fruc = { true }, url = "8th%20Edition"},--Eighth Edition
+[460]={id = 460, lang = { true }, fruc = { true }, url = "7th%20Edition"},--Seventh Edition
+[360]={id = 360, lang = { true }, fruc = { true }, url = "Classic%20Sixth%20Edition"},--Sixth Edition
+[250]={id = 250, lang = { true }, fruc = { true }, url = "Fifth%20Edition"},--Fifth Edition
+[180]={id = 180, lang = { true }, fruc = { true }, url = "Fourth%20Edition"},--Fourth Edition
+[179]=nil,--4th Edition (FBB)
 [141]=nil,--Revised Summer Magic
-[140]={id = 140, lang = { true }, fruc = { true }, url = "Revised%20Edition"},
+[140]={id = 140, lang = { true }, fruc = { true }, url = "revised%20edition"},--Revised Edition
 [139]=nil,--Revised Limited Deutsch
-[110]={id = 110, lang = { true }, fruc = { true }, url = "Unlimited%20Edition"},
-[100]={id = 100, lang = { true }, fruc = { true }, url = "Beta%20Edition"},
-[90] ={id =  90, lang = { true }, fruc = { true }, url = "Alpha%20Edition"},
+[110]={id = 110, lang = { true }, fruc = { true }, url = "Unlimited%20Edition"},--Unlimited Edition
+[100]={id = 100, lang = { true }, fruc = { true }, url = "Beta%20Edition"},--Beta Edition
+[90] ={id =  90, lang = { true }, fruc = { true }, url = "Alpha%20Edition"},--Alpha Edition
 -- Expansions
-[813]={id = 813, lang = { true }, fruc = { true }, url = "Khans%20of%20Tarkir"},--Khans of Tarkir
-[806]={id = 806, lang = { true }, fruc = { true }, url = "Journey%20into%20Nyx"},
-[802]={id = 802, lang = { true }, fruc = { true }, url = "Born%20of%20the%20Gods"},
-[800]={id = 800, lang = { true }, fruc = { true }, url = "Theros"},
-[795]={id = 795, lang = { true }, fruc = { true }, url = "Dragon's%20Maze"},
-[793]={id = 793, lang = { true }, fruc = { true }, url = "Gatecrash"},
-[791]={id = 791, lang = { true }, fruc = { true }, url = "Return%20to%20Ravnica"},
-[786]={id = 786, lang = { true }, fruc = { true }, url = "Avacyn%20Restored"},
-[784]={id = 784, lang = { true }, fruc = { true }, url = "Dark%20Ascension"},
-[782]={id = 782, lang = { true }, fruc = { true }, url = "Innistrad"},
-[776]={id = 776, lang = { true }, fruc = { true }, url = "New%20Phyrexia"},
-[775]={id = 775, lang = { true }, fruc = { true }, url = "Mirrodin%20Besieged"},
-[773]={id = 773, lang = { true }, fruc = { true }, url = "Scars%20of%20Mirrodin"},
-[767]={id = 767, lang = { true }, fruc = { true }, url = "Rise%20of%20the%20Eldrazi"},
-[765]={id = 765, lang = { true }, fruc = { true }, url = "Worldwake"},
-[762]={id = 762, lang = { true }, fruc = { true }, url = "Zendikar"},
-[758]={id = 758, lang = { true }, fruc = { true }, url = "Alara%20Reborn"},
-[756]={id = 756, lang = { true }, fruc = { true }, url = "Conflux"},
-[754]={id = 754, lang = { true }, fruc = { true }, url = "Shards%20of%20Alara"},
-[752]={id = 752, lang = { true }, fruc = { true }, url = "Eventide"},
-[751]={id = 751, lang = { true }, fruc = { true }, url = "Shadowmoor"},
-[750]={id = 750, lang = { true }, fruc = { true }, url = "Morningtide"},
-[730]={id = 730, lang = { true }, fruc = { true }, url = "Lorwyn"},
-[710]={id = 710, lang = { true }, fruc = { true }, url = "Future%20Sight"},
-[700]={id = 700, lang = { true }, fruc = { true }, url = "Planar%20Chaos"},
-[690]={id = 690, lang = { true }, fruc = { true }, url = "Timeshifted"},
-[680]={id = 680, lang = { true }, fruc = { true }, url = "Time%20Spiral"},
-[670]={id = 670, lang = { true }, fruc = { true }, url = "Coldsnap"},
-[660]={id = 660, lang = { true }, fruc = { true }, url = "Dissension"},
-[650]={id = 650, lang = { true }, fruc = { true }, url = "Guildpact"},
-[640]={id = 640, lang = { true }, fruc = { true }, url = "Ravnica"},
-[620]={id = 620, lang = { true }, fruc = { true }, url = "Saviors%20of%20Kamigawa"},
-[610]={id = 610, lang = { true }, fruc = { true }, url = "Betrayers%20of%20Kamigawa"},
-[590]={id = 590, lang = { true }, fruc = { true }, url = "Champions%20of%20Kamigawa"},
-[580]={id = 580, lang = { true }, fruc = { true }, url = "Fifth%20Dawn"},
-[570]={id = 570, lang = { true }, fruc = { true }, url = "Darksteel"},
-[560]={id = 560, lang = { true }, fruc = { true }, url = "Mirrodin"},
-[540]={id = 540, lang = { true }, fruc = { true }, url = "Scourge"},
-[530]={id = 530, lang = { true }, fruc = { true }, url = "Legions"},
-[520]={id = 520, lang = { true }, fruc = { true }, url = "Onslaught"},
-[510]={id = 510, lang = { true }, fruc = { true }, url = "Judgment"},
-[500]={id = 500, lang = { true }, fruc = { true }, url = "Torment"},
-[480]={id = 480, lang = { true }, fruc = { true }, url = "Odyssey"},
-[470]={id = 470, lang = { true }, fruc = { true }, url = "Apocalypse"},
-[450]={id = 450, lang = { true }, fruc = { true }, url = "Planeshift"},
-[430]={id = 430, lang = { true }, fruc = { true }, url = "Invasion"},
-[420]={id = 420, lang = { true }, fruc = { true }, url = "Prophecy"},
-[410]={id = 410, lang = { true }, fruc = { true }, url = "Nemesis"},
-[400]={id = 400, lang = { true }, fruc = { true }, url = "Mercadian%20Masques"},
-[370]={id = 370, lang = { true }, fruc = { true }, url = "Urza's%20Destiny"},
-[350]={id = 350, lang = { true }, fruc = { true }, url = "Urza's%20Legacy"},
-[330]={id = 330, lang = { true }, fruc = { true }, url = "Urza's%20Saga"},
-[300]={id = 300, lang = { true }, fruc = { true }, url = "Exodus"},
-[290]={id = 290, lang = { true }, fruc = { true }, url = "Stronghold"},
-[280]={id = 280, lang = { true }, fruc = { true }, url = "Tempest"},
-[270]={id = 270, lang = { true }, fruc = { true }, url = "Weatherlight"},
-[240]={id = 240, lang = { true }, fruc = { true }, url = "Visions"},
-[230]={id = 230, lang = { true }, fruc = { true }, url = "Mirage"},
-[220]={id = 220, lang = { true }, fruc = { true }, url = "Alliances"},
-[210]={id = 210, lang = { true }, fruc = { true }, url = "Homelands"},
-[190]={id = 190, lang = { true }, fruc = { true }, url = "Ice%20Age"},
-[170]={id = 170, lang = { true }, fruc = { true }, url = "Fallen%20Empires"},
-[160]={id = 160, lang = { true }, fruc = { true }, url = "The%20Dark"},
-[150]={id = 150, lang = { true }, fruc = { true }, url = "Legends"},
-[130]={id = 130, lang = { true }, fruc = { true }, url = "Antiquities"},
-[120]={id = 120, lang = { true }, fruc = { true }, url = "Arabian%20Nights"},
+[818]={id = 818, lang = { true }, fruc = { true }, url = "dragons%20of%20tarkir"},--Dragons of Tarkir
+[816]={id = 816, lang = { true }, fruc = { true }, url = "fate%20reforged"},--Fate Reforged
+[813]={id = 813, lang = { true }, fruc = { true }, url = "khans%20of%20tarkir"},--Khans of Tarkir
+[806]={id = 806, lang = { true }, fruc = { true }, url = "journey%20into%20nyx"},--Journey into Nyx
+[802]={id = 802, lang = { true }, fruc = { true }, url = "born%20of%20the%20gods"},--Born of the Gods
+[800]={id = 800, lang = { true }, fruc = { true }, url = "theros"},--Theros
+[795]={id = 795, lang = { true }, fruc = { true }, url = "Dragon's%20Maze"},--Dragon's Maze
+[793]={id = 793, lang = { true }, fruc = { true }, url = "gatecrash"},--Gatecrash
+[791]={id = 791, lang = { true }, fruc = { true }, url = "return%20to%20ravnica"},--Return to Ravnica
+[786]={id = 786, lang = { true }, fruc = { true }, url = "avacyn%20restored"},--Avacyn Restored
+[784]={id = 784, lang = { true }, fruc = { true }, url = "dark%20ascension"},--Dark Ascension
+[782]={id = 782, lang = { true }, fruc = { true }, url = "innistrad"},--Innistrad
+[776]={id = 776, lang = { true }, fruc = { true }, url = "new%20phyrexia"},--New Phyrexia
+[775]={id = 775, lang = { true }, fruc = { true }, url = "mirrodin%20besieged"},--Mirrodin Besieged
+[773]={id = 773, lang = { true }, fruc = { true }, url = "scars%20of%20mirrodin"},--Scars of Mirrodin
+[767]={id = 767, lang = { true }, fruc = { true }, url = "rise%20of%20the%20eldrazi"},--Rise of the Eldrazi
+[765]={id = 765, lang = { true }, fruc = { true }, url = "worldwake"},--Worldwake
+[762]={id = 762, lang = { true }, fruc = { true }, url = "zendikar"},--Zendikar
+[758]={id = 758, lang = { true }, fruc = { true }, url = "alara%20reborn"},--Alara Reborn
+[756]={id = 756, lang = { true }, fruc = { true }, url = "conflux"},--Conflux
+[754]={id = 754, lang = { true }, fruc = { true }, url = "shards%20of%20alara"},--Shards of Alara
+[752]={id = 752, lang = { true }, fruc = { true }, url = "eventide"},--Eventide
+[751]={id = 751, lang = { true }, fruc = { true }, url = "shadowmoor"},--Shadowmoor
+[750]={id = 750, lang = { true }, fruc = { true }, url = "morningtide"},--Morningtide
+[730]={id = 730, lang = { true }, fruc = { true }, url = "lorwyn"},--Lorwyn
+[710]={id = 710, lang = { true }, fruc = { true }, url = "future%20sight"},--Future Sight
+[700]={id = 700, lang = { true }, fruc = { true }, url = "planar%20chaos"},--Planar Chaos
+[690]={id = 690, lang = { true }, fruc = { true }, url = "timeshifted"},--Timeshifted
+[680]={id = 680, lang = { true }, fruc = { true }, url = "time%20spiral"},--Time Spiral
+[670]={id = 670, lang = { true }, fruc = { true }, url = "coldsnap"},--Coldsnap
+[660]={id = 660, lang = { true }, fruc = { true }, url = "dissension"},--Dissension
+[650]={id = 650, lang = { true }, fruc = { true }, url = "guildpact"},--Guildpact
+[640]={id = 640, lang = { true }, fruc = { true }, url = "ravnica"},--Ravnica
+[620]={id = 620, lang = { true }, fruc = { true }, url = "saviors%20of%20kamigawa"},--Saviors of Kamigawa
+[610]={id = 610, lang = { true }, fruc = { true }, url = "betrayers%20of%20kamigawa"},--Betrayers of Kamigawa
+[590]={id = 590, lang = { true }, fruc = { true }, url = "champions%20of%20kamigawa"},--Champions of Kamigawa
+[580]={id = 580, lang = { true }, fruc = { true }, url = "fifth%20dawn"},--Fifth Dawn
+[570]={id = 570, lang = { true }, fruc = { true }, url = "darksteel"},--Darksteel
+[560]={id = 560, lang = { true }, fruc = { true }, url = "mirrodin"},--Mirrodin
+[540]={id = 540, lang = { true }, fruc = { true }, url = "scourge"},--Scourge
+[530]={id = 530, lang = { true }, fruc = { true }, url = "legions"},--Legions
+[520]={id = 520, lang = { true }, fruc = { true }, url = "onslaught"},--Onslaught
+[510]={id = 510, lang = { true }, fruc = { true }, url = "judgment"},--Judgment
+[500]={id = 500, lang = { true }, fruc = { true }, url = "torment"},--Torment
+[480]={id = 480, lang = { true }, fruc = { true }, url = "odyssey"},--Odyssey
+[470]={id = 470, lang = { true }, fruc = { true }, url = "apocalypse"},--Apocalypse
+[450]={id = 450, lang = { true }, fruc = { true }, url = "planeshift"},--Planeshift
+[430]={id = 430, lang = { true }, fruc = { true }, url = "invasion"},--Invasion
+[420]={id = 420, lang = { true }, fruc = { true }, url = "prophecy"},--Prophecy
+[410]={id = 410, lang = { true }, fruc = { true }, url = "nemesis"},--Nemesis
+[400]={id = 400, lang = { true }, fruc = { true }, url = "mercadian%20masques"},--Mercadian Masques
+[370]={id = 370, lang = { true }, fruc = { true }, url = "Urza's%20Destiny"},--Urza's Destiny
+[350]={id = 350, lang = { true }, fruc = { true }, url = "Urza's%20Legacy"},--Urza's Legacy
+[330]={id = 330, lang = { true }, fruc = { true }, url = "Urza's%20Saga"},--Urza's Saga
+[300]={id = 300, lang = { true }, fruc = { true }, url = "exodus"},--Exodus
+[290]={id = 290, lang = { true }, fruc = { true }, url = "stronghold"},--Stronghold
+[280]={id = 280, lang = { true }, fruc = { true }, url = "tempest"},--Tempest
+[270]={id = 270, lang = { true }, fruc = { true }, url = "weatherlight"},--Weatherlight
+[240]={id = 240, lang = { true }, fruc = { true }, url = "visions"},--Visions
+[230]={id = 230, lang = { true }, fruc = { true }, url = "mirage"},--Mirage
+[220]={id = 220, lang = { true }, fruc = { true }, url = "alliances"},--Alliances
+[210]={id = 210, lang = { true }, fruc = { true }, url = "homelands"},--Homelands
+[190]={id = 190, lang = { true }, fruc = { true }, url = "ice%20age"},--Ice Age
+[170]={id = 170, lang = { true }, fruc = { true }, url = "fallen%20empires"},--Fallen Empires
+[160]={id = 160, lang = { true }, fruc = { true }, url = "the%20dark"},--The Dark
+[150]={id = 150, lang = { true }, fruc = { true }, url = "legends"},--Legends
+[130]={id = 130, lang = { true }, fruc = { true }, url = "antiquities"},--Antiquities
+[120]={id = 120, lang = { true }, fruc = { true }, url = "arabian%20nights"},--Arabian Nights
 -- special sets
+[821]=nil,--Challenge Deck: Defeat a God
+[820]=nil,--Duel Decks: Elspeth vs. Kiora
+[819]=nil,--Modern Masters 2015 Edition
+[817]=nil,--Duel Decks: Anthology
+[815]=nil,--Fate Reforged Clash Pack
+[814]={id=814, lang = { [1]=true }, fruc = { false, true }, url = "C14"},--Commander 2014
 [812]={id=812, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Speed%20vs.%20Cunning"},--Duel Decks: Speed vs. Cunning
---[811]=nil,--Magic 2015 Clash Pack
-[810]={id=810, lang = { true }, fruc = { true }, url = "Modern%20Event%20Deck"},--Modern Event Deck 2014
---[809]=nil,--From the Vault: Annihilation
-[807]={id=807, lang = { true }, fruc = { true }, url = "Conspiracy"},--Conspiracy
+[811]=nil,--Magic 2015 Clash Pack
+[810]={id=810, lang = { true }, fruc = { true }, url = "magic%20modern%20event%20deck"},--Modern Event Deck 2014
+[809]={id = 809, lang = { true }, fruc = { true }, url = "From%20the%20Vault:%20Annihilation"},--From the Vault: Annihilation
+[807]={id = 807, lang = { true }, fruc = { true }, url = "conspiracy"},--Conspiracy
 [805]={id=805, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Jace%20vs.%20Vraska"},--Duel Decks: Jace vs. Vraska
 [804]=nil,--Challenge Deck: Battle the Horde
 [803]=nil,--Challenge Deck: Face the Hydra
 [801]={id = 801, lang = { true }, fruc = { true }, url = "Commander%202013"},
-[799]={id = 799, lang = { true }, fruc = { true }, url = "Duel%20Decks%3A%20Heroes%20vs.%20Monsters"},
-[798]={id = 798, lang = { true }, fruc = { true }, url = "From%20the%20Vault%3A%20Twenty"},
-[796]={id = 796, lang = { true }, fruc = { true }, url = "Modern+Masters"},
-[794]={id = 794, lang = { true }, fruc = { true }, url = "Duel%20Decks%3A%20Sorin%20vs.%20Tibalt"},
+[799]={id = 799, lang = { true }, fruc = { true }, url = "Duel%20Decks%3A%20Heroes%20vs.%20Monsters"},--Duel Decks: Heroes vs. Monsters
+[798]={id = 798, lang = { true }, fruc = { true }, url = "From%20the%20Vault%3A%20Twenty"},--From the Vault: Twenty
+[796]={id = 796, lang = { true }, fruc = { true }, url = "modern%20masters"},--Modern Masters
+[794]={id = 794, lang = { true }, fruc = { true }, url = "Duel%20Decks%3A%20Sorin%20vs.%20Tibalt"},--Duel Decks: Sorin vs. Tibalt
 [792]={id = 792, lang = { true }, fruc = { true }, url = "Commander%27s%20Arsenal"},
-[790]={id = 790, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Izzet%20vs.%20Golgari"},
-[789]={id = 789, lang = { true }, fruc = { true }, url = "From%20the%20Vault%3A%20Realms"},
-[787]={id = 787, lang = { true }, fruc = { true }, url = "Planechase%202012"},
-[785]={id = 785, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Venser%20vs.%20Koth"},
-[783]={id = 783, lang = { true }, fruc = { true }, url = "Premium%20Deck%20Series:%20Graveborn"},
-[781]={id = 781, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Ajani%20vs.%20Nicol%20Bolas"},
-[780]={id = 780, lang = { true }, fruc = { true }, url = "From%20the%20Vault%3A%20Legends"},
-[778]={id = 778, lang = { true }, fruc = { true }, url = "Commander"},
-[777]={id = 777, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Knights%20vs%20Dragons"},
-[774]={id = 774, lang = { true }, fruc = { true }, url = "Premium%20Deck%20Series:%20Fire%20and%20Lightning"},
-[772]={id = 772, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Elspeth%20vs.%20Tezzeret"},
-[771]={id = 771, lang = { true }, fruc = { true }, url = "From%20the%20Vault%3A%20Relics"},
-[769]={id = 769, lang = { true }, fruc = { true }, url = "Archenemy"},
+[790]={id = 790, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Izzet%20vs.%20Golgari"},--Duel Decks: Izzet vs. Golgari
+[789]={id = 789, lang = { true }, fruc = { true }, url = "From%20the%20Vault%3A%20Realms"},--From the Vault: Realms
+[787]={id = 787, lang = { true }, fruc = { true }, url = "planechase%202012"},--Planechase 2012
+[785]={id = 785, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Venser%20vs.%20Koth"},--Duel Decks: Venser vs. Koth
+[783]={id = 783, lang = { true }, fruc = { true }, url = "Premium%20Deck%20Series:%20Graveborn"},--Premium Deck Series: Graveborn
+[781]={id = 781, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Ajani%20vs.%20Nicol%20Bolas"},--Duel Decks: Ajani vs. Nicol Bolas
+[780]={id = 780, lang = { true }, fruc = { true }, url = "From%20the%20Vault%3A%20Legends"},--From the Vault: Legends
+[778]={id = 778, lang = { true }, fruc = { true }, url = "commander"},--Commander
+[777]={id = 777, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Knights%20vs%20Dragons"},--Duel Decks: Knights vs Dragons
+[774]={id = 774, lang = { true }, fruc = { true }, url = "Premium%20Deck%20Series:%20Fire%20and%20Lightning"},--Premium Deck Series: Fire and Lightning
+[772]={id = 772, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Elspeth%20vs.%20Tezzeret"},--Duel Decks: Elspeth vs. Tezzeret
+[771]={id = 771, lang = { true }, fruc = { true }, url = "From%20the%20Vault%3A%20Relics"},--From the Vault: Relics
+[769]={id = 769, lang = { true }, fruc = { true }, url = "archenemy"},--Archenemy
 [768]={id = 768, lang = { true }, fruc = { true }, url = "Duels%20of%20the%20Planeswalkers"},
-[766]={id = 766, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Phyrexia%20vs.%20The%20Coalition"},
-[764]={id = 764, lang = { true }, fruc = { true }, url = "Premium%20Deck%20Series:%20Slivers"},
-[763]={id = 763, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Garruk%20vs.%20Liliana"},
-[761]={id = 761, lang = { true }, fruc = { true }, url = "Planechase"},   
-[760]={id = 760, lang = { true }, fruc = { true }, url = "From%20the%20Vault%3A%20Exiled"},
-[757]={id = 757, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Divine%20vs.%20Demonic"},
-[755]={id = 755, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Jace%20vs.%20Chandra"},
-[753]={id = 753, lang = { true }, fruc = { true }, url = "From%20the%20Vault%3A%20Dragons"},
-[740]={id = 740, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Elves%20vs.%20Goblins"},
+[766]={id = 766, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Phyrexia%20vs.%20The%20Coalition"},--Duel Decks: Phyrexia vs. The Coalition
+[764]={id = 764, lang = { true }, fruc = { true }, url = "Premium%20Deck%20Series:%20Slivers"},--Premium Deck Series: Slivers
+[763]={id = 763, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Garruk%20vs.%20Liliana"},--Duel Decks: Garruk vs. Liliana
+[761]={id = 761, lang = { true }, fruc = { true }, url = "planechase"},--Planechase
+[760]={id = 760, lang = { true }, fruc = { true }, url = "From%20the%20Vault%3A%20Exiled"},--From the Vault: Exiled
+[757]={id = 757, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Divine%20vs.%20Demonic"},--Duel Decks: Divine vs. Demonic
+[755]={id = 755, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Jace%20vs.%20Chandra"},--Duel Decks: Jace vs. Chandra
+[753]={id = 753, lang = { true }, fruc = { true }, url = "From%20the%20Vault%3A%20Dragons"},--From the Vault: Dragons
+[740]={id = 740, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Elves%20vs.%20Goblins"},--Duel Decks: Elves vs. Goblins
 [675]=nil,--Coldsnap Theme Decks
+[636]=nil,--Salvat 2011
 [635]=nil,--Magic Encyclopedia
-[600]={id = 600, lang = { true }, fruc = { true }, url = "Unhinged"},
+[600]={id = 600, lang = { true }, fruc = { true }, url = "unhinged"},--Unhinged
 [490]=nil,--Deckmaster
-[440]={id = 440, lang = { true }, fruc = { true }, url = "Beatdown%20Box%20Set"},
-[415]={id = 415, lang = { true }, fruc = { true }, url = "Starter%202000"},   
-[405]={id = 405, lang = { true }, fruc = { true }, url = "Battle%20Royale%20Box%20Set"},
-[390]={id = 390, lang = { true }, fruc = { true }, url = "Starter%201999"},
-[380]={id = 380, lang = { true }, fruc = { true }, url = "Portal%20Three%20Kingdoms"},
+[440]={id = 440, lang = { true }, fruc = { true }, url = "beatdown%20box%20set"},--Beatdown Box Set
+[415]={id = 415, lang = { true }, fruc = { true }, url = "starter%202000"},--Starter 2000
+[405]={id = 405, lang = { true }, fruc = { true }, url = "battle%20royale%20box%20set"},--Battle Royale Box Set
+[390]={id = 390, lang = { true }, fruc = { true }, url = "starter%201999"},--Starter 1999
+[380]={id = 380, lang = { true }, fruc = { true }, url = "portal%20three%20kingdoms"},--Portal Three Kingdoms
 [340]=nil,--Anthologies
-[320]={id = 320, lang = { true }, fruc = { true }, url = "Unglued"},
-[310]={id = 310, lang = { true }, fruc = { true }, url = "Portal%20Second%20Age"},
-[260]={id = 260, lang = { true }, fruc = { true }, url = "Portal"},
-[225]=nil,--Introductory Two-Player Set
+[320]={id = 320, lang = { true }, fruc = { true }, url = "unglued"},--Unglued
+[310]={id = 310, lang = { true }, fruc = { true }, url = "portal%20second%20age"},--Portal Second Age
+[260]={id = 260, lang = { true }, fruc = { true }, url = "portal"},--Portal
+[235]=nil,--Multiverse Gift Box[225]=nil,--Introductory Two-Player Set
 [201]=nil,--Renaissance
-[200]={id = 200, lang = { true }, fruc = { true }, url = "Chronicles"},
-[70] ={id =  70, lang = { true }, fruc = { true }, url = "Vanguard"},
+[200]={id = 200, lang = { true }, fruc = { true }, url = "chronicles"},--Chronicles
+[106]={id = 106, lang = { true }, fruc = { true }, url = "collectors%20edition"},--Collectors’ Edition (International)
+[105]={id = 105, lang = { true }, fruc = { true }, url = "collectors%20edition"},--Collectors’ Edition (Domestic)
+[70] ={id =  70, lang = { true }, fruc = { true }, url = "vanguard"},--Vanguard
 [69] =nil,--Box Topper Cards
 -- Promo Cards
+[55] =nil,--Ugin’s Fate Promos
+[53] =nil,--Holiday Gift Box Promos
+[52] =nil,--Intro Pack Promos
 [50] =nil,--Full Box Promotion
 [45] =nil,--Magic Premiere Shop
 [43] =nil,--Two-Headed Giant Promos
 [42] =nil,--Summer of Magic Promos
 [41] =nil,--Happy Holidays Promos
---TODO [40] ={id =  40, lang = { true }, fruc = { true }, url = "Arena%20Promos"},
+[40] ={id =  40, lang = { true }, fruc = { true }, url = "arena%20promos"},--Arena Promos
 [33] =nil,--Championships Prizes
---TODO [32] ={id =  32, lang = { true }, fruc = { true }, url = "Pro%20Tour%20Promos"},--Pro Tour Promos
+[32] ={id =  32, lang = { true }, fruc = { true }, url = "pro%20tour%20promos"},--Pro Tour Promos
 [31] ={id =  31, lang = { true }, fruc = { true }, url = "Grand%20Prix%20Promos"},--Grand Prix Promos
-[30] ={id =  30, lang = { true }, fruc = { true }, url = "FNM%20Promos"},
---TODO: "APAC%20Lands" is Asian-Pacific subset of altArt, needs variant table
---TODO: "European%20Lands" is Asian-Pacific subset of altArt, needs variant table
---TODO: "Guru%20Lands" is Asian-Pacific subset of altArt, needs variant table
---[27] ={id =  27, lang = { true }, fruc = { true }, url = ""},--Alternate Art Lands
-[26] ={id =  26, lang = { true }, fruc = { true }, url = "Game%20Day%20Promos"},
---TODO [25] ={id =  25, lang = { true }, fruc = { true }, url = "Judge%20Promos"},
-[24] ={id =  24, lang = { true }, fruc = { true }, url = "Champs%20Promos"},
---TODO "WPN%20Promos" is subset of 23 Gateway & WPN Promos
-[23] ={id =  23, lang = { true }, fruc = { true }, url = "Gateway%20Promos"},
---TODO [22] ={id =  22, lang = { true }, fruc = { true }, url = "Prerelease%20Cards"},
---TODO "Release%20Event%20Cards" is subset of 21 Release & Launch Party Cards
-[21] ={id =  21, lang = { true }, fruc = { true }, url = "Launch%20Party%20Cards"},
-[20] ={id =  20, lang = { true }, fruc = { true }, url = "Magic%20Player%20Rewards"},
+[30] ={id =  30, lang = { true }, fruc = { true }, url = "fnm%20promos"},--FNM Promos
+[27] ={id =  27, lang = { true }, fruc = { true }, url = { --Alternate Art Lands
+															"apac%20lands",--Asian-Pacific Lands
+															"european%20lands",--European Lands
+															"guru%20lands",--Guru Lands
+															} },
+[26] ={id =  26, lang = { true }, fruc = { true }, url = "game%20day%20promos"},--Game Day Promos
+[25] ={id =  25, lang = { true }, fruc = { true }, url = "judge%20promos"},--Judge Promos
+[24] ={id =  24, lang = { true }, fruc = { true }, url = "champs%20promos"},--Champs Promos
+[23] ={id =  23, lang = { true }, fruc = { true }, url = { --Gateway & WPN Promos
+														"gateway%20promos",--Gateway Promos
+														"wpn%20promos",--WPN Promos
+														} },
+[22] ={id =  22, lang = { true }, fruc = { true }, url = "prerelease%20cards"},--Prerelease Cards
+[21] ={id =  21, lang = { true }, fruc = { true }, url = { --Release & Launch Party Cards
+														"release%20event%20cards",--Release Event Cards
+														"launch%20party%20cards",--Launch Party Cards
+														} },
+[20] ={id =  20, lang = { true }, fruc = { true }, url = "magic%20player%20rewards"},--Magic Player Rewards
 [15] =nil,--Convention Promos
 [12] =nil,--Hobby Japan Commemorative Cards
 [11] =nil,--Redemption Program Cards
@@ -585,7 +683,9 @@ site.sets = {
 [4]  =nil,--Ultra Rare Cards
 [2]  =nil,--DCI Legend Membership
 -- "Media%20Promos": sorting out the single page seems more trouble than it's worth
+[9990]={id =   0, lang = { true }, fruc = { true }, url = "media%20promos"},--Media Promos
 -- "Special%20Occasion": sorting out the single page seems more trouble than it's worth
+[9991]={id =   0, lang = { true }, fruc = { true }, url = "special%20occasion"},--Special Occasion
 } -- end table site.sets
 
 --[[- card name replacement tables.
@@ -1294,6 +1394,8 @@ site.namereplace = {
 },
 [766] = { -- DD:Phyrexia vs. The Coalition 
 ["Urza's Rage"]							= "Urza’s Rage",
+["Minion"]								= "Minion Token",
+["Saproling"]							= "Saproling Token",
 },
 [763] = { -- DD: Garruk vs. Liliana
 ["Beast Token (3)"]						= "Beast Token (1)",
@@ -1597,7 +1699,7 @@ function site.SetExpected( importfoil , importlangs , importsets )
 -- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
 -- @field [parent=#site.expected] #boolean nontrad
 	nontrad = true,
---- if site.expected.repl is true, LHpi.Data.sets[setid].cardcount.repl is added to pset default.
+--- if site.expected.replica is true, LHpi.Data.sets[setid].cardcount.repl is added to pset default.
 -- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
 -- @field [parent=#site.expected] #boolean replica
 	replica = true,
@@ -1719,4 +1821,5 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [10]  = { pset={ 26 }, dropped=1 },-- 1 SOON
 	}--end table site.expected
 end--function site.SetExpected()
+ma.Log(site.scriptname .. " loaded.")
 --EOF

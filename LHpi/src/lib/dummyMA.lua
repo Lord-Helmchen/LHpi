@@ -39,6 +39,7 @@ fixed savepath handling
 deprecated dummy.loadlibonly and dummy.loadscript
 dummy.mergetables no longer changes param #table teins
 update helper functions ouput to log instead od stdout 
+ma.GetUrl now uses luasockets instead of returning nil
 ]]
 
 --TODO make most dummy functions local
@@ -73,7 +74,7 @@ end
 --- GetURL.
 -- Returns downloaded web page or nil if there was an error (page not found, network problems, etc.).
 -- 
--- dummy: just prints request to stdout
+-- dummy: uses luasockets and additionally prints status to stdout if not "200" (OK).
 -- 
 -- @function [parent=#ma] GetURL
 -- @param #string url
@@ -81,14 +82,12 @@ end
 function ma.GetUrl(url)
 	print("dummy: GetUrl called for " .. url)
 	local host,file = string.match(url, "http://([^/]+)/(.+)" )
-	--TODO use luasockets for real
---	try {
---		Socket =require "luasocket"
---		local c = assert(Socket.connect(host, 80))
---		c:send("GET " .. file .. " HTTP/1.0\r\n\r\n")
---		c:close()
---	}
-	return nil
+	local http = require("socket.http")
+	local page,status = http.request(url)
+	if (not page) or (status~="200") then
+		print("http status" .. status)
+	end
+	return page
 end
 
 --- GetFile.
@@ -141,12 +140,15 @@ function ma.PutFile(filepath, data, append)
 	else
 		handle,err = io.open(filepath,"a")	-- get file handle in append mode
 	end
-	if err then print("PutFile error: " .. tostring(err)) end	
-	local temp = io.output()	-- save current file
-	io.output( handle )			-- open a new current file
-	io.write( data )	
-	io.output():close()			-- close current file
-    io.output(temp)				-- restore previous current file
+	if err then
+		print("PutFile error: " .. tostring(err))	
+	else
+		local temp = io.output()	-- save current file
+		io.output( handle )			-- open a new current file
+		io.write( data )	
+		io.output():close()			-- close current file
+    	io.output(temp)				-- restore previous current file
+    end
 end
 
 --- Log.
@@ -551,6 +553,7 @@ function dummy.CompareSiteSets()
 		end
 	end
 	LHpi.Log(#missing .. " sets from dummy missing in site.sets:" ,0)
+	table.sort(missing, function(a, b) return a.id > b.id end)
 	for i,set in pairs(missing) do
 		LHpi.Log(string.format("[%3i] = %q;",set.id,set.name) ,0)
 	end
@@ -569,7 +572,7 @@ function dummy.ListUnknownUrls(expansions,missing,file)
 		LHpi.Log("site.sets = {",0,file,0 )--
 	else
 		-- insert to normal logfile
-		LHpi.Log("-----\nAdd to site.sets :",0 )--
+		LHpi.Log("-----\nAdd to \nsite.sets = {",0 )--
 	end
 	local revMissing = {}
 	for _,set in pairs(missing) do
@@ -610,7 +613,6 @@ function dummy.ListUnknownUrls(expansions,missing,file)
 			table.sort(sortSets, function(a, b) return a > b end)
 			LHpi.Log("-- ".. setcat ,0,file)--
 			for i,sid in ipairs(sortSets) do
---TODO externalize formatstring
 				local string = string.format(site.updateFormatString,sid,sid,sets[sid].urlsuffix,sets[sid].name )
 				--print(string)
 				LHpi.Log(string, 0,file )--
@@ -622,12 +624,7 @@ function dummy.ListUnknownUrls(expansions,missing,file)
 			--print(string)
 			LHpi.Log(string, 0,file )--
 		end--for i,sid
-	if file then
-		LHpi.Log("	}\n--end table site.sets",0,file )--
-	else
-		-- insert to normal logfile
-		LHpi.Log("-----",0 )--
-	end
+	LHpi.Log("}--end table site.sets\n-----",0,file )--
 end
 
 --- @field [parent=#dummy] #table alllangs
@@ -864,8 +861,8 @@ function main()
 	
 	--don't keep a seperate dev savepath, though
 	mapath = "..\\..\\..\\Magic Album\\"
-	--package.path = 'src\\lib\\ext\\?.lua;' .. package.path
-	--package.cpath= 'src\\lib\\bin\\?.dll;' .. package.cpath
+	package.path = workdir..'lib\\ext\\?.lua;' .. package.path
+	package.cpath= workdir..'lib\\bin\\?.dll;' .. package.cpath
 	dummy.env={--define debug enviroment options
 		VERBOSE = true,
 		LOGDROPS = true,
@@ -873,34 +870,48 @@ function main()
 		LOGFOILTWEAK = true,
 		CHECKEXPECTED = true,
 		STRICTEXPECTED = true,
-		OFFLINE = true,
---		OFFLINE = false,
+--		STRICTOBJTYPE = true,
+		STRICTOBJTYPE = false,
+--		OFFLINE = true,
+		OFFLINE = false,
 		SAVELOG = true,
---		SAVEHTML = true,
-		SAVEHTML = false,
-		DEBUG = true,
+		SAVEHTML = true,
+--		SAVEHTML = false,
+--		DEBUG = true,
 		DEBUGFOUND = true,
 --		DEBUGVARIANTS = true,
 --		SAVETABLE=true,
 	}
 	dummy.forceEnv()
+
+	local importfoil = "y"
+--	local importlangs = { [1] = "eng" }
+--	local importlangs = { [5] = "FOO" }
+	local importlangs = dummy.alllangs
+--	local importsets = { [0] = "fakeset"; }
+--	local importsets = { [800]="some set" }
+--	local importsets = { [220]="foo";[800]="bar";[0]="baz";}
+--	local importsets = { [808] = "Magic 2015"; [806] = "Journey into Nyx"; [802] = "Born of the Gods"; [800] = "Theros"; }
+--	local importsets = dummy.coresets
+--	local importsets = dummy.expansionsets
+	local importsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 	
 	local scripts={
 		[0]={name="lib\\LHpi.sitescriptTemplate-v2.15.6.13.lua"},
-		[1]={name="LHpi.mtgmintcard.lua",path=workdir,savepath=mapath},
-		[2]={name="LHpi.magicuniverseDE.lua",path=workdir,savepath=mapath},
-		[3]={name="LHpi.trader-onlineDE.lua",path=workdir,savepath=mapath},
-		[4]={name="LHpi.tcgplayerPriceGuide.lua",path=workdir,savepath=mapath},
-		[5]={name="\\MTG Mint Card.lua",path=savepath,mapath=mapath},
-		[6]={name="\\Import Prices.lua",path=mapath,savepath=mapath},
-		[7]={name="LHpi.mtgprice.com.lua",path=workdir,savepath=mapath},
+--		[1]={name="LHpi.mtgmintcard.lua",path=workdir,savepath=mapath},
+--		[2]={name="LHpi.magicuniverseDE.lua",path=workdir,savepath=mapath},
+--		[3]={name="LHpi.trader-onlineDE.lua",path=workdir,savepath=mapath},
+		[4]={name="LHpi.tcgplayerPriceGuide.lua",savepath=mapath.."Prices\\LHpi.tcgplayerPriceGuide\\"},
+--		[5]={name="\\MTG Mint Card.lua",path=savepath,mapath=mapath},
+--		[6]={name="\\Import Prices.lua",path=mapath,savepath=mapath},
+--		[7]={name="LHpi.mtgprice.com.lua",path=workdir,savepath=mapath},
 		[8]={name="LHpi.magickartenmarkt.lua",savepath=mapath.."Prices\\LHpi.magickartenmarkt\\"},
 		[9]={name="LHpi.mkm-helper.lua",savepath=mapath.."Prices\\LHpi.magickartenmarkt\\"},
 	}
 	
 	-- select a predefined script to be tested
 --	dummy.fakesitescript()
-	local script=scripts[0]
+	local script=scripts[4]
 	--dummy.loadscript(script.name,script.path,script.savepath)--deprecated
 	savepath=script.savepath
 	dofile(workdir..script.name)
@@ -910,27 +921,15 @@ function main()
 --	LHpi = dofile(workdir.."lib\\LHpi-v"..libver..".lua")
 
 	--prepare sitescript (not needed for mkm-helper)
-	site.Initialize({update=true})
+--	site.Initialize({update=true})
 
 	-- force debug enviroment options
 	dummy.forceEnv(dummy.env)
 	print("dummy says: script loaded.")
 
-	local importfoil = "y"
-	local importlangs = { [1] = "eng" }
---	local importlangs = { [5] = "FOO" }
-	local importlangs = dummy.alllangs
---	local importsets = { [0] = "fakeset"; }
---	local importsets = { [800]="some set" }
---	local importsets = { [220]="foo";[800]="bar";[0]="baz";}
-	local importsets = { [808] = "Magic 2015"; [806] = "Journey into Nyx"; [802] = "Born of the Gods"; [800] = "Theros"; }
---	local importsets = dummy.coresets
---	local importsets = dummy.expansionsets
---	local importsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
-
 	-- now try to break the script :-)
 --	LHpi.DoImport(importfoil, importlangs, importsets)
---	ImportPrice( importfoil, importlangs, importsets )
+	ImportPrice( importfoil, importlangs, importsets )
 
 	-- demo LHpi helper functions:
 --	print(LHpi.Tostring( { ["this"]=1, is=2, [3]="a", ["table"]="string" } ))
