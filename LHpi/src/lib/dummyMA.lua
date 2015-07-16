@@ -862,23 +862,23 @@ function main()
 	package.path = workdir..'lib\\ext\\?.lua;' .. package.path
 	package.cpath= workdir..'lib\\bin\\?.dll;' .. package.cpath
 	dummy.env={--define debug enviroment options
-		VERBOSE = true,
-		LOGDROPS = true,
-		LOGNAMEREPLACE = true,
-		LOGFOILTWEAK = true,
-		CHECKEXPECTED = true,
-		STRICTEXPECTED = true,
---		STRICTOBJTYPE = true,
-		STRICTOBJTYPE = false,
-		OFFLINE = true,
---		OFFLINE = false,
-		SAVELOG = true,
-		SAVEHTML = true,
---		SAVEHTML = false,
-		DEBUG = true,
-		DEBUGFOUND = true,
---		DEBUGVARIANTS = true,
---		SAVETABLE=true,
+		VERBOSE = true,--default false
+		LOGDROPS = true,--default false
+		LOGNAMEREPLACE = true,--default false
+		LOGFOILTWEAK = true,--default false
+--		CHECKEXPECTED = false,--default true
+		STRICTEXPECTED = true,--default false
+--		STRICTOBJTYPE = false,--default true
+		OFFLINE = true,--default false
+--		SAVELOG = false,--default true
+		SAVEHTML = true,--default false
+		DEBUG = true,--default false
+--		DEBUGFOUND = true,--default false
+--		DEBUGVARIANTS = true,--default false
+--		SAVETABLE=true,--default false
+		--quick switches:
+		OFFLINE = false,
+		DEBUG = false,
 	}
 	dummy.forceEnv()
 
@@ -887,12 +887,12 @@ function main()
 --	local importlangs = { [5] = "FOO" }
 	local importlangs = dummy.alllangs
 --	local importsets = { [0] = "fakeset"; }
-	local importsets = { [22]="some set" }
+--	local importsets = { [22]="some set" }
 --	local importsets = { [220]="foo";[800]="bar";[0]="baz";}
 --	local importsets = { [808] = "Magic 2015"; [806] = "Journey into Nyx"; [802] = "Born of the Gods"; [800] = "Theros"; }
 --	local importsets = dummy.coresets
 --	local importsets = dummy.expansionsets
---	local importsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
+	local importsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 	
 	local scripts={
 		[0]={name="lib\\LHpi.sitescriptTemplate-v2.15.6.13.lua"},
