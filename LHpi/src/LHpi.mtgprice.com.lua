@@ -6,7 +6,7 @@ to import card pricing from www.mtgprice.com.
 
 Inspired by and loosely based on "MTG Mint Card.lua" by Goblin Hero, Stromglad1 and "Import Prices.lua" by woogerboy21;
 who generously granted permission to "do as I like" with their code;
-everything else Copyright (C) 2012-2014 by Christian Harms.
+everything else Copyright (C) 2012-2015 by Christian Harms.
 If you want to contact me about the script, try its release thread in http://www.slightlymagic.net/forum/viewforum.php?f=32
 
 @module LHpi.site
@@ -29,6 +29,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --[[ CHANGES
 2.13.6.5
 added 814
+2.14.5.5
+removed url to filename changes that are done by the library if OFFLINE 
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -67,7 +69,7 @@ fairOrBest = "fair"
 --STRICTEXPECTED = true
 
 --- if true, exit with error on object type mismatch, else use object type 0 (all)
--- @field [parent=#global] boolena STRICTOBJTYPE
+-- @field [parent=#global] #boolean STRICTOBJTYPE
 --STRICTOBJTYPE = true
 
 --- log to seperate logfile instead of Magic Album.log;	default true
@@ -100,13 +102,13 @@ fairOrBest = "fair"
 
 --- revision of the LHpi library to use
 -- @field [parent=#global] #string libver
-libver = "2.13"
+libver = "2.15"
 --- revision of the LHpi library datafile to use
 -- @field [parent=#global] #string dataver
 dataver = "6"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "5"
+scriptver = "6"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.mtgprice.com-v" .. libver .. "." .. dataver .. "" .. scriptver .. ".lua"
@@ -127,6 +129,7 @@ site={}
  it will be chopped into its parts by site.ParseHtmlData later. 
  @field [parent=#site] #string regex ]]
 site.regex = '<tr><td>(<a href ="/sets/[^>]+>[^<]+</a> </td><td>[$0-9.,%-]+</td><td>[$0-9.,%-]+</td>)</tr>'
+site.regex = '%{"cardId.-%}'
 
 --- @field #string currency		not used yet;default "$"
 site.currency = "$"
@@ -146,8 +149,12 @@ site.encoding="utf-8"
  @param #table importsets	{ #number (setid)= #string , ... }
 	-- parameter passed from Magic Album
 	-- array of sets the script should import, represented as pairs { #number = #string } (see "Database\Sets.txt").
+ @param #table scriptmode { #boolean listsets, boolean checksets, ... }
+	-- nil if called by Magic Album
+	-- will be passed to site.Initialize to trigger nonstandard modes of operation	
 ]]
-function ImportPrice( importfoil , importlangs , importsets )
+function ImportPrice( importfoil , importlangs , importsets , scriptmode)
+	scriptmode = scriptmode or {}
 	if SAVELOG~=false then
 		ma.Log( "Check " .. scriptname .. ".log for detailed information" )
 	end
@@ -185,9 +192,25 @@ function ImportPrice( importfoil , importlangs , importsets )
 	end -- do load LHpi library
 	collectgarbage() -- we now have LHpi table with all its functions inside, let's clear LHpilib and execlib() from memory
 	LHpi.Log( "LHpi lib is ready to use." )
+	site.Initialize( scriptmode ) -- keep site-specific stuff out of ImportPrice
 	LHpi.DoImport (importfoil , importlangs , importsets)
 	ma.Log( "End of Lua script " .. scriptname )
 end -- function ImportPrice
+
+--[[- prepare script
+ Do stuff here that needs to be done between loading the Library and calling LHpi.DoImport.
+ At this point, LHpi's functions are avalable, but default values for missing fields have not yet been set.
+ 
+ for LHpi.mkm, we need to configure and prepare the oauth client.
+@param #table mode { #boolean listsets, boolean checksets, ... }
+	-- nil if called by Magic Album
+	-- testOAuth	tests the OAuth implementation
+	-- checksets	compares site.sets with setlist from dummyMA
+	-- getsets		fetches available expansions from server and saves a site.sets template.
+ @function [parent=#site] Initialize
+]]
+function site.Initialize( mode )
+end
 
 --[[-  build source url/filename.
  Has to be done in sitescript since url structure is site specific.
@@ -201,10 +224,11 @@ end -- function ImportPrice
  @param #number setid		see site.sets
  @param #number langid		see site.langs
  @param #number frucid		see site.frucs
- @param #boolean offline	(can be nil) use local file instead of url
- @return #table { #string (url)= #table { isfile= #boolean, (optional) foilonly= #boolean } , ... }
+ @param #boolean offline	DEPRECATED, read global OFFLINE instead if you need really it.
+ 							(can be nil) use local file instead of url
+ @return #table { #string (url)= #table { isfile= #boolean, (optional) foilonly= #boolean, (optional) setid= #number, (optional) langid= #number, (optional) frucid= #number } , ... }
 ]]
-function site.BuildUrl( setid,langid,frucid,offline )
+function site.BuildUrl( setid,langid,frucid )
 	site.domain = "www.mtgprice.com"
 	site.setprefix = "/spoiler_lists/"
 	local container = {}
@@ -216,13 +240,6 @@ function site.BuildUrl( setid,langid,frucid,offline )
 	end
 	for _i,seturl in pairs(urls) do
 		local url = site.domain .. site.setprefix .. seturl .. site.frucs[frucid].url
-		if offline then
-			url = string.gsub( url, "%?", "_" )
-			url = string.gsub( url, "/", "_" )
-			container[url] = { isfile = true}
-		else
-			container[url] = {}
-		end -- if offline 
 		container[url].frucid = frucid -- keep frucid for ParseHtmlData
 	end
 print(LHpi.Tostring(container))
@@ -231,49 +248,71 @@ end -- function site.BuildUrl
 
 --[[-  get data from foundstring.
  Has to be done in sitescript since html raw data structure is site specific.
- To allow returning more than one card here (foil and nonfoil versions are considered seperate cards!),
+ To allow returning more than one card here (foil and nonfoil versions are considered seperate cards at this stage!),
  ParseHtmlData is required to wrap it/them into a container table.
+ NEW: newCard.price must be #number; if foundstring contains multiple prices, return a different card for each price! 
+ If you decide to set regprice or foilprice directly, language and variant detection will not be applied to the price!
+ LHpi.buildCardData will construct regprice or foilprice as #table { #number (langid)= #number, ... } or { #number (langid)= #table { #string (variant)= #number, ... }, ... }
+ It's usually a good idea to explicitely set newCard.foil, for example by querying site.frucs[urldetails.frucid].isfoil, unless parsed card names contain a foil suffix.
  
  Price is returned as whole number to generalize decimal and digit group separators
  ( 1.000,00 vs 1,000.00 ); LHpi library then divides the price by 100 again.
  This is, of course, not optimal for speed, but the most flexible.
 
  Return value newCard can receive optional additional fields:
- @return #boolean newcard.foil		(semi-optional) set the card as foil. It's often a good idea to explicitely set this, for example by querying site.frucs[urldetails.frucid].isfoil
+ @return #boolean newcard.foil		(semi-optional) set the card as foil. 
  @return #table newCard.pluginData	(optional) is passed on by LHpi.buildCardData for use in site.BCDpluginName and/or site.BCDpluginCard.
  @return #string newCard.name		(optional) will pre-set the card's unique (for the cardsetTable) identifying name.
  @return #table newCard.lang		(optional) will override LHpi.buildCardData generated values.
  @return #boolean newCard.drop		(optional) will override LHpi.buildCardData generated values.
  @return #table newCard.variant		(optional) will override LHpi.buildCardData generated values.
- @return #table newCard.regprice	(optional) will override LHpi.buildCardData generated values.
- @return #table newCard.foilprice 	(optional) will override LHpi.buildCardData generated values.
+ @return #number or #table newCard.regprice		(optional) will override LHpi.buildCardData generated values. #number or #table { [#number langid]= #number,...}
+ @return #number or #table newCard.foilprice 	(optional) will override LHpi.buildCardData generated values. #number or #table { [#number langid]= #number,...}
  
  @function [parent=#site] ParseHtmlData
  @param #string foundstring		one occurence of siteregex from raw html data
- @param #table urldetails		{ isfile= #boolean , setid= #number, langid= #number, frucid= #number , foilonly= #boolean }
+ @param #table urldetails		{ isfile= #boolean, oauth= #boolean, setid= #number, langid= #number, frucid= #number , foilonly= #boolean }
  @return #table { #number= #table { names= #table { #number (langid)= #string , ... }, price= #number , foil= #boolean , ... } , ... } 
 ]]
 function site.ParseHtmlData( foundstring , urldetails )
---	local _start,_end,name = string.find(foundstring, '<a.->([^<]+)</a>' )
---	local _start,_end,price = string.find( foundstring , '[$€]([%d.,]+)' )
-	local _start,_end,name,fairPrice,bestPrice = string.find(foundstring,"<a.->([^<]+)</a>%s*%b<>%b<>([$.,%-%d]+)%b<>%b<>([$.,%-%d]+)" )
---print(foundstring)
---print(name)
---print(fairPrice)
---print(bestPrice)
+--	print(foundstring)
+	local _s,_e,name = string.find(foundstring,'"name":"([^"]+)",')
+	local _s,_e,isFoil = string.find(foundstring,'"isFoil":([^,]+),')
+	local _s,_e,fairPrice = string.find(foundstring,'"fair_price":([^,]+),')
+	local _s,_e,setName = string.find(foundstring,'"setName":"([^"]+)",')
+	local _s,_e,absoluteChangeSinceYesterday = string.find(foundstring,'"absoluteChangeSinceYesterday":([^,]+),')
+	local _s,_e,absoluteChangeSinceOneWeekAgo = string.find(foundstring,'"absoluteChangeSinceOneWeekAgo":([^,]+),')
+	local _s,_e,color = string.find(foundstring,'"color":"([^"]+)",')
+	local _s,_e,rarity = string.find(foundstring,'"rarity":"([^"]+)",')
+	local _s,_e,bestPrice = string.find(foundstring,'"lowestPrice":"([^"]+)",')
+--	print("name:",name,type(name))
+--	print("isFoil:",isFoil,type(isFoil))
+--	print("fairPrice:",fairPrice,type(fairPrice))
+--	print("setName:",setName,type(setName))
+--	print("absoluteChangeSinceYesterday:",absoluteChangeSinceYesterday,type(absoluteChangeSinceYesterday))
+--	print("absoluteChangeSinceOneWeekAgo:",absoluteChangeSinceOneWeekAgo,type(absoluteChangeSinceOneWeekAgo))
+--	print("color:",color,type(color))
+--	print("rarity:",rarity,type(rarity))
+--	print("bestPrice:",bestPrice,type(bestPrice))
 	local price
 	if fairOrBest == "best" then
 		price = bestPrice
 	else
 		price = fairPrice
 	end
-		
+	local foil = nil
+	if isFoil == "true" then
+		foil = true
+	elseif isFoil == "false" then
+		foil = false
+	end
 	price = string.gsub( price , "[$,.-]" , "" )
 	price = tonumber( price ) or 0
-	local newCard = { names = { [urldetails.langid] = name }, price = { [urldetails.langid] = price } }
-	if site.frucs[urldetails.frucid].isfoil and not site.frucs[urldetails.frucid].isnonfoil then
-		newCard.foil = true
-	end
+	local newCard = { names = { [urldetails.langid] = name }, price = price, foil=foil, pluginData={ set=setName, colour=color, rarity=rarity } }
+--	if site.frucs[urldetails.frucid].isfoil and not site.frucs[urldetails.frucid].isnonfoil then
+--		newCard.foil = true
+--	end
+	--print( "site.ParseHtmlData\t returns" .. LHpi.Tostring(newCard))
 	if DEBUG then
 		LHpi.Log( "site.ParseHtmlData\t returns" .. LHpi.Tostring(newCard) , 2 )
 	end
@@ -300,6 +339,7 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 	end
 
 	card.name = string.gsub( card.name , "AE" , "Æ")
+	card.name = string.gsub( card.name , "\\u0027" , "'")
 
 	return card
 end -- function site.BCDpluginPre
@@ -317,14 +357,43 @@ end -- function site.BCDpluginPre
  @return #table			modified card is passed back for further processing
  			{ name= #string , drop= #boolean, lang= #table , (optional) names= #table , variant= (#table or nil), regprice= #table , foilprice= #table }
 ]]
---function site.BCDpluginPost( card , setid , importfoil, importlangs )
---	if DEBUG then
---		LHpi.Log( "site.BCDpluginPost got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
---	end
---
---	card.pluginData=nil
---	return card
---end -- function site.BCDpluginPost
+function site.BCDpluginPost( card , setid , importfoil, importlangs )
+	if DEBUG then
+		LHpi.Log( "site.BCDpluginPost got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
+	end
+
+	local _s,_e,name,variant = string.find(card.name,"([^(]+) %((%d+)%)")
+	if variant then
+--		print(LHpi.Tostring(card))
+--		print("name",name)
+--		print("variant",variant)
+		variant = tonumber(variant)
+		local oldname = card.name
+		card.name = name
+		card.variant= {}
+		for nr=1, variant-1 do
+			card.variant[nr]=false
+		end
+		card.variant[variant]=variant
+		local objtype={}
+		objtype[variant]=card.objtype
+		card.objtype=objtype
+		local foilprice={}
+		local regprice={}
+		for lid,lang in pairs(card.lang) do
+			foilprice[variant]=card.foilprice[lid]
+			card.foilprice[lid]=foilprice				
+			regprice[variant]=card.regprice[lid]
+			card.regprice[lid]=regprice
+		end
+		if VERBOSE or DEBUG then
+			LHpi.Log((string.format( "variant catchall %q changed to %q with variant %s",oldname,card.name,LHpi.Tostring(card.variant) )), 1 )
+		end
+--		print(LHpi.Tostring(card))
+	end
+	card.pluginData=nil
+	return card
+end -- function site.BCDpluginPost
 
 -------------------------------------------------------------------------------------------------------------
 -- tables
@@ -472,16 +541,16 @@ site.sets = {
 [812]=nil,--Duel Decks: Speed vs. Cunning
 [811]=nil,--Magic 2015 Clash Pack
 [810]=nil,--Modern Event Deck 2014
-[809]={id = 798, lang = { [1]=true }, fruc = { false, true }, url = "From_the_Vault_Annihilation"},--From the Vault: Annihilation
+[809]={id = 798, lang = { [1]=true }, fruc = { true, true }, url = "From_the_Vault_Annihilation"},--From the Vault: Annihilation
 [807]={id = 807, lang = { [1]=true }, fruc = { true , true }, url = {"Conspiracy","Conspiracy_Schemes"} },--Conspiracy
-[805]={id = 805, lang = { [1]=true }, fruc = { false, true }, url = "Duel_Decks_Jace_vs_Vraska"},--Duel Decks: Jace vs. Vraska
+[805]={id = 805, lang = { [1]=true }, fruc = { true , true }, url = "Duel_Decks_Jace_vs_Vraska"},--Duel Decks: Jace vs. Vraska
 [804]=nil,--Challenge Deck: Battle the Horde
 [803]=nil,--Challenge Deck: Face the Hydra
-[801]={id = 801, lang = { [1]=true }, fruc = { false, true }, url = "Commander_2013"},--Commander 2013
-[799]={id = 799, lang = { [1]=true }, fruc = { false, true }, url = "Duel_Decks_Heroes_vs_Monsters"},--Duel Decks: Heroes vs. Monsters
-[798]={id = 798, lang = { [1]=true }, fruc = { false, true }, url = "From_the_Vault_Twenty"},--From the Vault: Twenty
+[801]={id = 801, lang = { [1]=true }, fruc = { true , true }, url = "Commander_2013"},--Commander 2013
+[799]={id = 799, lang = { [1]=true }, fruc = { true , true }, url = "Duel_Decks_Heroes_vs_Monsters"},--Duel Decks: Heroes vs. Monsters
+[798]={id = 798, lang = { [1]=true }, fruc = { true , true }, url = "From_the_Vault_Twenty"},--From the Vault: Twenty
 [796]={id = 796, lang = { [1]=true }, fruc = { true , true }, url = "Modern_Masters"},
-[794]={id = 794, lang = { [1]=true }, fruc = { false, true }, url = "Duel_Decks_Sorin_vs_Tibalt"},--Duel Decks: Sorin vs. Tibalt
+[794]={id = 794, lang = { [1]=true }, fruc = { true , true }, url = "Duel_Decks_Sorin_vs_Tibalt"},--Duel Decks: Sorin vs. Tibalt
 [792]={id = 792, lang = { [1]=true }, fruc = { true , true }, url = "Commanders_Arsenal"},
 [790]={id = 790, lang = { [1]=true }, fruc = { true , true }, url = "Duel_Decks_Izzet_vs_Golgari"},
 [789]={id = 789, lang = { [1]=true }, fruc = { true , true }, url = "From_the_Vault_Realms"},
@@ -510,9 +579,9 @@ site.sets = {
 [675]=nil,--Coldsnap Theme Decks
 [635]=nil,--Magic Encyclopedia
 [600]={id = 600, lang = { [1]=true }, fruc = { true , true }, url = "Unhinged"},--no foils on site
-[490]={id = 490, lang = { [1]=true }, fruc = { true , true }, url = "Deckmasters_Box_Set"},--Deckmaster --TODO foiltweak
+[490]={id = 490, lang = { [1]=true }, fruc = { true , true }, url = "Deckmasters_Box_Set"},
 [440]={id = 440, lang = { [1]=true }, fruc = { true , true }, url = "Beatdown_Box_Set"},
-[415]={id = 415, lang = { [1]=true }, fruc = { true , true }, url = "Starter_2000"},--TODO foiltweak
+[415]={id = 415, lang = { [1]=true }, fruc = { true , true }, url = "Starter_2000"},
 [405]={id = 405, lang = { [1]=true }, fruc = { true , true }, url = "Battle_Royale_Box_Set"},
 [390]={id = 390, lang = { [1]=true }, fruc = { true , true }, url = "Starter_1999"},
 [380]={id = 380, lang = { [1]=true }, fruc = { true , true }, url = "Portal_Three_Kingdoms"},   
@@ -536,7 +605,7 @@ site.sets = {
 [32] ={id =  32, lang = { [1]=true }, fruc = { true , true }, url = "Pro_Tour"},
 [31] ={id =  31, lang = { [1]=true }, fruc = { true , true }, url = "Grand_Prix"},
 [30] ={id =  30, lang = { [1]=true }, fruc = { true , true }, url = "Friday_Night_Magic"},
-[27] ={id =  27, lang = { [1]=true }, fruc = { false, true }, url = { "Euro_Land_Program", "Guru", "Asia Pacific Land Program" } },--Alternate Art Lands
+[27] ={id =  27, lang = { [1]=true }, fruc = { true , true }, url = { "Euro_Land_Program", "Guru", "Asia Pacific Land Program" } },--Alternate Art Lands
 [26] ={id =  26, lang = { [1]=true }, fruc = { true , true }, url = "Game_Day"},
 [25] ={id =  25, lang = { [1]=true }, fruc = { true , true }, url = "Judge_Gift_Program"},
 --TODO half of the cards are foilonly
@@ -548,24 +617,24 @@ site.sets = {
 --[15] ={id =  15, lang = { [1]=true }, fruc = {  }, url = ""},--Convention Promos
 --[12] ={id =  12, lang = { [1]=true }, fruc = {  }, url = ""},--Hobby Japan Commemorative Cards
 --[11] ={id =  11, lang = { [1]=true }, fruc = {  }, url = ""},--Redemption Program Cards
---[10] ={id =  10, lang = { [1]=true }, fruc = {  }, url = ""},--Junior Series Promos
---[9]  ={id =   9, lang = { [1]=true }, fruc = {  }, url = ""},--Video Game Promos
+--TODO what is "Super_Series" ? probably Junior Super Series
+[10] ={id =  10, lang = { [1]=true }, fruc = { true , true }, url = "Super_Series"},--Junior Series Promos
+[9]  ={id =   9, lang = { [1]=true }, fruc = { true , true }, url = "Media_Inserts"},--Video Game Promos
 --[8]  ={id =   8, lang = { [1]=true }, fruc = {  }, url = ""},--Stores Promos
---[7]  ={id =   7, lang = { [1]=true }, fruc = {  }, url = ""},--Magazine Inserts
---[6]  ={id =   6, lang = { [1]=true }, fruc = {  }, url = ""},--Comic Inserts
---[5]  ={id =   5, lang = { [1]=true }, fruc = {  }, url = ""},--Book Inserts
+[7]  ={id =   7, lang = { [1]=true }, fruc = { true , true }, url = "Media_Inserts"},--Magazine Inserts
+[6]  ={id =   6, lang = { [1]=true }, fruc = { true , true }, url = "Media_Inserts"},--Comic Inserts
+[5]  ={id =   5, lang = { [1]=true }, fruc = { true , true }, url = "Media_Inserts"},--Book Inserts
 --[4]  ={id =   4, lang = { [1]=true }, fruc = {  }, url = ""},--Ultra Rare Cards
 [2]  ={id =   2, lang = { [1]=true }, fruc = { true , true }, url = "Legend_Membership"},
 --TODO what is "15th_Anniversary" ?
 --TODO what is "World_Magic_Cup_Qualifier" ?
---TODO what is "Super_Series" ?
 --TODO sort out "Media_Inserts"
 } -- end table site.sets
 
 --[[- card name replacement tables.
 
   fields are for subtables indexed by #number setid.
- { #number (setid)= #table { #string (oldname)= #string , ... } , ... }
+ { #number (setid)= #table { #string (oldname)= #string (newname), ... } , ... }
  
  @type site.namereplace
  @field [parent=#site.namereplace] #string name
@@ -690,6 +759,7 @@ site.namereplace = {
 ["Forest (2)"]			= "Forest (247)",
 ["Forest (3)"]			= "Forest (248)",
 ["Forest (4)"]			= "Forest (249)",
+["Consume SPirit"]		= "Consume Spirit",
 },
 [770]={--M11
 ["Plains (1)"]			= "Plains (230)",
@@ -745,6 +815,99 @@ site.namereplace = {
 ["Junun Efreet"]						= "Junún Efreet",
 ["El-Hajjaj"]							= "El-Hajjâj",
 },
+-- Expansions
+[784] = { -- Dark Ascension
+["Hinterland Hermit"] 				= "Hinterland Hermit|Hinterland Scourge",
+["Mondronen Shaman"] 				= "Mondronen Shaman|Tovolar’s Magehunter",
+["Soul Seizer"] 					= "Soul Seizer|Ghastly Haunting",
+["Lambholt Elder"] 					= "Lambholt Elder|Silverpelt Werewolf",
+["Ravenous Demon"] 					= "Ravenous Demon|Archdemon of Greed",
+["Elbrus, the Binding Blade"] 		= "Elbrus, the Binding Blade|Withengar Unbound",
+["Loyal Cathar"] 					= "Loyal Cathar|Unhallowed Cathar",
+["Chosen of Markov"] 				= "Chosen of Markov|Markov’s Servant",
+["Huntmaster of the Fells"] 		= "Huntmaster of the Fells|Ravager of the Fells",
+["Afflicted Deserter"] 				= "Afflicted Deserter|Werewolf Ransacker",
+["Chalice of Life"] 				= "Chalice of Life|Chalice of Death",
+["Wolfbitten Captive"] 				= "Wolfbitten Captive|Krallenhorde Killer",
+["Scorned Villager"]				= "Scorned Villager|Moonscarred Werewolf",
+},
+[782] = { -- Innistrad
+["Bloodline Keeper"] 				= "Bloodline Keeper|Lord of Lineage",
+["Ludevic's Test Subject"] 			= "Ludevic's Test Subject|Ludevic's Abomination",
+["Instigator Gang"] 				= "Instigator Gang|Wildblood Pack",
+["Kruin Outlaw"] 					= "Kruin Outlaw|Terror of Kruin Pass",
+["Daybreak Ranger"] 				= "Daybreak Ranger|Nightfall Predator",
+["Garruk Relentless"] 				= "Garruk Relentless|Garruk, the Veil-Cursed",
+["Mayor of Avabruck"] 				= "Mayor of Avabruck|Howlpack Alpha",
+["Cloistered Youth"] 				= "Cloistered Youth|Unholy Fiend",
+["Civilized Scholar"] 				= "Civilized Scholar|Homicidal Brute",
+["Screeching Bat"] 					= "Screeching Bat|Stalking Vampire",
+["Hanweir Watchkeep"] 				= "Hanweir Watchkeep|Bane of Hanweir",
+["Reckless Waif"] 					= "Reckless Waif|Merciless Predator",
+["Gatstaf Shepherd"] 				= "Gatstaf Shepherd|Gatstaf Howler",
+["Ulvenwald Mystics"] 				= "Ulvenwald Mystics|Ulvenwald Primordials",
+["Thraben Sentry"] 					= "Thraben Sentry|Thraben Militia",
+["Delver of Secrets"] 				= "Delver of Secrets|Insectile Aberration",
+["Tormented Pariah"] 				= "Tormented Pariah|Rampaging Werewolf",
+["Village Ironsmith"] 				= "Village Ironsmith|Ironfang",
+["Grizzled Outcasts"] 				= "Grizzled Outcasts|Krallenhorde Wantons",
+["Villagers of Estwald"] 			= "Villagers of Estwald|Howlpack of Estwald",
+},
+[766] = { -- New Phyrexia
+["Arm with Aether"]					= "Arm with Æther",
+},
+[754] = { -- Shards of Alara
+["Elspeth Knight-Errant"]			= "Elspeth, Knight-Errant",
+},
+[620] = { -- Saviors of Kamigawa
+["Sasaya, Orochi Ascendant"] 		= "Sasaya, Orochi Ascendant|Sasaya’s Essence",
+["Rune-Tail, Kitsune Ascendant"]	= "Rune-Tail, Kitsune Ascendant|Rune-Tail’s Essence",
+["Homura, Human Ascendant"] 		= "Homura, Human Ascendant|Homura’s Essence",
+["Kuon, Ogre Ascendant"] 			= "Kuon, Ogre Ascendant|Kuon’s Essence",
+["Erayo, Soratami Ascendant"] 		= "Erayo, Soratami Ascendant|Erayo’s Essence"
+},
+[610] = { -- Betrayers of Kamigawa
+["Hired Muscle"] 					= "Hired Muscle|Scarmaker",
+["Cunning Bandit"] 					= "Cunning Bandit|Azamuki, Treachery Incarnate",
+["Callow Jushi"] 					= "Callow Jushi|Jaraku the Interloper",
+["Faithful Squire"] 				= "Faithful Squire|Kaiso, Memory of Loyalty",
+["Budoka Pupil"] 					= "Budoka Pupil|Ichiga, Who Topples Oaks",
+},
+[590] = { -- Champions of Kamigawa
+["Student of Elements"]				= "Student of Elements|Tobita, Master of Winds",
+["Kitsune Mystic"]					= "Kitsune Mystic|Autumn-Tail, Kitsune Sage",
+["Initiate of Blood"]				= "Initiate of Blood|Goka the Unjust",
+["Bushi Tenderfoot"]				= "Bushi Tenderfoot|Kenzo the Hardhearted",
+["Budoka Gardener"]					= "Budoka Gardener|Dokai, Weaver of Life",
+["Nezumi Shortfang"]				= "Nezumi Shortfang|Stabwhisker the Odious",
+["Jushi Apprentice"]				= "Jushi Apprentice|Tomoya the Revealer",
+["Orochi Eggwatcher"]				= "Orochi Eggwatcher|Shidako, Broodmistress",
+["Nezumi Graverobber"]				= "Nezumi Graverobber|Nighteyes the Desecrator",
+["Akki Lavarunner"]					= "Akki Lavarunner|Tok-Tok, Volcano Born",
+["Brothers Yamazaki (1)"]			= "Brothers Yamazaki (160a)",
+["Brothers Yamazaki (2)"]			= "Brothers Yamazaki (160b)",
+},
+--Special
+[787] = { -- Planechase 2012
+["Norn's Dominion"]		= "Norn’s Dominion",
+},
+[492] = { -- Deckmasters
+["Lim-Dul's High Guard"]		= "Lim-Dûl's High Guard",
+},
+[310] = { -- Portal Second Age
+["Deja Vu"]		= "Déjà Vu",
+},
+-- Promo
+[22] = { -- Prerelease Promos
+["Ravenous Demon"]				= "Ravenous Demon|Archdemon of Greed",
+["Mayor of Avabruck"]			= "Mayor of Avabruck|Howlpack Alpha",
+["Laquatus's Champion"]			= "Laquatus’s Champion",
+},
+[21] = { -- Release Promos
+["Mondronen Shaman"]				= "Mondronen Shaman|Tovolar’s Magehunter",
+["Ludevic's Test Subject"]			= "Ludevic’s Test Subject|Ludevic’s Abomination",
+["Budoka Pupil"]					= "Budoka Pupil|Ichiga, Who Topples Oaks",
+},
 } -- end table site.namereplace
 
 --[[- card variant tables.
@@ -760,14 +923,16 @@ site.namereplace = {
  @field [parent=#site.variants] #table variant
 ]]
 site.variants = {
---[0] = { -- Basic Lands as example (setid 0 is not used)
---override=false,
---["Plains"] 					= { "Plains"	, { 1    , 2    , 3    , 4     } },
---["Island"] 					= { "Island" 	, { 1    , 2    , 3    , 4     } },
---["Swamp"] 					= { "Swamp"		, { 1    , 2    , 3    , 4     } },
---["Mountain"] 					= { "Mountain"	, { 1    , 2    , 3    , 4     } },
---["Forest"] 					= { "Forest" 	, { 1    , 2    , 3    , 4     } }
---},
+[10]  = { -- Junior Series
+["Elvish Champion"]				= { "Elvish Champion"	, { "E"	, "J" } },
+["Glorious Anthem"]				= { "Glorious Anthem"	, { "E"	, "J" , "U" } },
+["Royal Assassin"]				= { "Royal Assassin"	, { "E"	, "J" } },
+["Sakura-Tribe Elder"]			= { "Sakura-Tribe Elder", { "E"	, "J" , "U" } },
+["Shard Phoenix"]				= { "Shard Phoenix"		, { "E"	, "J" , "U" } },
+["Slith Firewalker"]			= { "Slith Firewalker"	, { "E"	, "J" } },
+["Soltari Priest"]				= { "Soltari Priest"	, { "E"	, "J" , "U" } },
+["Whirling Dervish"]			= { "Whirling Dervish"	, { "E"	, "J" , "U" } },
+	},	
 } -- end table site.variants
 
 --[[- foil status replacement tables.
@@ -790,9 +955,11 @@ site.foiltweak = {
  This allows to read LHpi.Data.sets[setid].cardcount tables for less hardcoded numbers. 
 
  @function [parent=#site] SetExpected
- @param nil
+ @param #string importfoil	"y"|"n"|"o" passed from DoImport
+ @param #table importlangs	{ #number (langid)= #string , ... } passed from DoImport
+ @param #table importsets	{ #number (setid)= #string , ... } passed from DoImport
 ]]
-function site.SetExpected()
+function site.SetExpected( importfoil , importlangs , importsets )
 --[[- table of expected results.
  as of script release. Used as sanity check during sitescript development and source of insanity afterwards ;-)
  For each setid, if unset defaults to expect all cards to be set.
@@ -809,35 +976,51 @@ function site.SetExpected()
  ]]
 	site.expected = {
 --- pset defaults to LHpi.Data.sets[setid].cardcount.reg, if available and not set otherwise here.
---  LHpi.Data.sets[setid]cardcount has 6 fields you can use avoid hardcoded numbers here: { reg, tok, both, nontr, repl, all }.
+--  LHpi.Data.sets[setid]cardcount has 6 fields you can use avoid hardcoded numbers here: { reg, tok, both, nontrad, repl, all }.
 
 --- if EXPECTTOKENS is true, LHpi.Data.sets[setid].cardcount.tok is added to pset default.
--- @field [parent=#site.expected] #boolean EXPECTTOKENS
-	EXPECTTOKENS = false,
---- if EXPECTNONTRAD is true, LHpi.Data.sets[setid].cardcount.nontrad is added to pset default.
--- @field [parent=#site.expected] #boolean EXPECTNONTRAD
-	EXPECTNONTRAD = true,
---- if EXPECTREPL is true, LHpi.Data.sets[setid].cardcount.repl is added to pset default.
--- @field [parent=#site.expected] #boolean EXPECTREPL
-	EXPECTREPL = true,
+--- if site.expected.tokens is true, LHpi.Data.sets[setid].cardcount.tok is added to pset default.
+-- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
+-- @field [parent=#site.expected] #boolean or #table { #boolean,...} tokens
+	tokens = false,
+--- if site.expected.nontrad is true, LHpi.Data.sets[setid].cardcount.nontrad is added to pset default.
+-- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
+-- @field [parent=#site.expected] #boolean nontrad
+	nontrad = false,
+--- if site.expected.repl is true, LHpi.Data.sets[setid].cardcount.repl is added to pset default.
+-- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
+-- @field [parent=#site.expected] #boolean replica
+	replica = false,
 --TODO expect a lot of namereplacements, for now just expect fails
 -- Core Sets
 [808] = { pset={ LHpi.Data.sets[808].cardcount.reg-20 } },
-[797] = { pset={ LHpi.Data.sets[797].cardcount.reg }, namereplaced=40 },
-[788] = { pset={ LHpi.Data.sets[788].cardcount.reg }, namereplaced=40 },
-[779] = { pset={ LHpi.Data.sets[779].cardcount.reg }, namereplaced=40 },
-[770] = { pset={ LHpi.Data.sets[770].cardcount.reg }, namereplaced=60 },
-[759] = { pset={ LHpi.Data.sets[759].cardcount.reg-20 }, namereplaced=4 },
-[720] = { pset={ LHpi.Data.sets[720].cardcount.reg-20 }, failed={ 5 } },
-[630] = { pset={ LHpi.Data.sets[630].cardcount.reg-20-9 }, failed={ 5 } },-- missing #s "S1" to "S9"
-[550] = { pset={ LHpi.Data.sets[550].cardcount.reg-20 }, failed={ 5 } },
-[460] = { pset={ LHpi.Data.sets[460].cardcount.reg-20 }, failed={ 5 } },
-[360] = { pset={ LHpi.Data.sets[360].cardcount.reg-20 }, failed={ 5 } },
-[250] = { pset={ LHpi.Data.sets[250].cardcount.reg-20 }, failed={ 5 } },
-[180] = { pset={ LHpi.Data.sets[180].cardcount.reg-20 }, failed={ 5 } },
+--[797] = { pset={ LHpi.Data.sets[797].cardcount.reg }, namereplaced=40 },
+[788] = { failed={ 2 } },
+--[779] = { pset={ LHpi.Data.sets[779].cardcount.reg }, namereplaced=40 },
+--[770] = { pset={ LHpi.Data.sets[770].cardcount.reg }, namereplaced=60 },
+--[759] = { pset={ LHpi.Data.sets[759].cardcount.reg-20 }, namereplaced=4 },
+[720] = { pset={ LHpi.Data.sets[720].cardcount.reg-1 }, failed={ 1 } },
+--[630] = { pset={ LHpi.Data.sets[630].cardcount.reg-20-9 }, failed={ 5 } },-- missing #s "S1" to "S9"
+--[550] = { pset={ LHpi.Data.sets[550].cardcount.reg-20 }, failed={ 5 } },
+--[460] = { pset={ LHpi.Data.sets[460].cardcount.reg-20 }, failed={ 5 } },
+--[360] = { pset={ LHpi.Data.sets[360].cardcount.reg-20 }, failed={ 5 } },
+--[250] = { pset={ LHpi.Data.sets[250].cardcount.reg-20 }, failed={ 5 } },
+--[180] = { pset={ LHpi.Data.sets[180].cardcount.reg-20 }, failed={ 5 } },
 -- Expansions
+[813] = { pset={ LHpi.Data.sets[813].cardcount.reg-25 }, failed={ 5 } },
+[800] = { pset={ LHpi.Data.sets[800].cardcount.reg-1 }, failed={ 1 } },
 -- Special Sets
+[787] = { failed= { 1 } },
+[778] = { pset={ LHpi.Data.sets[778].cardcount.reg-2 }, failed={ LHpi.Data.sets[778].cardcount.repl+2 } },
+[762] = { pset={ LHpi.Data.sets[762].cardcount.reg-20 }, failed={ 20 } },
+[751] = { failed={ 15 } },
 -- Promos
+[41]  = { pset={ 7 } },
+[40]  = { pset={ 41 }, failed={ 6 } },
+[30]  = { pset={ 167 } },
+[20]  = { pset={ LHpi.Data.sets[20].cardcount.reg } },
+[9]   = { pset={ 12 }, failed={ 74 } },
+[5]   = { pset={ 80 } },
 
 --[798] = { pset={0}},
 --[797] = { namereplaced=4*5 },
@@ -848,8 +1031,30 @@ function site.SetExpected()
 --[560] = { pset={ LHpi.Data.sets[560].cardcount.reg-20 }, failed={ 5 } },
 --[807] = { pset={ LHpi.Data.sets[807].cardcount.reg+LHpi.Data.sets[807].cardcount.nontrad } },
 --[766] = { pset={ LHpi.Data.sets[766].cardcount.reg-6 }, failed={ 2 } },
---[26]  = { pset={ 40 }, foiltweaked=22 },
+--[26]  = { pset={  }, failed={  }, foiltweaked=22 },
 --[] = { pset={ LHpi.Data.sets[].cardcount.reg-20 }, failed={  } },
 	}--end table site.expected
+	for sid,name in pairs(importsets) do
+		if not site.expected.sid then
+			site.expected.sid = {}
+		end
+		if site.namereplace[sid] then
+			local namereplaced=0
+			for fid,fruc in pairs(site.frucs) do
+				if site.sets[sid].fruc[fid] then
+					namereplaced = namereplaced + LHpi.Length(site.namereplace[sid])
+				end
+			end
+			if namereplaced > 0 then
+				site.expected[sid].namereplaced=namereplaced
+			end
+		end
+		if site.foiltweak[sid] then
+			site.expected[sid].foiltweaked=LHpi.Length(site.foiltweak[sid])
+		end
+		if site.expected.sid == {} then
+			site.expected.sid = nil
+		end
+	end--for sid,name
 end--function site.SetExpected()
 --EOF

@@ -3,3 +3,5 @@
 /release archive
 *.log
 /timelog.txt
+/MyProfilingReport.txt
+/missorted.json
