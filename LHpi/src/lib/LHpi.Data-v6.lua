@@ -7,7 +7,7 @@ Finally, adding a new set will not require touching the library anymore.
 
 Inspired by and loosely based on "MTG Mint Card.lua" by Goblin Hero, Stromglad1 and "Import Prices.lua" by woogerboy21;
 who generously granted permission to "do as I like" with their code;
-everything else Copyright (C) 2012-2014 by Christian Harms.
+everything else Copyright (C) 2012-2015 by Christian Harms.
 If you want to contact me about the script, try its release thread in http://www.slightlymagic.net/forum/viewforum.php?f=32
 
 @module LHpi.Data
@@ -29,14 +29,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 --[[ CHANGES
 v6
-fixed set names
 added lang [17]="Phyrexian"
 new 52,53,55,814,815,816,817,818,819,820,821
 fixed names for 21,40,814
-fixed variants for 43,69,201[ITA],758,764,766,781,787,800,813
 variant table for 15,22,25,26,27,33,40,45
 foiltweak table for 22,26,33
-cardcount fixed/updated in 9,105,106,762,791,800,813
+cardcount fixed/updated in 9,105,106,762,791,800,813,816,30,22,21
+fixed/updated variants for 43,69,201[ITA],758,764,766,781,787,800,813,22
+commented variants in 180,140,110,100,90,280,230,220,170,260,105,25
+foiltweak fixed/updated in 813
 ]]
 
 
@@ -79,12 +80,12 @@ Data.languages = {
 	[9]  = {id=9,  full = "Simplified Chinese",		abbr="SZH" },
 	[10] = {id=10, full = "Traditional Chinese",	abbr="ZHT" },
 	[11] = {id=11, full = "Korean",					abbr="KOR" },
-	[12] = {id=12, full = "Hebrew",					abbr="HEB" },-- Only 1 card, in [22] Prerelease Promos
-	[13] = {id=13, full = "Arabic",					abbr="ARA" },-- Only 1 card, in [22] Prerelease Promos
-	[14] = {id=14, full = "Latin",					abbr="LAT" },-- Only 1 card, in [22] Prerelease Promos
-	[15] = {id=15, full = "Sanskrit",				abbr="SAN" },-- Only 1 card, in [22] Prerelease Promos
-	[16] = {id=16, full = "Ancient Greek",			abbr="GRC" },-- Only 1 card, in [22] Prerelease Promos
-	[17] = {id=17, full = "Phyrexian",				abbr="PHY" },-- Only 1 card, in [25] Judge Gift Cards
+	[12] = {id=12, full = "Hebrew",					abbr="HEB" },-- Only "Glory" in [22] Prerelease Promos
+	[13] = {id=13, full = "Arabic",					abbr="ARA" },-- Only "Stone-Tongue Basilisk" in [22] Prerelease Promos
+	[14] = {id=14, full = "Latin",					abbr="LAT" },-- Only "Raging Kavu" in [22] Prerelease Promos
+	[15] = {id=15, full = "Sanskrit",				abbr="SAN" },-- Only "Fungal Shambler" in [22] Prerelease Promos
+	[16] = {id=16, full = "Ancient Greek",			abbr="GRC" },-- Only "Questing Phelddagrif" in [22] Prerelease Promos
+	[17] = {id=17, full = "Phyrexian",				abbr="PHY" },-- Only "Elesh Norn, Grand Cenobite" in [25] Judge Gift Cards
 }
 
 
@@ -489,21 +490,21 @@ Coresets = nil,
 ["Swamp"] 						= { "Swamp"		, { 1    , 2    , 3     } },
 ["Mountain"] 					= { "Mountain"	, { 1    , 2    , 3     } },
 ["Forest"] 						= { "Forest" 	, { 1    , 2    , 3     } },
-["Plains (1)"]					= { "Plains"	, { 1    , false, false } },
-["Plains (2)"]					= { "Plains"	, { false, 2    , false } },
-["Plains (3)"]					= { "Plains"	, { false, false, 3     } },
-["Island (1)"]					= { "Island"	, { 1    , false, false } },
-["Island (2)"]					= { "Island"	, { false, 2    , false } },
-["Island (3)"]					= { "Island"	, { false, false, 3     } },
-["Swamp (1)"]					= { "Swamp"		, { 1    , false, false } },
-["Swamp (2)"]					= { "Swamp"		, { false, 2    , false } },
-["Swamp (3)"]					= { "Swamp"		, { false, false, 3     } },
-["Mountain (1)"]				= { "Mountain"	, { 1    , false, false } },
-["Mountain (2)"]				= { "Mountain"	, { false, 2    , false } },
-["Mountain (3)"]				= { "Mountain"	, { false, false, 3     } },
-["Forest (1)"]					= { "Forest"	, { 1    , false, false } },
-["Forest (2)"]					= { "Forest"	, { false, 2    , false } },
-["Forest (3)"]					= { "Forest"	, { false, false, 3     } },
+["Plains (1)"]					= { "Plains"	, { 1    , false, false } },--No Mountains
+["Plains (2)"]					= { "Plains"	, { false, 2    , false } },--Trees
+["Plains (3)"]					= { "Plains"	, { false, false, 3     } },--No Trees
+["Island (1)"]					= { "Island"	, { 1    , false, false } },--Green
+["Island (2)"]					= { "Island"	, { false, 2    , false } },--Purple
+["Island (3)"]					= { "Island"	, { false, false, 3     } },--Blue
+["Swamp (1)"]					= { "Swamp"		, { 1    , false, false } },--High Branch
+["Swamp (2)"]					= { "Swamp"		, { false, 2    , false } },--Two Branches
+["Swamp (3)"]					= { "Swamp"		, { false, false, 3     } },--Low Branch
+["Mountain (1)"]				= { "Mountain"	, { 1    , false, false } },--Dirt
+["Mountain (2)"]				= { "Mountain"	, { false, 2    , false } },--Slate
+["Mountain (3)"]				= { "Mountain"	, { false, false, 3     } },--Fog
+["Forest (1)"]					= { "Forest"	, { 1    , false, false } },--Path
+["Forest (2)"]					= { "Forest"	, { false, 2    , false } },--Eyes
+["Forest (3)"]					= { "Forest"	, { false, false, 3     } },--Rocks
 	},
 },
 [179] = { name="4th Edition (FBB)", -- Foreign Black Bordered / Limited
@@ -564,21 +565,21 @@ Coresets = nil,
 ["Swamp"] 						= { "Swamp"		, { 1    , 2    , 3     } },
 ["Mountain"] 					= { "Mountain"	, { 1    , 2    , 3     } },
 ["Forest"] 						= { "Forest" 	, { 1    , 2    , 3     } },
-["Plains (1)"]					= { "Plains"	, { 1    , false, false } },
-["Plains (2)"]					= { "Plains"	, { false, 2    , false } },
-["Plains (3)"]					= { "Plains"	, { false, false, 3     } },
-["Island (1)"]					= { "Island"	, { 1    , false, false } },
-["Island (2)"]					= { "Island"	, { false, 2    , false } },
-["Island (3)"]					= { "Island"	, { false, false, 3     } },
-["Swamp (1)"]					= { "Swamp"		, { 1    , false, false } },
-["Swamp (2)"]					= { "Swamp"		, { false, 2    , false } },
-["Swamp (3)"]					= { "Swamp"		, { false, false, 3     } },
-["Mountain (1)"]				= { "Mountain"	, { 1    , false, false } },
-["Mountain (2)"]				= { "Mountain"	, { false, 2    , false } },
-["Mountain (3)"]				= { "Mountain"	, { false, false, 3     } },
-["Forest (1)"]					= { "Forest"	, { 1    , false, false } },
-["Forest (2)"]					= { "Forest"	, { false, 2    , false } },
-["Forest (3)"]					= { "Forest"	, { false, false, 3     } },
+["Plains (1)"]					= { "Plains"	, { 1    , false, false } },--No Trees
+["Plains (2)"]					= { "Plains"	, { false, 2    , false } },--Trees
+["Plains (3)"]					= { "Plains"	, { false, false, 3     } },--No Mountains
+["Island (1)"]					= { "Island"	, { 1    , false, false } },--Purple
+["Island (2)"]					= { "Island"	, { false, 2    , false } },--Green
+["Island (3)"]					= { "Island"	, { false, false, 3     } },--Blue
+["Swamp (1)"]					= { "Swamp"		, { 1    , false, false } },--Low Branch
+["Swamp (2)"]					= { "Swamp"		, { false, 2    , false } },--High Branch
+["Swamp (3)"]					= { "Swamp"		, { false, false, 3     } },--Two Branches
+["Mountain (1)"]				= { "Mountain"	, { 1    , false, false } },--Slate
+["Mountain (2)"]				= { "Mountain"	, { false, 2    , false } },--Fog
+["Mountain (3)"]				= { "Mountain"	, { false, false, 3     } },--Dirt
+["Forest (1)"]					= { "Forest"	, { 1    , false, false } },--Rocks
+["Forest (2)"]					= { "Forest"	, { false, 2    , false } },--Path
+["Forest (3)"]					= { "Forest"	, { false, false, 3     } },--Eyes
 	},
 },
 [139] = { name="Revised Edition (FBB)", -- Foreign Black Bordered / Limited
@@ -614,21 +615,21 @@ Coresets = nil,
 ["Swamp"] 						= { "Swamp"		, { 1    , 2    , 3     } },
 ["Mountain"] 					= { "Mountain"	, { 1    , 2    , 3     } },
 ["Forest"] 						= { "Forest" 	, { 1    , 2    , 3     } },
-["Plains (1)"]					= { "Plains"	, { 1    , false, false } },
-["Plains (2)"]					= { "Plains"	, { false, 2    , false } },
-["Plains (3)"]					= { "Plains"	, { false, false, 3     } },
-["Island (1)"]					= { "Island"	, { 1    , false, false } },
-["Island (2)"]					= { "Island"	, { false, 2    , false } },
-["Island (3)"]					= { "Island"	, { false, false, 3     } },
-["Swamp (1)"]					= { "Swamp"		, { 1    , false, false } },
-["Swamp (2)"]					= { "Swamp"		, { false, 2    , false } },
-["Swamp (3)"]					= { "Swamp"		, { false, false, 3     } },
-["Mountain (1)"]				= { "Mountain"	, { 1    , false, false } },
-["Mountain (2)"]				= { "Mountain"	, { false, 2    , false } },
-["Mountain (3)"]				= { "Mountain"	, { false, false, 3     } },
-["Forest (1)"]					= { "Forest"	, { 1    , false, false } },
-["Forest (2)"]					= { "Forest"	, { false, 2    , false } },
-["Forest (3)"]					= { "Forest"	, { false, false, 3     } },
+["Plains (1)"]					= { "Plains"	, { 1    , false, false } },--No Trees
+["Plains (2)"]					= { "Plains"	, { false, 2    , false } },--Trees
+["Plains (3)"]					= { "Plains"	, { false, false, 3     } },--No Mountains
+["Island (1)"]					= { "Island"	, { 1    , false, false } },--Blue
+["Island (2)"]					= { "Island"	, { false, 2    , false } },--Green
+["Island (3)"]					= { "Island"	, { false, false, 3     } },--Purple
+["Swamp (1)"]					= { "Swamp"		, { 1    , false, false } },--High Branch
+["Swamp (2)"]					= { "Swamp"		, { false, 2    , false } },--Low Branch
+["Swamp (3)"]					= { "Swamp"		, { false, false, 3     } },--Two Branches
+["Mountain (1)"]				= { "Mountain"	, { 1    , false, false } },--Slate
+["Mountain (2)"]				= { "Mountain"	, { false, 2    , false } },--Fog
+["Mountain (3)"]				= { "Mountain"	, { false, false, 3     } },--Dirt
+["Forest (1)"]					= { "Forest"	, { 1    , false, false } },--Path
+["Forest (2)"]					= { "Forest"	, { false, 2    , false } },--Eyes
+["Forest (3)"]					= { "Forest"	, { false, false, 3     } },--Rocks
 	},
 },
 [100] = { name="Beta",
@@ -639,21 +640,21 @@ Coresets = nil,
 ["Swamp"] 						= { "Swamp"		, { 1    , 2    , 3     } },
 ["Mountain"] 					= { "Mountain"	, { 1    , 2    , 3     } },
 ["Forest"] 						= { "Forest" 	, { 1    , 2    , 3     } },
-["Plains (1)"]					= { "Plains"	, { 1    , false, false } },
-["Plains (2)"]					= { "Plains"	, { false, 2    , false } },
-["Plains (3)"]					= { "Plains"	, { false, false, 3     } },
-["Island (1)"]					= { "Island"	, { 1    , false, false } },
-["Island (2)"]					= { "Island"	, { false, 2    , false } },
-["Island (3)"]					= { "Island"	, { false, false, 3     } },
-["Swamp (1)"]					= { "Swamp"		, { 1    , false, false } },
-["Swamp (2)"]					= { "Swamp"		, { false, 2    , false } },
-["Swamp (3)"]					= { "Swamp"		, { false, false, 3     } },
-["Mountain (1)"]				= { "Mountain"	, { 1    , false, false } },
-["Mountain (2)"]				= { "Mountain"	, { false, 2    , false } },
-["Mountain (3)"]				= { "Mountain"	, { false, false, 3     } },
-["Forest (1)"]					= { "Forest"	, { 1    , false, false } },
-["Forest (2)"]					= { "Forest"	, { false, 2    , false } },
-["Forest (3)"]					= { "Forest"	, { false, false, 3     } },
+["Plains (1)"]					= { "Plains"	, { 1    , false, false } },--No Trees
+["Plains (2)"]					= { "Plains"	, { false, 2    , false } },--Trees
+["Plains (3)"]					= { "Plains"	, { false, false, 3     } },--No Mountains
+["Island (1)"]					= { "Island"	, { 1    , false, false } },--Purple
+["Island (2)"]					= { "Island"	, { false, 2    , false } },--Green
+["Island (3)"]					= { "Island"	, { false, false, 3     } },--Blue
+["Swamp (1)"]					= { "Swamp"		, { 1    , false, false } },--Low Branch
+["Swamp (2)"]					= { "Swamp"		, { false, 2    , false } },--High Branch
+["Swamp (3)"]					= { "Swamp"		, { false, false, 3     } },--Two Branches
+["Mountain (1)"]				= { "Mountain"	, { 1    , false, false } },--Dirt
+["Mountain (2)"]				= { "Mountain"	, { false, 2    , false } },--Fog
+["Mountain (3)"]				= { "Mountain"	, { false, false, 3     } },--Slate
+["Forest (1)"]					= { "Forest"	, { 1    , false, false } },--Rocks
+["Forest (2)"]					= { "Forest"	, { false, 2    , false } },--Path
+["Forest (3)"]					= { "Forest"	, { false, false, 3     } },--Eyes
 	},
 },
 [90]  = { name="Alpha",
@@ -664,16 +665,16 @@ Coresets = nil,
 ["Swamp"] 						= { "Swamp"		, { 1    , 2     } },
 ["Mountain"] 					= { "Mountain"	, { 1    , 2     } },
 ["Forest"] 						= { "Forest" 	, { 1    , 2     } },
-["Plains (1)"]					= { "Plains"	, { 1    , false } },
-["Plains (2)"]					= { "Plains"	, { false, 2     } },
-["Island (1)"]					= { "Island"	, { 1    , false } },
-["Island (2)"]					= { "Island"	, { false, 2     } },
-["Swamp (1)"]					= { "Swamp"		, { 1    , false } },
-["Swamp (2)"]					= { "Swamp"		, { false, 2     } },
-["Mountain (1)"]				= { "Mountain"	, { 1    , false } },
-["Mountain (2)"]				= { "Mountain"	, { false, 2     } },
-["Forest (1)"]					= { "Forest"	, { 1    , false } },
-["Forest (2)"]					= { "Forest"	, { false, 2     } },
+["Plains (1)"]					= { "Plains"	, { 1    , false } },--No Trees
+["Plains (2)"]					= { "Plains"	, { false, 2     } },--Trees
+["Island (1)"]					= { "Island"	, { 1    , false } },--Purple
+["Island (2)"]					= { "Island"	, { false, 2     } },--Green
+["Swamp (1)"]					= { "Swamp"		, { 1    , false } },--Low Branch
+["Swamp (2)"]					= { "Swamp"		, { false, 2     } },--High Branch
+["Mountain (1)"]				= { "Mountain"	, { 1    , false } },--Slate
+["Mountain (2)"]				= { "Mountain"	, { false, 2     } },--Fog
+["Forest (1)"]					= { "Forest"	, { 1    , false } },--Rocks
+["Forest (2)"]					= { "Forest"	, { false, 2     } },--Path
 	},
 },
 --- not really a seperate subtable, just a bookmark for quick navigation in eclipse.
@@ -705,7 +706,7 @@ Expansions = nil,
 	},
 },
 [816] = { name="Fate Reforged",
-	cardcount= { reg=191, tok=4 },
+	cardcount= { reg=185, tok=4 },
 	variants={
 ["Plains"] 						= { "Plains"	, { 1    , 2     } },
 ["Island"] 						= { "Island" 	, { 1    , 2     } },
@@ -725,7 +726,7 @@ Expansions = nil,
 	},
 },
 [813] = { name="Khans of Tarkir",
-	cardcount= { reg=274, tok=13 },
+	cardcount= { reg=269, tok=13 },
 	variants={
 ["Plains"] 						= { "Plains"	, { 1    , 2    , 3    , 4     } },
 ["Island"] 						= { "Island" 	, { 1    , 2    , 3    , 4     } },
@@ -758,39 +759,7 @@ Expansions = nil,
 ["Krieger Token"]				= { "Krieger Token"		, { 1    , 2     } },
 ["Krieger Token (3)"]			= { "Krieger Token"		, { 1    , false } },--Ryan Barger
 ["Krieger Token (4)"]			= { "Krieger Token"		, { false, 2     } },--Yefim Kligerman
---["Ankle Shanker"] 					= { "Ankle Shanker"				, { ""   , false } },
---["Ankle Shanker (Intro)"] 			= { "Ankle Shanker"				, { false, "Intro Pack" } },
---["Avalanche Tusker"] 				= { "Avalanche Tusker"			, { ""   , false } },
---["Avalanche Tusker (Intro)"] 		= { "Avalanche Tusker"			, { false, "Intro Pack" } },
---["Ivorytusk Fortress"] 				= { "Ivorytusk Fortress"		, { ""   , false } },
---["Ivorytusk Fortress (Intro)"] 		= { "Ivorytusk Fortress"		, { false, "Intro Pack" } },
---["Rakshasa Vizier"] 				= { "Rakshasa Vizier"			, { ""   , false } },
---["Rakshasa Vizier (Intro)"] 		= { "Rakshasa Vizier"			, { false, "Intro Pack" } },
---["Sage of the Inward Eye"] 			= { "Sage of the Inward Eye"	, { ""   , false } },
---["Sage of the Inward Eye (Intro)"]	= { "Sage of the Inward Eye"	, { false, "Intro Pack" } },
---["Knöchelkerber"] 					= { "Knöchelkerber"				, { ""   , false } },
---["Knöchelkerber (Intro)"] 			= { "Knöchelkerber"				, { false, "Intro Pack" } },
---["Lawinenbulle"] 					= { "Lawinenbulle"				, { ""   , false } },
---["Lawinenbulle (Intro)"] 			= { "Lawinenbulle"				, { false, "Intro Pack" } },
---["Stoßzahn-Festung"] 				= { "Stoßzahn-Festung"			, { ""   , false } },
---["Stoßzahn-Festung (Intro)"] 		= { "Stoßzahn-Festung"			, { false, "Intro Pack" } },
---["Rakshasa-Wesir"] 					= { "Rakshasa-Wesir"			, { ""   , false } },
---["Rakshasa-Wesir (Intro)"]	 		= { "Rakshasa-Wesir"			, { false, "Intro Pack" } },
---["Weise des Inneren Auges"] 		= { "Weise des Inneren Auges"	, { ""   , false } },
---["Weise des Inneren Auges (Intro)"]	= { "Weise des Inneren Auges"	, { false, "Intro Pack" } },
 	},
---	foiltweak={
---["Ankle Shanker (Intro)"] 			= { foil = true },
---["Avalanche Tusker (Intro)"] 		= { foil = true },
---["Ivorytusk Fortress (Intro)"] 		= { foil = true },
---["Rakshasa Vizier (Intro)"] 		= { foil = true },
---["Sage of the Inward Eye (Intro)"]	= { foil = true },
---["Knöchelkerber (Intro)"] 			= { foil = true },
---["Lawinenbulle (Intro)"] 			= { foil = true },
---["Stoßzahn-Festung (Intro)"] 		= { foil = true },
---["Rakshasa-Wesir (Intro)"] 			= { foil = true },
---["Weise des Inneren Auges (Intro)"]	= { foil = true },
---	},
 },
 [806] = { name = "Journey into Nyx",
 	cardcount = { reg=165, tok=6 },
@@ -1087,6 +1056,7 @@ Expansions = nil,
 [762] = { name="Zendikar",
 	cardcount={ reg = 269, tok = 11 },
 	variants={
+	-- (000) is Full Art, (000a) is normal
 ["Plains"] 						= { "Plains"	, { 1    , 2    , 3    , 4    , "1a" , "2a" , "3a" , "4a"  } },
 ["Island"] 						= { "Island" 	, { 1    , 2    , 3    , 4    , "1a" , "2a" , "3a" , "4a"  } },
 ["Swamp"] 						= { "Swamp"		, { 1    , 2    , 3    , 4    , "1a" , "2a" , "3a" , "4a"  } },
@@ -1642,26 +1612,26 @@ Expansions = nil,
 ["Swamp"] 						= { "Swamp"		, { 1    , 2    , 3    , 4     } },
 ["Mountain"] 					= { "Mountain"	, { 1    , 2    , 3    , 4     } },
 ["Forest"] 						= { "Forest" 	, { 1    , 2    , 3    , 4     } },
-["Plains (1)"]					= { "Plains"	, { 1    , false, false, false } }, 
-["Plains (2)"]					= { "Plains"	, { false, 2    , false, false } },
-["Plains (3)"]					= { "Plains"	, { false, false, 3    , false } },
-["Plains (4)"]					= { "Plains"	, { false, false, false, 4     } },
-["Island (1)"]					= { "Island"	, { 1    , false, false, false } },
-["Island (2)"]					= { "Island"	, { false, 2    , false, false } },
-["Island (3)"]					= { "Island"	, { false, false, 3    , false } },
-["Island (4)"]					= { "Island"	, { false, false, false, 4     } },
-["Swamp (1)"]					= { "Swamp"		, { 1    , false, false, false } },
-["Swamp (2)"]					= { "Swamp"		, { false, 2    , false, false } },
-["Swamp (3)"]					= { "Swamp"		, { false, false, 3    , false } },
-["Swamp (4)"]					= { "Swamp"		, { false, false, false, 4     } },
-["Mountain (1)"]				= { "Mountain"	, { 1    , false, false, false } },
-["Mountain (2)"]				= { "Mountain"	, { false, 2    , false, false } },
-["Mountain (3)"]				= { "Mountain"	, { false, false, 3    , false } },
-["Mountain (4)"]				= { "Mountain"	, { false, false, false, 4     } },
-["Forest (1)"]					= { "Forest"	, { 1    , false, false, false } },
-["Forest (2)"]					= { "Forest"	, { false, 2    , false, false } },
-["Forest (3)"]					= { "Forest"	, { false, false, 3    , false } },
-["Forest (4)"]					= { "Forest"	, { false, false, false, 4     } },
+["Plains (1)"]					= { "Plains"	, { 1    , false, false, false } },--Rocks
+["Plains (2)"]					= { "Plains"	, { false, 2    , false, false } },--Dead Tree
+["Plains (3)"]					= { "Plains"	, { false, false, 3    , false } },--Shrub
+["Plains (4)"]					= { "Plains"	, { false, false, false, 4     } },--Ant Hill
+["Island (1)"]					= { "Island"	, { 1    , false, false, false } },--Rocky Path
+["Island (2)"]					= { "Island"	, { false, 2    , false, false } },--Crashing Waves
+["Island (3)"]					= { "Island"	, { false, false, 3    , false } },--Spire
+["Island (4)"]					= { "Island"	, { false, false, false, 4     } },--Inlet
+["Swamp (1)"]					= { "Swamp"		, { 1    , false, false, false } },--Vertical Log
+["Swamp (2)"]					= { "Swamp"		, { false, 2    , false, false } },--Horizontal Log
+["Swamp (3)"]					= { "Swamp"		, { false, false, 3    , false } },--Boulder
+["Swamp (4)"]					= { "Swamp"		, { false, false, false, 4     } },--River
+["Mountain (1)"]				= { "Mountain"	, { 1    , false, false, false } },--Vertical
+["Mountain (2)"]				= { "Mountain"	, { false, 2    , false, false } },--Right
+["Mountain (3)"]				= { "Mountain"	, { false, false, 3    , false } },--Joined
+["Mountain (4)"]				= { "Mountain"	, { false, false, false, 4     } },--Left
+["Forest (1)"]					= { "Forest"	, { 1    , false, false, false } },--Skyward
+["Forest (2)"]					= { "Forest"	, { false, 2    , false, false } },--Pond
+["Forest (3)"]					= { "Forest"	, { false, false, 3    , false } },--Cloudy
+["Forest (4)"]					= { "Forest"	, { false, false, false, 4     } },--Ledge
 	},
 },
 [270] = { name="Weatherlight",
@@ -1680,358 +1650,358 @@ Expansions = nil,
 ["Swamp"] 						= { "Swamp"		, { 1    , 2    , 3    , 4     } },
 ["Mountain"] 					= { "Mountain"	, { 1    , 2    , 3    , 4     } },
 ["Forest"] 						= { "Forest" 	, { 1    , 2    , 3    , 4     } },
-["Plains (1)"]					= { "Plains"	, { 1    , false, false, false } }, 
-["Plains (2)"]					= { "Plains"	, { false, 2    , false, false } },
-["Plains (3)"]					= { "Plains"	, { false, false, 3    , false } },
-["Plains (4)"]					= { "Plains"	, { false, false, false, 4     } },
-["Island (1)"]					= { "Island"	, { 1    , false, false, false } },
-["Island (2)"]					= { "Island"	, { false, 2    , false, false } },
-["Island (3)"]					= { "Island"	, { false, false, 3    , false } },
-["Island (4)"]					= { "Island"	, { false, false, false, 4     } },
-["Swamp (1)"]					= { "Swamp"		, { 1    , false, false, false } },
-["Swamp (2)"]					= { "Swamp"		, { false, 2    , false, false } },
-["Swamp (3)"]					= { "Swamp"		, { false, false, 3    , false } },
-["Swamp (4)"]					= { "Swamp"		, { false, false, false, 4     } },
-["Mountain (1)"]				= { "Mountain"	, { 1    , false, false, false } },
-["Mountain (2)"]				= { "Mountain"	, { false, 2    , false, false } },
-["Mountain (3)"]				= { "Mountain"	, { false, false, 3    , false } },
-["Mountain (4)"]				= { "Mountain"	, { false, false, false, 4     } },
-["Forest (1)"]					= { "Forest"	, { 1    , false, false, false } },
-["Forest (2)"]					= { "Forest"	, { false, 2    , false, false } },
-["Forest (3)"]					= { "Forest"	, { false, false, 3    , false } },
-["Forest (4)"]					= { "Forest"	, { false, false, false, 4     } },
+["Plains (1)"]					= { "Plains"	, { 1    , false, false, false } },--Watering Hole
+["Plains (2)"]					= { "Plains"	, { false, 2    , false, false } },--Buffalo
+["Plains (3)"]					= { "Plains"	, { false, false, 3    , false } },--Zebra
+["Plains (4)"]					= { "Plains"	, { false, false, false, 4     } },--Bird
+["Island (1)"]					= { "Island"	, { 1    , false, false, false } },--Palm Tree
+["Island (2)"]					= { "Island"	, { false, 2    , false, false } },--Off-Center Spire
+["Island (3)"]					= { "Island"	, { false, false, 3    , false } },--Rocky Water
+["Island (4)"]					= { "Island"	, { false, false, false, 4     } },--Sunset
+["Swamp (1)"]					= { "Swamp"		, { 1    , false, false, false } },--Mossy Roots
+["Swamp (2)"]					= { "Swamp"		, { false, 2    , false, false } },--Foggy Night
+["Swamp (3)"]					= { "Swamp"		, { false, false, 3    , false } },--Eyes in Log
+["Swamp (4)"]					= { "Swamp"		, { false, false, false, 4     } },--Tall Grass
+["Mountain (1)"]				= { "Mountain"	, { 1    , false, false, false } },--Green
+["Mountain (2)"]				= { "Mountain"	, { false, 2    , false, false } },--Orange
+["Mountain (3)"]				= { "Mountain"	, { false, false, 3    , false } },--Purple
+["Mountain (4)"]				= { "Mountain"	, { false, false, false, 4     } },--Red
+["Forest (1)"]					= { "Forest"	, { 1    , false, false, false } },--Pink Flowers Right
+["Forest (2)"]					= { "Forest"	, { false, 2    , false, false } },--Waterfall
+["Forest (3)"]					= { "Forest"	, { false, false, 3    , false } },--White Flowers Right
+["Forest (4)"]					= { "Forest"	, { false, false, false, 4     } },--Red Tree Leaves
 	},
 },
 [220] = { name="Alliances",
 	cardcount={ reg = 199, tok =  0 },
 	variants={
 ["Aesthir Glider"] 						= { "Aesthir Glider"				, { 1    , 2     } },
-["Aesthir Glider (1)"] 					= { "Aesthir Glider"				, { 1    , false } },
-["Aesthir Glider (2)"] 					= { "Aesthir Glider"				, { false, 2     } },
+["Aesthir Glider (1)"] 					= { "Aesthir Glider"				, { 1    , false } },--
+["Aesthir Glider (2)"] 					= { "Aesthir Glider"				, { false, 2     } },--Moon
 	["Aesthirgleiter"] 					= { "Aesthirgleiter"				, { 1    , 2     } },
 	["Aesthirgleiter (1)"] 				= { "Aesthirgleiter"				, { 1    , false } },
 	["Aesthirgleiter (2)"] 				= { "Aesthirgleiter"				, { false, 2     } },
 ["Agent of Stromgald"] 					= { "Agent of Stromgald"			, { 1    , 2     } },
-["Agent of Stromgald (1)"] 				= { "Agent of Stromgald"			, { 1    , false } },
-["Agent of Stromgald (2)"] 				= { "Agent of Stromgald"			, { false, 2     } },
+["Agent of Stromgald (1)"] 				= { "Agent of Stromgald"			, { 1    , false } },--Woman Holding Staff
+["Agent of Stromgald (2)"] 				= { "Agent of Stromgald"			, { false, 2     } },--
 	["Agent der Stromgalder"] 			= { "Agent der Stromgalder"			, { 1    , 2     } },
 	["Agent der Stromgalder (1)"] 		= { "Agent der Stromgalder"			, { 1    , false } },
 	["Agent der Stromgalder (2)"] 		= { "Agent der Stromgalder"			, { false, 2     } },
 ["Arcane Denial"] 						= { "Arcane Denial"					, { 1    , 2     } },
-["Arcane Denial (1)"] 					= { "Arcane Denial"					, { 1    , false } },
-["Arcane Denial (2)"] 					= { "Arcane Denial"					, { false, 2     } },
+["Arcane Denial (1)"] 					= { "Arcane Denial"					, { 1    , false } },--Axe
+["Arcane Denial (2)"] 					= { "Arcane Denial"					, { false, 2     } },--Sword
 	["Mysteriöse Ablehnung"]		 	= { "Mysteriöse Ablehnung"			, { 1    , 2     } },
 	["Mysteriöse Ablehnung (1)"] 		= { "Mysteriöse Ablehnung"			, { 1    , false } },
 	["Mysteriöse Ablehnung (2)"] 		= { "Mysteriöse Ablehnung"			, { false, 2     } },
 ["Astrolabe"] 							= { "Astrolabe"						, { 1    , 2     } },
-["Astrolabe (1)"] 						= { "Astrolabe"						, { 1    , false } },
-["Astrolabe (2)"] 						= { "Astrolabe"						, { false, 2     } },
+["Astrolabe (1)"] 						= { "Astrolabe"						, { 1    , false } },--Globe
+["Astrolabe (2)"] 						= { "Astrolabe"						, { false, 2     } },--
 	["Astrolabium"] 					= { "Astrolabium"					, { 1    , 2     } },
 	["Astrolabium (1)"] 				= { "Astrolabium"					, { 1    , false } },
 	["Astrolabium (2)"] 				= { "Astrolabium"					, { false, 2     } },
 ["Awesome Presence"] 					= { "Awesome Presence"				, { 1    , 2     } },
-["Awesome Presence (1)"] 				= { "Awesome Presence"				, { 1    , false } },
-["Awesome Presence (2)"] 				= { "Awesome Presence"				, { false, 2     } },
+["Awesome Presence (1)"] 				= { "Awesome Presence"				, { 1    , false } },--Man Being Chased
+["Awesome Presence (2)"] 				= { "Awesome Presence"				, { false, 2     } },--
 	["Furchterregende Aura"]		 	= { "Furchterregende Aura"			, { 1    , 2     } },
 	["Furchterregende Aura (1)"] 		= { "Furchterregende Aura"			, { 1    , false } },
 	["Furchterregende Aura (2)"] 		= { "Furchterregende Aura"			, { false, 2     } },
 ["Balduvian War-Makers"] 				= { "Balduvian War-Makers"			, { 1    , 2     } },
-["Balduvian War-Makers (1)"] 			= { "Balduvian War-Makers"			, { 1    , false } },
-["Balduvian War-Makers (2)"] 			= { "Balduvian War-Makers"			, { false, 2     } },
+["Balduvian War-Makers (1)"] 			= { "Balduvian War-Makers"			, { 1    , false } },--Gen. Varchild Flavor
+["Balduvian War-Makers (2)"] 			= { "Balduvian War-Makers"			, { false, 2     } },--
 	["Balduvianische Kämpfer"] 			= { "Balduvianische Kämpfer"		, { 1    , 2     } },
 	["Balduvianische Kämpfer (1)"] 		= { "Balduvianische Kämpfer"		, { 1    , false } },
 	["Balduvianische Kämpfer (2)"] 		= { "Balduvianische Kämpfer"		, { false, 2     } },
 ["Benthic Explorers"] 					= { "Benthic Explorers"				, { 1    , 2     } },
-["Benthic Explorers (1)"] 				= { "Benthic Explorers"				, { 1    , false } },
-["Benthic Explorers (2)"] 				= { "Benthic Explorers"				, { false, 2     } },
+["Benthic Explorers (1)"] 				= { "Benthic Explorers"				, { 1    , false } },--
+["Benthic Explorers (2)"] 				= { "Benthic Explorers"				, { false, 2     } },--On the Rocks
 	["Meeresforscher"] 					= { "Meeresforscher"				, { 1    , 2     } },
 	["Meeresforscher (1)"] 				= { "Meeresforscher"				, { 1    , false } },
 	["Meeresforscher (2)"] 				= { "Meeresforscher"				, { false, 2     } },
 ["Bestial Fury"] 						= { "Bestial Fury"					, { 1    , 2     } },
-["Bestial Fury (1)"] 					= { "Bestial Fury"					, { 1    , false } },
-["Bestial Fury (2)"] 					= { "Bestial Fury"					, { false, 2     } },
+["Bestial Fury (1)"] 					= { "Bestial Fury"					, { 1    , false } },--Facing Left
+["Bestial Fury (2)"] 					= { "Bestial Fury"					, { false, 2     } },--
 	["Kampfinstinkt"] 					= { "Kampfinstinkt"					, { 1    , 2     } },
 	["Kampfinstinkt (1)"] 				= { "Kampfinstinkt"					, { 1    , false } },
 	["Kampfinstinkt (2)"] 				= { "Kampfinstinkt"					, { false, 2     } },
 ["Carrier Pigeons"] 					= { "Carrier Pigeons"				, { 1    , 2     } },
-["Carrier Pigeons (1)"] 				= { "Carrier Pigeons"				, { 1    , false } },
-["Carrier Pigeons (2)"] 				= { "Carrier Pigeons"				, { false, 2     } },
+["Carrier Pigeons (1)"] 				= { "Carrier Pigeons"				, { 1    , false } },--
+["Carrier Pigeons (2)"] 				= { "Carrier Pigeons"				, { false, 2     } },--Hand
 	["Brieftauben"] 					= { "Brieftauben"					, { 1    , 2     } },
 	["Brieftauben (1)"] 				= { "Brieftauben"					, { 1    , false } },
 	["Brieftauben (2)"] 				= { "Brieftauben"					, { false, 2     } },
 ["Casting of Bones"] 					= { "Casting of Bones"				, { 1    , 2     } },
-["Casting of Bones (1)"] 				= { "Casting of Bones"				, { 1    , false } },
-["Casting of Bones (2)"] 				= { "Casting of Bones"				, { false, 2     } },
+["Casting of Bones (1)"] 				= { "Casting of Bones"				, { 1    , false } },--
+["Casting of Bones (2)"] 				= { "Casting of Bones"				, { false, 2     } },--Close-up
 	["Knochenorakel"] 					= { "Knochenorakel"					, { 1    , 2     } },
 	["Knochenorakel (1)"] 				= { "Knochenorakel"					, { 1    , false } },
 	["Knochenorakel (2)"] 				= { "Knochenorakel"					, { false, 2     } },
 ["Deadly Insect"] 						= { "Deadly Insect"					, { 1    , 2     } },
-["Deadly Insect (1)"] 					= { "Deadly Insect"					, { 1    , false } },
-["Deadly Insect (2)"] 					= { "Deadly Insect"					, { false, 2     } },
+["Deadly Insect (1)"] 					= { "Deadly Insect"					, { 1    , false } },--
+["Deadly Insect (2)"] 					= { "Deadly Insect"					, { false, 2     } },--Red Robe
 	["Killerinsekten"] 					= { "Killerinsekten"				, { 1    , 2     } },
 	["Killerinsekten (1)"] 				= { "Killerinsekten"				, { 1    , false } },
 	["Killerinsekten (2)"] 				= { "Killerinsekten"				, { false, 2     } },
 ["Elvish Ranger"] 						= { "Elvish Ranger"					, { 1    , 2     } },
-["Elvish Ranger (1)"] 					= { "Elvish Ranger"					, { 1    , false } },
-["Elvish Ranger (2)"] 					= { "Elvish Ranger"					, { false, 2     } },
+["Elvish Ranger (1)"] 					= { "Elvish Ranger"					, { 1    , false } },--
+["Elvish Ranger (2)"] 					= { "Elvish Ranger"					, { false, 2     } },--Woman
 	["Elfenwaldläufer"] 				= { "Elfenwaldläufer"				, { 1    , 2     } },
 	["Elfenwaldläufer (1)"] 			= { "Elfenwaldläufer"				, { 1    , false } },
 	["Elfenwaldläufer (2)"] 			= { "Elfenwaldläufer"				, { false, 2     } },
 ["Enslaved Scout"] 						= { "Enslaved Scout"				, { 1    , 2     } },
-["Enslaved Scout (1)"] 					= { "Enslaved Scout"				, { 1    , false } },
-["Enslaved Scout (2)"] 					= { "Enslaved Scout"				, { false, 2     } },
+["Enslaved Scout (1)"] 					= { "Enslaved Scout"				, { 1    , false } },--
+["Enslaved Scout (2)"] 					= { "Enslaved Scout"				, { false, 2     } },--Solitary Goblin
 	["Unterworfener Späher"] 			= { "Unterworfener Späher"			, { 1    , 2     } },
 	["Unterworfener Späher (1)"] 		= { "Unterworfener Späher"			, { 1    , false } },
 	["Unterworfener Späher (2)"] 		= { "Unterworfener Späher"			, { false, 2     } },
 ["Errand of Duty"] 						= { "Errand of Duty"				, { 1    , 2     } },
-["Errand of Duty (1)"] 					= { "Errand of Duty"				, { 1    , false } },
-["Errand of Duty (2)"] 					= { "Errand of Duty"				, { false, 2     } },
+["Errand of Duty (1)"] 					= { "Errand of Duty"				, { 1    , false } },--
+["Errand of Duty (2)"] 					= { "Errand of Duty"				, { false, 2     } },--Page Holding Sword
 	["Ruf der Pflicht"] 				= { "Ruf der Pflicht"				, { 1    , 2     } },
 	["Ruf der Pflicht (1)"] 			= { "Ruf der Pflicht"				, { 1    , false } },
 	["Ruf der Pflicht (2)"] 			= { "Ruf der Pflicht"				, { false, 2     } },
 ["False Demise"] 						= { "False Demise"					, { 1    , 2     } },
-["False Demise (1)"] 					= { "False Demise"					, { 1    , false } },
-["False Demise (2)"] 					= { "False Demise"					, { false, 2     } },
+["False Demise (1)"] 					= { "False Demise"					, { 1    , false } },--
+["False Demise (2)"] 					= { "False Demise"					, { false, 2     } },--Cave-in
 	["Vorgetäuschter Tod"] 				= { "Vorgetäuschter Tod"			, { 1    , 2     } },
 	["Vorgetäuschter Tod (1)"] 			= { "Vorgetäuschter Tod"			, { 1    , false } },
 	["Vorgetäuschter Tod (2)"] 			= { "Vorgetäuschter Tod"			, { false, 2     } },
 ["Feast or Famine"] 					= { "Feast or Famine"				, { 1    , 2     } },
-["Feast or Famine (1)"] 				= { "Feast or Famine"				, { 1    , false } },
-["Feast or Famine (2)"] 				= { "Feast or Famine"				, { false, 2     } },
+["Feast or Famine (1)"] 				= { "Feast or Famine"				, { 1    , false } },--
+["Feast or Famine (2)"] 				= { "Feast or Famine"				, { false, 2     } },--Falling into Pit
 	["Um Leben und Tod"] 				= { "Um Leben und Tod"				, { 1    , 2     } },
 	["Um Leben und Tod (1)"] 			= { "Um Leben und Tod"				, { 1    , false } },
 	["Um Leben und Tod (2)"] 			= { "Um Leben und Tod"				, { false, 2     } },
 ["Foresight"] 							= { "Foresight"						, { 1    , 2     } },
-["Foresight (1)"] 						= { "Foresight"						, { 1    , false } },
-["Foresight (2)"] 						= { "Foresight"						, { false, 2     } },
+["Foresight (1)"] 						= { "Foresight"						, { 1    , false } },--White Dress
+["Foresight (2)"] 						= { "Foresight"						, { false, 2     } },--
 	["Vorsehung"] 						= { "Vorsehung"						, { 1    , 2     } },
 	["Vorsehung (1)"] 					= { "Vorsehung"						, { 1    , false } },
 	["Vorsehung (2)"] 					= { "Vorsehung"						, { false, 2     } },
 ["Fevered Strength"] 					= { "Fevered Strength"				, { 1    , 2     } },
-["Fevered Strength (1)"] 				= { "Fevered Strength"				, { 1    , false } },
-["Fevered Strength (2)"] 				= { "Fevered Strength"				, { false, 2     } },
+["Fevered Strength (1)"] 				= { "Fevered Strength"				, { 1    , false } },--Foaming at Mouth
+["Fevered Strength (2)"] 				= { "Fevered Strength"				, { false, 2     } },--
 	["Fieberstärke"] 					= { "Fieberstärke"					, { 1    , 2     } },
 	["Fieberstärke (1)"] 				= { "Fieberstärke"					, { 1    , false } },
 	["Fieberstärke (2)"] 				= { "Fieberstärke"					, { false, 2     } },
 ["Fyndhorn Druid"] 						= { "Fyndhorn Druid"				, { 1    , 2     } },
-["Fyndhorn Druid (1)"] 					= { "Fyndhorn Druid"				, { 1    , false } },
-["Fyndhorn Druid (2)"] 					= { "Fyndhorn Druid"				, { false, 2     } },
+["Fyndhorn Druid (1)"] 					= { "Fyndhorn Druid"				, { 1    , false } },--Facing Right
+["Fyndhorn Druid (2)"] 					= { "Fyndhorn Druid"				, { false, 2     } },--
 	["Fyndhorndruide"] 					= { "Fyndhorndruide"				, { 1    , 2     } },
 	["Fyndhorndruide (1)"] 				= { "Fyndhorndruide"				, { 1    , false } },
 	["Fyndhorndruide (2)"] 				= { "Fyndhorndruide"				, { false, 2     } },
 ["Gift of the Woods"] 					= { "Gift of the Woods"				, { 1    , 2     } },
-["Gift of the Woods (1)"] 				= { "Gift of the Woods"				, { 1    , false } },
-["Gift of the Woods (2)"] 				= { "Gift of the Woods"				, { false, 2     } },
+["Gift of the Woods (1)"] 				= { "Gift of the Woods"				, { 1    , false } },--Girl/ Lynx
+["Gift of the Woods (2)"] 				= { "Gift of the Woods"				, { false, 2     } },--
 	["Geschenk des Waldes"] 			= { "Geschenk des Waldes"			, { 1    , 2     } },
 	["Geschenk des Waldes (1)"] 		= { "Geschenk des Waldes"			, { 1    , false } },
 	["Geschenk des Waldes (2)"] 		= { "Geschenk des Waldes"			, { false, 2     } },
 ["Gorilla Berserkers"] 					= { "Gorilla Berserkers"			, { 1    , 2     } },
-["Gorilla Berserkers (1)"] 				= { "Gorilla Berserkers"			, { 1    , false } },
-["Gorilla Berserkers (2)"] 				= { "Gorilla Berserkers"			, { false, 2     } },
+["Gorilla Berserkers (1)"] 				= { "Gorilla Berserkers"			, { 1    , false } },--
+["Gorilla Berserkers (2)"] 				= { "Gorilla Berserkers"			, { false, 2     } },--Closed-Mouth
 	["Rasende Gorillas"] 				= { "Rasende Gorillas"				, { 1    , 2     } },
 	["Rasende Gorillas (1)"] 			= { "Rasende Gorillas"				, { 1    , false } },
 	["Rasende Gorillas (2)"] 			= { "Rasende Gorillas"				, { false, 2     } },
 ["Gorilla Chieftain"] 					= { "Gorilla Chieftain"				, { 1    , 2     } },
-["Gorilla Chieftain (1)"] 				= { "Gorilla Chieftain"				, { 1    , false } },
-["Gorilla Chieftain (2)"] 				= { "Gorilla Chieftain"				, { false, 2     } },
+["Gorilla Chieftain (1)"] 				= { "Gorilla Chieftain"				, { 1    , false } },--2 Gorillas
+["Gorilla Chieftain (2)"] 				= { "Gorilla Chieftain"				, { false, 2     } },--
 	["Gorillahäuptling"] 				= { "Gorillahäuptling"				, { 1    , 2     } },
 	["Gorillahäuptling (1)"] 			= { "Gorillahäuptling"				, { 1    , false } },
 	["Gorillahäuptling (2)"]	 		= { "Gorillahäuptling"				, { false, 2     } },
 ["Gorilla Shaman"] 						= { "Gorilla Shaman"				, { 1    , 2     } },
-["Gorilla Shaman (1)"] 					= { "Gorilla Shaman"				, { 1    , false } },
-["Gorilla Shaman (2)"] 					= { "Gorilla Shaman"				, { false, 2     } },
+["Gorilla Shaman (1)"] 					= { "Gorilla Shaman"				, { 1    , false } },--
+["Gorilla Shaman (2)"] 					= { "Gorilla Shaman"				, { false, 2     } },--Holding Baby
 	["Gorillaschamane"] 				= { "Gorillaschamane"				, { 1    , 2     } },
 	["Gorillaschamane (1)"] 			= { "Gorillaschamane"				, { 1    , false } },
 	["Gorillaschamane (2)"] 			= { "Gorillaschamane"				, { false, 2     } },
 ["Gorilla War Cry"] 					= { "Gorilla War Cry"				, { 1    , 2     } },
-["Gorilla War Cry (1)"] 				= { "Gorilla War Cry"				, { 1    , false } },
-["Gorilla War Cry (2)"] 				= { "Gorilla War Cry"				, { false, 2     } },
+["Gorilla War Cry (1)"] 				= { "Gorilla War Cry"				, { 1    , false } },--Red Club
+["Gorilla War Cry (2)"] 				= { "Gorilla War Cry"				, { false, 2     } },--
 	["Schlachtruf der Gorillas"]		= { "Schlachtruf der Gorillas"		, { 1    , 2     } },
 	["Schlachtruf der Gorillas (1)"] 	= { "Schlachtruf der Gorillas"		, { 1    , false } },
 	["Schlachtruf der Gorillas (2)"] 	= { "Schlachtruf der Gorillas"		, { false, 2     } },
 ["Guerrilla Tactics"] 					= { "Guerrilla Tactics"				, { 1    , 2     } },
-["Guerrilla Tactics (1)"] 				= { "Guerrilla Tactics"				, { 1    , false } },
-["Guerrilla Tactics (2)"]	 			= { "Guerrilla Tactics"				, { false, 2     } },
+["Guerrilla Tactics (1)"] 				= { "Guerrilla Tactics"				, { 1    , false } },--Kneeling Knight
+["Guerrilla Tactics (2)"]	 			= { "Guerrilla Tactics"				, { false, 2     } },--
 	["Guerillataktik"] 					= { "Guerillataktik"				, { 1    , 2     } },
 	["Guerillataktik (1)"] 				= { "Guerillataktik"				, { 1    , false } },
 	["Guerillataktik (2)"] 				= { "Guerillataktik"				, { false, 2     } },
 ["Insidious Bookworms"] 				= { "Insidious Bookworms"			, { 1    , 2     } },
-["Insidious Bookworms (1)"] 			= { "Insidious Bookworms"			, { 1    , false } },
-["Insidious Bookworms (2)"] 			= { "Insidious Bookworms"			, { false, 2     } },
+["Insidious Bookworms (1)"] 			= { "Insidious Bookworms"			, { 1    , false } },--Horde of Worms
+["Insidious Bookworms (2)"] 			= { "Insidious Bookworms"			, { false, 2     } },--Single
 	["Heimtückische Bücherwürmer"]		= { "Heimtückische Bücherwürmer"	, { 1    , 2     } },
 	["Heimtückische Bücherwürmer (1)"]	= { "Heimtückische Bücherwürmer"	, { 1    , false } },
 	["Heimtückische Bücherwürmer (2)"] 	= { "Heimtückische Bücherwürmer"	, { false, 2     } },
 ["Kjeldoran Escort"] 					= { "Kjeldoran Escort"				, { 1    , 2     } },
-["Kjeldoran Escort (1)"] 				= { "Kjeldoran Escort"				, { 1    , false } },
-["Kjeldoran Escort (2)"] 				= { "Kjeldoran Escort"				, { false, 2     } },
+["Kjeldoran Escort (1)"] 				= { "Kjeldoran Escort"				, { 1    , false } },--Green Dog
+["Kjeldoran Escort (2)"] 				= { "Kjeldoran Escort"				, { false, 2     } },--
 	["Kjeldoranische Eskorte"]		 	= { "Kjeldoranische Eskorte"		, { 1    , 2     } },
 	["Kjeldoranische Eskorte (1)"] 		= { "Kjeldoranische Eskorte"		, { 1    , false } },
 	["Kjeldoranische Eskorte (2)"] 		= { "Kjeldoranische Eskorte"		, { false, 2     } },
 ["Kjeldoran Pride"] 					= { "Kjeldoran Pride"				, { 1    , 2     } },
-["Kjeldoran Pride (1)"] 				= { "Kjeldoran Pride"				, { 1    , false } },
-["Kjeldoran Pride (2)"] 				= { "Kjeldoran Pride"				, { false, 2     } },
+["Kjeldoran Pride (1)"] 				= { "Kjeldoran Pride"				, { 1    , false } },--Boy|Hawk
+["Kjeldoran Pride (2)"] 				= { "Kjeldoran Pride"				, { false, 2     } },--
 	["Kjeldors Stolz"] 					= { "Kjeldors Stolz"				, { 1    , 2     } },
 	["Kjeldors Stolz (1)"] 				= { "Kjeldors Stolz"				, { 1    , false } },
 	["Kjeldors Stolz (2)"] 				= { "Kjeldors Stolz"				, { false, 2     } },
 ["Lat-Nam's Legacy"] 					= { "Lat-Nam's Legacy"				, { 1    , 2     } },
-["Lat-Nam's Legacy (1)"] 				= { "Lat-Nam's Legacy"				, { 1    , false } },
-["Lat-Nam's Legacy (2)"] 				= { "Lat-Nam's Legacy"				, { false, 2     } },
+["Lat-Nam's Legacy (1)"] 				= { "Lat-Nam's Legacy"				, { 1    , false } },--
+["Lat-Nam's Legacy (2)"] 				= { "Lat-Nam's Legacy"				, { false, 2     } },--2 Blue Men
 	["Lat-Nams Erbe"] 					= { "Lat-Nams Erbe"					, { 1    , 2     } },
 	["Lat-Nams Erbe (1)"] 				= { "Lat-Nams Erbe"					, { 1    , false } },
 	["Lat-Nams Erbe (2)"] 				= { "Lat-Nams Erbe"					, { false, 2     } },
 ["Lim-Dûl's High Guard"]	 			= { "Lim-Dûl's High Guard"			, { 1    , 2     } },
-["Lim-Dûl's High Guard (1)"] 			= { "Lim-Dûl's High Guard"			, { 1    , false } },
-["Lim-Dûl's High Guard (2)"] 			= { "Lim-Dûl's High Guard"			, { false, 2     } },
+["Lim-Dûl's High Guard (1)"] 			= { "Lim-Dûl's High Guard"			, { 1    , false } },--
+["Lim-Dûl's High Guard (2)"] 			= { "Lim-Dûl's High Guard"			, { false, 2     } },--Red Armor
 	["Lim-Dûls Ehrengarde"]	 			= { "Lim-Dûls Ehrengarde"			, { 1    , 2     } },
 	["Lim-Dûls Ehrengarde (1)"] 		= { "Lim-Dûls Ehrengarde"			, { 1    , false } },
 	["Lim-Dûls Ehrengarde (2)"] 		= { "Lim-Dûls Ehrengarde"			, { false, 2     } },
 ["Martyrdom"] 							= { "Martyrdom"						, { 1    , 2     } },
-["Martyrdom (1)"] 						= { "Martyrdom"						, { 1    , false } },
-["Martyrdom (2)"] 						= { "Martyrdom"						, { false, 2     } },
+["Martyrdom (1)"] 						= { "Martyrdom"						, { 1    , false } },--Wounded on Ground
+["Martyrdom (2)"] 						= { "Martyrdom"						, { false, 2     } },--
 	["Martyrium"] 						= { "Martyrium"						, { 1    , 2     } },
 	["Martyrium (1)"] 					= { "Martyrium"						, { 1    , false } },
 	["Martyrium (2)"] 					= { "Martyrium"						, { false, 2     } },
 ["Noble Steeds"] 						= { "Noble Steeds"					, { 1    , 2     } },
-["Noble Steeds (1)"] 					= { "Noble Steeds"					, { 1    , false } },
-["Noble Steeds (2)"] 					= { "Noble Steeds"					, { false, 2     } },
+["Noble Steeds (1)"] 					= { "Noble Steeds"					, { 1    , false } },--Trees in Forefront
+["Noble Steeds (2)"] 					= { "Noble Steeds"					, { false, 2     } },--
 	["Edle Rösser"] 					= { "Edle Rösser"					, { 1    , 2     } },
 	["Edle Rösser (1)"] 				= { "Edle Rösser"					, { 1    , false } },
 	["Edle Rösser (2)"] 				= { "Edle Rösser"					, { false, 2     } },
 ["Phantasmal Fiend"] 					= { "Phantasmal Fiend"				, { 1    , 2     } },
-["Phantasmal Fiend (1)"] 				= { "Phantasmal Fiend"				, { 1    , false } },
-["Phantasmal Fiend (2)"] 				= { "Phantasmal Fiend"				, { false, 2     } },
+["Phantasmal Fiend (1)"] 				= { "Phantasmal Fiend"				, { 1    , false } },--Close-up
+["Phantasmal Fiend (2)"] 				= { "Phantasmal Fiend"				, { false, 2     } },--
 	["Traumunhold"] 					= { "Traumunhold"					, { 1    , 2     } },
 	["Traumunhold (1)"] 				= { "Traumunhold"					, { 1    , false } },
 	["Traumunhold (2)"] 				= { "Traumunhold"					, { false, 2     } },
 ["Phyrexian Boon"] 						= { "Phyrexian Boon"				, { 1    , 2     } },
-["Phyrexian Boon (1)"] 					= { "Phyrexian Boon"				, { 1    , false } },
-["Phyrexian Boon (2)"] 					= { "Phyrexian Boon"				, { false, 2     } },
+["Phyrexian Boon (1)"] 					= { "Phyrexian Boon"				, { 1    , false } },--
+["Phyrexian Boon (2)"] 					= { "Phyrexian Boon"				, { false, 2     } },--Man Held Aloft
 	["Phyrexianischer Segen"]		 	= { "Phyrexianischer Segen"			, { 1    , 2     } },
 	["Phyrexianischer Segen (1)"] 		= { "Phyrexianischer Segen"			, { 1    , false } },
 	["Phyrexianischer Segen (2)"] 		= { "Phyrexianischer Segen"			, { false, 2     } },
 ["Phyrexian War Beast"] 				= { "Phyrexian War Beast"			, { 1    , 2     } },
-["Phyrexian War Beast (1)"] 			= { "Phyrexian War Beast"			, { 1    , false } },
-["Phyrexian War Beast (2)"] 			= { "Phyrexian War Beast"			, { false, 2     } },
+["Phyrexian War Beast (1)"] 			= { "Phyrexian War Beast"			, { 1    , false } },--Facing Right
+["Phyrexian War Beast (2)"] 			= { "Phyrexian War Beast"			, { false, 2     } },--
 	["Phyrexianische Kriegsbestie"]		= { "Phyrexianische Kriegsbestie"	, { 1    , 2     } },
 	["Phyrexianische Kriegsbestie (1)"] = { "Phyrexianische Kriegsbestie"	, { 1    , false } },
 	["Phyrexianische Kriegsbestie (2)"] = { "Phyrexianische Kriegsbestie"	, { false, 2     } },
 ["Reprisal"] 							= { "Reprisal"						, { 1    , 2     } },
-["Reprisal (1)"] 						= { "Reprisal"						, { 1    , false } },
-["Reprisal (2)"] 						= { "Reprisal"						, { false, 2     } },
+["Reprisal (1)"] 						= { "Reprisal"						, { 1    , false } },--
+["Reprisal (2)"] 						= { "Reprisal"						, { false, 2     } },--Green Monster
 	["Revolte"] 						= { "Revolte"						, { 1    , 2     } },
 	["Revolte (1)"] 					= { "Revolte"						, { 1    , false } },
 	["Revolte (2)"] 					= { "Revolte"						, { false, 2     } },
 ["Royal Herbalist"] 					= { "Royal Herbalist"				, { 1    , 2     } },
-["Royal Herbalist (1)"] 				= { "Royal Herbalist"				, { 1    , false } },
-["Royal Herbalist (2)"] 				= { "Royal Herbalist"				, { false, 2     } },
+["Royal Herbalist (1)"] 				= { "Royal Herbalist"				, { 1    , false } },--
+["Royal Herbalist (2)"] 				= { "Royal Herbalist"				, { false, 2     } },--Man
 	["Königlicher Kräuterkundler"]		= { "Königlicher Kräuterkundler"	, { 1    , 2     } },
 	["Königlicher Kräuterkundler (1)"] 	= { "Königlicher Kräuterkundler"	, { 1    , false } },
 	["Königlicher Kräuterkundler (2)"] 	= { "Königlicher Kräuterkundler"	, { false, 2     } },
 ["Reinforcements"] 						= { "Reinforcements"				, { 1    , 2     } },
-["Reinforcements (1)"] 					= { "Reinforcements"				, { 1    , false } },
-["Reinforcements (2)"] 					= { "Reinforcements"				, { false, 2     } },
+["Reinforcements (1)"] 					= { "Reinforcements"				, { 1    , false } },--
+["Reinforcements (2)"] 					= { "Reinforcements"				, { false, 2     } },--Line-up
 	["Verstärkungen"] 					= { "Verstärkungen"					, { 1    , 2     } },
 	["Verstärkungen (1)"] 				= { "Verstärkungen"					, { 1    , false } },
 	["Verstärkungen (2)"] 				= { "Verstärkungen"					, { false, 2     } },
 ["Stench of Decay"] 					= { "Stench of Decay"				, { 1    , 2     } },
-["Stench of Decay (1)"] 				= { "Stench of Decay"				, { 1    , false } },
-["Stench of Decay (2)"] 				= { "Stench of Decay"				, { false, 2     } },
+["Stench of Decay (1)"] 				= { "Stench of Decay"				, { 1    , false } },--Red Flower
+["Stench of Decay (2)"] 				= { "Stench of Decay"				, { false, 2     } },--
 	["Verwesungsgestank"] 				= { "Verwesungsgestank"				, { 1    , 2     } },
 	["Verwesungsgestank (1)"] 			= { "Verwesungsgestank"				, { 1    , false } },
 	["Verwesungsgestank (2)"] 			= { "Verwesungsgestank"				, { false, 2     } },
 ["Storm Shaman"]	 					= { "Storm Shaman"					, { 1    , 2     } },
-["Storm Shaman (1)"] 					= { "Storm Shaman"					, { 1    , false } },
-["Storm Shaman (2)"] 					= { "Storm Shaman"					, { false, 2     } },
+["Storm Shaman (1)"] 					= { "Storm Shaman"					, { 1    , false } },--Man on Plains
+["Storm Shaman (2)"] 					= { "Storm Shaman"					, { false, 2     } },--
 	["Sturmschamane"]	 				= { "Sturmschamane"					, { 1    , 2     } },
 	["Sturmschamane (1)"] 				= { "Sturmschamane"					, { 1    , false } },
 	["Sturmschamane (2)"] 				= { "Sturmschamane"					, { false, 2     } },
 ["Storm Crow"] 							= { "Storm Crow"					, { 1    , 2     } },
-["Storm Crow (1)"] 						= { "Storm Crow"					, { 1    , false } },
-["Storm Crow (2)"] 						= { "Storm Crow"					, { false, 2     } },
+["Storm Crow (1)"] 						= { "Storm Crow"					, { 1    , false } },--Flying Right
+["Storm Crow (2)"] 						= { "Storm Crow"					, { false, 2     } },--
 	["Sturmkrähe"] 						= { "Sturmkrähe"					, { 1    , 2     } },
 	["Sturmkrähe (1)"] 					= { "Sturmkrähe"					, { 1    , false } },
 	["Sturmkrähe (2)"] 					= { "Sturmkrähe"					, { false, 2     } },
 ["Soldevi Adnate"]	 					= { "Soldevi Adnate"				, { 1    , 2     } },
-["Soldevi Adnate (1)"] 					= { "Soldevi Adnate"				, { 1    , false } },
-["Soldevi Adnate (2)"] 					= { "Soldevi Adnate"				, { false, 2     } },
+["Soldevi Adnate (1)"] 					= { "Soldevi Adnate"				, { 1    , false } },--
+["Soldevi Adnate (2)"] 					= { "Soldevi Adnate"				, { false, 2     } },--Woman
 	["Soldevischer Sektierer"]			= { "Soldevischer Sektierer"		, { 1    , 2     } },
 	["Soldevischer Sektierer (1)"] 		= { "Soldevischer Sektierer"		, { 1    , false } },
 	["Soldevischer Sektierer (2)"] 		= { "Soldevischer Sektierer"		, { false, 2     } },
 ["Soldevi Heretic"] 					= { "Soldevi Heretic"				, { 1    , 2     } },
-["Soldevi Heretic (1)"] 				= { "Soldevi Heretic"				, { 1    , false } },
-["Soldevi Heretic (2)"] 				= { "Soldevi Heretic"				, { false, 2     } },
+["Soldevi Heretic (1)"] 				= { "Soldevi Heretic"				, { 1    , false } },--
+["Soldevi Heretic (2)"] 				= { "Soldevi Heretic"				, { false, 2     } },--Scolding Old Men
 	["Soldevischer Ketzer"] 			= { "Soldevischer Ketzer"			, { 1    , 2     } },
 	["Soldevischer Ketzer (1)"] 		= { "Soldevischer Ketzer"			, { 1    , false } },
 	["Soldevischer Ketzer (2)"] 		= { "Soldevischer Ketzer"			, { false, 2     } },
 ["Soldevi Sage"] 						= { "Soldevi Sage"					, { 1    , 2     } },
-["Soldevi Sage (1)"] 					= { "Soldevi Sage"					, { 1    , false } },
-["Soldevi Sage (2)"] 					= { "Soldevi Sage"					, { false, 2     } },
+["Soldevi Sage (1)"] 					= { "Soldevi Sage"					, { 1    , false } },--
+["Soldevi Sage (2)"] 					= { "Soldevi Sage"					, { false, 2     } },--2 Candles
 	["Soldevischer Weiser"] 			= { "Soldevischer Weiser"			, { 1    , 2     } },
 	["Soldevischer Weiser (1)"] 		= { "Soldevischer Weiser"			, { 1    , false } },
 	["Soldevischer Weiser (2)"] 		= { "Soldevischer Weiser"			, { false, 2     } },
 ["Soldevi Sentry"] 						= { "Soldevi Sentry"				, { 1    , 2     } },
-["Soldevi Sentry (1)"] 					= { "Soldevi Sentry"				, { 1    , false } },
-["Soldevi Sentry (2)"] 					= { "Soldevi Sentry"				, { false, 2     } },
+["Soldevi Sentry (1)"] 					= { "Soldevi Sentry"				, { 1    , false } },--Silver Bust
+["Soldevi Sentry (2)"] 					= { "Soldevi Sentry"				, { false, 2     } },--
 	["Soldevischer Wachposten"] 		= { "Soldevischer Wachposten"		, { 1    , 2     } },
 	["Soldevischer Wachposten (1)"] 	= { "Soldevischer Wachposten"		, { 1    , false } },
 	["Soldevischer Wachposten (2)"] 	= { "Soldevischer Wachposten"		, { false, 2     } },
 ["Soldevi Steam Beast"] 				= { "Soldevi Steam Beast"			, { 1    , 2     } },
-["Soldevi Steam Beast (1)"] 			= { "Soldevi Steam Beast"			, { 1    , false } },
-["Soldevi Steam Beast (2)"] 			= { "Soldevi Steam Beast"			, { false, 2     } },
+["Soldevi Steam Beast (1)"] 			= { "Soldevi Steam Beast"			, { 1    , false } },--
+["Soldevi Steam Beast (2)"] 			= { "Soldevi Steam Beast"			, { false, 2     } },--Purple Sun
 	["Soldevische Dampfmaschine"]		= { "Soldevische Dampfmaschine"		, { 1    , 2     } },
 	["Soldevische Dampfmaschine (1)"] 	= { "Soldevische Dampfmaschine"		, { 1    , false } },
 	["Soldevische Dampfmaschine (2)"] 	= { "Soldevische Dampfmaschine"		, { false, 2     } },
 ["Swamp Mosquito"] 						= { "Swamp Mosquito"				, { 1    , 2     } },
-["Swamp Mosquito (1)"] 					= { "Swamp Mosquito"				, { 1    , false } },
-["Swamp Mosquito (2)"] 					= { "Swamp Mosquito"				, { false, 2     } },
+["Swamp Mosquito (1)"] 					= { "Swamp Mosquito"				, { 1    , false } },--Fallen Tree
+["Swamp Mosquito (2)"] 					= { "Swamp Mosquito"				, { false, 2     } },--
 	["Sumpfmoskito"] 					= { "Sumpfmoskito"					, { 1    , 2     } },
 	["Sumpfmoskito (1)"] 				= { "Sumpfmoskito"					, { 1    , false } },
 	["Sumpfmoskito (2)"] 				= { "Sumpfmoskito"					, { false, 2     } },
 ["Taste of Paradise"] 					= { "Taste of Paradise"				, { 1    , 2     } },
-["Taste of Paradise (1)"] 				= { "Taste of Paradise"				, { 1    , false } },
-["Taste of Paradise (2)"] 				= { "Taste of Paradise"				, { false, 2     } },
+["Taste of Paradise (1)"] 				= { "Taste of Paradise"				, { 1    , false } },--Holding Fruit
+["Taste of Paradise (2)"] 				= { "Taste of Paradise"				, { false, 2     } },--
 	["Vorgeschmack des Paradieses"]		= { "Vorgeschmack des Paradieses"	, { 1    , 2     } },
 	["Vorgeschmack des Paradieses (1)"] = { "Vorgeschmack des Paradieses"	, { 1    , false } },
 	["Vorgeschmack des Paradieses (2)"] = { "Vorgeschmack des Paradieses"	, { false, 2     } },
 ["Undergrowth"] 						= { "Undergrowth"					, { 1    , 2     } },
-["Undergrowth (1)"] 					= { "Undergrowth"					, { 1    , false } },
-["Undergrowth (2)"] 					= { "Undergrowth"					, { false, 2     } },
+["Undergrowth (1)"] 					= { "Undergrowth"					, { 1    , false } },--
+["Undergrowth (2)"] 					= { "Undergrowth"					, { false, 2     } },--Holding Ax
 	["Unterholz"] 						= { "Unterholz"						, { 1    , 2     } },
 	["Unterholz (1)"] 					= { "Unterholz"						, { 1    , false } },
 	["Unterholz (2)"] 					= { "Unterholz"						, { false, 2     } },
 ["Varchild's Crusader"] 				= { "Varchild's Crusader"			, { 1    , 2     } },
-["Varchild's Crusader (1)"] 			= { "Varchild's Crusader"			, { 1    , false } },
-["Varchild's Crusader (2)"] 			= { "Varchild's Crusader"			, { false, 2     } },
+["Varchild's Crusader (1)"] 			= { "Varchild's Crusader"			, { 1    , false } },--Castle
+["Varchild's Crusader (2)"] 			= { "Varchild's Crusader"			, { false, 2     } },--
 	["Varchilds Kreuzritter"]		 	= { "Varchilds Kreuzritter"			, { 1    , 2     } },
 	["Varchilds Kreuzritter (1)"] 		= { "Varchilds Kreuzritter"			, { 1    , false } },
 	["Varchilds Kreuzritter (2)"] 		= { "Varchilds Kreuzritter"			, { false, 2     } },
 ["Veteran's Voice"] 					= { "Veteran's Voice"				, { 1    , 2     } },
-["Veteran's Voice (1)"] 				= { "Veteran's Voice"				, { 1    , false } },
-["Veteran's Voice (2)"] 				= { "Veteran's Voice"				, { false, 2     } },
+["Veteran's Voice (1)"] 				= { "Veteran's Voice"				, { 1    , false } },--
+["Veteran's Voice (2)"] 				= { "Veteran's Voice"				, { false, 2     } },--Side-by-side
 	["Stimme des Veteranen"] 			= { "Stimme des Veteranen"			, { 1    , 2     } },
 	["Stimme des Veteranen (1)"] 		= { "Stimme des Veteranen"			, { 1    , false } },
 	["Stimme des Veteranen (2)"] 		= { "Stimme des Veteranen"			, { false, 2     } },
 ["Viscerid Armor"] 						= { "Viscerid Armor"				, { 1    , 2     } },
-["Viscerid Armor (1)"] 					= { "Viscerid Armor"				, { 1    , false } },
-["Viscerid Armor (2)"] 					= { "Viscerid Armor"				, { false, 2     } },
+["Viscerid Armor (1)"] 					= { "Viscerid Armor"				, { 1    , false } },--Crashing Wave
+["Viscerid Armor (2)"] 					= { "Viscerid Armor"				, { false, 2     } },--
 	["Visceridenpanzer"] 				= { "Visceridenpanzer"				, { 1    , 2     } },
 	["Visceridenpanzer (1)"] 			= { "Visceridenpanzer"				, { 1    , false } },
 	["Visceridenpanzer (2)"] 			= { "Visceridenpanzer"				, { false, 2     } },
 ["Whip Vine"] 							= { "Whip Vine"						, { 1    , 2     } },
-["Whip Vine (1)"] 						= { "Whip Vine"						, { 1    , false } },
-["Whip Vine (2)"] 						= { "Whip Vine"						, { false, 2     } },
+["Whip Vine (1)"] 						= { "Whip Vine"						, { 1    , false } },--Only Plants
+["Whip Vine (2)"] 						= { "Whip Vine"						, { false, 2     } },--
 	["Kletterranken"] 					= { "Kletterranken"					, { 1    , 2     } },
 	["Kletterranken (1)"] 				= { "Kletterranken"					, { 1    , false } },
 	["Kletterranken (2)"] 				= { "Kletterranken"					, { false, 2     } },
 ["Wild Aesthir"] 						= { "Wild Aesthir"					, { 1    , 2     } },
-["Wild Aesthir (1)"] 					= { "Wild Aesthir"					, { 1    , false } },
-["Wild Aesthir (2)"] 					= { "Wild Aesthir"					, { false, 2     } },
+["Wild Aesthir (1)"] 					= { "Wild Aesthir"					, { 1    , false } },--
+["Wild Aesthir (2)"] 					= { "Wild Aesthir"					, { false, 2     } },--Lightning Strike
 	["Wilder Aesthir"] 					= { "Wilder Aesthir"				, { 1    , 2     } },
 	["Wilder Aesthir (1)"] 				= { "Wilder Aesthir"				, { 1    , false } },
 	["Wilder Aesthir (2)"] 				= { "Wilder Aesthir"				, { false, 2     } },
 ["Yavimaya Ancients"] 					= { "Yavimaya Ancients"				, { 1    , 2     } },
-["Yavimaya Ancients (1)"] 				= { "Yavimaya Ancients"				, { 1    , false } },
-["Yavimaya Ancients (2)"] 				= { "Yavimaya Ancients"				, { false, 2     } },
+["Yavimaya Ancients (1)"] 				= { "Yavimaya Ancients"				, { 1    , false } },--Rearing Horse
+["Yavimaya Ancients (2)"] 				= { "Yavimaya Ancients"				, { false, 2     } },--
 	["Ahnen aus Yavimaya"] 				= { "Ahnen aus Yavimaya"			, { 1    , 2     } },
 	["Ahnen aus Yavimaya (1)"] 			= { "Ahnen aus Yavimaya"			, { 1    , false } },
 	["Ahnen aus Yavimaya (2)"] 			= { "Ahnen aus Yavimaya"			, { false, 2     } },
@@ -2221,160 +2191,160 @@ Expansions = nil,
 	cardcount={ reg = 187, tok =  0 },
 	variants={
 ["Armor Thrull"]	 				= { "Armor Thrull"					, { 1    , 2    , 3    , 4     } },
-["Armor Thrull (1)"]	 			= { "Armor Thrull"					, { 1    , false, false, false } },
-["Armor Thrull (2)"] 				= { "Armor Thrull"					, { false, 2    , false, false } },
-["Armor Thrull (3)"] 				= { "Armor Thrull"					, { false, false, 3    , false } },
-["Armor Thrull (4)"] 				= { "Armor Thrull"					, { false, false, false, 4     } },
+["Armor Thrull (1)"]	 			= { "Armor Thrull"					, { 1    , false, false, false } },--
+["Armor Thrull (2)"] 				= { "Armor Thrull"					, { false, 2    , false, false } },--Spencer
+["Armor Thrull (3)"] 				= { "Armor Thrull"					, { false, false, 3    , false } },--Menges
+["Armor Thrull (4)"] 				= { "Armor Thrull"					, { false, false, false, 4     } },--Kirschner
 ["Basal Thrull"] 					= { "Basal Thrull"					, { 1    , 2    , 3    , 4     } },
-["Basal Thrull (1)"]	 			= { "Basal Thrull"					, { 1    , false, false, false } },
-["Basal Thrull (2)"] 				= { "Basal Thrull"					, { false, 2    , false, false } },
-["Basal Thrull (3)"] 				= { "Basal Thrull"					, { false, false, 3    , false } },
-["Basal Thrull (4)"] 				= { "Basal Thrull"					, { false, false, false, 4     } },
+["Basal Thrull (1)"]	 			= { "Basal Thrull"					, { 1    , false, false, false } },--
+["Basal Thrull (2)"] 				= { "Basal Thrull"					, { false, 2    , false, false } },--P. Foglio
+["Basal Thrull (3)"] 				= { "Basal Thrull"					, { false, false, 3    , false } },--Ferguson
+["Basal Thrull (4)"] 				= { "Basal Thrull"					, { false, false, false, 4     } },--Rush
 ["Brassclaw Orcs"] 					= { "Brassclaw Orcs"				, { 1    , 2    , 3    , 4     } },
-["Brassclaw Orcs (1)"]	 			= { "Brassclaw Orcs"				, { 1    , false, false, false } },
-["Brassclaw Orcs (2)"] 				= { "Brassclaw Orcs"				, { false, 2    , false, false } },
-["Brassclaw Orcs (3)"] 				= { "Brassclaw Orcs"				, { false, false, 3    , false } },
-["Brassclaw Orcs (4)"] 				= { "Brassclaw Orcs"				, { false, false, false, 4     } },
+["Brassclaw Orcs (1)"]	 			= { "Brassclaw Orcs"				, { 1    , false, false, false } },--Pike
+["Brassclaw Orcs (2)"] 				= { "Brassclaw Orcs"				, { false, 2    , false, false } },--Map
+["Brassclaw Orcs (3)"] 				= { "Brassclaw Orcs"				, { false, false, 3    , false } },--Glove
+["Brassclaw Orcs (4)"] 				= { "Brassclaw Orcs"				, { false, false, false, 4     } },--
 ["Combat Medic"] 					= { "Combat Medic"					, { 1    , 2    , 3    , 4     } },
-["Combat Medic (1)"] 				= { "Combat Medic"					, { 1    , false, false, false } },
-["Combat Medic (2)"] 				= { "Combat Medic"					, { false, 2    , false, false } },
-["Combat Medic (3)"] 				= { "Combat Medic"					, { false, false, 3    , false } },
-["Combat Medic (4)"] 				= { "Combat Medic"					, { false, false, false, 4     } },
+["Combat Medic (1)"] 				= { "Combat Medic"					, { 1    , false, false, false } },--
+["Combat Medic (2)"] 				= { "Combat Medic"					, { false, 2    , false, false } },--Camp
+["Combat Medic (3)"] 				= { "Combat Medic"					, { false, false, 3    , false } },--Maddocks
+["Combat Medic (4)"] 				= { "Combat Medic"					, { false, false, false, 4     } },--Danforth
 ["Dwarven Soldier"] 				= { "Dwarven Soldier"				, { 1    , 2    , 3     } },
-["Dwarven Soldier (1)"]				= { "Dwarven Soldier"				, { 1    , false, false } },
-["Dwarven Soldier (2)"]				= { "Dwarven Soldier"				, { false, 2    , false } },
-["Dwarven Soldier (3)"]				= { "Dwarven Soldier"				, { false, false, 3     } },
+["Dwarven Soldier (1)"]				= { "Dwarven Soldier"				, { 1    , false, false } },--
+["Dwarven Soldier (2)"]				= { "Dwarven Soldier"				, { false, 2    , false } },--Asplund-Faith
+["Dwarven Soldier (3)"]				= { "Dwarven Soldier"				, { false, false, 3     } },--Shuler
 ["Elven Fortress"] 					= { "Elven Fortress"				, { 1    , 2    , 3    , 4     } },
-["Elven Fortress (1)"] 				= { "Elven Fortress"				, { 1    , false, false, false } },
-["Elven Fortress (2)"] 				= { "Elven Fortress"				, { false, 2    , false, false } },
-["Elven Fortress (3)"] 				= { "Elven Fortress"				, { false, false, 3    , false } },
-["Elven Fortress (4)"] 				= { "Elven Fortress"				, { false, false, false, 4     } },
+["Elven Fortress (1)"] 				= { "Elven Fortress"				, { 1    , false, false, false } },--
+["Elven Fortress (2)"] 				= { "Elven Fortress"				, { false, 2    , false, false } },--Asplund-Faith
+["Elven Fortress (3)"] 				= { "Elven Fortress"				, { false, false, 3    , false } },--Poole
+["Elven Fortress (4)"] 				= { "Elven Fortress"				, { false, false, false, 4     } },--Wanerstrand
 ["Elvish Hunter"] 					= { "Elvish Hunter"					, { 1    , 2    , 3     } },
-["Elvish Hunter (1)"]				= { "Elvish Hunter"					, { 1    , false, false } },
-["Elvish Hunter (2)"]				= { "Elvish Hunter"					, { false, 2    , false } },
-["Elvish Hunter (3)"]				= { "Elvish Hunter"					, { false, false, 3     } },
+["Elvish Hunter (1)"]				= { "Elvish Hunter"					, { 1    , false, false } },--
+["Elvish Hunter (2)"]				= { "Elvish Hunter"					, { false, 2    , false } },--Maddocks
+["Elvish Hunter (3)"]				= { "Elvish Hunter"					, { false, false, 3     } },--Camp
 ["Elvish Scout"] 					= { "Elvish Scout"					, { 1    , 2    , 3     } },
-["Elvish Scout (1)"]				= { "Elvish Scout"					, { 1    , false, false } },
-["Elvish Scout (2)"]				= { "Elvish Scout"					, { false, 2    , false } },
-["Elvish Scout (3)"]				= { "Elvish Scout"					, { false, false, 3     } },
+["Elvish Scout (1)"]				= { "Elvish Scout"					, { 1    , false, false } },--
+["Elvish Scout (2)"]				= { "Elvish Scout"					, { false, 2    , false } },--Venters
+["Elvish Scout (3)"]				= { "Elvish Scout"					, { false, false, 3     } },--Rush
 ["Farrel's Zealot"] 				= { "Farrel's Zealot"				, { 1    , 2    , 3     } },
-["Farrel's Zealot (1)"]				= { "Farrel's Zealot"				, { 1    , false, false } },
-["Farrel's Zealot (2)"]				= { "Farrel's Zealot"				, { false, 2    , false } },
-["Farrel's Zealot (3)"]				= { "Farrel's Zealot"				, { false, false, 3     } },
+["Farrel's Zealot (1)"]				= { "Farrel's Zealot"				, { 1    , false, false } },--
+["Farrel's Zealot (2)"]				= { "Farrel's Zealot"				, { false, 2    , false } },--Ferguson
+["Farrel's Zealot (3)"]				= { "Farrel's Zealot"				, { false, false, 3     } },--Beard
 ["Goblin Chirurgeon"] 				= { "Goblin Chirurgeon"				, { 1    , 2    , 3     } },
-["Goblin Chirurgeon (1)"]			= { "Goblin Chirurgeon"				, { 1    , false, false } },
-["Goblin Chirurgeon (2)"]			= { "Goblin Chirurgeon"				, { false, 2    , false } },
-["Goblin Chirurgeon (3)"]			= { "Goblin Chirurgeon"				, { false, false, 3     } },
+["Goblin Chirurgeon (1)"]			= { "Goblin Chirurgeon"				, { 1    , false, false } },--
+["Goblin Chirurgeon (2)"]			= { "Goblin Chirurgeon"				, { false, 2    , false } },--Foglio
+["Goblin Chirurgeon (3)"]			= { "Goblin Chirurgeon"				, { false, false, 3     } },--Frazier
 ["Goblin Grenade"] 					= { "Goblin Grenade"				, { 1    , 2    , 3     } },
-["Goblin Grenade (1)"]				= { "Goblin Grenade"				, { 1    , false, false } },
-["Goblin Grenade (2)"]				= { "Goblin Grenade"				, { false, 2    , false } },
-["Goblin Grenade (3)"]				= { "Goblin Grenade"				, { false, false, 3     } },
+["Goblin Grenade (1)"]				= { "Goblin Grenade"				, { 1    , false, false } },--
+["Goblin Grenade (2)"]				= { "Goblin Grenade"				, { false, 2    , false } },--Frazier
+["Goblin Grenade (3)"]				= { "Goblin Grenade"				, { false, false, 3     } },--Rush
 ["Goblin War Drums"] 				= { "Goblin War Drums"				, { 1    , 2    , 3    , 4     } },
-["Goblin War Drums (1)"]	 		= { "Goblin War Drums"				, { 1    , false, false, false } },
-["Goblin War Drums (2)"] 			= { "Goblin War Drums"				, { false, 2    , false, false } },
-["Goblin War Drums (3)"] 			= { "Goblin War Drums"				, { false, false, 3    , false } },
-["Goblin War Drums (4)"]	 		= { "Goblin War Drums"				, { false, false, false, 4     } },
+["Goblin War Drums (1)"]	 		= { "Goblin War Drums"				, { 1    , false, false, false } },--
+["Goblin War Drums (2)"] 			= { "Goblin War Drums"				, { false, 2    , false, false } },--Ferguson
+["Goblin War Drums (3)"] 			= { "Goblin War Drums"				, { false, false, 3    , false } },--Hudson
+["Goblin War Drums (4)"]	 		= { "Goblin War Drums"				, { false, false, false, 4     } },--Menges
 ["High Tide"] 						= { "High Tide"						, { 1    , 2    , 3     } },
-["High Tide (1)"]					= { "High Tide"						, { 1    , false, false } },
-["High Tide (2)"]					= { "High Tide"						, { false, 2    , false } },
-["High Tide (3)"]					= { "High Tide"						, { false, false, 3     } },
+["High Tide (1)"]					= { "High Tide"						, { 1    , false, false } },--Wave
+["High Tide (2)"]					= { "High Tide"						, { false, 2    , false } },--Merfolk
+["High Tide (3)"]					= { "High Tide"						, { false, false, 3     } },--Coral
 ["Homarid"] 						= { "Homarid"						, { 1    , 2    , 3    , 4     } },
-["Homarid (1)"] 					= { "Homarid"						, { 1    , false, false, false } },
-["Homarid (2)"] 					= { "Homarid"						, { false, 2    , false, false } },
-["Homarid (3)"] 					= { "Homarid"						, { false, false, 3    , false } },
-["Homarid (4)"] 					= { "Homarid"						, { false, false, false, 4     } },
+["Homarid (1)"] 					= { "Homarid"						, { 1    , false, false, false } },--Hoover
+["Homarid (2)"] 					= { "Homarid"						, { false, 2    , false, false } },--Hudson
+["Homarid (3)"] 					= { "Homarid"						, { false, false, 3    , false } },--Tedin
+["Homarid (4)"] 					= { "Homarid"						, { false, false, false, 4     } },--Wackwitz
 ["Homarid Warrior"] 				= { "Homarid Warrior"				, { 1    , 2    , 3     } },
-["Homarid Warrior (1)"]				= { "Homarid Warrior"				, { 1    , false, false } },
-["Homarid Warrior (2)"]				= { "Homarid Warrior"				, { false, 2    , false } },
-["Homarid Warrior (3)"]				= { "Homarid Warrior"				, { false, false, 3     } },
+["Homarid Warrior (1)"]				= { "Homarid Warrior"				, { 1    , false, false } },--
+["Homarid Warrior (2)"]				= { "Homarid Warrior"				, { false, 2    , false } },--Asplund-Faith
+["Homarid Warrior (3)"]				= { "Homarid Warrior"				, { false, false, 3     } },--Shuler
 ["Hymn to Tourach"] 				= { "Hymn to Tourach"				, { 1    , 2    , 3    , 4     } },
-["Hymn to Tourach (1)"] 			= { "Hymn to Tourach"				, { 1    , false, false, false } },
-["Hymn to Tourach (2)"] 			= { "Hymn to Tourach"				, { false, 2    , false, false } },
-["Hymn to Tourach (3)"] 			= { "Hymn to Tourach"				, { false, false, 3    , false } },
-["Hymn to Tourach (4)"] 			= { "Hymn to Tourach"				, { false, false, false, 4     } },
+["Hymn to Tourach (1)"] 			= { "Hymn to Tourach"				, { 1    , false, false, false } },--Wolf
+["Hymn to Tourach (2)"] 			= { "Hymn to Tourach"				, { false, 2    , false, false } },--Circle
+["Hymn to Tourach (3)"] 			= { "Hymn to Tourach"				, { false, false, 3    , false } },--Cloak
+["Hymn to Tourach (4)"] 			= { "Hymn to Tourach"				, { false, false, false, 4     } },--Table
 ["Icatian Infantry"] 				= { "Icatian Infantry"				, { 1    , 2    , 3    , 4     } },
-["Icatian Infantry (1)"] 			= { "Icatian Infantry"				, { 1    , false, false, false } },
-["Icatian Infantry (2)"] 			= { "Icatian Infantry"				, { false, 2    , false, false } },
-["Icatian Infantry (3)"]	 		= { "Icatian Infantry"				, { false, false, 3    , false } },
-["Icatian Infantry (4)"] 			= { "Icatian Infantry"				, { false, false, false, 4     } },
+["Icatian Infantry (1)"] 			= { "Icatian Infantry"				, { 1    , false, false, false } },--
+["Icatian Infantry (2)"] 			= { "Icatian Infantry"				, { false, 2    , false, false } },--Rush
+["Icatian Infantry (3)"]	 		= { "Icatian Infantry"				, { false, false, 3    , false } },--Shuler
+["Icatian Infantry (4)"] 			= { "Icatian Infantry"				, { false, false, false, 4     } },--Tucker
 ["Icatian Javelineers"] 			= { "Icatian Javelineers"			, { 1    , 2    , 3     } },
-["Icatian Javelineers (1)"]			= { "Icatian Javelineers"			, { 1    , false, false } },
-["Icatian Javelineers (2)"]			= { "Icatian Javelineers"			, { false, 2    , false } },
-["Icatian Javelineers (3)"]			= { "Icatian Javelineers"			, { false, false, 3     } },
+["Icatian Javelineers (1)"]			= { "Icatian Javelineers"			, { 1    , false, false } },--Benson
+["Icatian Javelineers (2)"]			= { "Icatian Javelineers"			, { false, 2    , false } },--Beard
+["Icatian Javelineers (3)"]			= { "Icatian Javelineers"			, { false, false, 3     } },--Kirschner
 ["Icatian Moneychanger"] 			= { "Icatian Moneychanger"			, { 1    , 2    , 3     } },
-["Icatian Moneychanger (1)"]		= { "Icatian Moneychanger"			, { 1    , false, false } },
-["Icatian Moneychanger (2)"]		= { "Icatian Moneychanger"			, { false, 2    , false } },
-["Icatian Moneychanger (3)"]		= { "Icatian Moneychanger"			, { false, false, 3     } },
+["Icatian Moneychanger (1)"]		= { "Icatian Moneychanger"			, { 1    , false, false } },--
+["Icatian Moneychanger (2)"]		= { "Icatian Moneychanger"			, { false, 2    , false } },--Beard
+["Icatian Moneychanger (3)"]		= { "Icatian Moneychanger"			, { false, false, 3     } },--Benson
 ["Icatian Scout"] 					= { "Icatian Scout"					, { 1    , 2    , 3    , 4     } },
-["Icatian Scout (1)"] 				= { "Icatian Scout"					, { 1    , false, false, false } },
-["Icatian Scout (2)"] 				= { "Icatian Scout"					, { false, 2    , false, false } },
-["Icatian Scout (3)"] 				= { "Icatian Scout"					, { false, false, 3    , false } },
-["Icatian Scout (4)"] 				= { "Icatian Scout"					, { false, false, false, 4     } },
+["Icatian Scout (1)"] 				= { "Icatian Scout"					, { 1    , false, false, false } },--
+["Icatian Scout (2)"] 				= { "Icatian Scout"					, { false, 2    , false, false } },--Shuler
+["Icatian Scout (3)"] 				= { "Icatian Scout"					, { false, false, 3    , false } },--Alexander
+["Icatian Scout (4)"] 				= { "Icatian Scout"					, { false, false, false, 4     } },--Foglio
 ["Initiates of the Ebon Hand"]	 	= { "Initiates of the Ebon Hand"	, { 1    , 2    , 3     } },
-["Initiates of the Ebon Hand (1)"]	= { "Initiates of the Ebon Hand"	, { 1    , false, false } },
-["Initiates of the Ebon Hand (2)"]	= { "Initiates of the Ebon Hand"	, { false, 2    , false } },
-["Initiates of the Ebon Hand (3)"]	= { "Initiates of the Ebon Hand"	, { false, false, 3     } },
+["Initiates of the Ebon Hand (1)"]	= { "Initiates of the Ebon Hand"	, { 1    , false, false } },--
+["Initiates of the Ebon Hand (2)"]	= { "Initiates of the Ebon Hand"	, { false, 2    , false } },--Foglio
+["Initiates of the Ebon Hand (3)"]	= { "Initiates of the Ebon Hand"	, { false, false, 3     } },--Hudson
 ["Merseine"] 						= { "Merseine"						, { 1    , 2    , 3    , 4     } },
-["Merseine (1)"] 					= { "Merseine"						, { 1    , false, false, false } },
-["Merseine (2)"] 					= { "Merseine"						, { false, 2    , false, false } },
-["Merseine (3)"] 					= { "Merseine"						, { false, false, 3    , false } },
-["Merseine (4)"]	 				= { "Merseine"						, { false, false, false, 4     } },
+["Merseine (1)"] 					= { "Merseine"						, { 1    , false, false, false } },--
+["Merseine (2)"] 					= { "Merseine"						, { false, 2    , false, false } },--Organ-Kean
+["Merseine (3)"] 					= { "Merseine"						, { false, false, 3    , false } },--Tucker
+["Merseine (4)"]	 				= { "Merseine"						, { false, false, false, 4     } },--Venters
 ["Mindstab Thrull"]	 				= { "Mindstab Thrull"				, { 1    , 2    , 3     } },
-["Mindstab Thrull (1)"]				= { "Mindstab Thrull"				, { 1    , false, false } },
-["Mindstab Thrull (2)"]				= { "Mindstab Thrull"				, { false, 2    , false } },
-["Mindstab Thrull (3)"]				= { "Mindstab Thrull"				, { false, false, 3     } },
+["Mindstab Thrull (1)"]				= { "Mindstab Thrull"				, { 1    , false, false } },--
+["Mindstab Thrull (2)"]				= { "Mindstab Thrull"				, { false, 2    , false } },--Hudson
+["Mindstab Thrull (3)"]				= { "Mindstab Thrull"				, { false, false, 3     } },--Tedin
 ["Necrite"] 						= { "Necrite"						, { 1    , 2    , 3     } },
-["Necrite (1)"]						= { "Necrite"						, { 1    , false, false } },
-["Necrite (2)"]						= { "Necrite"						, { false, 2    , false } },
-["Necrite (3)"]						= { "Necrite"						, { false, false, 3     } },
+["Necrite (1)"]						= { "Necrite"						, { 1    , false, false } },--
+["Necrite (2)"]						= { "Necrite"						, { false, 2    , false } },--Rush
+["Necrite (3)"]						= { "Necrite"						, { false, false, 3     } },--Tucker
 ["Night Soil"] 						= { "Night Soil"					, { 1    , 2    , 3     } },
-["Night Soil (1)"]					= { "Night Soil"					, { 1    , false, false } },
-["Night Soil (2)"]					= { "Night Soil"					, { false, 2    , false } },
-["Night Soil (3)"]					= { "Night Soil"					, { false, false, 3     } },
+["Night Soil (1)"]					= { "Night Soil"					, { 1    , false, false } },--
+["Night Soil (2)"]					= { "Night Soil"					, { false, 2    , false } },--Hudson
+["Night Soil (3)"]					= { "Night Soil"					, { false, false, 3     } },--Tucker
 ["Orcish Spy"] 						= { "Orcish Spy"					, { 1    , 2    , 3     } },
-["Orcish Spy (1)"]					= { "Orcish Spy"					, { 1    , false, false } },
-["Orcish Spy (2)"]					= { "Orcish Spy"					, { false, 2    , false } },
-["Orcish Spy (3)"]					= { "Orcish Spy"					, { false, false, 3     } },
+["Orcish Spy (1)"]					= { "Orcish Spy"					, { 1    , false, false } },--
+["Orcish Spy (2)"]					= { "Orcish Spy"					, { false, 2    , false } },--Gelon
+["Orcish Spy (3)"]					= { "Orcish Spy"					, { false, false, 3     } },--Venters
 ["Orcish Veteran"] 					= { "Orcish Veteran"				, { 1    , 2    , 3    , 4     } },
-["Orcish Veteran (1)"] 				= { "Orcish Veteran"				, { 1    , false, false, false } },
-["Orcish Veteran (2)"] 				= { "Orcish Veteran"				, { false, 2    , false, false } },
-["Orcish Veteran (3)"] 				= { "Orcish Veteran"				, { false, false, 3    , false } },
-["Orcish Veteran (4)"]	 			= { "Orcish Veteran"				, { false, false, false, 4     } },
+["Orcish Veteran (1)"] 				= { "Orcish Veteran"				, { 1    , false, false, false } },--
+["Orcish Veteran (2)"] 				= { "Orcish Veteran"				, { false, 2    , false, false } },--Frazier
+["Orcish Veteran (3)"] 				= { "Orcish Veteran"				, { false, false, 3    , false } },--Hoover
+["Orcish Veteran (4)"]	 			= { "Orcish Veteran"				, { false, false, false, 4     } },--Benson
 ["Order of the Ebon Hand"]	 		= { "Order of the Ebon Hand"		, { 1    , 2    , 3     } },
-["Order of the Ebon Hand (1)"]		= { "Order of the Ebon Hand"		, { 1    , false, false } },
-["Order of the Ebon Hand (2)"]		= { "Order of the Ebon Hand"		, { false, 2    , false } },
-["Order of the Ebon Hand (3)"]		= { "Order of the Ebon Hand"		, { false, false, 3     } },
+["Order of the Ebon Hand (1)"]		= { "Order of the Ebon Hand"		, { 1    , false, false } },--
+["Order of the Ebon Hand (2)"]		= { "Order of the Ebon Hand"		, { false, 2    , false } },--Rush
+["Order of the Ebon Hand (3)"]		= { "Order of the Ebon Hand"		, { false, false, 3     } },--Spencer
 ["Order of Leitbur"]	 			= { "Order of Leitbur"				, { 1    , 2    , 3     } },
-["Order of Leitbur (1)"]			= { "Order of Leitbur"				, { 1    , false, false } },
-["Order of Leitbur (2)"]			= { "Order of Leitbur"				, { false, 2    , false } },
-["Order of Leitbur (3)"]			= { "Order of Leitbur"				, { false, false, 3     } },
+["Order of Leitbur (1)"]			= { "Order of Leitbur"				, { 1    , false, false } },--Female
+["Order of Leitbur (2)"]			= { "Order of Leitbur"				, { false, 2    , false } },--Male
+["Order of Leitbur (3)"]			= { "Order of Leitbur"				, { false, false, 3     } },--
 ["Spore Cloud"] 					= { "Spore Cloud"					, { 1    , 2    , 3     } },
-["Spore Cloud (1)"]					= { "Spore Cloud"					, { 1    , false, false } },
-["Spore Cloud (2)"]					= { "Spore Cloud"					, { false, 2    , false } },
-["Spore Cloud (3)"]					= { "Spore Cloud"					, { false, false, 3     } },
+["Spore Cloud (1)"]					= { "Spore Cloud"					, { 1    , false, false } },--
+["Spore Cloud (2)"]					= { "Spore Cloud"					, { false, 2    , false } },--Weber
+["Spore Cloud (3)"]					= { "Spore Cloud"					, { false, false, 3     } },--Myrfors
 ["Thallid"] 						= { "Thallid"						, { 1    , 2    , 3    , 4     } },
-["Thallid (1)"] 					= { "Thallid"						, { 1    , false, false, false } },
-["Thallid (2)"] 					= { "Thallid"						, { false, 2    , false, false } },
-["Thallid (3)"] 					= { "Thallid"						, { false, false, 3    , false } },
-["Thallid (4)"] 					= { "Thallid"						, { false, false, false, 4     } },
+["Thallid (1)"] 					= { "Thallid"						, { 1    , false, false, false } },--
+["Thallid (2)"] 					= { "Thallid"						, { false, 2    , false, false } },--Myrfors
+["Thallid (3)"] 					= { "Thallid"						, { false, false, 3    , false } },--Spencer
+["Thallid (4)"] 					= { "Thallid"						, { false, false, false, 4     } },--Gelon
 ["Thorn Thallid"] 					= { "Thorn Thallid"					, { 1    , 2    , 3    , 4     } },
-["Thorn Thallid (1)"] 				= { "Thorn Thallid"					, { 1    , false, false, false } },
-["Thorn Thallid (2)"] 				= { "Thorn Thallid"					, { false, 2    , false, false } },
-["Thorn Thallid (3)"] 				= { "Thorn Thallid"					, { false, false, 3    , false } },
-["Thorn Thallid (4)"] 				= { "Thorn Thallid"					, { false, false, false, 4     } },
+["Thorn Thallid (1)"] 				= { "Thorn Thallid"					, { 1    , false, false, false } },--
+["Thorn Thallid (2)"] 				= { "Thorn Thallid"					, { false, 2    , false, false } },--Hudson
+["Thorn Thallid (3)"] 				= { "Thorn Thallid"					, { false, false, 3    , false } },--Myrfors
+["Thorn Thallid (4)"] 				= { "Thorn Thallid"					, { false, false, false, 4     } },--Tedin
 ["Tidal Flats"] 					= { "Tidal Flats"					, { 1    , 2    , 3     } },
-["Tidal Flats (1)"]					= { "Tidal Flats"					, { 1    , false, false } },
-["Tidal Flats (2)"]					= { "Tidal Flats"					, { false, 2    , false } },
-["Tidal Flats (3)"]					= { "Tidal Flats"					, { false, false, 3     } },
+["Tidal Flats (1)"]					= { "Tidal Flats"					, { 1    , false, false } },--
+["Tidal Flats (2)"]					= { "Tidal Flats"					, { false, 2    , false } },--Sky
+["Tidal Flats (3)"]					= { "Tidal Flats"					, { false, false, 3     } },--Earth
 ["Vodalian Soldiers"] 				= { "Vodalian Soldiers"				, { 1    , 2    , 3    , 4     } },
-["Vodalian Soldiers (1)"] 			= { "Vodalian Soldiers"				, { 1    , false, false, false } },
-["Vodalian Soldiers (2)"] 			= { "Vodalian Soldiers"				, { false, 2    , false, false } },
-["Vodalian Soldiers (3)"] 			= { "Vodalian Soldiers"				, { false, false, 3    , false } },
-["Vodalian Soldiers (4)"] 			= { "Vodalian Soldiers"				, { false, false, false, 4     } },
+["Vodalian Soldiers (1)"] 			= { "Vodalian Soldiers"				, { 1    , false, false, false } },--
+["Vodalian Soldiers (2)"] 			= { "Vodalian Soldiers"				, { false, 2    , false, false } },--Menges
+["Vodalian Soldiers (3)"] 			= { "Vodalian Soldiers"				, { false, false, 3    , false } },--Ferguson
+["Vodalian Soldiers (4)"] 			= { "Vodalian Soldiers"				, { false, false, false, 4     } },--Camp
 ["Vodalian Mage"] 					= { "Vodalian Mage"					, { 1    , 2    , 3     } },
-["Vodalian Mage (1)"]				= { "Vodalian Mage"					, { 1    , false, false } },
-["Vodalian Mage (2)"]				= { "Vodalian Mage"					, { false, 2    , false } },
-["Vodalian Mage (3)"]				= { "Vodalian Mage"					, { false, false, 3     } },
+["Vodalian Mage (1)"]				= { "Vodalian Mage"					, { 1    , false, false } },--
+["Vodalian Mage (2)"]				= { "Vodalian Mage"					, { false, 2    , false } },--Poole
+["Vodalian Mage (3)"]				= { "Vodalian Mage"					, { false, false, 3     } },--Hoover
 	},
 },
 [160] = { name="The Dark",
@@ -2841,6 +2811,7 @@ SpecialSets = nil,
 ["Daretti, Scrap Savant (oversized)"]		= { "Daretti, Scrap Savant"			, { false, "replica" } },
 ["Freyalise, Llanowar’s Fury"]				= { "Freyalise, Llanowar’s Fury"	, { ""   , false     } },
 ["Freyalise, Llanowar’s Fury (oversized)"]	= { "Freyalise, Llanowar’s Fury"	, { false, "replica" } },
+--TODO [814] "Commander 2014 Edition" tokens are double sided, but MA treats them as 2 seperate objects. expect fails until a solution is found.
 	},
 	foiltweak= {
 ["Nahiri, the Lithomancer (oversized)"]			= { foil = true },
@@ -3921,11 +3892,11 @@ SpecialSets = nil,
 ["Plains (7)"]			= { "Plains"	, { false, false, false, false, false, false, 7    , false, false } },
 ["Plains (8)"]			= { "Plains"	, { false, false, false, false, false, false, false, 8    , false } },
 ["Plains (9)"]			= { "Plains"	, { false, false, false, false, false, false, false, false, 9     } },
-["Island (1)"]			= { "Island"	, { 1    , false, false, false, false } },
-["Island (2)"]			= { "Island"	, { false, 2    , false, false, false } },
-["Island (3)"]			= { "Island"	, { false, false, 3    , false, false } },
-["Island (4)"]			= { "Island"	, { false, false, false, 4    , false } },
-["Island (5)"]			= { "Island"	, { false, false, false, false, 5     } },
+["Island (1)"]			= { "Island"	, { 1    , false, false, false, false } },--Spires Right
+["Island (2)"]			= { "Island"	, { false, 2    , false, false, false } },--Spires Left
+["Island (3)"]			= { "Island"	, { false, false, 3    , false, false } },--River
+["Island (4)"]			= { "Island"	, { false, false, false, 4    , false } },--No Sky
+["Island (5)"]			= { "Island"	, { false, false, false, false, 5     } },--Beach
 ["Swamp (1)"]			= { "Swamp"		, { 1    , false, false, false } },
 ["Swamp (2)"]			= { "Swamp"		, { false, 2    , false, false } },
 ["Swamp (3)"]			= { "Swamp"		, { false, false, 3    , false } },
@@ -4075,26 +4046,26 @@ SpecialSets = nil,
 ["Swamp"] 						= { "Swamp"		, { 1    , 2    , 3    , 4     } },
 ["Mountain"] 					= { "Mountain"	, { 1    , 2    , 3    , 4     } },
 ["Forest"] 						= { "Forest" 	, { 1    , 2    , 3    , 4     } },
-["Plains (1)"]					= { "Plains"	, { 1    , false, false, false } }, 
-["Plains (2)"]					= { "Plains"	, { false, 2    , false, false } },
-["Plains (3)"]					= { "Plains"	, { false, false, 3    , false } },
-["Plains (4)"]					= { "Plains"	, { false, false, false, 4     } },
-["Island (1)"]					= { "Island"	, { 1    , false, false, false } },
-["Island (2)"]					= { "Island"	, { false, 2    , false, false } },
-["Island (3)"]					= { "Island"	, { false, false, 3    , false } },
-["Island (4)"]					= { "Island"	, { false, false, false, 4     } },
-["Swamp (1)"]					= { "Swamp"		, { 1    , false, false, false } },
-["Swamp (2)"]					= { "Swamp"		, { false, 2    , false, false } },
-["Swamp (3)"]					= { "Swamp"		, { false, false, 3    , false } },
-["Swamp (4)"]					= { "Swamp"		, { false, false, false, 4     } },
-["Mountain (1)"]				= { "Mountain"	, { 1    , false, false, false } },
-["Mountain (2)"]				= { "Mountain"	, { false, 2    , false, false } },
-["Mountain (3)"]				= { "Mountain"	, { false, false, 3    , false } },
-["Mountain (4)"]				= { "Mountain"	, { false, false, false, 4     } },
-["Forest (1)"]					= { "Forest"	, { 1    , false, false, false } },
-["Forest (2)"]					= { "Forest"	, { false, 2    , false, false } },
-["Forest (3)"]					= { "Forest"	, { false, false, 3    , false } },
-["Forest (4)"]					= { "Forest"	, { false, false, false, 4     } },
+["Plains (1)"]					= { "Plains"	, { 1    , false, false, false } },--Clouds Right
+["Plains (2)"]					= { "Plains"	, { false, 2    , false, false } },--White Sky
+["Plains (3)"]					= { "Plains"	, { false, false, 3    , false } },--No Flowers
+["Plains (4)"]					= { "Plains"	, { false, false, false, 4     } },--Clouds Left
+["Island (1)"]					= { "Island"	, { 1    , false, false, false } },--Waterfall
+["Island (2)"]					= { "Island"	, { false, 2    , false, false } },--Castle Cove
+["Island (3)"]					= { "Island"	, { false, false, 3    , false } },--Beach Right
+["Island (4)"]					= { "Island"	, { false, false, false, 4     } },--Sea Arch
+["Swamp (1)"]					= { "Swamp"		, { 1    , false, false, false } },--Hanging Moss
+["Swamp (2)"]					= { "Swamp"		, { false, 2    , false, false } },--Crossed Trees
+["Swamp (3)"]					= { "Swamp"		, { false, false, 3    , false } },--White Tree
+["Swamp (4)"]					= { "Swamp"		, { false, false, false, 4     } },--Yellow Sun
+["Mountain (1)"]				= { "Mountain"	, { 1    , false, false, false } },--Middle Chasm
+["Mountain (2)"]				= { "Mountain"	, { false, 2    , false, false } },--Peaks Right
+["Mountain (3)"]				= { "Mountain"	, { false, false, 3    , false } },--Trees Center
+["Mountain (4)"]				= { "Mountain"	, { false, false, false, 4     } },--Three Peaks
+["Forest (1)"]					= { "Forest"	, { 1    , false, false, false } },--Large Middle
+["Forest (2)"]					= { "Forest"	, { false, 2    , false, false } },--Slanted Tree
+["Forest (3)"]					= { "Forest"	, { false, false, 3    , false } },--Ferns on Ground
+["Forest (4)"]					= { "Forest"	, { false, false, false, 4     } },--Pale Trees
 ["Anaconda"]					= { "Anaconda"				, { ""	 , false } },
 ["Anaconda (ST)"]				= { "Anaconda"				, { false, "ST"	 } },
 ["Blaze"]						= { "Blaze"					, { ""	 , false } },
@@ -4195,7 +4166,7 @@ SpecialSets = nil,
 ["Urza's Tower"] 				= { "Urza's Tower"			, { 1    , 2    , 3    , 4 } },
 ["Urza's Mine (1)"] 			= { "Urza's Mine"			, { 1    , false, false, false } },--Mouth
 ["Urza's Mine (2)"] 			= { "Urza's Mine"			, { false, 2    , false, false } },--Clawed Sphere
-["Urza's Mine (3)"] 			= { "Urza's Mine"			, { false, false, 3    , false } },--Pully
+["Urza's Mine (3)"] 			= { "Urza's Mine"			, { false, false, 3    , false } },--Pulley
 ["Urza's Mine (4)"] 			= { "Urza's Mine"			, { false, false, false, 4     } },--Tower
 ["Urza's Power Plant (1)"] 		= { "Urza's Power Plant"	, { 1    , false, false, false } },--Rock in Pot
 ["Urza's Power Plant (2)"] 		= { "Urza's Power Plant"	, { false, 2    , false, false } },--Columns
@@ -4242,21 +4213,21 @@ SpecialSets = nil,
 ["Swamp"] 						= { "Swamp"		, { 1    , 2    , 3     } },
 ["Mountain"] 					= { "Mountain"	, { 1    , 2    , 3     } },
 ["Forest"] 						= { "Forest" 	, { 1    , 2    , 3     } },
-["Plains (1)"]					= { "Plains"	, { 1    , false, false } },
-["Plains (2)"]					= { "Plains"	, { false, 2    , false } },
-["Plains (3)"]					= { "Plains"	, { false, false, 3     } },
-["Island (1)"]					= { "Island"	, { 1    , false, false } },
-["Island (2)"]					= { "Island"	, { false, 2    , false } },
-["Island (3)"]					= { "Island"	, { false, false, 3     } },
-["Swamp (1)"]					= { "Swamp"		, { 1    , false, false } },
-["Swamp (2)"]					= { "Swamp"		, { false, 2    , false } },
-["Swamp (3)"]					= { "Swamp"		, { false, false, 3     } },
-["Mountain (1)"]				= { "Mountain"	, { 1    , false, false } },
-["Mountain (2)"]				= { "Mountain"	, { false, 2    , false } },
-["Mountain (3)"]				= { "Mountain"	, { false, false, 3     } },
-["Forest (1)"]					= { "Forest"	, { 1    , false, false } },
-["Forest (2)"]					= { "Forest"	, { false, 2    , false } },
-["Forest (3)"]					= { "Forest"	, { false, false, 3     } },
+["Plains (1)"]					= { "Plains"	, { 1    , false, false } },--No Trees
+["Plains (2)"]					= { "Plains"	, { false, 2    , false } },--Trees
+["Plains (3)"]					= { "Plains"	, { false, false, 3     } },--No Mountains
+["Island (1)"]					= { "Island"	, { 1    , false, false } },--Purple
+["Island (2)"]					= { "Island"	, { false, 2    , false } },--Green
+["Island (3)"]					= { "Island"	, { false, false, 3     } },--Blue
+["Swamp (1)"]					= { "Swamp"		, { 1    , false, false } },--Low Branch
+["Swamp (2)"]					= { "Swamp"		, { false, 2    , false } },--High Branch
+["Swamp (3)"]					= { "Swamp"		, { false, false, 3     } },--Two Branches
+["Mountain (1)"]				= { "Mountain"	, { 1    , false, false } },--Slate
+["Mountain (2)"]				= { "Mountain"	, { false, 2    , false } },--Fog
+["Mountain (3)"]				= { "Mountain"	, { false, false, 3     } },--Dirt
+["Forest (1)"]					= { "Forest"	, { 1    , false, false } },--Rocks
+["Forest (2)"]					= { "Forest"	, { false, 2    , false } },--Path
+["Forest (3)"]					= { "Forest"	, { false, false, 3     } },--Eyes
 	},
 },
 [70] = { name="Vanguard",
@@ -4470,7 +4441,7 @@ Promos = nil,
 [40] = { name="Arena/Colosseo Leagues Promos",
 	foil="y",
 	cardcount={ reg=83, tok=5, nontrad=0, repl=83 },
---TODO [40] foiltweak
+--FIXME [40] foiltweak
 	variants={
 ["Plains (1996)"]		= { "Plains",	{ "1996", false , false , false , false , false , false , false } },
 ["Plains (1999)"]		= { "Plains",	{ false , "1999", false , false , false , false , false , false } },
@@ -4483,8 +4454,8 @@ Promos = nil,
 ["Island (1996)"]		= { "Island",	{ "1996", false , false , false  , false  , false , false , false , false } },
 ["Island (1999)"]		= { "Island",	{ false , "1999", false , false  , false  , false , false , false , false } },
 ["Island (2000)"]		= { "Island",	{ false , false , "2000", false  , false  , false , false , false , false } },
-["Island (2001a)"]		= { "Island",	{ false , false , false , "2001a", false  , false , false , false , false } },
-["Island (2001b)"]		= { "Island",	{ false , false , false , false  , "2001b", false , false , false , false } },
+["Island (2001a)"]		= { "Island",	{ false , false , false , "2001a", false  , false , false , false , false } },--
+["Island (2001b)"]		= { "Island",	{ false , false , false , false  , "2001b", false , false , false , false } },--
 ["Island (2003)"]		= { "Island",	{ false , false , false , false  , false  , "2003", false , false , false } },
 ["Island (2004)"]		= { "Island",	{ false , false , false , false  , false  , false , "2004", false , false } },
 ["Island (2005)"]		= { "Island",	{ false , false , false , false  , false  , false , false , "2005", false } },
@@ -4508,8 +4479,8 @@ Promos = nil,
 ["Forest (1996)"]		= { "Forest",	{ "1996", false , false , false  , false  , false , false , false , false } },
 ["Forest (1999)"]		= { "Forest",	{ false , "1999", false , false  , false  , false , false , false , false } },
 ["Forest (2000)"]		= { "Forest",	{ false , false , "2000", false  , false  , false , false , false , false } },
-["Forest (2001a)"]		= { "Forest",	{ false , false , false , "2001a", false  , false , false , false , false } },
-["Forest (2001b)"]		= { "Forest",	{ false , false , false , false  , "2001b", false , false , false , false } },
+["Forest (2001a)"]		= { "Forest",	{ false , false , false , "2001a", false  , false , false , false , false } },--Ice Age
+["Forest (2001b)"]		= { "Forest",	{ false , false , false , false  , "2001b", false , false , false , false } },--Beta
 ["Forest (2003)"]		= { "Forest",	{ false , false , false , false  , false  , "2003", false , false , false } },
 ["Forest (2004)"]		= { "Forest",	{ false , false , false , false  , false  , false , "2004", false , false } },
 ["Forest (2005)"]		= { "Forest",	{ false , false , false , false  , false  , false , false , "2005", false } },
@@ -4641,9 +4612,9 @@ Promos = nil,
 },
 [30] = { name="Friday Night Magic Promos",
 	foilonly=true,
-	cardcount={ reg=172, tok=1, nontrad=0, repl=0 }, 
+	cardcount={ reg=183, tok=1, nontrad=0, repl=0 }, 
 	foiltweak={
-["Human Token|Wolf Token"] 				= { foil = false},
+["Human|Wolf Token"] 				= { foil = false},
 	},
 },
 [27] = { name="Alternate Art Lands",
@@ -4696,7 +4667,7 @@ Promos = nil,
 ["The Vanquisher"]		= { "The Vanquisher"	, { "Nontrad" } },
 	},
 	foiltweak={
-	--TODO update [26] foiltweak
+	--FIXME update [26] foiltweak
 ["Black Sun’s Zenith"] 				= { foil = true},
 ["Cryptborn Horror"] 				= { foil = true},
 ["Deathless Angel"] 				= { foil = true},
@@ -4726,8 +4697,8 @@ Promos = nil,
 	cardcount={ reg=87, tok=4, nontrad=0, repl=0 },
 	variants = {
 ["Vindicate"]					= { "Vindicate"	, { 1     , 2     } },
-["Vindicate (4)"]				= { "Vindicate"	, { 1     , false } },
-["Vindicate (7)"]				= { "Vindicate"	, { false , 2     } },
+["Vindicate (4)"]				= { "Vindicate"	, { 1     , false } },--2007
+["Vindicate (7)"]				= { "Vindicate"	, { false , 2     } },--2013
 ["Wolf│Make a Positive Mark"]	= { "Wolf"	, { "" } },
 ["Wolf│Open New Worlds"]		= { "Wolf"	, { "" } },
 	},
@@ -4778,19 +4749,28 @@ Promos = nil,
 [22] = { name="Prerelease Promos",
 	foil="y",-- "o" might be better to catch most foils, but there are 5 "yes" cards in here...
 	--TODO check whether the 5 "yes" are really "yes", if they're "Only" change to foilonly=true and cut "true" from foiltweak.
-	cardcount={ reg=121, tok=2, nontrad=17, repl=5 }, 
+	cardcount={ reg=195, tok=2, nontrad=17, repl=5 }, 
 	variants={
-["Lu Bu, Master-at-Arms"] 			= { "Lu Bu, Master-at-Arms"		, { "April", "July" } },
-["Lu Bu, Master-at-Arms (April)"] 	= { "Lu Bu, Master-at-Arms"		, { "April", false  } },
-["Lu Bu, Master-at-Arms (July)"] 	= { "Lu Bu, Master-at-Arms"		, { false  , "July" } },
-["Plains"] 							= { "Plains"					, { "DGM" } },
-["Celestine Reef"]					= { "Celestine Reef"			, { "Nontrad" } },	
-["Garruk the Slayer"]				= { "Garruk the Slayer"			, { "Nontrad" } },
-["Avacyn, Angel of Hope"]			= { "Avacyn, Angel of Hope"		, { "Replica" } },
-["Bruna, Light of Alabaster"]		= { "Bruna, Light of Alabaster"	, { "Replica" } },
-["Sigarda, Host of Herons"]			= { "Sigarda, Host of Herons"	, { "Replica" } },
-["Gisela, Blade of Goldnight"]		= { "Gisela, Blade of Goldnight", { "Replica" } },
-["Griselbrand"]						= { "Griselbrand"				, { "Replica" } },
+["Lu Bu, Master-at-Arms"] 				= { "Lu Bu, Master-at-Arms"		, { "April", "July" } },
+["Lu Bu, Master-at-Arms (April)"] 		= { "Lu Bu, Master-at-Arms"		, { "April", false  } },
+["Lu Bu, Master-at-Arms (July)"] 		= { "Lu Bu, Master-at-Arms"		, { false  , "July" } },
+["Plains"] 								= { "Plains"					, { "DGM" } },
+["Plains (DGM)"] 						= { "Plains"					, { "DGM" } },
+["Foe-Razer Regent"] 					= { "Foe-Razer Regent"			, { ""          , false        } },
+["Foe-Razer Regent (Dragonfury)"] 		= { "Foe-Razer Regent"			, { false       , "Dragonfury" } },
+["Evolving Wilds"] 						= { "Evolving Wilds"			, { "Dragonfury" } },
+["Evolving Wilds (Dragonfury)"] 		= { "Evolving Wilds"			, { "Dragonfury" } },
+["Dragonlord’s Servant"] 				= { "Dragonlord’s Servant"		, { "Dragonfury" } },
+["Dragonlord’s Servant (Dragonfury)"]	= { "Dragonlord’s Servant"		, { "Dragonfury" } },
+["Dragon Fodder"] 						= { "Dragon Fodder"				, { "Dragonfury" } },
+["Dragon Fodder (Dragonfury)"] 			= { "Dragon Fodder"				, { "Dragonfury" } },
+["Celestine Reef"]						= { "Celestine Reef"			, { "Nontrad" } },	
+["Garruk the Slayer"]					= { "Garruk the Slayer"			, { "Nontrad" } },
+["Avacyn, Angel of Hope"]				= { "Avacyn, Angel of Hope"		, { "Replica" } },
+["Bruna, Light of Alabaster"]			= { "Bruna, Light of Alabaster"	, { "Replica" } },
+["Sigarda, Host of Herons"]				= { "Sigarda, Host of Herons"	, { "Replica" } },
+["Gisela, Blade of Goldnight"]			= { "Gisela, Blade of Goldnight", { "Replica" } },
+["Griselbrand"]							= { "Griselbrand"				, { "Replica" } },
 ["The Avenger"]					= { "The Avenger"				, { "Nontrad" } },
 ["The General"]					= { "The General"				, { "Nontrad" } },
 ["The Hunter"]					= { "The Hunter"				, { "Nontrad" } },
@@ -4808,6 +4788,7 @@ Promos = nil,
 ["Cloak of the Philosopher"]	= { "Cloak of the Philosopher"	, { "Nontrad" } },
 	},
 	foiltweak={
+	--FIXME foiltweak [22] update
 ["Garruk the Slayer"]				= { foil = false },
 ["The Avenger"]						= { foil = false },
 ["The General"]						= { foil = false },
@@ -4899,7 +4880,7 @@ Promos = nil,
 ["Malfegor"]							= { foil = true },
 ["Mardu Ascendancy"]					= { foil = true },
 ["Master of Pearls"]					= { foil = true },
-["Mayor of Avabruck│Howlpack Alpha"]	= { foil = true },
+["Mayor of Avabruck|Howlpack Alpha"]	= { foil = true },
 ["Maze’s End"]							= { foil = true },
 ["Megantic Sliver"]						= { foil = true },
 ["Mercurial Pretender"]					= { foil = true },
@@ -4916,7 +4897,7 @@ Promos = nil,
 ["Rampaging Baloths"]					= { foil = true },
 ["Rathi Assassin"]						= { foil = true },
 ["Rattleclaw Mystic"]					= { foil = true },
-["Ravenous Demon│Archdemon of Greed"]	= { foil = true },
+["Ravenous Demon|Archdemon of Greed"]	= { foil = true },
 ["Resolute Archangel"]					= { foil = true },
 ["Rubblehulk"]							= { foil = true },
 ["Ryusei, the Falling Star"]			= { foil = true },
@@ -4952,7 +4933,7 @@ Promos = nil,
 },
 [21] = { name="Release & Launch Parties Promos",
 	foilonly=true,
-	cardcount={ reg=40, tok=1, nontrad=6, repl=6 },
+	cardcount={ reg=43, tok=1, nontrad=6, repl=6 },
 	variants={
 ["Plots that Span Centuries"]		= { "Plots that Span Centuries"		, { "Nontrad" } },
 ["Stairs to Infinity"]				= { "Stairs to Infinity"			, { "Nontrad" } },
@@ -4968,6 +4949,7 @@ Promos = nil,
 ["Incoming!"]						= { "Incoming!"						, { "Replica" } },
 	}, 
 	foiltweak={
+--FIXME [21] foiltweak update
 ["Incoming!"]						= { foil = false},
 ["Tazeem"]							= { foil = false},
 ["Plots that Span Centuries"]		= { foil = false},

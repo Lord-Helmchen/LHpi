@@ -42,8 +42,6 @@ update helper functions ouput to log instead od stdout
 ma.GetUrl now uses luasockets instead of returning nil
 ]]
 
---TODO make most dummy functions local
-
 --[[- "main" function called by Magic Album; just display error and return.
  Called by Magic Album to import prices. Parameters are passed from MA.
  We don't want to call the dummy from within MA.
@@ -84,8 +82,8 @@ function ma.GetUrl(url)
 	local host,file = string.match(url, "http://([^/]+)/(.+)" )
 	local http = require("socket.http")
 	local page,status = http.request(url)
-	if (not page) or (status~="200") then
-		print("http status" .. status)
+	if status~=200 then
+		print("http status " .. status)
 	end
 	return page
 end
@@ -553,7 +551,7 @@ function dummy.CompareSiteSets()
 		end
 	end
 	LHpi.Log(#missing .. " sets from dummy missing in site.sets:" ,0)
-	table.sort(missing, function(a, b) return a.id > b.id end)
+	table.sort(missing, function(a, b) return a.id > b.id end)--order descending by setid
 	for i,set in pairs(missing) do
 		LHpi.Log(string.format("[%3i] = %q;",set.id,set.name) ,0)
 	end
@@ -872,12 +870,12 @@ function main()
 		STRICTEXPECTED = true,
 --		STRICTOBJTYPE = true,
 		STRICTOBJTYPE = false,
---		OFFLINE = true,
-		OFFLINE = false,
+		OFFLINE = true,
+--		OFFLINE = false,
 		SAVELOG = true,
 		SAVEHTML = true,
 --		SAVEHTML = false,
---		DEBUG = true,
+		DEBUG = true,
 		DEBUGFOUND = true,
 --		DEBUGVARIANTS = true,
 --		SAVETABLE=true,
@@ -889,12 +887,12 @@ function main()
 --	local importlangs = { [5] = "FOO" }
 	local importlangs = dummy.alllangs
 --	local importsets = { [0] = "fakeset"; }
---	local importsets = { [800]="some set" }
+	local importsets = { [22]="some set" }
 --	local importsets = { [220]="foo";[800]="bar";[0]="baz";}
 --	local importsets = { [808] = "Magic 2015"; [806] = "Journey into Nyx"; [802] = "Born of the Gods"; [800] = "Theros"; }
 --	local importsets = dummy.coresets
 --	local importsets = dummy.expansionsets
-	local importsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
+--	local importsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 	
 	local scripts={
 		[0]={name="lib\\LHpi.sitescriptTemplate-v2.15.6.13.lua"},
@@ -930,7 +928,7 @@ function main()
 	-- now try to break the script :-)
 --	LHpi.DoImport(importfoil, importlangs, importsets)
 	ImportPrice( importfoil, importlangs, importsets )
-
+	
 	-- demo LHpi helper functions:
 --	print(LHpi.Tostring( { ["this"]=1, is=2, [3]="a", ["table"]="string" } ))
 --	print(LHpi.ByteRep("Zwölffüßler"))
@@ -942,7 +940,6 @@ function main()
 --	dummy.CompareDataSets(2.15,5)
 --	--dummy.CompareSiteSets()
 -- 	dummy.ListUnknownUrls(site.FetchExpansionList(),dummy.CompareSiteSets())
-
 
 	-- use ProFi to profile the script
 --	ProFi = require 'ProFi'

@@ -6,7 +6,7 @@ to import card pricing from www.trader-online.de.
 
 Inspired by and loosely based on "MTG Mint Card.lua" by Goblin Hero, Stromglad1 and "Import Prices.lua" by woogerboy21;
 who generously granted permission to "do as I like" with their code;
-everything else Copyright (C) 2012-2014 by Christian Harms.
+everything else Copyright (C) 2012-2015 by Christian Harms.
 If you want to contact me about the script, try its release thread in http://www.slightlymagic.net/forum/viewforum.php?f=32
 
 @module LHpi.site
@@ -98,7 +98,7 @@ libver = "2.14"
 dataver = "5"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "13"
+scriptver = "14"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.trader-onlineDE-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -216,10 +216,11 @@ end
  @param #number setid		see site.sets
  @param #number langid		see site.langs
  @param #number frucid		see site.frucs
- @param #boolean offline	(can be nil) use local file instead of url
+ @param #boolean offline	DEPRECATED, read global OFFLINE instead if you need really it.
+ 							(can be nil) use local file instead of url
  @return #table { #string (url)= #table { isfile= #boolean, (optional) foilonly= #boolean, (optional) setid= #number, (optional) langid= #number, (optional) frucid= #number } , ... }
 ]]
-function site.BuildUrl( setid,langid,frucid,offline )
+function site.BuildUrl( setid,langid,frucid )
 	site.domain = "www.trader-online.de/"
 	if frucid == 1 then
 		site.frucfileprefix = "foil"
@@ -241,13 +242,7 @@ function site.BuildUrl( setid,langid,frucid,offline )
 		seturl = "i" .. string.gsub( seturl, "%%20", "" )
 	end
 	local url = site.domain ..  site.frucfileprefix .. site.file .. site.setprefix .. site.frucs[frucid].url .. "-" .. seturl .. site.langs[langid].url
---	if offline then
---		url = string.gsub( url, "%?", "_" )
---		url = string.gsub( url, "/", "_" )
---		container[url] = { isfile = true}
---	else
-		container[url] = {}
---	end -- if offline 
+	container[url] = {}
 	if site.frucs[frucid].isfoil then -- mark url as foil-only
 		container[url].foilonly = true
 	else
@@ -262,13 +257,8 @@ function site.BuildUrl( setid,langid,frucid,offline )
 		url1 = string.gsub( url1 , "DvD" , "DvD-W" )
 		url2 = string.gsub( url2 , "ELSTEZ" , "TEZ" )
 		url2 = string.gsub( url2 , "DvD" , "DvD-B" )
---		if offline then
---			container[url1] = { isfile = true}
---			container[url2] = { isfile = true}
---		else
-			container[url1] = {}			
-			container[url2] = {}			
---		end
+		container[url1] = {}			
+		container[url2] = {}			
 		if site.frucs[frucid].isfoil then
 			container[url1].foilonly = true
 			container[url2].foilonly = true

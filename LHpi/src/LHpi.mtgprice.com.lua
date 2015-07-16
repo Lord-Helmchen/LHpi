@@ -6,7 +6,7 @@ to import card pricing from www.mtgprice.com.
 
 Inspired by and loosely based on "MTG Mint Card.lua" by Goblin Hero, Stromglad1 and "Import Prices.lua" by woogerboy21;
 who generously granted permission to "do as I like" with their code;
-everything else Copyright (C) 2012-2014 by Christian Harms.
+everything else Copyright (C) 2012-2015 by Christian Harms.
 If you want to contact me about the script, try its release thread in http://www.slightlymagic.net/forum/viewforum.php?f=32
 
 @module LHpi.site
@@ -106,7 +106,7 @@ libver = "2.14"
 dataver = "5"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "5"
+scriptver = "6"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.mtgprice.com-v" .. libver .. "." .. dataver .. "" .. scriptver .. ".lua"
@@ -222,10 +222,11 @@ end
  @param #number setid		see site.sets
  @param #number langid		see site.langs
  @param #number frucid		see site.frucs
- @param #boolean offline	(can be nil) use local file instead of url
+ @param #boolean offline	DEPRECATED, read global OFFLINE instead if you need really it.
+ 							(can be nil) use local file instead of url
  @return #table { #string (url)= #table { isfile= #boolean, (optional) foilonly= #boolean, (optional) setid= #number, (optional) langid= #number, (optional) frucid= #number } , ... }
 ]]
-function site.BuildUrl( setid,langid,frucid,offline )
+function site.BuildUrl( setid,langid,frucid )
 	site.domain = "www.mtgprice.com"
 	site.setprefix = "/spoiler_lists/"
 	local container = {}
@@ -237,13 +238,6 @@ function site.BuildUrl( setid,langid,frucid,offline )
 	end
 	for _i,seturl in pairs(urls) do
 		local url = site.domain .. site.setprefix .. seturl .. site.frucs[frucid].url
---		if offline then
---			url = string.gsub( url, "%?", "_" )
---			url = string.gsub( url, "/", "_" )
---			container[url] = { isfile = true}
---		else
-			container[url] = {}
---		end -- if offline 
 		container[url].frucid = frucid -- keep frucid for ParseHtmlData
 	end
 print(LHpi.Tostring(container))
@@ -582,9 +576,9 @@ site.sets = {
 [675]=nil,--Coldsnap Theme Decks
 [635]=nil,--Magic Encyclopedia
 [600]={id = 600, lang = { [1]=true }, fruc = { true , true }, url = "Unhinged"},--no foils on site
-[490]={id = 490, lang = { [1]=true }, fruc = { true , true }, url = "Deckmasters_Box_Set"},--Deckmaster --TODO foiltweak
+[490]={id = 490, lang = { [1]=true }, fruc = { true , true }, url = "Deckmasters_Box_Set"},
 [440]={id = 440, lang = { [1]=true }, fruc = { true , true }, url = "Beatdown_Box_Set"},
-[415]={id = 415, lang = { [1]=true }, fruc = { true , true }, url = "Starter_2000"},--TODO foiltweak
+[415]={id = 415, lang = { [1]=true }, fruc = { true , true }, url = "Starter_2000"},
 [405]={id = 405, lang = { [1]=true }, fruc = { true , true }, url = "Battle_Royale_Box_Set"},
 [390]={id = 390, lang = { [1]=true }, fruc = { true , true }, url = "Starter_1999"},
 [380]={id = 380, lang = { [1]=true }, fruc = { true , true }, url = "Portal_Three_Kingdoms"},   

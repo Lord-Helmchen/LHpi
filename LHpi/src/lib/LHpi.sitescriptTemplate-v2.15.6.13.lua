@@ -4,7 +4,7 @@ Template to write new sitescripts for LHpi library
 
 Inspired by and loosely based on "MTG Mint Card.lua" by Goblin Hero, Stromglad1 and "Import Prices.lua" by woogerboy21;
 who generously granted permission to "do as I like" with their code;
-everything else Copyright (C) 2012-2014 by Christian Harms.
+everything else Copyright (C) 2012-2015 by Christian Harms.
 If you want to contact me about the script, try its release thread in http://www.slightlymagic.net/forum/viewforum.php?f=32
 
 @module LHpi.site
@@ -304,7 +304,8 @@ This will be used by site.FetchExpansionList().
  @param #number setid		see site.sets
  @param #number langid		see site.langs
  @param #number frucid		see site.frucs
- @param #boolean offline	(can be nil) use local file instead of url
+ @param #boolean offline	DEPRECATED, read global OFFLINE instead if you need really it.
+ 							(can be nil) use local file instead of url
  @return #table { #string (url)= #table { isfile= #boolean, (optional) foilonly= #boolean, (optional) setid= #number, (optional) langid= #number, (optional) frucid= #number } , ... }
 ]]
 --function site.BuildUrl( setid,langid,frucid,offline )
@@ -328,15 +329,19 @@ This will be used by site.FetchExpansionList().
 --		for _i,seturl in pairs(urls) do
 --			seturl = url .. seturl .. site.langprefix .. site.langs[langid].url .. site.frucprefix .. site.frucs[frucid].url .. site.suffix
 --			local details = {}
---			if offline then
---				--LHpi.GetDourceData already does:
---				--seturl = string.gsub(seturl, '[/\\:%*%?<>|"]', "_")
---				--details.isfile = true
---			end -- if offline 
 --			if site.frucs[frucid].isfoil and not site.frucs[frucid].isnonfoil then
 --				detals.foilonly = true
 --			end--if
---		
+--
+--			--LHpi.GetDourceData already does:
+--			if OFFLINE then
+--				--seturl = string.gsub(seturl, '[/\\:%*%?<>|"]', "_")
+--				--details.isfile = true
+--			end -- if OFFLINE
+--			if not details.isfile then
+--				seturl = "http://" .. seturl
+--			end -- if isfile
+----		
 --			container[seturl] = details
 --		end--for
 --		return container
@@ -369,7 +374,7 @@ function site.FetchExpansionList()
 	for sid,name in pairs(expansionSource) do
 		expansions[sid]={name=name, urlsuffix = LHpi.OAuthEncode(name)}
 	end
-
+	
 --	
 --	for i,expansion in pairs(expansions) do
 --		expansions[i].urlsuffix = LHpi.OAuthEncode(expansion.name)
@@ -399,9 +404,9 @@ site.updateFormatString = "[%i]={id=%3i, lang = { [1]=true }, fruc = { true , tr
  @return #string newCard.name		(optional) will pre-set the card's unique (for the cardsetTable) identifying name.
  @return #table newCard.lang		(optional) will override LHpi.buildCardData generated values.
  @return #boolean newCard.drop		(optional) will override LHpi.buildCardData generated values.
- @return #table newCard.variant		(optional) will override LHpi.buildCardData generated values.
- @return #number or #table newCard.regprice		(optional) will override LHpi.buildCardData generated values. #number or #table { [#number langid]= #number,...}
- @return #number or #table newCard.foilprice 	(optional) will override LHpi.buildCardData generated values. #number or #table { [#number langid]= #number,...}
+ @return #table newCard.variant		(discouraged) will override LHpi.buildCardData generated values.
+ @return #number or #table newCard.regprice		(discouraged) will override LHpi.buildCardData generated values. #number or #table { [#number langid]= #number,...}
+ @return #number or #table newCard.foilprice 	(discouraged) will override LHpi.buildCardData generated values. #number or #table { [#number langid]= #number,...}
  
  @function [parent=#site] ParseHtmlData
  @param #string foundstring		one occurence of siteregex from raw html data
@@ -445,6 +450,29 @@ site.updateFormatString = "[%i]={id=%3i, lang = { [1]=true }, fruc = { true , tr
 --	-- if you don't want a full namereplace table, gsubs like this might take care of a lot of fails.
 --	card.name = string.gsub( card.name , "AE" , "Æ")
 --	card.name = string.gsub( card.name , "Ae" , "Æ")
+--
+--	if setid == 25 then -- Judge Gift Cards
+--		if card.name == "Elesh Norn, Grand Cenobite" then
+--			card.lang = { [17]="PHY" }
+--		else
+--			card.lang[17] = nil
+--		end
+--	elseif setid == 22 then -- Prerelease Promos
+--		for _,lid in ipairs({12,13,14,15,16}) do
+--			card.lang[lid] = nil
+--		end
+--		if card.name == "Glory" then
+--			card.lang = { [12]="HEB"}
+--		elseif card.name == "Stone-Tongue Basilisk" then
+--			card.lang = { [13]="ARA" }
+--		elseif card.name == "Raging Kavu" then
+--			card.lang = { [14]="LAT" }
+--		elseif card.name == "Fungal Shambler" then
+--			card.lang = { [15]="SAN"}
+--		elseif card.name == "Questing Phelddagrif" then
+--			card.lang = { [16]="GRC" }
+--		end
+--	end
 --
 --	return card
 --end -- function site.BCDpluginPre
@@ -498,12 +526,12 @@ site.langs = {
 --	[9]  = { id= 9, url="" },--Simplified Chinese
 --	[10] = { id=10, url="" },--Traditional Chinese
 --	[11] = { id=11, url="" },--Korean
---	[12] = { id=12, url="" },--Hebrew			-- Only 1 card, in [22] Prerelease Promos
---	[13] = { id=13, url="" },--Arabic			-- Only 1 card, in [22] Prerelease Promos
---	[14] = { id=14, url="" },--Latin			-- Only 1 card, in [22] Prerelease Promos
---	[15] = { id=15, url="" },--Sanskrit			-- Only 1 card, in [22] Prerelease Promos
---	[16] = { id=16, url="" },--Ancient Greek	-- Only 1 card, in [22] Prerelease Promos
---	[17] = { id=17, url="" },--Phyrexian		-- Only 1 card, in [25] Judge Gift Cards
+	[12] = { id=12, url="" },-- Only "Glory" in [22] Prerelease Promos
+	[13] = { id=13, url="" },-- Only "Stone-Tongue Basilisk" in [22] Prerelease Promos
+	[14] = { id=14, url="" },-- Only "Raging Kavu" in [22] Prerelease Promos
+	[15] = { id=15, url="" },-- Only "Fungal Shambler" in [22] Prerelease Promos
+	[16] = { id=16, url="" },-- Only "Questing Phelddagrif" in [22] Prerelease Promos
+	[17] = { id=17, url="" },-- Only "Elesh Norn, Grand Cenobite" in [25] Judge Gift Cards
 }
 
 --[[- table of available rarities.
@@ -715,13 +743,13 @@ site.sets = {
 --															"",--Guru Lands
 --															} },
 --[26] ={id= 26, lang = { [1]=true }, fruc = { true , true }, url = ""},--Game Day Promos
---[25] ={id= 25, lang = { [1]=true }, fruc = { true , true }, url = ""},--Judge Promos
+--[25] ={id= 25, lang = { [1]=true, [17]="PHY" }, fruc = { true , true }, url = ""},--Judge Promos
 --[24] ={id= 24, lang = { [1]=true }, fruc = { true , true }, url = ""},--Champs Promos
 --[23] ={id= 23, lang = { [1]=true }, fruc = { true , true }, url = { --Gateway & WPN Promos
 --														"",--Gateway Promos
 --														"",--WPN Promos
 --														} },
---[22] ={id= 22, lang = { [1]=true }, fruc = { true , true }, url = ""},--Prerelease Cards
+--[22] ={id= 22, lang = { [1]=true,[12]="HEB",[13]="ARA",[14]="LAT",[15]="SAN",[16]="GRC" }, fruc = { true , true }, url = ""},--Prerelease Cards
 --[21] ={id= 21, lang = { [1]=true }, fruc = { true , true }, url = ""},--Release & Launch Parties Promos
 --[20] ={id= 20, lang = { [1]=true }, fruc = { true , true }, url = ""},--Magic Player Rewards
 --[15] ={id= 15, lang = { [1]=true }, fruc = { true , true }, url = ""},--Convention Promos

@@ -6,7 +6,7 @@ to import card pricing from www.magiccardmarket.eu.
 
 Inspired by and loosely based on "MTG Mint Card.lua" by Goblin Hero, Stromglad1 and "Import Prices.lua" by woogerboy21;
 who generously granted permission to "do as I like" with their code;
-everything else Copyright (C) 2012-2014 by Christian Harms.
+everything else Copyright (C) 2012-2015 by Christian Harms.
 If you want to contact me about the script, try its release thread in http://www.slightlymagic.net/forum/viewforum.php?f=32
 
 @module LHpi.site
@@ -38,8 +38,6 @@ no longer check for lib and Data in deprecated location
 site.Initialize loads LHpi lib if not yet available (needed if ImportPrice is not called)
 new site.FetchExpansionList() 
 ]]
-
---TODO check if site.BuildUrl param offline is/should be deprecated
 
 -- options that control the amount of feedback/logging done by the script
 
@@ -490,10 +488,9 @@ end
  @param #number setid		see site.sets
  @param #number langid		see site.langs
  @param #number frucid		see site.frucs
- @param #boolean offline	(can be nil) use local file instead of url
  @return #table { #string (url)= #table { isfile= #boolean, (optional) foilonly= #boolean, (optional) setid= #number, (optional) langid= #number, (optional) frucid= #number } , ... }
 ]]
-function site.BuildUrl( setid,langid,frucid,offline )
+function site.BuildUrl( setid,langid,frucid )
 	local url = "mkmapi.eu/ws/v1.1/output." .. responseFormat
 	local container = {}
 	local urls
@@ -1116,7 +1113,7 @@ end -- function site.BCDpluginPre
 ]]
 function site.BCDpluginPost( card , setid , importfoil, importlangs )
 	LHpi.Log( "site.BCDpluginPost got " .. LHpi.Tostring( card ) .. " from set " .. setid ,2)
-	--TODO migrate settweak to library?
+	--FIXME migrate settweak to library?
 	if site.settweak[setid] and site.settweak[setid][card.name] then
 		if LOGSETTWEAK then
 			LHpi.Log( string.format( "settweak saved %s with new set %s" ,card.name, site.settweak[setid][card.name] ) ,0)
@@ -2672,7 +2669,7 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [415] = { pset={ [7]=1 }, failed={ [7]=LHpi.Data.sets[415].cardcount.reg-1  } },
 [390] = { dropped=188 },
 [340] = { dropped=4 },
-[310] = { pset={ [5]=LHpi.Data.sets[310].cardcount.reg+1,[6]=49 }, failed={ [5]=1,[6]=LHpi.Data.sets[310].cardcount.reg-49 } },-- TODO why does ma.SetPrice(setid="310",langid="5",cardname="Ogre Berserker",cardversion="",regprice="0.14",foilprice="0",objtype="1") return 2 ?!
+[310] = { pset={ [5]=LHpi.Data.sets[310].cardcount.reg+1,[6]=49 }, failed={ [5]=1,[6]=LHpi.Data.sets[310].cardcount.reg-49 } },-- FIXME why does ma.SetPrice(setid="310",langid="5",cardname="Ogre Berserker",cardversion="",regprice="0.14",foilprice="0",objtype="1") return 2 ?!
 [260] = { pset={ dup=LHpi.Data.sets[260].cardcount.reg-6 }, failed={ dup=6 }, duppset={ [3]="GER",[8]="JPN" }, dupfail={ [3]="GER",[8]="JPN" } },
 [201] = { pset={ [5]=69 } },
 -- Promos
@@ -2699,8 +2696,6 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [6]   = { pset={ [8]=7 }, dropped=232 },
 [5]   = { pset={ [4]=5,[5]=3,[6]=2,[7]=5 }, failed={ [4]=1,[5]=3,[6]=4,[7]=1 }, dropped=60 },
 [2]   = { dropped=2*29 },
-
---TODO remap regular/foilprice to any priceGuide entry and make configurable
 
 	}--end table site.expected
 	-- I'm too lazy to fill in site.expected myself, let the script do it ;-)

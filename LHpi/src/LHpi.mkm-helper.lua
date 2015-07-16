@@ -101,7 +101,7 @@ function ImportPrice( importfoil , importlangs , importsets )
 end -- function ImportPrice
 
 function main( mode )
---TODO select mode (downloadl-std,downloadl-all,boostervalue-std,boostervalue-all) via filenameoptions
+--TODO filenameoptions to select mode (downloadl-std,downloadl-all,boostervalue-std,boostervalue-all)
 	print("mode="..tostring(mode))
 	if mode==nil then
 		mode = { download=true, sets="standard" }

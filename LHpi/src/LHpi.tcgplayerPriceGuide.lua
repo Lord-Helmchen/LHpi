@@ -3,7 +3,7 @@
 
 Inspired by and loosely based on "MTG Mint Card.lua" by Goblin Hero, Stromglad1 and "Import Prices.lua" by woogerboy21;
 who generously granted permission to "do as I like" with their code;
-everything else Copyright (C) 2012-2014 by Christian Harms.
+everything else Copyright (C) 2012-2015 by Christian Harms.
 If you want to contact me about the script, try its release thread in http://www.slightlymagic.net/forum/viewforum.php?f=32
 
 @module LHpi.site
@@ -28,7 +28,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 removed url to filename changes that are done by the library if OFFLINE
 2.15.6.14
 new features from template/mkm branch
-site.BuildUrl supports multiple urls per set
+site.BuildUrl
+* supports multiple urls per set
+* set url.details.setid
+special handling for 
+* Dragonfury cards
+* unusual lang cards
+updated/fixed/added variants,namereplacements,expected
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -80,7 +86,7 @@ STRICTOBJTYPE = true
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
---OFFLINE = true
+OFFLINE = true
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
@@ -266,10 +272,11 @@ This will be used by site.FetchExpansionList().
  @param #number setid		see site.sets
  @param #number langid		see site.langs
  @param #number frucid		see site.frucs
- @param #boolean offline	(can be nil) use local file instead of url
+ @param #boolean offline	DEPRECATED, read global OFFLINE instead if you need really it.
+ 							(can be nil) use local file instead of url
  @return #table { #string (url)= #table { isfile= #boolean, (optional) foilonly= #boolean, (optional) setid= #number, (optional) langid= #number, (optional) frucid= #number } , ... }
 ]]
-function site.BuildUrl( setid,langid,frucid,offline )
+function site.BuildUrl( setid,langid,frucid )
 	site.domain = "magic.tcgplayer.com/"
 	site.file = "db/price_guide.asp"
 	site.setprefix = "?setname="
@@ -285,13 +292,20 @@ function site.BuildUrl( setid,langid,frucid,offline )
 			urls = { site.sets[setid].url }
 		end--if type(site.sets[setid].url)
 		for _i,seturl in pairs(urls) do
-			container[url .. seturl] = {}
+			container[url .. seturl] = { setid=setid }
 			if LHpi.Data.sets[setid].foilonly then
 				container[url .. seturl].foilonly = true
 			else
 				container[url .. seturl].foilonly = false -- just to make the point :)
 			end
 		end--for _i,seturl
+	end
+	if setid==22 then
+		for url,_details in pairs(container) do
+			if string.find(url,"dragonfury") then
+				container[url].dragonfury=true
+			end
+		end
 	end
 	return container
 end -- function site.BuildUrl
@@ -368,8 +382,12 @@ function site.ParseHtmlData( foundstring , urldetails )
 	if (price == 0) and string.find(foundstring,"SOON") then
 		name = name .. "(DROP price SOON)"
 	end
---	local newCard = { names = { [1] = name } , price = { [1] = price } }
 	local newCard = { names = { [1] = name } , price = price }
+	if urldetails.setid==22 then
+		if urldetails.dragonfury then
+			newCard.pluginData = { dragonfury=true }
+		end
+	end--if urldetails
 	return { newCard }
 end -- function site.ParseHtmlData
 
@@ -393,7 +411,35 @@ function site.BCDpluginPre( card, setid, importfoil, importlangs )
 	card.name = string.gsub( card.name , "^(Magic QA.*)" , "(DROP) %1")
 	card.name = string.gsub( card.name , "^(Staging Check.*)" , "(DROP) %1")
 	card.name = string.gsub( card.name , "^(RWN Testing.*)" , "(DROP) %1")
-
+	if setid == 105 then
+		card.name = string.gsub(card.name, "(CE)","")
+	elseif setid == 106 then
+		card.name = string.gsub(card.name, "(IE)","")
+	elseif setid == 25 then -- Judge Gift Cards
+		if card.name == "Elesh Norn, Grand Cenobite" then
+			card.lang = { [17]="PHY" }
+		else
+			card.lang[17] = nil
+		end
+	elseif setid == 22 then -- Prerelease Promos
+		for _,lid in ipairs({12,13,14,15,16}) do
+			card.lang[lid] = nil
+		end
+		if card.name == "Glory" then
+			card.lang = { [12]="HEB"}
+		elseif card.name == "Stone-Tongue Basilisk" then
+			card.lang = { [13]="ARA" }
+		elseif card.name == "Raging Kavu" then
+			card.lang = { [14]="LAT" }
+		elseif card.name == "Fungal Shambler" then
+			card.lang = { [15]="SAN"}
+		elseif card.name == "Questing Phelddagrif" then
+			card.lang = { [16]="GRC" }
+		end
+		if card.pluginData and card.pluginData.dragonfury then
+				card.name = card.name .. " (Dragonfury)"
+		end
+	end
 	return card
 end -- function site.BCDpluginPre
 
@@ -447,6 +493,12 @@ site.himelo = { "high" , "medium" , "low" }
 ]]
 site.langs = {
 	[1] = { id=1,  url="" },
+	[12] = { id=12, url="" },--Hebrew		-- Only 1 card, in [22] Prerelease Promos
+	[13] = { id=13, url="" },--Arabic		-- Only 1 card, in [22] Prerelease Promos
+	[14] = { id=14, url="" },--Latin		-- Only 1 card, in [22] Prerelease Promos
+	[15] = { id=15, url="" },--Sanskrit		-- Only 1 card, in [22] Prerelease Promos
+	[16] = { id=16, url="" },--Ancient Greek-- Only 1 card, in [22] Prerelease Promos
+	[17] = { id=17, url="" },--Phyrexian	-- Only 1 card, in [25] Judge Gift Cards
 }
 
 --[[- table of available rarities.
@@ -482,6 +534,7 @@ site.frucs = {
  @field [parent=#site.sets] #table fruc		{ #number (frucid)= #boolean , ... }
  @field [parent=#site.sets] #string url		infix for site.BuildUrl
 ]]
+--FIXME check nil sets with guessed urls
 site.sets = {
 -- Core Sets
 [808]={id = 808, lang = { true }, fruc = { true }, url = "Magic%202015%20(M15)"},--Magic 2015 (M15)
@@ -579,7 +632,7 @@ site.sets = {
 [819]=nil,--Modern Masters 2015 Edition
 [817]=nil,--Duel Decks: Anthology
 [815]=nil,--Fate Reforged Clash Pack
-[814]={id=814, lang = { [1]=true }, fruc = { false, true }, url = "C14"},--Commander 2014
+[814]={id=814, lang = { true }, fruc = { true }, url = "Commander%202014"},--Commander 2014
 [812]={id=812, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Speed%20vs.%20Cunning"},--Duel Decks: Speed vs. Cunning
 [811]=nil,--Magic 2015 Clash Pack
 [810]={id=810, lang = { true }, fruc = { true }, url = "magic%20modern%20event%20deck"},--Modern Event Deck 2014
@@ -602,7 +655,7 @@ site.sets = {
 [781]={id = 781, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Ajani%20vs.%20Nicol%20Bolas"},--Duel Decks: Ajani vs. Nicol Bolas
 [780]={id = 780, lang = { true }, fruc = { true }, url = "From%20the%20Vault%3A%20Legends"},--From the Vault: Legends
 [778]={id = 778, lang = { true }, fruc = { true }, url = "commander"},--Commander
-[777]={id = 777, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Knights%20vs%20Dragons"},--Duel Decks: Knights vs Dragons
+[777]={id = 777, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Knights%20vs.%20Dragons"},--Duel Decks: Knights vs Dragons
 [774]={id = 774, lang = { true }, fruc = { true }, url = "Premium%20Deck%20Series:%20Fire%20and%20Lightning"},--Premium Deck Series: Fire and Lightning
 [772]={id = 772, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Elspeth%20vs.%20Tezzeret"},--Duel Decks: Elspeth vs. Tezzeret
 [771]={id = 771, lang = { true }, fruc = { true }, url = "From%20the%20Vault%3A%20Relics"},--From the Vault: Relics
@@ -634,8 +687,8 @@ site.sets = {
 [235]=nil,--Multiverse Gift Box[225]=nil,--Introductory Two-Player Set
 [201]=nil,--Renaissance
 [200]={id = 200, lang = { true }, fruc = { true }, url = "chronicles"},--Chronicles
-[106]={id = 106, lang = { true }, fruc = { true }, url = "collectors%20edition"},--Collectors’ Edition (International)
-[105]={id = 105, lang = { true }, fruc = { true }, url = "collectors%20edition"},--Collectors’ Edition (Domestic)
+[106]={id = 106, lang = { true }, fruc = { true }, url = "international%20edition"},--Collectors’ Edition (International)
+[105]={id = 105, lang = { true }, fruc = { true }, url = "collector's%20edition"},--Collectors’ Edition (Domestic)
 [70] ={id =  70, lang = { true }, fruc = { true }, url = "vanguard"},--Vanguard
 [69] =nil,--Box Topper Cards
 -- Promo Cards
@@ -658,13 +711,16 @@ site.sets = {
 															"guru%20lands",--Guru Lands
 															} },
 [26] ={id =  26, lang = { true }, fruc = { true }, url = "game%20day%20promos"},--Game Day Promos
-[25] ={id =  25, lang = { true }, fruc = { true }, url = "judge%20promos"},--Judge Promos
+[25] ={id =  25, lang = { true, [17]="PHY" }, fruc = { true }, url = "judge%20promos"},--Judge Promos
 [24] ={id =  24, lang = { true }, fruc = { true }, url = "champs%20promos"},--Champs Promos
 [23] ={id =  23, lang = { true }, fruc = { true }, url = { --Gateway & WPN Promos
 														"gateway%20promos",--Gateway Promos
 														"wpn%20promos",--WPN Promos
 														} },
-[22] ={id =  22, lang = { true }, fruc = { true }, url = "prerelease%20cards"},--Prerelease Cards
+[22] ={id =  22, lang = { true,[12]="HEB",[13]="ARA",[14]="LAT",[15]="SAN",[16]="GRC" }, fruc = { true }, url = { --Prerelease Cards
+														"prerelease%20cards",
+														"tarkir%20dragonfury%20promos",
+														} },
 [21] ={id =  21, lang = { true }, fruc = { true }, url = { --Release & Launch Party Cards
 														"release%20event%20cards",--Release Event Cards
 														"launch%20party%20cards",--Launch Party Cards
@@ -673,7 +729,6 @@ site.sets = {
 [15] =nil,--Convention Promos
 [12] =nil,--Hobby Japan Commemorative Cards
 [11] =nil,--Redemption Program Cards
---TODO: 10 JSS Needs Variant Table
 [10] ={id =  10, lang = { true }, fruc = { true }, url = "JSS/MSS%20Promos"},--Junior Series Promos
 [9]  =nil,--Video Game Promos
 [8]  =nil,--Stores Promos
@@ -686,6 +741,7 @@ site.sets = {
 [9990]={id =   0, lang = { true }, fruc = { true }, url = "media%20promos"},--Media Promos
 -- "Special%20Occasion": sorting out the single page seems more trouble than it's worth
 [9991]={id =   0, lang = { true }, fruc = { true }, url = "special%20occasion"},--Special Occasion
+[9992]={id =   0, lang = { true }, fruc = { true }, url = "oversize-cards"},
 } -- end table site.sets
 
 --[[- card name replacement tables.
@@ -702,13 +758,14 @@ site.namereplace = {
 ["Beast Token (Black)"]					= "Beast Token (5)",
 ["Beast Token (Green)"]					= "Beast Token (9)",
 ["Land Mine"]							= "Land Mine Token",
+["Insect Token (Deathtouch)"]			= "Insect Token",
 },
 [797] = { -- M2014
 ["Elemental Token (Jones)"]				= "Elemental Token (7)",
 ["Elemental Token (Nelson)"]			= "Elemental Token (8)",
 },
 [779] = { -- M2012
-["AEther Adept"]						= "Æther Adept",
+["Aether Adept"]						= "Æther Adept",
 --["Pentiavite Token"]					= "Pentavite"
 },
 [770] = { -- M2011
@@ -750,70 +807,90 @@ site.namereplace = {
 ["Swamp (445)"]							= "Swamp (4)",
 },
 [180] = { -- 4th Edition
-["Forest (175)"]						= "Forest (1)",
-["Forest (176)"]						= "Forest (2)",
-["Forest (177)"]						= "Forest (3)",
-["Island (178)"]						= "Island (1)",
-["Island (179)"]						= "Island (2)",
-["Island (180)"]						= "Island (3)",
-["Mountain (182)"]						= "Mountain (1)",
-["Mountain (183)"]						= "Mountain (2)",
-["Mountain (184)"]						= "Mountain (3)",
-["Plains (186)"]						= "Plains (1)",
-["Plains (187)"]						= "Plains (2)",
-["Plains (188)"]						= "Plains (3)",
-["Swamp (190)"]							= "Swamp (1)",
-["Swamp (191)"]							= "Swamp (2)",
-["Swamp (192)"]							= "Swamp (3)",
+["Forest (Path)"]						= "Forest (1)",
+["Forest (Eyes)"]						= "Forest (2)",
+["Forest (Rocks)"]						= "Forest (3)",
+["Island (Green)"]						= "Island (1)",
+["Island (Purple)"]						= "Island (2)",
+["Island (Blue)"]						= "Island (3)",
+["Mountain (Dirt)"]						= "Mountain (1)",
+["Mountain (Slate)"]					= "Mountain (2)",
+["Mountain (Fog)"]						= "Mountain (3)",
+["Plains (No Mountains)"]				= "Plains (1)",
+["Plains (Trees)"]						= "Plains (2)",
+["Plains (No Trees)"]					= "Plains (3)",
+["Swamp (High Branch)"]					= "Swamp (1)",
+["Swamp (Two Branches)"]				= "Swamp (2)",
+["Swamp (Low Branch)"]					= "Swamp (3)",
 },
 [140] = { -- Revised
 --["El-Hajjâj"]							= "El-Hajjaj",
-["Forest (284)"]						= "Forest (1)",
-["Forest (285)"]						= "Forest (2)",
-["Forest (286)"]						= "Forest (3)",
-["Island (287)"]						= "Island (1)",
-["Island (288)"]						= "Island (2)",
-["Island (289)"]						= "Island (3)",
-["Mountain (290)"]						= "Mountain (1)",
-["Mountain (291)"]						= "Mountain (2)",
-["Mountain (292)"]						= "Mountain (3)",
-["Plains (293)"]						= "Plains (1)",
-["Plains (294)"]						= "Plains (2)",
-["Plains (295)"]						= "Plains (3)",
-["Swamp (299)"]							= "Swamp (1)",
-["Swamp (300)"]							= "Swamp (2)",
-["Swamp (301)"]							= "Swamp (3)",
+["Forest (Rocks)"]						= "Forest (1)",
+["Forest (Path)"]						= "Forest (2)",
+["Forest (Eyes)"]						= "Forest (3)",
+["Island (Purple)"]						= "Island (1)",
+["Island (Green)"]						= "Island (2)",
+["Island (Blue)"]						= "Island (3)",
+["Mountain (Slate)"]					= "Mountain (1)",
+["Mountain (Fog)"]						= "Mountain (2)",
+["Mountain (Dirt)"]						= "Mountain (3)",
+["Plains (No Trees)"]					= "Plains (1)",
+["Plains (Trees)"]						= "Plains (2)",
+["Plains (No Mountains)"]				= "Plains (3)",
+["Swamp (Low Branch)"]					= "Swamp (1)",
+["Swamp (High Branch)"]					= "Swamp (2)",
+["Swamp (Two Branches)"]				= "Swamp (3)",
+},
+[110]  = { -- Unlimited
+["Plains (No Trees)"]					= "Plains (1)",
+["Plains (Trees)"]						= "Plains (2)",
+["Plains (No Mountains)"]				= "Plains (3)",
+["Island (Blue)"]						= "Island (1)",
+["Island (Green)"]						= "Island (2)",
+["Island (Purple)"]						= "Island (3)",
+["Swamp (High Branch)"]					= "Swamp (1)",
+["Swamp (Low Branch)"]					= "Swamp (2)",
+["Swamp (Two Branches)"]				= "Swamp (3)",
+["Mountain (Slate)"]					= "Mountain (1)",
+["Mountain (Fog)"]						= "Mountain (2)",
+["Mountain (Dirt)"]						= "Mountain (3)",
+["Forest (Path)"]						= "Forest (1)",
+["Forest (Eyes)"]						= "Forest (2)",
+["Forest (Rocks)"]						= "Forest (3)",
 },
 [100]  = { -- Beta
-["Plains (A)"]							= "Plains (1)",
-["Plains (B)"]							= "Plains (2)",
-["Plains (C)"]							= "Plains (3)",
-["Island (A)"]							= "Island (1)",
-["Island (B)"]							= "Island (2)",
-["Island (C)"]							= "Island (3)",
-["Swamp (A)"]							= "Swamp (1)",
-["Swamp (B)"]							= "Swamp (2)",
-["Swamp (C)"]							= "Swamp (3)",
-["Mountain (A)"]						= "Mountain (1)",
-["Mountain (B)"]						= "Mountain (2)",
-["Mountain (C)"]						= "Mountain (3)",
-["Forest (A)"]							= "Forest (1)",
-["Forest (B)"]							= "Forest (2)",
-["Forest (C)"]							= "Forest (3)",
+["Plains (No Trees)"]					= "Plains (1)",
+["Plains (Trees)"]						= "Plains (2)",
+["Plains (No Mountains)"]				= "Plains (3)",
+["Island (Purple)"]						= "Island (1)",
+["Island (Green)"]						= "Island (2)",
+["Island (Blue)"]						= "Island (3)",
+["Swamp (Low Branch)"]					= "Swamp (1)",
+["Swamp (High Branch)"]					= "Swamp (2)",
+["Swamp (Two Branches)"]				= "Swamp (3)",
+["Mountain (Dirt)"]						= "Mountain (1)",
+["Mountain (Fog)"]						= "Mountain (2)",
+["Mountain (Slate)"]					= "Mountain (3)",
+["Forest (Rocks)"]						= "Forest (1)",
+["Forest (Path)"]						= "Forest (2)",
+["Forest (Eyes)"]						= "Forest (3)",
 },
 [90]  = { -- Alpha
-["Plains (A)"]							= "Plains (1)",
-["Plains (B)"]							= "Plains (2)",
-["Island (A)"]							= "Island (1)",
-["Island (B)"]							= "Island (2)",
-["Swamp (A)"]							= "Swamp (1)",
-["Swamp (B)"]							= "Swamp (2)",
-["Mountain (A)"]						= "Mountain (1)",
-["Mountain (B)"]						= "Mountain (2)",
-["Forest (A)"]							= "Forest (1)",
-["Forest (B)"]							= "Forest (2)",
+["Plains (No Trees)"]					= "Plains (1)",
+["Plains (Trees)"]						= "Plains (2)",
+["Island (Purple)"]						= "Island (1)",
+["Island (Green)"]						= "Island (2)",
+["Swamp (Low Branch)"]					= "Swamp (1)",
+["Swamp (High Branch)"]					= "Swamp (2)",
+["Mountain (Slate)"]					= "Mountain (1)",
+["Mountain (Fog)"]						= "Mountain (2)",
+["Forest (Rocks)"]						= "Forest (1)",
+["Forest (Path)"]						= "Forest (2)",
 },
 --expansion sets
+[818] = { -- Dragons of Tarkir
+["Obscuring Aether"]					= "Obscuring Æther",
+},
 [813] = { -- Khans of Tarkir
 --["Morph Reminder Card"]					= "Morph Token",
 ["Warrior Token (Sword & Shield)"]		= "Warrior Token (3)",
@@ -901,24 +978,9 @@ site.namereplace = {
 ["Wurm Token (Lifelink)"]				= "Wurm Token (9)",
 },
 [767] = { -- Rise of the Eldazi
-["Eldrazi Spawn Token (A)"]				= "Eldrazi Spawn Token (1a)",
-["Eldrazi Spawn Token (B)"]				= "Eldrazi Spawn Token (1b)",
-["Eldrazi Spawn Token (C)"]				= "Eldrazi Spawn Token (1c)",
---["Plains - B"]							= "Plains (230)",
---["Plains - C"]							= "Plains (231)",
---["Plains - D"]							= "Plains (232)",
---["Island - B"]							= "Island (234)",
---["Island - C"]							= "Island (235)",
---["Island - D"]							= "Island (236)",
---["Swamp - B"]							= "Swamp (238)",
---["Swamp - C"]							= "Swamp (239)",
---["Swamp - D"]							= "Swamp (240)",
---["Mountain - B"]						= "Mountain (242)",
---["Mountain - C"]						= "Mountain (243)",
---["Mountain - D"]						= "Mountain (244)",
---["Forest - B"]							= "Forest (246)",
---["Forest - C"]							= "Forest (247)",
---["Forest - D"]							= "Forest (248)",
+["Eldrazi Spawn Token (Briclot)"]		= "Eldrazi Spawn Token (1a)",
+["Eldrazi Spawn Token (Tedin)"]			= "Eldrazi Spawn Token (1b)",
+["Eldrazi Spawn Token (Meignaud)"]		= "Eldrazi Spawn Token (1c)",
 },
 [765] = { -- Worldwake
 ["Aether Tradewinds"]					= "Æther Tradewinds"
@@ -940,7 +1002,7 @@ site.namereplace = {
 ["Aethersnipe"]							= "Æthersnipe",
 ["Elemental Token (Green)"]				= "Elemental Token (8)",
 ["Elemental Token (White)"]				= "Elemental Token (2)",
-["Elemental Shaman"]					= "Elemental Shaman Token",
+--["Elemental Shaman"]					= "Elemental Shaman Token",
 },
 [710] = { -- Future Sight
 ["Vedalken Aethermage"]					= "Vedalken Æthermage"
@@ -1005,7 +1067,6 @@ site.namereplace = {
 [560] = { -- Mirrodin
 ["Gate to the Aether"]					= "Gate to the Æther",
 ["Aether Spellbomb"]					= "Æther Spellbomb",
-["Island (293"]							= "Island (293)",
 },
 [520] = { -- Onslaught
 ["Aether Charge"]						= "Æther Charge"
@@ -1036,67 +1097,68 @@ site.namereplace = {
 [300] = { -- Exodus
 ["Aether Tide"]							= "Æther Tide"
 },
-[280] = { -- Mirage
-["Forest (308)"]						= "Forest (1)",
-["Forest (309)"]						= "Forest (2)",
-["Forest (310)"]						= "Forest (3)",
-["Forest (311)"]						= "Forest (4)",
-["Island (313)"]						= "Island (1)",
-["Island (314)"]						= "Island (2)",
-["Island (315)"]						= "Island (3)",
-["Island (316)"]						= "Island (4)",
-["Mountain (319)"]						= "Mountain (1)",
-["Mountain (320)"]						= "Mountain (2)",
-["Mountain (321)"]						= "Mountain (3)",
-["Mountain (322)"]						= "Mountain (4)",
-["Plains (324)"]						= "Plains (1)",
-["Plains (325)"]						= "Plains (2)",
-["Plains (326)"]						= "Plains (3)",
-["Plains (327)"]						= "Plains (4)",
-["Swamp (334)"]							= "Swamp (1)",
-["Swamp (335)"]							= "Swamp (2)",
-["Swamp (336)"]							= "Swamp (3)",
-["Swamp (337)"]							= "Swamp (4)",
+[280] = { -- Tempest
+["Forest (Skyward)"]					= "Forest (1)",
+["Forest (Pond)"]						= "Forest (2)",
+["Forest (Cloudy)"]						= "Forest (3)",
+["Forest (Ledge)"]						= "Forest (4)",
+["Island (Rocky Path)"]					= "Island (1)",
+["Island (Crashing Waves)"]				= "Island (2)",
+["Island (Spire)"]						= "Island (3)",
+["Island (Inlet)"]						= "Island (4)",
+["Mountain (Vertical)"]					= "Mountain (1)",
+["Mountain (Right)"]					= "Mountain (2)",
+["Mountain (Joined)"]					= "Mountain (3)",
+["Mountain (Left)"]						= "Mountain (4)",
+["Plains (Rocks)"]						= "Plains (1)",
+["Plains (Dead Tree)"]					= "Plains (2)",
+["Plains (Shrub)"]						= "Plains (3)",
+["Plains (Ant Hill)"]					= "Plains (4)",
+["Swamp (Vertical Log)"]				= "Swamp (1)",
+["Swamp (Horizontal Log)"]				= "Swamp (2)",
+["Swamp (Boulder)"]						= "Swamp (3)",
+["Swamp (River)"]						= "Swamp (4)",
 },
 [270] = { -- Weatherlight
 ["Aether Flash"]						= "Æther Flash",
 ["Bosium Strip"]						= "Bösium Strip"
 },
 [230] = { -- Mirage
-["Forest (292)"]						= "Forest (1)",
-["Forest (293)"]						= "Forest (2)",
-["Forest (294)"]						= "Forest (3)",
-["Forest (295)"]						= "Forest (4)",
-["Island (297)"]						= "Island (1)",
-["Island (298)"]						= "Island (2)",
-["Island (299)"]						= "Island (3)",
-["Island (300)"]						= "Island (4)",
-["Mountain (301)"]						= "Mountain (1)",
-["Mountain (302)"]						= "Mountain (2)",
-["Mountain (303)"]						= "Mountain (3)",
-["Mountain (304)"]						= "Mountain (4)",
-["Plains (306)"]						= "Plains (1)",
-["Plains (307)"]						= "Plains (2)",
-["Plains (308)"]						= "Plains (3)",
-["Plains (309)"]						= "Plains (4)",
-["Swamp (311)"]							= "Swamp (1)",
-["Swamp (312)"]							= "Swamp (2)",
-["Swamp (313)"]							= "Swamp (3)",
-["Swamp (414)"]							= "Swamp (4)",
+["Forest (Pink Flowers Right)"]			= "Forest (1)",
+["Forest (Waterfall)"]					= "Forest (2)",
+["Forest (White Flowers Right)"]		= "Forest (3)",
+["Forest (Red Tree Leaves)"]			= "Forest (4)",
+["Island (Palm Tree)"]					= "Island (1)",
+["Island (Off-Center Spire)"]			= "Island (2)",
+["Island (Rocky Water)"]				= "Island (3)",
+["Island (Sunset)"]						= "Island (4)",
+["Mountain (Green)"]					= "Mountain (1)",
+["Mountain (Orange)"]					= "Mountain (2)",
+["Mountain (Purple)"]					= "Mountain (3)",
+["Mountain (Red)"]						= "Mountain (4)",
+["Plains (Watering Hole)"]				= "Plains (1)",
+["Plains (Buffalo)"]					= "Plains (2)",
+["Plains (Zebra)"]						= "Plains (3)",
+["Plains (Bird)"]						= "Plains (4)",
+["Swamp (Mossy Roots)"]					= "Swamp (1)",
+["Swamp (Foggy Night)"]					= "Swamp (2)",
+["Swamp (Eyes in Log)"]					= "Swamp (3)",
+["Swamp (Tall Grass)"]					= "Swamp (4)",
 },
 [220] = { -- Alliances
 ["Aesthir Glider"]								= "Aesthir Glider (1)",
 ["Aesthir Glider (Moon)"]						= "Aesthir Glider (2)",
 ["Agent of Stromgald"]							= "Agent of Stromgald (2)",
 ["Agent of Stromgald (Woman Holding Staff)"]	= "Agent of Stromgald (1)",
+["Arcane Denial"]								= "Arcane Denial (2)",
 ["Arcane Denial (Axe)"]							= "Arcane Denial (1)",
-["Arcane Denial (Sword)"]						= "Arcane Denial (2)",
+--["Arcane Denial (Sword)"]						= "Arcane Denial (2)",
 ["Astrolabe"]									= "Astrolabe (2)",
 ["Astrolabe (Globe)"]							= "Astrolabe (1)",
 ["Awesome Presence"]							= "Awesome Presence (2)",
 ["Awesome Presence (Man Being Chased)"]			= "Awesome Presence (1)",
-["Balduvian War-Makers"] 				= "Balduvian War-Makers (1)",
-["Balduvian War-Makers (Verison 2)"]	= "Balduvian War-Makers (2)",
+["Balduvian War-Makers (Gen. Varchild Flavor)"]	= "Balduvian War-Makers (1)",
+["Balduvian War-Makers"]						= "Balduvian War-Makers (2)",
 ["Benthic Explorers"]							= "Benthic Explorers (1)",
 ["Benthic Explorers (On the Rocks)"]			= "Benthic Explorers (2)",
 ["Bestial Fury"]								= "Bestial Fury (2)",
@@ -1121,7 +1183,8 @@ site.namereplace = {
 ["Fevered Strength (Foaming at Mouth)"]			= "Fevered Strength (1)",
 ["Foresight"]									= "Foresight (2)",
 ["Foresight (White Dress)"]						= "Foresight (1)",
-["Fyndhorn Druid"] 						= "Fyndhorn Druid (1)",
+["Fyndhorn Druid (Facing Right)"] 				= "Fyndhorn Druid (1)",
+["Fyndhorn Druid"] 								= "Fyndhorn Druid (2)",
 ["Gift of the Woods"]							= "Gift of the Woods (2)",
 ["Gift of the Woods (Girl/ Lynx)"]				= "Gift of the Woods (1)",
 ["Gorilla Berserkers"]							= "Gorilla Berserkers (1)",
@@ -1134,17 +1197,16 @@ site.namereplace = {
 ["Gorilla War Cry (Red Club)"]					= "Gorilla War Cry (1)",
 ["Guerrilla Tactics"]							= "Guerrilla Tactics (2)",
 ["Guerrilla Tactics (Kneeling Knight"]			= "Guerrilla Tactics (1)", 
-["Insidious Bookworms"]							= "Insidious Bookworms (2)",
-["Insidious Bookworms (Horde of Worms)"]		= "Insidious Bookworms (1)",
+["Insidious Bookworms"]							= "Insidious Bookworms (1)",
+--["Insidious Bookworms (Horde of Worms)"]		= "Insidious Bookworms (1)",
+["Insidious Bookworms (Single)"]				= "Insidious Bookworms (2)",
 ["Kjeldoran Escort"]							= "Kjeldoran Escort (2)",
 ["Kjeldoran Escort (Green Dog)"]				= "Kjeldoran Escort (1)",
 ["Kjeldoran Pride"]								= "Kjeldoran Pride (2)",
 ["Kjeldoran Pride (Boy|Hawk)"]					= "Kjeldoran Pride (1)",
 ["Lat-Nam's Legacy"]							= "Lat-Nam's Legacy (1)",
 ["Lat-Nam's Legacy (2 Blue Men)"]				= "Lat-Nam's Legacy (2)",
-["Lim-Dul's High Guard"]				= "Lim-Dûl's High Guard (1)",
---["Lim-Dûl's High Guard"]						= "Lim-Dûl's High Guard (1)",
---["Lim-Dul's High Guard (2)"]			= "Lim-Dûl's High Guard (2)",
+["Lim-Dul's High Guard"]						= "Lim-Dûl's High Guard (1)",
 ["Lim-Dul's High Guard (Red Armor)"]			= "Lim-Dûl's High Guard (2)",
 ["Martyrdom"]									= "Martyrdom (2)",
 ["Martyrdom (Wounded on Ground)"]				= "Martyrdom (1)",
@@ -1164,12 +1226,14 @@ site.namereplace = {
 ["Royal Herbalist (Man)"]						= "Royal Herbalist (2)",
 ["Soldevi Heretic"]								= "Soldevi Heretic (1)",
 ["Soldevi Heretic (Scolding Old Men)"]			= "Soldevi Heretic (2)",
-["Soldevi Adnate"]	 					= "Soldevi Adnate (1)",
+["Soldevi Adnate"]	 							= "Soldevi Adnate (1)",
+["Soldevi Adnate (Woman)"]	 					= "Soldevi Adnate (2)",
 ["Soldevi Sage"]								= "Soldevi Sage (1)",
 ["Soldevi Sage (2 Candles)"]					= "Soldevi Sage (2)",
 ["Soldevi Sentry"]								= "Soldevi Sentry (2)",
 ["Soldevi Sentry (Silver Bust)"]				= "Soldevi Sentry (1)",
-["Soldevi Steam Beast"] 				= "Soldevi Steam Beast (1)",
+["Soldevi Steam Beast"] 						= "Soldevi Steam Beast (1)",
+["Soldevi Steam Beast (Purple Sun)"] 			= "Soldevi Steam Beast (2)",
 ["Stench of Decay"]								= "Stench of Decay (2)",
 ["Stench of Decay (Red Flower)"]				= "Stench of Decay (1)",
 ["Storm Crow"]									= "Storm Crow (2)",
@@ -1190,7 +1254,8 @@ site.namereplace = {
 ["Viscerid Armor (Crashing Wave)"]				= "Viscerid Armor (1)",
 ["Whip Vine"]									= "Whip Vine (2)",
 ["Whip Vine (Only Plants)"]						= "Whip Vine (1)",
-["Wild Aesthir"] 						= "Wild Aesthir (1)",
+["Wild Aesthir"] 								= "Wild Aesthir (1)",
+["Wild Aesthir (Lightning Strike)"] 			= "Wild Aesthir (2)",
 ["Yavimaya Ancients"]							= "Yavimaya Ancients (2)",
 ["Yavimaya Ancients (Rearing Horse)"]			= "Yavimaya Ancients (1)",
 },
@@ -1245,63 +1310,129 @@ site.namereplace = {
 ["Forest (330)"]						= "Forest (3)",
 },
 [170] = { -- Fallen Empires
---["Armor Thrull"]					= "Armor Thrull (1)",
-["Armor Thrull (Spencer)"]			= "Armor Thrull (2)",
-["Armor Thrull (Menges)"]			= "Armor Thrull (3)",
-["Armor Thrull (Kirschner)"]		= "Armor Thrull (4)",
---["Basal Thrull"]					= "Basal Thrull (1)",
-["Basal Thrull (P. Foglio)"]		= "Basal Thrull (2)",
-["Basal Thrull (Ferguson)"]			= "Basal Thrull (3)",
-["Basal Thrull (Rush)"]				= "Basal Thrull (4)",
-["Brassclaw Orcs"] 					= "Brassclaw Orcs (1)",
-["Combat Medic"] 					= "Combat Medic (1)",
-["Dwarven Soldier"] 				= "Dwarven Soldier (1)",
-["Elven Fortress"] 					= "Elven Fortress (1)",
-["Elvish Hunter"] 					= "Elvish Hunter (1)",
-["Elvish Scout"] 					= "Elvish Scout (1)",
-["Farrel's Zealot"] 				= "Farrel's Zealot (1)",
-["Goblin Chirurgeon"] 				= "Goblin Chirurgeon (1)",
-["Goblin Grenade"]					= "Goblin Grenade (1)",
-["Goblin Grenade (Frazier Art)"]	= "Goblin Grenade (2)",
-["Goblin Grenade (Rush Art)"]		= "Goblin Grenade (3)",
-["Goblin War Drums"] 				= "Goblin War Drums (1)",
---["High Tide"] 						= "High Tide (1)",
-["High Tide (Wave)"] 				= "High Tide (1)",
-["High Tide (Merfolk)"] 			= "High Tide (2)",
-["High Tide (Coral)"] 				= "High Tide (3)",
---["Homarid"]							= "Homarid (1)",
-["Homarid (Hoover)"]				= "Homarid (1)",
-["Homarid (Hudson)"]				= "Homarid (2)",
-["Homarid (Tedin)"]					= "Homarid (3)",
-["Homarid (Wackwitz)"]				= "Homarid (4)",
-["Homarid Warrior"] 				= "Homarid Warrior (1)",
---["Hymn to Tourach"] 				= "Hymn to Tourach (1)",
-["Hymn to Tourach (Wolf)"] 			= "Hymn to Tourach (1)",
-["Hymn to Tourach (Circle)"] 		= "Hymn to Tourach (2)",
-["Hymn to Tourach (Table)"] 		= "Hymn to Tourach (3)",
-["Hymn to Tourach (Cloak)"] 		= "Hymn to Tourach (4)",
-["Icatian Infantry"] 				= "Icatian Infantry (1)",
---["Icatian Javelineers"] 			= "Icatian Javelineers (1)",
-["Icatian Javelineers (Benson)"]	= "Icatian Javelineers (1)",
-["Icatian Javelineers (Beard)"]		= "Icatian Javelineers (2)",
-["Icatian Javelineers (Kirschner)"]	= "Icatian Javelineers (3)",
-["Icatian Moneychanger"] 			= "Icatian Moneychanger (1)",
-["Icatian Scout"] 					= "Icatian Scout (1)",
-["Initiates of the Ebon Hand"]	 	= "Initiates of the Ebon Hand (1)",
-["Merseine"] 						= "Merseine (1)",
-["Mindstab Thrull"]	 				= "Mindstab Thrull (1)",
-["Necrite"] 						= "Necrite (1)",
-["Night Soil"] 						= "Night Soil (1)",
-["Orcish Spy"] 						= "Orcish Spy (1)",
-["Orcish Veteran"] 					= "Orcish Veteran (1)",
-["Order of the Ebon Hand"]	 		= "Order of the Ebon Hand (1)",
-["Order of Leitbur"]	 			= "Order of Leitbur (1)",
-["Spore Cloud"] 					= "Spore Cloud (1)",
-["Thallid"] 						= "Thallid (1)",
-["Thorn Thallid"] 					= "Thorn Thallid (1)",
-["Tidal Flats"] 					= "Tidal Flats (1)",
-["Vodalian Soldiers"] 				= "Vodalian Soldiers (1)",
-["Vodalian Mage"] 					= "Vodalian Mage (1)",
+["Armor Thrull"]						= "Armor Thrull (1)",
+["Armor Thrull (Spencer)"]				= "Armor Thrull (2)",
+["Armor Thrull (Menges)"]				= "Armor Thrull (3)",
+["Armor Thrull (Kirschner)"]			= "Armor Thrull (4)",
+["Basal Thrull"]						= "Basal Thrull (1)",
+["Basal Thrull (P. Foglio)"]			= "Basal Thrull (2)",
+["Basal Thrull (Ferguson)"]				= "Basal Thrull (3)",
+["Basal Thrull (Rush)"]					= "Basal Thrull (4)",
+["Brassclaw Orcs (Pike)"] 				= "Brassclaw Orcs (1)",
+["Brassclaw Orcs (Map)"] 				= "Brassclaw Orcs (2)",
+["Brassclaw Orcs (Glove)"] 				= "Brassclaw Orcs (3)",
+["Brassclaw Orcs"] 						= "Brassclaw Orcs (4)",
+["Combat Medic"] 						= "Combat Medic (1)",
+["Combat Medic (Camp)"] 				= "Combat Medic (2)",
+["Combat Medic (Maddocks)"] 			= "Combat Medic (3)",
+["Combat Medic (Danforth)"] 			= "Combat Medic (4)",
+["Dwarven Soldier"] 					= "Dwarven Soldier (1)",
+["Dwarven Soldier (Asplund-Faith)"] 	= "Dwarven Soldier (2)",
+["Dwarven Soldier (Shuler)"] 			= "Dwarven Soldier (3)",
+["Elven Fortress"] 						= "Elven Fortress (1)",
+["Elven Fortress (Asplund-Faith)"] 		= "Elven Fortress (2)",
+["Elven Fortress (Poole)"] 				= "Elven Fortress (3)",
+["Elven Fortress (Wanerstrand)"] 		= "Elven Fortress (4)",
+["Elvish Hunter"] 						= "Elvish Hunter (1)",
+["Elvish Hunter (Maddocks)"] 			= "Elvish Hunter (2)",
+["Elvish Hunter (Camp)"] 				= "Elvish Hunter (3)",
+["Elvish Scout"] 						= "Elvish Scout (1)",
+["Elvish Scout (Venters)"] 				= "Elvish Scout (2)",
+["Elvish Scout (Rush)"] 				= "Elvish Scout (3)",
+["Farrel's Zealot"] 					= "Farrel's Zealot (1)",
+["Farrel's Zealot (Ferguson)"] 			= "Farrel's Zealot (2)",
+["Farrel's Zealot (Beard)"] 			= "Farrel's Zealot (3)",
+["Goblin Chirurgeon"] 					= "Goblin Chirurgeon (1)",
+["Goblin Chirurgeon (Foglio)"] 			= "Goblin Chirurgeon (2)",
+["Goblin Chirurgeon (Frazier)"] 		= "Goblin Chirurgeon (3)",
+["Goblin Grenade"]						= "Goblin Grenade (1)",
+["Goblin Grenade (Frazier)"]			= "Goblin Grenade (2)",
+["Goblin Grenade (Rush)"]				= "Goblin Grenade (3)",
+["Goblin War Drums"] 					= "Goblin War Drums (1)",
+["Goblin War Drums (Ferguson)"] 		= "Goblin War Drums (2)",
+["Goblin War Drums (Hudson)"] 			= "Goblin War Drums (3)",
+["Goblin War Drums (Menges)"] 			= "Goblin War Drums (4)",
+["High Tide"] 							= "High Tide (1)",
+--["High Tide (Wave)"] 					= "High Tide (1)",
+["High Tide (Merfolk)"] 				= "High Tide (2)",
+["High Tide (Coral)"] 					= "High Tide (3)",
+["Homarid (Hoover)"]					= "Homarid (1)",
+["Homarid (Hudson)"]					= "Homarid (2)",
+["Homarid (Tedin)"]						= "Homarid (3)",
+["Homarid (Wackwitz)"]					= "Homarid (4)",
+["Homarid Warrior"] 					= "Homarid Warrior (1)",
+["Homarid Warrior (Asplund-Faith)"] 	= "Homarid Warrior (2)",
+["Homarid Warrior (Shuler)"] 			= "Homarid Warrior (3)",
+["Hymn to Tourach"] 					= "Hymn to Tourach (1)",
+--["Hymn to Tourach (Wolf)"] 				= "Hymn to Tourach (1)",
+["Hymn to Tourach (Circle)"] 			= "Hymn to Tourach (2)",
+["Hymn to Tourach (Cloak)"] 			= "Hymn to Tourach (3)",
+["Hymn to Tourach (Table)"] 			= "Hymn to Tourach (4)",
+["Icatian Infantry"] 					= "Icatian Infantry (1)",
+["Icatian Infantry (Rush)"] 			= "Icatian Infantry (2)",
+["Icatian Infantry (Shuler)"] 			= "Icatian Infantry (3)",
+["Icatian Infantry (Tucker)"] 			= "Icatian Infantry (4)",
+["Icatian Javelineers (Benson)"]		= "Icatian Javelineers (1)",
+["Icatian Javelineers"] 				= "Icatian Javelineers (2)",
+--["Icatian Javelineers (Beard)"]			= "Icatian Javelineers (2)",
+["Icatian Javelineers (Kirschner)"]		= "Icatian Javelineers (3)",
+["Icatian Moneychanger"] 				= "Icatian Moneychanger (1)",
+["Icatian Moneychanger (Beard)"] 		= "Icatian Moneychanger (2)",
+["Icatian Moneychanger (Benson)"] 		= "Icatian Moneychanger (3)",
+["Icatian Scout"] 						= "Icatian Scout (1)",
+["Icatian Scout (Shuler)"] 				= "Icatian Scout (2)",
+["Icatian Scout (Alexander)"] 			= "Icatian Scout (3)",
+["Icatian Scout (Foglio)"] 				= "Icatian Scout (4)",
+["Initiates of the Ebon Hand"]	 		= "Initiates of the Ebon Hand (1)",
+["Initiates of the Ebon Hand (Foglio)"]	= "Initiates of the Ebon Hand (2)",
+["Initiates of the Ebon Hand (Hudson)"]	= "Initiates of the Ebon Hand (3)",
+["Merseine"] 							= "Merseine (1)",
+["Merseine (Organ-Kean)"] 				= "Merseine (2)",
+["Merseine (Tucker)"] 					= "Merseine (3)",
+["Merseine (Venters)"] 					= "Merseine (4)",
+["Mindstab Thrull"]	 					= "Mindstab Thrull (1)",
+["Mindstab Thrull (Hudson)"]	 		= "Mindstab Thrull (2)",
+["Mindstab Thrull (Tedin)"]	 			= "Mindstab Thrull (3)",
+["Necrite"] 							= "Necrite (1)",
+["Necrite (Rush)"] 						= "Necrite (2)",
+["Necrite (Tucker)"] 					= "Necrite (3)",
+["Night Soil"] 							= "Night Soil (1)",
+["Night Soil (Hudson)"] 				= "Night Soil (2)",
+["Night Soil (Tucker)"] 				= "Night Soil (3)",
+["Orcish Spy"] 							= "Orcish Spy (1)",
+["Orcish Spy (Gelon)"] 					= "Orcish Spy (2)",
+["Orcish Spy (Venters)"] 				= "Orcish Spy (3)",
+["Orcish Veteran"] 						= "Orcish Veteran (1)",
+["Orcish Veteran (Frazier)"] 			= "Orcish Veteran (2)",
+["Orcish Veteran (Hoover)"] 			= "Orcish Veteran (3)",
+["Orcish Veteran (Benson)"] 			= "Orcish Veteran (4)",
+["Order of the Ebon Hand"]	 			= "Order of the Ebon Hand (1)",
+["Order of the Ebon Hand (Rush)"]	 	= "Order of the Ebon Hand (2)",
+["Order of the Ebon Hand (Spencer)"]	= "Order of the Ebon Hand (3)",
+["Order of Leitbur (Female)"]	 		= "Order of Leitbur (1)",
+["Order of Leitbur (Male)"]	 			= "Order of Leitbur (2)",
+["Order of Leitbur"]	 				= "Order of Leitbur (3)",
+["Spore Cloud"] 						= "Spore Cloud (1)",
+["Spore Cloud (Weber)"] 				= "Spore Cloud (2)",
+["Spore Cloud (Myrfors)"] 				= "Spore Cloud (3)",
+["Thallid"] 							= "Thallid (1)",
+["Thallid (Myrfors)"] 					= "Thallid (2)",
+["Thallid (Spencer)"] 					= "Thallid (3)",
+["Thallid (Gelon)"] 					= "Thallid (4)",
+["Thorn Thallid"] 						= "Thorn Thallid (1)",
+["Thorn Thallid (Hudson)"] 				= "Thorn Thallid (2)",
+["Thorn Thallid (Myrfors)"] 			= "Thorn Thallid (3)",
+["Thorn Thallid (Tedin)"] 				= "Thorn Thallid (4)",
+["Tidal Flats"] 						= "Tidal Flats (1)",
+["Tidal Flats (Sky)"] 					= "Tidal Flats (2)",
+["Tidal Flats (Earth)"] 				= "Tidal Flats (3)",
+["Vodalian Soldiers"] 					= "Vodalian Soldiers (1)",
+["Vodalian Soldiers (Menges)"] 			= "Vodalian Soldiers (2)",
+["Vodalian Soldiers (Ferguson)"] 		= "Vodalian Soldiers (3)",
+["Vodalian Soldiers (Camp)"] 			= "Vodalian Soldiers (4)",
+["Vodalian Mage"] 						= "Vodalian Mage (1)",
+["Vodalian Mage (Poole)"] 				= "Vodalian Mage (2)",
+["Vodalian Mage (Hoover)"] 				= "Vodalian Mage (3)",
 },
 [150] = { -- Legends
 ["Aerathi Berserker"]					= "Ærathi Berserker"
@@ -1335,12 +1466,11 @@ site.namereplace = {
 ["Erg Raiders"] 						= "Erg Raiders (1)",
 ["Fishliver Oil"] 						= "Fishliver Oil (1)",
 ["Giant Tortoise"] 						= "Giant Tortoise (1)",
-["Hasran Ogress"] 						= "Hasran Ogress (1)",
+["Hasran Ogress (Light)"]				= "Hasran Ogress (1)",
+["Hasran Ogress"] 						= "Hasran Ogress (2)",
 ["Moorish Cavalry"] 					= "Moorish Cavalry (1)",
-["Naf's Asp"] 							= "Nafs Asp (1)",
---["Naf's Asp"] 							= "Nafs Asp",
-["Naf's Asp"] 							= "Nafs Asp (1)",
-["Naf's Asp (2)"] 						= "Nafs Asp (2)",
+["Naf's Asp (Light)"]					= "Nafs Asp (1)",
+["Naf's Asp"] 							= "Nafs Asp (2)",
 ["Oubliette"] 							= "Oubliette (1)",
 ["Rukh Egg"] 							= "Rukh Egg (1)",
 ["Piety"] 								= "Piety (1)",
@@ -1350,6 +1480,17 @@ site.namereplace = {
 ["Mountain (Arabian Nights)"]			= "Mountain",
 },
 -- special sets
+[814] = { -- Commander 2014
+["AEther Gale"]								= "Æther Gale",
+["AEther Snap"]								= "Æther Snap",
+["Freyalise, Llanowar's Fury"]				= "Freyalise, Llanowar’s Fury",
+["Freyalise, Llanowar's Fury (Oversized)"]	= "Freyalise, Llanowar’s Fury (oversized)",
+},
+[810] = { -- Modern Event Deck 2014
+["Soldier - Spirt Double Sided Token"]	= "Soldier|Spirit Token",
+["Emblem - Elspeth, Knight-Errant|Soldier Token"]	= "Soldier|Elspeth, Knight-Errant Emblem",
+["Myr - Spirit Double Sided Token"]		= "Spirit|Myr Token",
+},
 [807] = { --Conspiracy
 ["AEther Tradewinds"]					= "Æther Tradewinds",
 ["AEther Searcher"]						= "Æther Searcher",
@@ -1368,18 +1509,19 @@ site.namereplace = {
 ["Sek'Kuar, Deathkeeper - Oversized"]	= "Sek’Kuar, Deathkeeper (oversized)",
 },
 [796] = { -- Modern Masters
-["Aether Vial"]							= "Æther Vial",
+["AEther Vial"]							= "Æther Vial",
 ["Aether Spellbomb"]					= "Æther Spellbomb",
 ["Aethersnipe"]							= "Æthersnipe",
 },
-[787] = { -- planechase 2012
+[787] = { -- Planechase 2012
 ["Norn's Dominion"]						= "Norn’s Dominion",
+["Kilspire District"]					= "Kilnspire District",
 },
 [785] = { -- DD:Venser vs. Koth
 ["Aether Membrane"]						= "Æther Membrane",
 },
 [778] = { -- The Gathering Commander
-["AEthersnipe"]							= "Æthersnipe",
+["Aethersnipe"]							= "Æthersnipe",
 ["Jotun Grunt"]							= "Jötun Grunt",
 ["Nezumi Graverobber"]					= "Nezumi Graverobber|Nighteyes the Desecrator",
 },
@@ -1387,7 +1529,7 @@ site.namereplace = {
 ["Aether Spellbomb"]					= "Æther Spellbomb",
 },
 [771]  = { -- From the Vault: Relics
-["Aether Vial"]							= "Æther Vial",
+["AEther Vial"]							= "Æther Vial",
 },
 [769] = { -- Archenemy
 ["Aether Spellbomb"]					= "Æther Spellbomb",
@@ -1398,6 +1540,7 @@ site.namereplace = {
 ["Saproling"]							= "Saproling Token",
 },
 [763] = { -- DD: Garruk vs. Liliana
+["Beast"]								= "Beast Token",
 ["Beast Token (3)"]						= "Beast Token (1)",
 ["Beast Token (4)"]						= "Beast Token (2)",
 ["Elephant"]							= "Elephant Token",
@@ -1412,7 +1555,7 @@ site.namereplace = {
 },
 [755] = { -- DD: Jace vs. Chandra
 ["Aethersnipe"]							= "Æthersnipe",
-["Elemental Shaman"]					= "Elemental Shaman Token",
+--["Elemental Shaman"]					= "Elemental Shaman Token",
 },
 [740] = { -- DD: Elves vs. Goblins
 ["Elemental"]							= "Elemental Token",
@@ -1441,11 +1584,11 @@ site.namereplace = {
 ["Forest (107)"]						= "Forest (7)",
 ["Forest (108)"]						= "Forest (8)",
 ["Forest (109)"]						= "Forest (9)",
-["Island (110)"]						= "Island (1)",
-["Island (111)"]						= "Island (2)",
-["Island (112)"]						= "Island (3)",
-["Island (113)"]						= "Island (4)",
-["Island (114)"]						= "Island (5)",
+["Island (Spires Right)"]				= "Island (1)",
+["Island (Spires Left)"]				= "Island (2)",
+["Island (River)"]						= "Island (3)",
+["Island (No Sky)"]						= "Island (4)",
+["Island (Beach)"]						= "Island (5)",
 ["Mountain (115)"]						= "Mountain (1)",
 ["Mountain (116)"]						= "Mountain (2)",
 ["Mountain (117)"]						= "Mountain (3)",
@@ -1502,38 +1645,45 @@ site.namereplace = {
 ["Swamp (165)"]							= "Swamp (3)",
 },
 [260] = { -- Portal
-["Anaconda (2)"]						= "Anaconda (ST)",
-["Blaze (2)"]							= "Blaze (ST)",
-["Elite Cat Warrior (2)"]				= "Elite Cat Warrior (ST)",
-["Hand of Death (2)"]					= "Hand of Death (ST)",
-["Monstrous Growth (2)"]				= "Monstrous Growth (ST)",
-["Raging Goblin (2)"]					= "Raging Goblin (ST)",
-["Warrior's Charge (2)"]				= "Warrior's Charge (ST)",
-["Forest (203)"]						= "Forest (1)",
-["Forest (204)"]						= "Forest (2)",
-["Forest (205)"]						= "Forest (3)",
-["Forest (206)"]						= "Forest (4)",
-["Island (207)"]						= "Island (1)",
-["Island (208)"]						= "Island (2)",
-["Island (209)"]						= "Island (3)",
-["Island (210)"]						= "Island (4)",
-["Mountain (211)"]						= "Mountain (1)",
-["Mountain (212)"]						= "Mountain (2)",
-["Mountain (213)"]						= "Mountain (3)",
-["Mountain (214)"]						= "Mountain (4)",
-["Plains (215)"]						= "Plains (1)",
-["Plains (216)"]						= "Plains (2)",
-["Plains (217)"]						= "Plains (3)",
-["Plains (218)"]						= "Plains (4)",
-["Swamp (219)"]							= "Swamp (1)",
-["Swamp (220)"]							= "Swamp (2)",
-["Swamp (221)"]							= "Swamp (3)",
-["Swamp (222)"]							= "Swamp (4)",
+["Anaconda (Flavor Text)"]				= "Anaconda",
+["Anaconda"]							= "Anaconda (ST)",
+["Blaze (Flavor Text)"]					= "Blaze",
+["Blaze"]								= "Blaze (ST)",
+["Elite Cat Warrior (Flavor Text)"]		= "Elite Cat Warrior",
+["Elite Cat Warrior"]					= "Elite Cat Warrior (ST)",
+--["Hand of Death"]						= "Hand of Death",
+["Hand of Death (Reminder Text)"]		= "Hand of Death (ST)",
+["Monstrous Growth (Flavor Text)"]		= "Monstrous Growth",
+["Monstrous Growth"]					= "Monstrous Growth (ST)",
+["Raging Goblin (Flavor Text)"]			= "Raging Goblin",
+["Raging Goblin"]						= "Raging Goblin (ST)",
+["Warrior's Charge (Flavor Text)"]		= "Warrior's Charge",
+["Warrior's Charge"]					= "Warrior's Charge (ST)",
+["Forest (Large Middle)"]				= "Forest (1)",
+["Forest (Slanted Tree)"]				= "Forest (2)",
+["Forest (Ferns on Ground)"]			= "Forest (3)",
+["Forest (Pale Trees)"]					= "Forest (4)",
+["Island (Waterfall)"]					= "Island (1)",
+["Island (Castle Cove)"]				= "Island (2)",
+["Island (Beach Right)"]				= "Island (3)",
+["Island (Sea Arch)"]					= "Island (4)",
+["Mountain (Middle Chasm)"]				= "Mountain (1)",
+["Mountain (Peaks Right)"]				= "Mountain (2)",
+["Mountain (Trees Center)"]				= "Mountain (3)",
+["Mountain (Three Peaks)"]				= "Mountain (4)",
+["Plains (Clouds Right)"]				= "Plains (1)",
+["Plains (White Sky)"]					= "Plains (2)",
+["Plains (No Flowers)"]					= "Plains (3)",
+["Plains (Clouds Left)"]				= "Plains (4)",
+["Swamp (Hanging Moss)"]				= "Swamp (1)",
+["Swamp (Crossed Trees)"]				= "Swamp (2)",
+["Swamp (White Tree)"]					= "Swamp (3)",
+["Swamp (Yellow Sun)"]					= "Swamp (4)",
 },
 [200] = { -- Chronicles
 ["Urza's Mine (Mouth)"] 				= "Urza's Mine (1)",
 ["Urza's Mine (Clawed Sphere)"] 		= "Urza's Mine (2)",
-["Urza's Mine (Pully)"] 				= "Urza's Mine (3)",
+["Urza's Mine (Pulley)"] 				= "Urza's Mine (3)",
 ["Urza's Mine (Tower)"] 				= "Urza's Mine (4)",
 ["Urza's Power Plant (Rock in Pot)"] 	= "Urza's Power Plant (1)",
 ["Urza's Power Plant (Columns)"] 		= "Urza's Power Plant (2)",
@@ -1544,13 +1694,125 @@ site.namereplace = {
 ["Urza's Tower (Mountains)"] 			= "Urza's Tower (3)",
 ["Urza's Tower (Shore)"] 				= "Urza's Tower (4)",
 },
+[105]  = { -- Collectors’ Edition (Domestic)
+["Plains (No Trees)"]					= "Plains (1)",
+["Plains (Trees)"]						= "Plains (2)",
+["Plains (No Mountains)"]				= "Plains (3)",
+["Island (Purple)"]						= "Island (1)",
+["Island (Green)"]						= "Island (2)",
+["Island (Blue)"]						= "Island (3)",
+["Swamp (Low Branch)"]					= "Swamp (1)",
+["Swamp (High Branch)"]					= "Swamp (2)",
+["Swamp (Two Branches)"]				= "Swamp (3)",
+["Mountain (Slate)"]					= "Mountain (1)",
+["Mountain (Fog)"]						= "Mountain (2)",
+["Mountain (Dirt)"]						= "Mountain (3)",
+["Forest (Rocks)"]						= "Forest (1)",
+["Forest (Path)"]						= "Forest (2)",
+["Forest (Eyes)"]						= "Forest (3)",
+},
 -- promo
+[40] = { -- Arena/Colosseo Leagues Promos
+--TODO [40] settweak
+["Ashnod\145s Coupon"]					= "Ashnod’s Coupon",
+["Island (2001)"]						= "Island (2001a)",
+["Island (2002)"]						= "Island (2001b)",
+["Man-o'-War"]							= "Man-o’-War",
+["Man\150o\145\150War"]					= "Man-o’-War",
+["Forest (2001 Ice Age)"]				= "Forest (2001a)",
+["Forest (2001 Beta)"]					= "Forest (2001b)",
+["Counterspell"]						= "Counterspell (DROP DLM)",
+["Incinerate"]							= "Incinerate (DROP DLM)",
+["Underworld Dreams"]					= "Underworld Dreams (DROP THG)",
+},
+[32] = { -- Pro Tour Promos
+--TODO [32] settweak
+["Ajani Goldmane (2011 Pro Tour)"]	= "Ajani Goldmane",
+["Liliana of the Veil"]				= "Liliana of the Veil (PTQ)",--not in MA
+["Char"]							= "Char (DROP CVP)",
+},
 [30] = { -- Friday Night Magic
---["Human|Wolf Token"]					= "Human|Wolf Token",
+--TODO [30] settweak
+["Empyrial Armor"]						= "Empyrial Armor (DROP ARE)",
+--["(Error)"]								= "(Error) (DROP)",
+},
+[27] = { -- Alternate Art Lands
+["Plains - Blue Pack (MacNeil)"]		= "Plains (APAC Blue)",
+["Plains - Clear Pack (Guay)"]			= "Plains (APAC Clear)",
+["Plains - Red Pack (Spears)"]			= "Plains (APAC Red)",
+["Plains - Scottish Highlands"]			= "Plains (Euro Blue)",
+["Plains - Steppe Tundra"]				= "Plains (Euro Purple)",
+["Plains - Lowlands, Netherlands"]		= "Plains (Euro Red)",
+["Plains - Guru"]						= "Plains (Guru)",
+["Island - Blue Pack (Eggleton)"]		= "Island (APAC Blue)",
+["Island - Clear Pack (Alexander)"]		= "Island (APAC Clear)",
+["Island - Red Pack (Beard, Jr.)"]		= "Island (APAC Red)",
+["Island - Danish Island"]				= "Island (Euro Blue)",
+["Island - White Cliffs of Dover"]		= "Island (Euro Purple)",
+["Island - Venezia"]					= "Island (Euro Red)",
+["Island - Guru"]						= "Island (Guru)",
+["Swamp - Blue Pack (Beard, Jr.)"]		= "Swamp (APAC Blue)",
+["Swamp - Clear Pack (Spears)"]			= "Swamp (APAC Clear)",
+["Swamp - Red Pack (Spears)"]			= "Swamp (APAC Red)",
+["Swamp - Ardennes Fagnes"]				= "Swamp (Euro Blue)",
+["Swamp - Camargue"]					= "Swamp (Euro Purple)",
+["Swamp - Lake District National Park"]	= "Swamp (Euro Red)",
+["Swamp - Guru"]						= "Swamp (Guru)",
+["Mountain - Blue Pack (Guay)"]			= "Mountain (APAC Blue)",
+["Mountain - Clear Pack (Beard, Jr.)"]	= "Mountain (APAC Clear)",
+["Mountain - Red Pack (Hudson)"]		= "Mountain (APAC Red)",
+["Mountain - Vesuvio"]					= "Mountain (Euro Blue)",
+["Mountain - Mont Blanc"]				= "Mountain (Euro Purple)",
+["Mountain - Pyrenees"]					= "Mountain (Euro Red)",
+["Mountain - Guru"]						= "Mountain (Guru)",
+["Forest - Blue Pack (Rush)"]			= "Forest (APAC Blue)",
+["Forest - Clear Pack (Beard, Jr.)"]	= "Forest (APAC Clear)",
+["Forest - Red Pack (Venters)"]			= "Forest (APAC Red)",
+["Forest - Schwarzwald"]				= "Forest (Euro Blue)",
+["Forest - Nottingham"]					= "Forest (Euro Purple)",
+["Forest - Broceliande"]				= "Forest (Euro Red)",
+["Forest - Guru"]						= "Forest (Guru)",
+},
+[25]  = { -- Judge Gift Cards
+--TODO [25] settweak
+["Plains - Full Art"] 				= "Plains",
+["Island - Full Art"] 				= "Island",
+["Swamp - Full Art"] 				= "Swamp",
+["Mountain - Full Art"] 			= "Mountain",
+["Forest - Full Art"] 				= "Forest",
+["Vindicate (2013)"] 				= "Vindicate (4)",
+["Vindicate (2007)"] 				= "Vindicate (7)",
+["Balduvian Horde"] 				= "Balduvian Horde (DROP WLD)",
+["Vindicate (2007)"] 				= "Vindicate (7)",
+},
+[23]  = { -- Gateway & WPN Promos
+--TODO [23] settweak
+["Faerie Conclave"] 				= "Faerie Conclave (DROP SUM)",
+["Treetop Village"] 				= "Treetop Village (DROP SUM)",
+["Nissa's Chosen"] 					= "Nissa's Chosen (DROP MGD)",
+["Deathless Angel"] 				= "Deathless Angel (DROP MGD)",
+["Emeria Angel"] 					= "Emeria Angel (DROP MGD)",
+["Vengevine"] 						= "Vengevine (DROP WLD)",
+["Geist of Saint Traft"] 			= "Geist of Saint Traft (DROP WLD)",
+},
+[22]  = { -- Prerelease Promos
+["Garruk the Slayer (Oversize)"]	= "Garruk the Slayer",
+["Angel|Demon Double sided token"]	= "Angel|Demon Token",
+["Celestine Reef (Oversized)"]		= "Celestine Reef",
+["Dragonlord's Servant (Dragonfury)"]		= "Dragonlord’s Servant (Dragonfury)",
+["Lu Bu, Master-at-Arms (Japan 4/29/99)"]	= "Lu Bu, Master-at-Arms (April)",
+["Lu Bu, Master-at-Arms (Singapore 7/4/99)"]= "Lu Bu, Master-at-Arms (July)",
+["Plains (Dragon's Maze)"]			= "Plains (DGM)",
+["Mayor of Avabruck"]				= "Mayor of Avabruck|Howlpack Alpha",
+["Ravenous Demon"]					= "Ravenous Demon|Archdemon of Greed",
 },
 [21]  = { -- Release & Launch Parties Promos
-["Ludevic's Test Subject"] 				= "Ludevic’s Test Subject|Ludevic’s Abomination",
-["Mondronen Shaman"] 					= "Mondronen Shaman|Tovolar’s Magehunter",
+["Ludevic's Test Subject"] 			= "Ludevic’s Test Subject|Ludevic’s Abomination",
+["Mondronen Shaman"] 				= "Mondronen Shaman|Tovolar’s Magehunter",
+["Plots that Spans Centuries"] 		= "Plots that Span Centuries",
+["Budoka Pupil"] 					= "Budoka Pupil|Ichiga, Who Topples Oaks",
+["Soldier Token (Red|White)"] 		= "Soldier Token (DROP ARE)",
+["Ghost\150Lit Raider"] 			= "Ghost-Lit Raider",
 },
 [20]  = { -- Magic Player Rewards
 ["Beast Token (Darksteel)"] 			= "Beast Token (DST)",
@@ -1596,6 +1858,7 @@ site.namereplace = {
 site.variants = {
 [762] = { --Zendikar
 override=true,
+	-- (000) and (000a) are reversed to MA
 ["Plains"] 						= { "Plains"	, { 1    , 2    , 3    , 4    , "1a" , "2a" , "3a" , "4a"  } },
 ["Plains - Full Art"] 			= { "Plains"	, { 1    , 2    , 3    , 4    , false, false, false, false } },
 ["Island"] 						= { "Island" 	, { 1    , 2    , 3    , 4    , "1a" , "2a" , "3a" , "4a"  } },
@@ -1607,49 +1870,49 @@ override=true,
 ["Forest"] 						= { "Forest" 	, { 1    , 2    , 3    , 4    , "1a" , "2a" , "3a" , "4a"  } },
 ["Forest - Full Art"] 			= { "Forest" 	, { 1    , 2    , 3    , 4    , false, false, false, false } },
 ["Plains (230) - Full Art"]		= { "Plains"	, { 1    , false, false, false, false, false, false, false } },
-["Plains (230)"]				= { "Plains"	, { false, false, false, false, "1a" , false, false, false } },
+["Plains (230a)"]				= { "Plains"	, { false, false, false, false, "1a" , false, false, false } },
 ["Plains (231) - Full Art"]		= { "Plains"	, { false, 2    , false, false, false, false, false, false } },
-["Plains (231)"]				= { "Plains"	, { false, false, false, false, false, "2a" , false, false } },
+["Plains (231a)"]				= { "Plains"	, { false, false, false, false, false, "2a" , false, false } },
 ["Plains (232) - Full Art"]		= { "Plains"	, { false, false, 3    , false, false, false, false, false } },
-["Plains (232)"]				= { "Plains"	, { false, false, false, false, false, false, "3a" , false } },
+["Plains (232a)"]				= { "Plains"	, { false, false, false, false, false, false, "3a" , false } },
 ["Plains (233) - Full Art"]		= { "Plains"	, { false, false, false, 4    , false, false, false, false } },
-["Plains (233)"]				= { "Plains"	, { false, false, false, false, false, false, false, "4a"  } },
+["Plains (233a)"]				= { "Plains"	, { false, false, false, false, false, false, false, "4a"  } },
 ["Island (234) - Full Art"]		= { "Island"	, { 1    , false, false, false, false, false, false, false } },
-["Island (234)"]				= { "Island"	, { false, false, false, false, "1a" , false, false, false } },
+["Island (234a)"]				= { "Island"	, { false, false, false, false, "1a" , false, false, false } },
 ["Island (235) - Full Art"]		= { "Island"	, { false, 2    , false, false, false, false, false, false } },
-["Island (235)"]				= { "Island"	, { false, false, false, false, false, "2a" , false, false } },
+["Island (235a)"]				= { "Island"	, { false, false, false, false, false, "2a" , false, false } },
 ["Island (236) - Full Art"]		= { "Island"	, { false, false, 3    , false, false, false, false, false } },
-["Island (236)"]				= { "Island"	, { false, false, false, false, false, false, "3a" , false } },
+["Island (236a)"]				= { "Island"	, { false, false, false, false, false, false, "3a" , false } },
 ["Island (237) - Full Art"]		= { "Island"	, { false, false, false, 4    , false, false, false, false } },
-["Island (237)"]				= { "Island"	, { false, false, false, false, false, false, false, "4a"  } },
+["Island (237a)"]				= { "Island"	, { false, false, false, false, false, false, false, "4a"  } },
 ["Swamp (238) - Full Art"]		= { "Swamp"		, { 1    , false, false, false, false, false, false, false } },
-["Swamp (238)"]					= { "Swamp"		, { false, false, false, false, "1a" , false, false, false } },
+["Swamp (238a)"]				= { "Swamp"		, { false, false, false, false, "1a" , false, false, false } },
 ["Swamp (239) - Full Art"]		= { "Swamp"		, { false, 2    , false, false, false, false, false, false } },
-["Swamp (239)"]					= { "Swamp"		, { false, false, false, false, false, "2a" , false, false } },
+["Swamp (239a)"]				= { "Swamp"		, { false, false, false, false, false, "2a" , false, false } },
 ["Swamp (240) - Full Art"]		= { "Swamp"		, { false, false, 3    , false, false, false, false, false } },
-["Swamp (240)"]					= { "Swamp"		, { false, false, false, false, false, false, "3a" , false } },
+["Swamp (240a)"]				= { "Swamp"		, { false, false, false, false, false, false, "3a" , false } },
 ["Swamp (241) - Full Art"]		= { "Swamp"		, { false, false, false, 4    , false, false, false, false } },
-["Swamp (241)"]					= { "Swamp"		, { false, false, false, false, false, false, false, "4a"  } },
+["Swamp (241a)"]				= { "Swamp"		, { false, false, false, false, false, false, false, "4a"  } },
 ["Mountain (242) - Full Art"]	= { "Mountain"	, { 1    , false, false, false, false, false, false, false } },
-["Mountain (242)"]				= { "Mountain"	, { false, false, false, false, "1a" , false, false, false } },
+["Mountain (242a)"]				= { "Mountain"	, { false, false, false, false, "1a" , false, false, false } },
 ["Mountain (243) - Full Art"]	= { "Mountain"	, { false, 2    , false, false, false, false, false, false } },
-["Mountain (243)"]				= { "Mountain"	, { false, false, false, false, false, "2a" , false, false } },
+["Mountain (243a)"]				= { "Mountain"	, { false, false, false, false, false, "2a" , false, false } },
 ["Mountain (244) - Full Art"]	= { "Mountain"	, { false, false, 3    , false, false, false, false, false } },
-["Mountain (244)"]				= { "Mountain"	, { false, false, false, false, false, false, "3a" , false } },
+["Mountain (244a)"]				= { "Mountain"	, { false, false, false, false, false, false, "3a" , false } },
 ["Mountain (245) - Full Art"]	= { "Mountain"	, { false, false, false, 4    , false, false, false, false } },
-["Mountain (245)"]				= { "Mountain"	, { false, false, false, false, false, false, false, "4a"  } },
+["Mountain (245a)"]				= { "Mountain"	, { false, false, false, false, false, false, false, "4a"  } },
 ["Forest (246) - Full Art"]		= { "Forest"	, { 1    , false, false, false, false, false, false, false } },
-["Forest (246)"]				= { "Forest"	, { false, false, false, false, "1a" , false, false, false } },
+["Forest (246a)"]				= { "Forest"	, { false, false, false, false, "1a" , false, false, false } },
 ["Forest (247) - Full Art"]		= { "Forest"	, { false, 2    , false, false, false, false, false, false } },
-["Forest (247)"]				= { "Forest"	, { false, false, false, false, false, "2a" , false, false } },
+["Forest (247a)"]				= { "Forest"	, { false, false, false, false, false, "2a" , false, false } },
 ["Forest (248) - Full Art"]		= { "Forest"	, { false, false, 3    , false, false, false, false, false } },
-["Forest (248)"]				= { "Forest"	, { false, false, false, false, false, false, "3a" , false } },
+["Forest (248a)"]				= { "Forest"	, { false, false, false, false, false, false, "3a" , false } },
 ["Forest (249) - Full Art"]		= { "Forest"	, { false, false, false, 4    , false, false, false, false } },
-["Forest (249)"]				= { "Forest"	, { false, false, false, false, false, false, false, "4a"  } },
+["Forest (249a)"]				= { "Forest"	, { false, false, false, false, false, false, false, "4a"  } },
 	},
 [23] = { name="Gateway & WPN Promos",
-["Fling"]						= { "Fling"				, { "1"  , "2"  } },
-["Sylvan Ranger"]				= { "Sylvan Ranger"		, { "1"  , "2"  } },
+["Fling"]						= { "Fling"				, { "1"  , "2"  } },--no idea which one of the two they list
+["Sylvan Ranger"]				= { "Sylvan Ranger"		, { "1"  , "2"  } },--picture suggest the older version, probably undistinguished
 },	
 [10]  = { -- Junior Series
 ["Elvish Champion"]				= { "Elvish Champion"	, { "E"	, "J" } },
@@ -1704,9 +1967,9 @@ function site.SetExpected( importfoil , importlangs , importsets )
 -- @field [parent=#site.expected] #boolean replica
 	replica = true,
 -- Core sets
-[808] = { pset={LHpi.Data.sets[808].cardcount.both}, dropped=1, namereplaced=4 }, -- 1 SOON (1 Garruk the Slayer (oversized))
-[797] = { failed={ 1 }, namereplaced=2 },
-[788] = { failed={ 1 } },
+[808] = { dropped=1, namereplaced=5 }, -- 1 SOON (1 Garruk the Slayer (oversized))
+[797] = { namereplaced=2 },
+--[788] = { failed={ 1 } },
 [779] = { namereplaced=1 },
 [770] = { namereplaced=3, dropped=6 },-- 6 SOON
 [759] = { dropped=6 },
@@ -1717,13 +1980,14 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [250] = { namereplaced=21 },
 [180] = { namereplaced=15 },
 [140] = { namereplaced=15, dropped=2 },
---[110] = { namereplaced=15},
+[110] = { namereplaced=15},
 [100] = { namereplaced=15},
-[90]  = { pset={295-5}, dropped=6, namereplaced=10},-- 6 SOON
+[90]  = { dropped=1, namereplaced=10},-- 1 SOON
 -- Expansions
-[813] = { pset={LHpi.Data.sets[813].cardcount.both-5}, failed={ 5 }, namereplaced=2 },-- -5 Intro Deck variants
-[802] = { namereplaced=2},
-[800] = { pset={ LHpi.Data.sets[800].cardcount.both-1 }, failed={ 2 }, namereplaced=3 },-- Holiday Gift Box missing, fail Soldier(League)
+[818] = { namereplaced=1 },
+[813] = { namereplaced=2 },
+[802] = { namereplaced=2, dropped=1},--SOON, "(clone)"
+[800] = { namereplaced=3 },
 [795] = { namereplaced=1, failed={ 1 } },
 [793] = { namereplaced=1 },
 [791] = { pset={ LHpi.Data.sets[791].cardcount.both-1 }, failed={ 2 } },-- Holiday Gift Box missing, fail Knight(League)
@@ -1739,8 +2003,8 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [758] = { dropped=1 },
 [756] = { namereplaced=1 },
 --[754] = { namereplaced=1 },
-[751] = { pset={LHpi.Data.sets[751].cardcount.both-2}, failed={ 2 }, namereplaced=5, dropped=2 },--2 SOON
-[730] = { namereplaced=4 },
+[751] = { namereplaced=5 },
+[730] = { namereplaced=3 },
 [710] = { namereplaced=1 },
 [700] = { namereplaced=2 },
 [680] = { namereplaced=3 },
@@ -1749,10 +2013,10 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [650] = { namereplaced=1 },
 [620] = { namereplaced=6 },
 [610] = { namereplaced=5 },
-[590] = { namereplaced=12, dropped=1 },
+[590] = { namereplaced=12 },
 [580] = { namereplaced=1 },
 [570] = { namereplaced=2 },
-[560] = { namereplaced=3, dropped=2 },
+[560] = { namereplaced=2, dropped=2 },
 [520] = { namereplaced=1, dropped=2 },
 [480] = { namereplaced=1, dropped=2 },
 [470] = { namereplaced=1 },
@@ -1766,59 +2030,67 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [280] = { namereplaced=20, dropped=2 },
 [270] = { namereplaced=2 },
 [230] = { namereplaced=20, dropped=2 },
-[220] = { namereplaced=106 },
+[220] = { namereplaced=110 },
 [210] = { namereplaced=24 },
 [190] = { namereplaced=20, dropped=2 },-- 2 SOON
-[170] = { namereplaced=51-1 },
+[170] = { namereplaced=120, dropped=1 },--1 SOON
 [150] = { namereplaced=1 },
-[120] = { namereplaced=17 },
+[120] = { namereplaced=18 },
 [130] = { namereplaced=17, dropped=1 },
 -- special sets
-[812] = { pset={0} },
-[810] = { pset={0} },
+[814] = {pset={ LHpi.Data.sets[814].cardcount.all-LHpi.Data.sets[814].cardcount.tok }, failed={ 24 }, foiltweaked=5, namereplaced=4, dropped=2 },--2 SOON
+[812] = { foiltweaked=2 },
+[810] = { namereplaced=3 },
 [807] = { pset={ LHpi.Data.sets[807].cardcount.both+LHpi.Data.sets[807].cardcount.nontrad }, namereplaced=2 },
-[805] = { pset={0} },--{ foiltweaked=2, namereplaced=2 },
+[805] = { foiltweaked=2, namereplaced=2 },
 [801] = { pset={ LHpi.Data.sets[801].cardcount.all-1 }, failed={ 1 }, foiltweaked=15-1, namereplaced=7 },--  "Sydri, Galvanic Genius - Oversized)" missing
-[799] = { pset={ LHpi.Data.sets[799].cardcount.both-25 }, foiltweaked=2-2, },
+[799] = { pset={ LHpi.Data.sets[799].cardcount.both-16 }, foiltweaked=2, },-- 16 basic lands
 [798] = { pset={20}, dropped=1 }, 
 [796] = { namereplaced=3 },
-[794] = { pset={ LHpi.Data.sets[794].cardcount.both-27 }, dropped=6, foiltweaked=2-2 },-- 6 SOON
-[792] = { pset={ LHpi.Data.sets[792].cardcount.reg }, dropped=LHpi.Data.sets[792].cardcount.repl-1  },
-[790] = { pset={ LHpi.Data.sets[790].cardcount.all-8 } },
-[787] = { pset={ LHpi.Data.sets[787].cardcount.all }, dropped=2 , namereplaced=1 },--2 SOON, both look wrong :)
-[785] = { pset={ LHpi.Data.sets[785].cardcount.both-11 }, namereplaced=1, foiltweaked=2-2 },
-[781] = { foiltweaked=2},
-[777] = { foiltweaked=2},
+[794] = { foiltweaked=2 },
+--[792] = { pset={ LHpi.Data.sets[792].cardcount.reg }, dropped=LHpi.Data.sets[792].cardcount.repl-1  },
+[790] = { foiltweaked=2 },
+[787] = { dropped=1 , namereplaced=2 },--1 SOON
+[785] = { namereplaced=1, foiltweaked=2 },
+[781] = { foiltweaked=2 },
+[777] = { foiltweaked=2 },
 [778] = { pset={ LHpi.Data.sets[778].cardcount.reg }, failed={ LHpi.Data.sets[778].cardcount.repl }, namereplaced=3 },
-[772] = { pset={ LHpi.Data.sets[772].cardcount.both-11 }, namereplaced=1-1, foiltweaked=2-1 },
-[771] = { namereplaced=1},
+[772] = { namereplaced=1, foiltweaked=2 },
+[771] = { namereplaced=1 },
 [769] = { pset={ LHpi.Data.sets[769].cardcount.reg+LHpi.Data.sets[769].cardcount.nontrad }, namereplaced=1, dropped=1 },
-[768] = { foiltweaked=5},
-[766] = { pset={ LHpi.Data.sets[766].cardcount.both-17 }, failed={ 3 }, foiltweaked=2-2, dropped=4-1, namereplaced=1-1 },
-[763] = { pset={ LHpi.Data.sets[763].cardcount.both-9 }, failed={ 1 }, dropped=1, namereplaced=3-1, foiltweaked=2-1 },
-[761] = { pset={ LHpi.Data.sets[761].cardcount.all-1 }, failed={ 4+1 }, namereplaced=1, dropped=2 },-- 4 fails are promos,2 SOON, 1 mountain missing
-[757] = { pset={ LHpi.Data.sets[757].cardcount.both-2 }, namereplaced=3-1, foiltweaked=2},
-[755] = { pset={ LHpi.Data.sets[755].cardcount.both-24 }, namereplaced=2-2, foiltweaked=2-1},
-[740] = { pset={ LHpi.Data.sets[740].cardcount.both-9 }, dropped=2, namereplaced=3, foiltweaked=2-2},
+[768] = { pset={ LHpi.Data.sets[768].cardcount.reg-2 }, foiltweaked=5-2 },--missing Immaculate Magistrate and Ascendant Evincar
+[766] = { foiltweaked=2-2, dropped=3, namereplaced=3, foiltweaked=2 },--3 SOON
+[763] = { namereplaced=4, foiltweaked=2 },
+[761] = { failed={ 4 }, namereplaced=1, dropped=1 },-- 4 fails are promos,1 SOON
+[757] = { namereplaced=3, foiltweaked=2 },
+[755] = { namereplaced=1, foiltweaked=2 },
+[740] = { dropped=2, namereplaced=3, foiltweaked=2 },
 [600] = { namereplaced=9, foiltweaked=1 }, 
 [440] = { foiltweaked=2 },
-[415] = { failed= { 5 }, dropped=28, foiltweaked=1},
-[405] = { pset={ LHpi.Data.sets[405].cardcount.reg-1 }, failed={ 1 }, dropped=2, namereplaced=36-2 },-- 2 SOON
+[415] = { failed= { 10 }, dropped=23, foiltweaked=1},--23 SOON, set only contains 20 cards
+[405] = { namereplaced=36 },
 [390] = { pset={ LHpi.Data.sets[390].cardcount.reg }, failed={ 1 } },-- Thorn Elemental (oversized) missing
 [380] = { pset={180}, namereplaced=2 },
 [320] = { namereplaced=8 },
 [310] = { namereplaced=15 },
-[260] = { pset={228-6-1}, failed={ 7}, dropped=1, namereplaced=27-1 },-- 1 SOON, -6 "DG" variant
+[260] = { pset={228-6}, failed={ 6 }, namereplaced=33 },-- 1 SOON, -6 "DG" variant
 [200] = { namereplaced=12 },
+[106] = { pset={ LHpi.Data.sets[106].cardcount.repl-17 }, dropped=17 },--17 SOON
+[105] = { namereplaced=15 },
 -- promos
-[31]  = { pset={ LHpi.Data.sets[31].cardcount.reg } },
-[30]  = { pset={ LHpi.Data.sets[30].cardcount.all }, failed={ 3 }, foiltweaked=1-1, dropped=4 },--4 SOON, 3 not yet in MA
-[26]  = { pset={ 42 }, foiltweaked=18 },
+[40]  = { pset={ LHpi.Data.sets[40].cardcount.reg }, failed={ 2 }, namereplaced=10, dropped=3 },--3 are not ARE
+[32]  = { failed={ 1 }, namereplaced=3, dropped=1 },-- "Liliana of the Veil" (PTQ) not in MA
+[31]  = { failed= { 1 } },--Griselbrand 2015 not in MA
+[30]  = { pset={ LHpi.Data.sets[30].cardcount.all-1 }, namereplaced=1, foiltweaked=1, dropped=4 },--1 SOON, 2 "(Error)",1 is ARE [40]
+[27]  = { namereplaced=35 },
+[26]  = { pset={ 47 }, foiltweaked=18, dropped=2 },--2 SOON
+[25]  = { pset={ LHpi.Data.sets[25].cardcount.all-2, [17]=1 }, failed={ 5 }, dropped=1+8, namereplaced=8, foiltweaked=3-1 },--5 Full Art lands not in MA, 1 not [25],8 SOON, 2 wolf tokens missing
 [24]  = { foiltweaked=5 },
-[23]  = { pset={ 36 }, failed={ 2 } },
-[21]  = { pset={ 24 }, namereplaced=2, foiltweaked=1, dropped=1 },
+[23]  = { pset={ LHpi.Data.sets[23].cardcount.reg }, dropped=7+1, namereplaced=7 },--7 not GTW, 1 SOON (which will not be in GTW,too)
+[22]  = { pset={ LHpi.Data.sets[22].cardcount.both+2,[12]=1,[13]=1,[14]=1,[15]=1,[16]=1 }, failed={ 10+40+3 }, namereplaced=9, foiltweaked=119, dropped=5 },--5 SOON, 10 Guild logo inserts not in MA, 6*5 Origins not yet in MA, TODO 3 unknown
+[21]  = { pset={ LHpi.Data.sets[21].cardcount.all-LHpi.Data.sets[21].cardcount.repl-3-1 }, namereplaced=6, foiltweaked=2, dropped=2 },--1 SOON, 1 is ARE [40], missing 3 Theros Hero Cards, Tazeem (Plane) and oversized
 [20]  = { pset={ 77 }, namereplaced=23, foiltweaked=8 },
-[10]  = { pset={ 26 }, dropped=1 },-- 1 SOON
+[10]  = { pset={ LHpi.Data.sets[10].cardcount.reg-3}, dropped=2 },-- 2 SOON
 	}--end table site.expected
 end--function site.SetExpected()
 ma.Log(site.scriptname .. " loaded.")

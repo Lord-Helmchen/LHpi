@@ -4,7 +4,7 @@
 
 Inspired by and loosely based on "MTG Mint Card.lua" by Goblin Hero, Stromglad1 and "Import Prices.lua" by woogerboy21;
 who generously granted permission to "do as I like" with their code;
-everything else Copyright (C) 2012-2014 by Christian Harms.
+everything else Copyright (C) 2012-2015 by Christian Harms.
 If you want to contact me about the script, try its release thread in http://www.slightlymagic.net/forum/viewforum.php?f=32
 
 @module LHpi
@@ -79,7 +79,8 @@ no longer check for Data in deprecated location
 
 --TODO count averaging events with counter attached to prices
 --todo nil unneeded Data.sets[sid] to save memory?
---TODO change #boolean VERBOSE to #number verbosity and adjust loglevels?
+--todo change #boolean VERBOSE to #number verbosity and adjust loglevels?
+--FIXME clean leftover unused code
 
 local LHpi = {}
 ---	LHpi library version
@@ -684,7 +685,7 @@ function LHpi.ProcessUserParams( importfoil , importlangs , importsets )
 		end
 	end
 	if next(setlist) then
-		LHpi.Log( "Importing Sets: " .. LHpi.Tostring( setlist ) ,0)
+		LHpi.Log( string.format("Importing %i Sets: %s", LHpi.Length(setlist), LHpi.Tostring(setlist,true)) ,0)
 	else -- setlist is empty
 	--[[local supsetlist = ""
 		for lid,lang in pairs(site.sets) do
@@ -709,7 +710,7 @@ function LHpi.ProcessUserParams( importfoil , importlangs , importsets )
 		end
 	end
 	if next(langlist) then
-		LHpi.Log( "Importing Languages: " .. LHpi.Tostring( langlist ) ,0)
+		LHpi.Log( "Importing Languages: " .. LHpi.Tostring( langlist,true ) ,0)
 	else -- langlist is empty
 		local suplanglist = ""
 		for lid,lang in pairs(site.langs) do
@@ -777,6 +778,7 @@ function LHpi.ListSources ( importfoil , importlangs , importsets )
 				if cSet.lang[lid] then
 					for fid,fruc in pairs ( site.frucs ) do
 						if cSet.fruc[fid] then
+--TODO remove deprecated @param OFFLINE on next version
 							for url,urldetails in next, site.BuildUrl( sid , lid , fid , OFFLINE ) do
 								urldetails.setid=sid
 								urldetails.langid=lid
@@ -1896,15 +1898,27 @@ end -- function LHpi.Length
 --[[- recursively get string representation.
  
  @function [parent=#LHpi] Tostring
- @param tbl
+ @param #table tbl
+ @param #boolean sort	if true, will sort the table ascending by index
  @return #string 
 ]]
-function LHpi.Tostring( tbl )
+function LHpi.Tostring( tbl,sort )
 	if type( tbl ) == 'table' then
 		local s = '{ '
-		for k,v in pairs( tbl ) do
-			s = s .. '[' .. LHpi.Tostring( k ) .. ']=' .. LHpi.Tostring( v ) .. ';'
-		end
+		if sort then
+			local tblArray={}
+			for k,v in pairs (tbl) do
+				table.insert(tblArray, { key=k, value=v } )
+			end
+			table.sort(tblArray, function(a, b) return a.key < b.key end)
+			for i,r in ipairs( tblArray ) do
+				s = s .. '[' .. LHpi.Tostring( r.key ) .. ']=' .. LHpi.Tostring( r.value ) .. ';'
+			end
+		else
+			for k,v in pairs( tbl ) do
+				s = s .. '[' .. LHpi.Tostring( k ) .. ']=' .. LHpi.Tostring( v ) .. ';'
+			end
+		end--if sort
 		return s .. '} '
 	elseif type( tbl ) == 'string' then
 		return '"' .. tbl .. '"'

@@ -6,7 +6,7 @@ to import card pricing from www.mtgmintcard.com.
 
 Inspired by and loosely based on "MTG Mint Card.lua" by Goblin Hero, Stromglad1 and "Import Prices.lua" by woogerboy21;
 who generously granted permission to "do as I like" with their code;
-everything else Copyright (C) 2012-2014 by Christian Harms.
+everything else Copyright (C) 2012-2015 by Christian Harms.
 If you want to contact me about the script, try its release thread in http://www.slightlymagic.net/forum/viewforum.php?f=32
 
 @module LHpi.site
@@ -98,7 +98,7 @@ libver = "2.14"
 dataver = "5"
 --- sitescript revision number
 -- @field [parent=#global] string scriptver
-scriptver = "14"
+scriptver = "15"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field [parent=#global] #string scriptname
 scriptname = "LHpi.mtgmintcard-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -223,10 +223,11 @@ end
  @param #number setid		see site.sets
  @param #number langid		see site.langs
  @param #number frucid		see site.frucs
- @param #boolean offline	(can be nil) use local file instead of url
+ @param #boolean offline	DEPRECATED, read global OFFLINE instead if you need really it.
+ 							(can be nil) use local file instead of url
  @return #table { #string (url)= #table { isfile= #boolean, (optional) foilonly= #boolean, (optional) setid= #number, (optional) langid= #number, (optional) frucid= #number } , ... }
 ]]
-function site.BuildUrl( setid,langid,frucid,offline )
+function site.BuildUrl( setid,langid,frucid )
 	local container = {}
 
 	site.domain = "www.mtgmintcard.com/"
@@ -739,7 +740,7 @@ site.namereplace = {
 [320] = { -- Unglued
 ["B.F.M. (Big Furry Monster)(Left)"]	= "B.F.M. (Left)",
 ["B.F.M. (Big Furry Monster)(Right)"]	= "B.F.M. (Right)",
-["B.F.M. (Big Furry Monster)"]			= "B.F.M.",--TODO grep P/T to distinguish left/right
+["B.F.M. (Big Furry Monster)"]			= "B.F.M.",--TODO grep P/T to distinguish B.F.M. left/right
 --["Chicken à la King"]					= "Chicken à la King",
 --["The Ultimate Nightmare ..."]			= "The Ultimate Nightmare of Wizards of the Coast® Customer Service",
 },

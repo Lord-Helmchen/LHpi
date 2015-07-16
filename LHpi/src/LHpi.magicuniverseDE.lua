@@ -6,7 +6,7 @@ to import card pricing from www.magicuniverse.de.
 
 Inspired by and loosely based on "MTG Mint Card.lua" by Goblin Hero, Stromglad1 and "Import Prices.lua" by woogerboy21;
 who generously granted permission to "do as I like" with their code;
-everything else Copyright (C) 2012-2014 by Christian Harms.
+everything else Copyright (C) 2012-2015 by Christian Harms.
 If you want to contact me about the script, try its release thread in http://www.slightlymagic.net/forum/viewforum.php?f=32
 
 @module LHpi.site
@@ -222,10 +222,11 @@ end
  @param #number setid		see site.sets
  @param #number langid		see site.langs
  @param #number frucid		see site.frucs
- @param #boolean offline	(can be nil) use local file instead of url
+ @param #boolean offline	DEPRECATED, read global OFFLINE instead if you need really it.
+ 							(can be nil) use local file instead of url
  @return #table { #string (url)= #table { isfile= #boolean, (optional) foilonly= #boolean, (optional) setid= #number, (optional) langid= #number, (optional) frucid= #number } , ... }
 ]]
-function site.BuildUrl( setid,langid,frucid,offline )
+function site.BuildUrl( setid,langid,frucid )
 	site.domain = "www.magicuniverse.de/html/"
 	site.file = "magic.php?startrow=1"
 	site.setprefix = "&edition="
@@ -233,13 +234,7 @@ function site.BuildUrl( setid,langid,frucid,offline )
 	
 	local container = {}
 	local url = site.domain .. site.file .. site.setprefix .. site.sets[setid].url .. site.frucprefix .. site.frucs[frucid].url
---	if offline then
---		url = string.gsub( url, "%?", "_" )
---		url = string.gsub( url, "/", "_" )
---		container[url] = { isfile = true}
---	else
-		container[url] = {}
---	end -- if offline 
+	container[url] = {}
 	
 	if string.find( url , "[Ff][Oo][Ii][Ll]" ) then -- mark url as foil-only
 		container[url].foilonly = true
