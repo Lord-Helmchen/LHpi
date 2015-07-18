@@ -819,7 +819,7 @@ dummy.expansionsets = {
 }
 --- @field [parent=#dummy] #table coresets
 dummy.coresets = {
---TODO [822] = "Magic Origins";
+ [822] = "Magic Origins";
  [808] = "Magic 2015";
  [797] = "Magic 2014";
  [788] = "Magic 2013";
@@ -878,13 +878,22 @@ function main()
 	dummy.forceEnv()
 
 	local importfoil = "y"
---	local importlangs = { [1] = "eng" }
---	local importlangs = { [5] = "FOO" }
 	local importlangs = dummy.alllangs
+--	local importlangs = { [1] = "eng" }
+	local standard = {
+	 	[800] = "Theros";
+	 	[802] = "Born of the Gods";
+	 	[806] = "Journey into Nyx";
+	 	[808] = "Magic 2015";
+		[818] = "Dragons of Tarkir";
+		[816] = "Fate Reforged";
+		[813] = "Khans of Tarkir";
+	 	[822] = "Magic Origins"; 
+	 	}
+	local importsets = standard
 --	local importsets = { [0] = "fakeset"; }
---	local importsets = { [817]="some set" }
---	local importsets = { [220]="foo";[800]="bar";[0]="baz";}
---	local importsets = { [808] = "Magic 2015"; [806] = "Journey into Nyx"; [802] = "Born of the Gods"; [800] = "Theros"; }
+--	local importsets = { [808]="some set" }
+--	local importsets = { [220]="foo";[800]="bar";[0]="baz"; }
 --	local importsets = dummy.coresets
 --	local importsets = dummy.expansionsets
 	local importsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
@@ -897,14 +906,14 @@ function main()
 		[4]={name="LHpi.tcgplayerPriceGuide.lua",savepath=mapath.."Prices\\LHpi.tcgplayerPriceGuide\\"},
 		[5]={name="\\MTG Mint Card.lua",path=savepath,mapath=mapath,oldloader=true},
 		[6]={name="\\Import Prices.lua",path=mapath,savepath=mapath,oldloader=true},
-		[7]={name="LHpi.mtgprice.com.lua",savepath=mapath.."Prices\\LHpi.mtgprice\\"},
+		[7]={name="LHpi.mtgprice.com.lua",savepath=mapath.."Prices\\LHpi.mtgprice.com\\"},
 	--	[8]={name="LHpi.magickartenmarkt.lua",savepath=mapath.."Prices\\LHpi.magickartenmarkt\\"},
 	--	[9]={name="LHpi.mkm-helper.lua",savepath=mapath.."Prices\\LHpi.magickartenmarkt\\"},
 	}
 	
 	-- select a predefined script to be tested
 --	dummy.fakesitescript()
-	local selection = 4
+	local selection = 7
 	local script=scripts[selection]
 	if script.oldloadertrue then
 		dummy.loadscript(script.name,script.path,script.savepath)--deprecated

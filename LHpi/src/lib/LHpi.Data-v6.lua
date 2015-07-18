@@ -29,8 +29,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 --[[ CHANGES
 v6
+new 52,53,55,814,815,816,817,818,819,820,821,822
 added lang [17]="Phyrexian"
-new 52,53,55,814,815,816,817,818,819,820,821
 fixed names for 21,40,814
 variant table for 15,22,25,26,27,33,40,45
 foiltweak table for 22,26,33
@@ -104,6 +104,39 @@ Data.sets = {
 --- not really a seperate subtable, just a bookmark for quick navigation in eclipse.
 -- @field [parent=#Data.sets] #table Coresets
 Coresets = nil,
+[822] = { name="Magic Origins",
+	cardcount={ reg = 272, tok = 14 },
+	variants={
+["Plains"] 						= { "Plains"	, { 1    , 2    , 3    , 4     } },
+["Island"] 						= { "Island" 	, { 1    , 2    , 3    , 4     } },
+["Swamp"] 						= { "Swamp"		, { 1    , 2    , 3    , 4     } },
+["Mountain"] 					= { "Mountain"	, { 1    , 2    , 3    , 4     } },
+["Forest"] 						= { "Forest" 	, { 1    , 2    , 3    , 4     } },
+["Plains (250)"]				= { "Plains"	, { 1    , false, false, false } }, 
+["Plains (251)"]				= { "Plains"	, { false, 2    , false, false } },
+["Plains (252)"]				= { "Plains"	, { false, false, 3    , false } },
+["Plains (253)"]				= { "Plains"	, { false, false, false, 4     } },
+["Island (254)"]				= { "Island"	, { 1    , false, false, false } },
+["Island (255)"]				= { "Island"	, { false, 2    , false, false } },
+["Island (256)"]				= { "Island"	, { false, false, 3    , false } },
+["Island (257)"]				= { "Island"	, { false, false, false, 4     } },
+["Swamp (258)"]					= { "Swamp"		, { 1    , false, false, false } },
+["Swamp (259)"]					= { "Swamp"		, { false, 2    , false, false } },
+["Swamp (260)"]					= { "Swamp"		, { false, false, 3    , false } },
+["Swamp (261)"]					= { "Swamp"		, { false, false, false, 4     } },
+["Mountain (262)"]				= { "Mountain"	, { 1    , false, false, false } },
+["Mountain (263)"]				= { "Mountain"	, { false, 2    , false, false } },
+["Mountain (264)"]				= { "Mountain"	, { false, false, 3    , false } },
+["Mountain (265)"]				= { "Mountain"	, { false, false, false, 4     } },
+["Forest (266)"]				= { "Forest"	, { 1    , false, false, false } },
+["Forest (267)"]				= { "Forest"	, { false, 2    , false, false } },
+["Forest (268)"]				= { "Forest"	, { false, false, 3    , false } },
+["Forest (269)"]				= { "Forest"	, { false, false, false, 4     } },
+["Thopter Token"]				= { "Thopter Token"	, { 1    , 2     } },
+["Thopter Token (10)"]			= { "Thopter Token"	, { 1    , false } },--Svetlin Velinov
+["Thopter Token (11)"]			= { "Thopter Token"	, { false, 2     } },--Adam Paquette
+	},
+},
 [808] = { name="Magic 2015",
 	cardcount={ reg = 269+15, tok = 14 },
 	variants={
@@ -1732,7 +1765,7 @@ Expansions = nil,
 	["Brieftauben (1)"] 				= { "Brieftauben"					, { 1    , false } },
 	["Brieftauben (2)"] 				= { "Brieftauben"					, { false, 2     } },
 ["Casting of Bones"] 					= { "Casting of Bones"				, { 1    , 2     } },
-["Casting of Bones (1)"] 				= { "Casting of Bones"				, { 1    , false } },--
+["Casting of Bones (1)"] 				= { "Casting of Bones"				, { 1    , false } },--Hooded Figure
 ["Casting of Bones (2)"] 				= { "Casting of Bones"				, { false, 2     } },--Close-up
 	["Knochenorakel"] 					= { "Knochenorakel"					, { 1    , 2     } },
 	["Knochenorakel (1)"] 				= { "Knochenorakel"					, { 1    , false } },
@@ -1768,7 +1801,7 @@ Expansions = nil,
 	["Vorgetäuschter Tod (1)"] 			= { "Vorgetäuschter Tod"			, { 1    , false } },
 	["Vorgetäuschter Tod (2)"] 			= { "Vorgetäuschter Tod"			, { false, 2     } },
 ["Feast or Famine"] 					= { "Feast or Famine"				, { 1    , 2     } },
-["Feast or Famine (1)"] 				= { "Feast or Famine"				, { 1    , false } },--
+["Feast or Famine (1)"] 				= { "Feast or Famine"				, { 1    , false } },--Knife
 ["Feast or Famine (2)"] 				= { "Feast or Famine"				, { false, 2     } },--Falling into Pit
 	["Um Leben und Tod"] 				= { "Um Leben und Tod"				, { 1    , 2     } },
 	["Um Leben und Tod (1)"] 			= { "Um Leben und Tod"				, { 1    , false } },
@@ -1823,7 +1856,7 @@ Expansions = nil,
 	["Schlachtruf der Gorillas (2)"] 	= { "Schlachtruf der Gorillas"		, { false, 2     } },
 ["Guerrilla Tactics"] 					= { "Guerrilla Tactics"				, { 1    , 2     } },
 ["Guerrilla Tactics (1)"] 				= { "Guerrilla Tactics"				, { 1    , false } },--Kneeling Knight
-["Guerrilla Tactics (2)"]	 			= { "Guerrilla Tactics"				, { false, 2     } },--
+["Guerrilla Tactics (2)"]	 			= { "Guerrilla Tactics"				, { false, 2     } },--Cliff
 	["Guerillataktik"] 					= { "Guerillataktik"				, { 1    , 2     } },
 	["Guerillataktik (1)"] 				= { "Guerillataktik"				, { 1    , false } },
 	["Guerillataktik (2)"] 				= { "Guerillataktik"				, { false, 2     } },
@@ -1912,8 +1945,8 @@ Expansions = nil,
 	["Verwesungsgestank (1)"] 			= { "Verwesungsgestank"				, { 1    , false } },
 	["Verwesungsgestank (2)"] 			= { "Verwesungsgestank"				, { false, 2     } },
 ["Storm Shaman"]	 					= { "Storm Shaman"					, { 1    , 2     } },
-["Storm Shaman (1)"] 					= { "Storm Shaman"					, { 1    , false } },--Man on Plains
-["Storm Shaman (2)"] 					= { "Storm Shaman"					, { false, 2     } },--
+["Storm Shaman (1)"] 					= { "Storm Shaman"					, { 1    , false } },--Male
+["Storm Shaman (2)"] 					= { "Storm Shaman"					, { false, 2     } },--Female
 	["Sturmschamane"]	 				= { "Sturmschamane"					, { 1    , 2     } },
 	["Sturmschamane (1)"] 				= { "Sturmschamane"					, { 1    , false } },
 	["Sturmschamane (2)"] 				= { "Sturmschamane"					, { false, 2     } },
@@ -1942,7 +1975,7 @@ Expansions = nil,
 	["Soldevischer Weiser (1)"] 		= { "Soldevischer Weiser"			, { 1    , false } },
 	["Soldevischer Weiser (2)"] 		= { "Soldevischer Weiser"			, { false, 2     } },
 ["Soldevi Sentry"] 						= { "Soldevi Sentry"				, { 1    , 2     } },
-["Soldevi Sentry (1)"] 					= { "Soldevi Sentry"				, { 1    , false } },--Silver Bust
+["Soldevi Sentry (1)"] 					= { "Soldevi Sentry"				, { 1    , false } },--Close-Up
 ["Soldevi Sentry (2)"] 					= { "Soldevi Sentry"				, { false, 2     } },--
 	["Soldevischer Wachposten"] 		= { "Soldevischer Wachposten"		, { 1    , 2     } },
 	["Soldevischer Wachposten (1)"] 	= { "Soldevischer Wachposten"		, { 1    , false } },

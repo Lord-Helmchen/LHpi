@@ -29,7 +29,7 @@ added 814
 2.14.5.14
 removed url to filename changes that are done by the library if OFFLINE
 2.15.6.14
-added 816,818,815,817,819,820,821,40,32,27,25,23,22,21,
+added 816,818,815,817,819,820,821,40,32,27,25,23,22,21,822,340,55,45,822
 new features from template/mkm branch
 site.BuildUrl
 * supports multiple urls per set
@@ -44,16 +44,16 @@ updated/fixed/added variants,namereplacements,expected
 
 --- more detailed log; default false
 -- @field [parent=#global] #boolean VERBOSE
---VERBOSE = true
+VERBOSE = true
 --- also log dropped cards; default false
 -- @field [parent=#global] #boolean LOGDROPS
---LOGDROPS = true
+LOGDROPS = true
 --- also log namereplacements; default false
 -- @field [parent=#global] #boolean LOGNAMEREPLACE
---LOGNAMEREPLACE = true
+LOGNAMEREPLACE = true
 --- also log foiltweaking; default false
 -- @field [parent=#global] #boolean LOGFOILTWEAK
---LOGFOILTWEAK = true
+LOGFOILTWEAK = true
 
 -- options unique to this sitescript
 
@@ -439,18 +439,20 @@ function site.BCDpluginPre( card, setid, importfoil, importlangs )
 		else
 			card.lang[17] = nil
 		end
+	elseif setid == 45 then
+		card.lang = { [8]="JPN" }
 	elseif setid == 22 then -- Prerelease Promos
 		for _,lid in ipairs({12,13,14,15,16}) do
 			card.lang[lid] = nil
 		end
 		if card.name == "Glory" then
-			card.lang = { [12]="HEB"}
+			card.lang = { [12]="HEB" }
 		elseif card.name == "Stone-Tongue Basilisk" then
 			card.lang = { [13]="ARA" }
 		elseif card.name == "Raging Kavu" then
 			card.lang = { [14]="LAT" }
 		elseif card.name == "Fungal Shambler" then
-			card.lang = { [15]="SAN"}
+			card.lang = { [15]="SAN" }
 		elseif card.name == "Questing Phelddagrif" then
 			card.lang = { [16]="GRC" }
 		end
@@ -509,7 +511,8 @@ site.himelo = { "high" , "medium" , "low" }
  @field [parent=#site.langs] #string url	infix for site.BuildUrl
 ]]
 site.langs = {
-	[1] = { id=1,  url="" },
+	[1] = { id=1, url="" },
+	[8] = { id=8, url="" },--Japanese		-- Only [45] Magic Premiere Shop
 	[12] = { id=12, url="" },--Hebrew		-- Only 1 card, in [22] Prerelease Promos
 	[13] = { id=13, url="" },--Arabic		-- Only 1 card, in [22] Prerelease Promos
 	[14] = { id=14, url="" },--Latin		-- Only 1 card, in [22] Prerelease Promos
@@ -551,9 +554,9 @@ site.frucs = {
  @field [parent=#site.sets] #table fruc		{ #number (frucid)= #boolean , ... }
  @field [parent=#site.sets] #string url		infix for site.BuildUrl
 ]]
---FIXME check nil sets with guessed urls
 site.sets = {
 -- Core Sets
+[822]={id = 822, lang = { true }, fruc = { true }, url = "magic%20origins"},--Magic Origins
 [808]={id = 808, lang = { true }, fruc = { true }, url = "magic%202015%20%28m15%29"},--Magic 2015 (M15)
 [797]={id = 797, lang = { true }, fruc = { true }, url = "magic%202014%20%28m14%29"},--Magic 2014 (M14)
 [788]={id = 788, lang = { true }, fruc = { true }, url = "magic%202013%20%28m13%29"},--Magic 2013 (M13)
@@ -697,7 +700,7 @@ site.sets = {
 [405]={id = 405, lang = { true }, fruc = { true }, url = "battle%20royale%20box%20set"},--Battle Royale Box Set
 [390]={id = 390, lang = { true }, fruc = { true }, url = "starter%201999"},--Starter 1999
 [380]={id = 380, lang = { true }, fruc = { true }, url = "portal%20three%20kingdoms"},--Portal Three Kingdoms
-[340]=nil,--Anthologies
+[340]={id = 340, lang = { true }, fruc = { true }, url = "Anthologies"},--Anthologies
 [320]={id = 320, lang = { true }, fruc = { true }, url = "unglued"},--Unglued
 [310]={id = 310, lang = { true }, fruc = { true }, url = "portal%20second%20age"},--Portal Second Age
 [260]={id = 260, lang = { true }, fruc = { true }, url = "portal"},--Portal
@@ -710,11 +713,11 @@ site.sets = {
 [70] ={id =  70, lang = { true }, fruc = { true }, url = "vanguard"},--Vanguard
 [69] =nil,--Box Topper Cards
 -- Promo Cards
-[55] =nil,--Ugin’s Fate Promos
+[55] ={id =  55, lang = { true }, fruc = { true }, url = "Ugin's%20Fate%20Promos"},--Ugin’s Fate Promos
 [53] =nil,--Holiday Gift Box Promos
 [52] =nil,--Intro Pack Promos
 [50] =nil,--Full Box Promotion
-[45] =nil,--Magic Premiere Shop
+[45] ={id =  45, lang = { [8]="JPN" }, fruc = { true }, url = "Magic%20Premiere%20Shop"},--Magic Premiere Shop
 [43] =nil,--Two-Headed Giant Promos
 [42] =nil,--Summer of Magic Promos
 [41] =nil,--Happy Holidays Promos
@@ -757,9 +760,8 @@ site.sets = {
 [2]  =nil,--DCI Legend Membership
 -- unknown
 -- uncomment these while running helper.FindUnknownUrls
--- "Media%20Promos": sorting out the single page seems more trouble than it's worth
+--TODO these four need settweak
 --[9990]={id =   0, lang = { true }, fruc = { true }, url = "media%20promos"},--Media Promos
--- "Special%20Occasion": sorting out the single page seems more trouble than it's worth
 --[9991]={id =   0, lang = { true }, fruc = { true }, url = "special%20occasion"},--Special Occasion
 --[9992]={id =   0, lang = { true }, fruc = { true }, url = "oversize-cards"},
 --[9993]={id =   0, lang = { true }, fruc = { true }, url = "unique and miscellaneous promos"},
@@ -774,6 +776,35 @@ site.sets = {
  @field [parent=#site.namereplace] #string name
 ]]
 site.namereplace = {
+[822] = { --Magic Origins
+["Plains (254)"]				= "Plains",
+["Plains (255)"]				= "Plains",
+["Plains (256)"]				= "Plains",
+["Island (258)"]				= "Island",
+["Island (259)"]				= "Island",
+["Island (260)"]				= "Island",
+["Swamp (262)"]					= "Swamp",
+["Swamp (263)"]					= "Swamp",
+["Swamp (264)"]					= "Swamp",
+["Mountain (266)"]				= "Mountain",
+["Mountain (267)"]				= "Mountain",
+["Mountain (268)"]				= "Mountain",
+["Forest (270)"]				= "Forest",
+["Forest (271)"]				= "Forest",
+["Forest (272)"]				= "Forest",
+["Anchor to the Aether"]		= "Anchor to the Æther",
+["Ghirapur Aether Grid"]		= "Ghirapur Æther Grid",
+["Chandra, Fire of Kaladesh"]	= "Chandra, Fire of Kaladesh|Chandra, Roaring Flame",
+["Jace, Vryn's Prodigy"]		= "Jace, Vryn’s Prodigy|Jace, Telepath Unbound",
+["Kytheon, Hero of Akros"]		= "Kytheon, Hero of Akros|Gideon, Battle-Forged",
+["Liliana, Heretical Healer"]	= "Liliana, Heretical Healer|Liliana, Defiant Necromancer",
+["Nissa, Vastwood Seer"]		= "Nissa, Vastwood Seer|Nissa, Sage Animist",
+["Thopter Token (Paquette)"]	= "Thopter Token (11)",
+["Thopter Token (Velinov)"]		= "Thopter Token (10)",
+["Emblem - Chandra"]			= "Chandra, Roaring Flame Emblem",
+["Emblem - Jace"]				= "Jace, Telepath Unbound Emblem",
+["Emblem - Liliana"]			= "Liliana, Defiant Necromancer Emblem",
+},
 [808] = { --M2015
 ["AEtherspouts"]						= "Ætherspouts",
 ["Beast Token (Black)"]					= "Beast Token (5)",
@@ -1186,7 +1217,7 @@ site.namereplace = {
 ["Bestial Fury (Facing Left)"]					= "Bestial Fury (1)",
 ["Carrier Pigeons"]								= "Carrier Pigeons (1)",
 ["Carrier Pigeons (Hand)"]						= "Carrier Pigeons (2)",
-["Casting of Bones"]							= "Casting of Bones (1)",
+["Casting of Bones (Hooded Figure)"]			= "Casting of Bones (1)",
 ["Casting of Bones (Close-up)"]					= "Casting of Bones (2)",
 ["Deadly Insect"]								= "Deadly Insect (1)",
 ["Deadly Insect (Red Robe)"]					= "Deadly Insect (2)",
@@ -1198,7 +1229,7 @@ site.namereplace = {
 ["Errand of Duty (Page Holding Sword)"]			= "Errand of Duty (2)",
 ["False Demise"]								= "False Demise (1)",
 ["False Demise (Cave-in)"]						= "False Demise (2)",
-["Feast or Famine"]								= "Feast or Famine (1)",
+["Feast or Famine (Knife)"]						= "Feast or Famine (1)",
 ["Feast or Famine (Falling into Pit)"]			= "Feast or Famine (2)",
 ["Fevered Strength"]							= "Fevered Strength (2)",
 ["Fevered Strength (Foaming at Mouth)"]			= "Fevered Strength (1)",
@@ -1216,8 +1247,8 @@ site.namereplace = {
 ["Gorilla Shaman (Holding Baby)"]				= "Gorilla Shaman (2)",
 ["Gorilla War Cry"]								= "Gorilla War Cry (2)",
 ["Gorilla War Cry (Red Club)"]					= "Gorilla War Cry (1)",
-["Guerrilla Tactics"]							= "Guerrilla Tactics (2)",
-["Guerrilla Tactics (Kneeling Knight"]			= "Guerrilla Tactics (1)", 
+["Guerrilla Tactics (Cliff)"]					= "Guerrilla Tactics (2)",
+["Guerrilla Tactics (Kneeling Knight)"]			= "Guerrilla Tactics (1)", 
 ["Insidious Bookworms"]							= "Insidious Bookworms (1)",
 --["Insidious Bookworms (Horde of Worms)"]		= "Insidious Bookworms (1)",
 ["Insidious Bookworms (Single)"]				= "Insidious Bookworms (2)",
@@ -1252,15 +1283,15 @@ site.namereplace = {
 ["Soldevi Sage"]								= "Soldevi Sage (1)",
 ["Soldevi Sage (2 Candles)"]					= "Soldevi Sage (2)",
 ["Soldevi Sentry"]								= "Soldevi Sentry (2)",
-["Soldevi Sentry (Silver Bust)"]				= "Soldevi Sentry (1)",
+["Soldevi Sentry (Close-Up)"]					= "Soldevi Sentry (1)",
 ["Soldevi Steam Beast"] 						= "Soldevi Steam Beast (1)",
 ["Soldevi Steam Beast (Purple Sun)"] 			= "Soldevi Steam Beast (2)",
 ["Stench of Decay"]								= "Stench of Decay (2)",
 ["Stench of Decay (Red Flower)"]				= "Stench of Decay (1)",
 ["Storm Crow"]									= "Storm Crow (2)",
 ["Storm Crow (Flying Right)"]					= "Storm Crow (1)",
-["Storm Shaman"]								= "Storm Shaman (2)",
-["Storm Shaman (Man on Plains)"]				= "Storm Shaman (1)",
+["Storm Shaman (Female)"]						= "Storm Shaman (2)",
+["Storm Shaman (Male)"]							= "Storm Shaman (1)",
 ["Swamp Mosquito"]								= "Swamp Mosquito (2)",
 ["Swamp Mosquito (Fallen Tree)"]				= "Swamp Mosquito (1)",
 ["Taste of Paradise"]							= "Taste of Paradise (2)",
@@ -1694,6 +1725,16 @@ site.namereplace = {
 ['Pang Tong, "Young Phoenix"']			= "Pang Tong, “Young Phoenix”",
 ['Kongming, "Sleeping Dragon"']			= "Kongming, “Sleeping Dragon”",
 },
+[340] = { -- Anthologies
+["Mountain (40)"]					= "Mountain (1)",
+["Mountain (41)"]					= "Mountain (2)",
+["Swamp (42)"]						= "Swamp (1)",
+["Swamp (43)"]						= "Swamp (2)",
+["Forest (84)"]						= "Forest (1)",
+["Forest (85)"]						= "Forest (2)",
+["Plains (86)"]						= "Plains (1)",
+["Plains (87)"]						= "Plains (2)",
+},
 [320] = { -- Unglued
 ["B.F.M. (Big Furry Monster Left)"]		= "B.F.M. (Left)",
 ["B.F.M. (Big Furry Monster Right)"]	= "B.F.M. (Right)",
@@ -1790,6 +1831,57 @@ site.namereplace = {
 ["Forest (Eyes)"]						= "Forest (3)",
 },
 -- promo
+[45] = { -- Magic Premiere Shop
+["Forest - Golgari Swarm"]				= "Forest (Golgari)",
+["Forest - Gruul Clans"]				= "Forest (Gruul)",
+["Forest - Innistrad Cycle"]			= "Forest (ISD)",
+["Forest - Lorwyn Cycle"]				= "Forest (LRW)",
+["Forest - Scars of Mirrodin Cycle"]	= "Forest (SOM)",
+["Forest - Selesnya Conclave"]			= "Forest (Selesnya)",
+["Forest - Shards of Alara Cycle"]		= "Forest (ALA)",
+["Forest - Simic Combine"]				= "Forest (Simic)",
+["Forest - Time Spiral Cycle"]			= "Forest (TSP)",
+["Forest - Zendikar Cycle"]				= "Forest (ZEN)",
+["Island - Azorius Senate"]				= "Island (Azorius)",
+["Island - House Dimir"]				= "Island (Dimir)",
+["Island - Izzet League"]				= "Island (Izzet)",
+["Island - Lorwyn Cycle"]				= "Island (LRW)",
+["Island - Scars of Mirrodin Cycle"]	= "Island (SOM)",
+["Island - Shards of Alara Cycle"]		= "Island (ALA)",
+["Island - Simic Combine"]				= "Island (Simic)",
+["Island - Time Spiral Cycle"]			= "Island (TSP)",
+["Island - Zendikar Cycle"]				= "Island (ZEN)",
+["Mountain - Boros Legion"]				= "Mountain (Boros)",
+["Mountain - Cult of Rakdos"]			= "Mountain (Rakdos)",
+["Mountain - Gruul Clans"]				= "Mountain (Gruul)",
+["Mountain - Innistrad Cycle"]			= "Mountain (ISD)",
+["Mountain - Izzet League"]				= "Mountain (Izzet)",
+["Mountain - Lorwyn Cycle"]				= "Mountain (LRW)",
+["Mountain - Scars of Mirrodin Cycle"]	= "Mountain (SOM)",
+["Mountain - Shards of Alara Cycle"]	= "Mountain (ALA)",
+["Mountain - Time Spiral Cycle"]		= "Mountain (TSP)",
+["Mountain - Zendikar Cycle"]			= "Mountain (ZEN)",
+["Plains - Azorius Senate"]				= "Plains (Azorius)",
+["Plains - Boros Legion"]				= "Plains (Boros)",
+["Plains - Innistrad Cycle"]			= "Plains (ISD)",
+["Plains - Lorwyn Cycle"]				= "Plains (LRW)",
+["Plains - Orzhov Syndicate"]			= "Plains (Orzhov)",
+["Plains - Scars of Mirrodin Cycle"]	= "Plains (SOM)",
+["Plains - Selesnya Conclave"]			= "Plains (Selesnya)",
+["Plains - Shards of Alara Cycle"]		= "Plains (ALA)",
+["Plains - Time Spiral Cycle"]			= "Plains (TSP)",
+["Plains - Zendikar Cycle"]				= "Plains (ZEN)",
+["Swamp - Cult of Rakdos"]				= "Swamp (Rakdos)",
+["Swamp - Golgari Swarm"]				= "Swamp (Golgari)",
+["Swamp - House Dimir"]					= "Swamp (Dimir)",
+["Swamp - Innistrad Cycle"]				= "Swamp (ISD)",
+["Swamp - Lorwyn Cycle"]				= "Swamp (LRW)",
+["Swamp - Orzhov Syndicate"]			= "Swamp (Orzhov)",
+["Swamp - Scars of Mirrodin Cycle"]		= "Swamp (SOM)",
+["Swamp - Shards of Alara Cycle"]		= "Swamp (ALA)",
+["Swamp - Time Spiral Cycle"]			= "Swamp (TSP)",
+["Swamp - Zendikar Cycle"]				= "Swamp (ZEN)",
+},
 [40] = { -- Arena/Colosseo Leagues Promos
 --TODO [40] settweak
 ["Ashnod\145s Coupon"]					= "Ashnod’s Coupon",
@@ -2045,6 +2137,7 @@ function site.SetExpected( importfoil , importlangs , importsets )
 -- @field [parent=#site.expected] #boolean replica
 	replica = true,
 -- Core sets
+[822] = { failed={ 17 }, namereplaced=27 }, -- Checklist and not-in-booster cards not in MA
 [808] = { dropped=1, namereplaced=5 }, -- 1 SOON (1 Garruk the Slayer (oversized))
 [797] = { namereplaced=2 },
 --[788] = { failed={ 1 } },
@@ -2159,6 +2252,7 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [106] = { pset={ LHpi.Data.sets[106].cardcount.repl-17 }, dropped=17 },--17 SOON
 [105] = { namereplaced=15 },
 -- promos
+[45]  = { pset={ [8]=LHpi.Data.sets[45].cardcount.reg-2 }, failed={ [8]=1 }, namereplaced=49, dropped=20 },--20 SOON, Jaya Ballard, Task Mage and Island (ISD) missing
 [40]  = { pset={ LHpi.Data.sets[40].cardcount.reg }, failed={ 2 }, namereplaced=10, dropped=3 },--3 are not ARE
 [32]  = { failed={ 1 }, namereplaced=3, dropped=1 },-- "Liliana of the Veil" (PTQ) not in MA
 [31]  = { failed= { 1 } },--Griselbrand 2015 not in MA
