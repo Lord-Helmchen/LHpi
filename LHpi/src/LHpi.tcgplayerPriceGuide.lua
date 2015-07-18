@@ -29,7 +29,7 @@ added 814
 2.14.5.14
 removed url to filename changes that are done by the library if OFFLINE
 2.15.6.14
-added 816,818,815,817,819,820,821,40,32,27,25,23,22,21
+added 816,818,815,817,819,820,821,40,32,27,25,23,22,21,
 new features from template/mkm branch
 site.BuildUrl
 * supports multiple urls per set
@@ -79,9 +79,9 @@ copyprice = nil
 -- @field [parent=#global] #boolean STRICTEXPECTED
 --STRICTEXPECTED = true
 
---- if true, exit with error on object type mismatch, else use object type 0 (all)
--- @field [parent=#global] boolena STRICTOBJTYPE
---STRICTOBJTYPE = true
+--- if true, exit with error on object type mismatch, else use object type 0 (all);	default true
+-- @field [parent=#global] #boolean STRICTOBJTYPE
+--STRICTOBJTYPE = false
 
 --- log to seperate logfile instead of Magic Album.log;	default true
 -- @field [parent=#global] #boolean SAVELOG
@@ -89,7 +89,7 @@ copyprice = nil
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
---OFFLINE = true
+OFFLINE = true--download from dummy, only change to false for release
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
@@ -112,22 +112,33 @@ copyprice = nil
 --DEBUGVARIANTS = true
 
 --- revision of the LHpi library to use
--- @field [parent=#global] #string libver
-libver = "2.15"
+-- @field #string libver
+local libver = "2.15"
 --- revision of the LHpi library datafile to use
--- @field [parent=#global] #string dataver
-dataver = "6"
+-- @field #string dataver
+local dataver = "6"
 --- sitescript revision number
--- @field [parent=#global] string scriptver
-scriptver = "14"
+-- @field  string scriptver
+local scriptver = "14"
 --- should be similar to the script's filename. Used for loging and savepath.
--- @field [parent=#global] #string scriptname
-scriptname = "LHpi.tcgplayerPriceGuide-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
+-- @field #string scriptname
+local scriptname = "LHpi.tcgplayerPriceGuide-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
+--- savepath for OFFLINE (read) and SAVEHTML (write). must point to an existing directory relative to MA's root.
+-- set by LHpi lib unless specified here.
+-- @field  #string savepath
+--local savepath = "Prices\\" .. string.gsub( scriptname , "%-v%d+%.%d+%.lua$" , "" ) .. "\\"
+local savepath = savepath -- keep external global savepath
+--- log file name. must point to (nonexisting or writable) file in existing directory relative to MA's root.
+-- set by LHpi lib unless specified here. Defaults to LHpi.log unless SAVELOG is true.
+-- @field #string logfile
+--local logfile = "Prices\\" .. string.gsub( site.scriptname , "lua$" , "log" )
+local logfile = logfile -- keep external global logfile
 
 ---	LHpi library
 -- will be loaded by ImportPrice
+-- do not delete already present LHpi (needed for helper mode)
 -- @field [parent=#global] #table LHpi
-LHpi = {} or {}
+LHpi = LHpi or {}
 
 --[[- Site specific configuration
  Settings that define the source site's structure and functions that depend on it,
@@ -150,7 +161,10 @@ site.regex = '<TR height=20>(.-)</TR>'
 
 
 --- support for global workdir, if used outside of Magic Album/Prices folder. do not change here.
-site.workdir = workdir or "Prices\\"
+-- @field [parent=#local] #string workdir
+-- @field [parent=#local] #string mapath
+local workdir = workdir or "Prices\\"
+local mapath = mapath or ".\\"
 
 --[[- "main" function.
  called by Magic Album to import prices. Parameters are passed from MA.
@@ -184,7 +198,9 @@ function ImportPrice( importfoil , importlangs , importsets , scriptmode)
 	LHpi.Log( "LHpi lib is ready for use." )
 	site.Initialize( scriptmode ) -- keep site-specific stuff out of ImportPrice
 	LHpi.DoImport (importfoil , importlangs , importsets)
-	ma.Log( "End of Lua script " .. scriptname )
+	LHpi.Log( "Lua script " .. scriptname .. " finished" ,0)
+	collectgarbage()--try prevent MA crashes on exit
+	ma.Log( "Lua script " .. scriptname .. " finished" )
 end -- function ImportPrice
 
 --[[- load LHpi library from external file
@@ -194,12 +210,12 @@ end -- function ImportPrice
 ]]
 function site.LoadLib()
 	local LHpi
-	local libname = site.workdir .. "lib\\LHpi-v" .. libver .. ".lua"
+	local libname = workdir .. "lib\\LHpi-v" .. libver .. ".lua"
 	local loglater
 	local LHpilib = ma.GetFile( libname )
 	if tonumber(libver) < 2.15 then
 		loglater = ""
-		local oldlibname = "Prices\\LHpi-v" .. libver .. ".lua"
+		local oldlibname = workdir .. "LHpi-v" .. libver .. ".lua"
 		local oldLHpilib = ma.GetFile ( oldlibname )
 		if oldLHpilib then
 			if DEBUG then
@@ -255,7 +271,10 @@ function site.Initialize( mode )
 	
 	if mode.update then
 		if not dummy then error("ListUnknownUrls needs to be run from dummyMA!") end
-	 	dummy.ListUnknownUrls(site.FetchExpansionList(),dummy.CompareSiteSets())
+		dummy.CompareDummySets(mapath,site.libver)
+		dummy.CompareDataSets(site.libver,site.libver)
+		dummy.CompareSiteSets()
+	 	dummy.ListUnknownUrls(site.FetchExpansionList())
 		return
 	end
 end--function site.Initialize
@@ -334,7 +353,7 @@ function site.FetchExpansionList()
 		table.insert(expansions, { name=name, urlsuffix=LHpi.OAuthEncode(url)})
 	end
 	return expansions
-end--function FetchExpansionList
+end--function site.FetchExpansionList
 --[[- format string to use in dummy.ListUnknownUrls update helper function.
  @field [parent=#site] #string updateFormatString ]]
 site.updateFormatString = "[%i]={id = %3i, lang = { true }, fruc = { true }, url = %q},--%s"
@@ -358,9 +377,9 @@ site.updateFormatString = "[%i]={id = %3i, lang = { true }, fruc = { true }, url
  @return #string newCard.name		(optional) will pre-set the card's unique (for the cardsetTable) identifying name.
  @return #table newCard.lang		(optional) will override LHpi.buildCardData generated values.
  @return #boolean newCard.drop		(optional) will override LHpi.buildCardData generated values.
- @return #table newCard.variant		(optional) will override LHpi.buildCardData generated values.
- @return #number or #table newCard.regprice		(optional) will override LHpi.buildCardData generated values. #number or #table { [#number langid]= #number,...}
- @return #number or #table newCard.foilprice 	(optional) will override LHpi.buildCardData generated values. #number or #table { [#number langid]= #number,...}
+ @return #table newCard.variant		(discouraged) will override LHpi.buildCardData generated values.
+ @return #number or #table newCard.regprice		(discouraged) will override LHpi.buildCardData generated values. #number or #table { [#number langid]= #number,...}
+ @return #number or #table newCard.foilprice 	(discouraged) will override LHpi.buildCardData generated values. #number or #table { [#number langid]= #number,...}
  
  @function [parent=#site] ParseHtmlData
  @param #string foundstring		one occurence of siteregex from raw html data
@@ -372,9 +391,7 @@ function site.ParseHtmlData( foundstring , urldetails )
 	for column in string.gmatch(foundstring , "<td[^>]->+%b<>([^<]+)%b<></td>") do
 		table.insert(tablerow , column)
 	end -- for column
-	if DEBUG then
-		LHpi.Log("(parsed):" .. LHpi.Tostring(tablerow) , 2 )
-	end
+	LHpi.Log("(parsed):" .. LHpi.Tostring(tablerow) ,2)
 	local name = string.gsub( tablerow[1], "&nbsp;" , "" )
 	name = string.gsub( name , "^ " , "" )--should not be necessary, done by LHpi.GetSourceData as well...
 	local price = ( tablerow[ ( himelo+5 ) ] ) or 0 -- rows 6 to 8
@@ -408,9 +425,7 @@ end -- function site.ParseHtmlData
  			{ name= #string , (optional) drop= #boolean , lang= #table , (optional) names= #table , (optional) pluginData= #table , (preset fields) }
 ]]
 function site.BCDpluginPre( card, setid, importfoil, importlangs )
-	if DEBUG then
-		LHpi.Log( "site.BCDpluginPre got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
-	end
+	LHpi.Log( "site.BCDpluginPre got " .. LHpi.Tostring( card ) .. " from set " .. setid ,2)
 	card.name = string.gsub( card.name , "^(Magic QA.*)" , "(DROP) %1")
 	card.name = string.gsub( card.name , "^(Staging Check.*)" , "(DROP) %1")
 	card.name = string.gsub( card.name , "^(RWN Testing.*)" , "(DROP) %1")
@@ -460,9 +475,8 @@ end -- function site.BCDpluginPre
  			{ name= #string , drop= #boolean, lang= #table , (optional) names= #table , variant= (#table or nil), regprice= #table , foilprice= #table }
 ]]
 function site.BCDpluginPost( card , setid , importfoil, importlangs )
-	if DEBUG then
-		LHpi.Log( "site.BCDpluginPost got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
-	end
+	LHpi.Log( "site.BCDpluginPost got " .. LHpi.Tostring( card ) .. " from set " .. setid ,2)
+	
 	-- Probably useless to most, but still a good example what BCDpluginPost can be used for.
 	if copyprice then
 		for lid,boolang in pairs(copyprice) do
@@ -540,26 +554,26 @@ site.frucs = {
 --FIXME check nil sets with guessed urls
 site.sets = {
 -- Core Sets
-[808]={id = 808, lang = { true }, fruc = { true }, url = "Magic%202015%20(M15)"},--Magic 2015 (M15)
-[797]={id = 797, lang = { true }, fruc = { true }, url = "Magic%202014%20(M14)"},--Magic 2014 (M14)
-[788]={id = 788, lang = { true }, fruc = { true }, url = "Magic%202013%20(M13)"},--Magic 2013 (M13)
-[779]={id = 779, lang = { true }, fruc = { true }, url = "Magic%202012%20(M12)"},--Magic 2012 (M12)
-[770]={id = 770, lang = { true }, fruc = { true }, url = "Magic%202011%20(M11)"},--Magic 2011 (M11)
-[759]={id = 759, lang = { true }, fruc = { true }, url = "Magic%202010%20(M10)"},--Magic 2010 (M10)
+[808]={id = 808, lang = { true }, fruc = { true }, url = "magic%202015%20%28m15%29"},--Magic 2015 (M15)
+[797]={id = 797, lang = { true }, fruc = { true }, url = "magic%202014%20%28m14%29"},--Magic 2014 (M14)
+[788]={id = 788, lang = { true }, fruc = { true }, url = "magic%202013%20%28m13%29"},--Magic 2013 (M13)
+[779]={id = 779, lang = { true }, fruc = { true }, url = "magic%202012%20%28m12%29"},--Magic 2012 (M12)
+[770]={id = 770, lang = { true }, fruc = { true }, url = "magic%202011%20%28m11%29"},--Magic 2011 (M11)
+[759]={id = 759, lang = { true }, fruc = { true }, url = "magic%202010%20%28m10%29"},--Magic 2010 (M10)
 [720]={id = 720, lang = { true }, fruc = { true }, url = "10th%20edition"},--Tenth Edition
-[630]={id = 630, lang = { true }, fruc = { true }, url = "9th%20Edition"},--Ninth Edition
-[550]={id = 550, lang = { true }, fruc = { true }, url = "8th%20Edition"},--Eighth Edition
-[460]={id = 460, lang = { true }, fruc = { true }, url = "7th%20Edition"},--Seventh Edition
-[360]={id = 360, lang = { true }, fruc = { true }, url = "Classic%20Sixth%20Edition"},--Sixth Edition
-[250]={id = 250, lang = { true }, fruc = { true }, url = "Fifth%20Edition"},--Fifth Edition
-[180]={id = 180, lang = { true }, fruc = { true }, url = "Fourth%20Edition"},--Fourth Edition
+[630]={id = 630, lang = { true }, fruc = { true }, url = "9th%20edition"},--Ninth Edition
+[550]={id = 550, lang = { true }, fruc = { true }, url = "8th%20edition"},--Eighth Edition
+[460]={id = 460, lang = { true }, fruc = { true }, url = "7th%20edition"},--Seventh Edition
+[360]={id = 360, lang = { true }, fruc = { true }, url = "classic%20sixth%20edition"},--Sixth Edition
+[250]={id = 250, lang = { true }, fruc = { true }, url = "fifth%20edition"},--Fifth Edition
+[180]={id = 180, lang = { true }, fruc = { true }, url = "fourth%20edition"},--Fourth Edition
 [179]=nil,--4th Edition (FBB)
 [141]=nil,--Revised Summer Magic
 [140]={id = 140, lang = { true }, fruc = { true }, url = "revised%20edition"},--Revised Edition
 [139]=nil,--Revised Limited Deutsch
-[110]={id = 110, lang = { true }, fruc = { true }, url = "Unlimited%20Edition"},--Unlimited Edition
-[100]={id = 100, lang = { true }, fruc = { true }, url = "Beta%20Edition"},--Beta Edition
-[90] ={id =  90, lang = { true }, fruc = { true }, url = "Alpha%20Edition"},--Alpha Edition
+[110]={id = 110, lang = { true }, fruc = { true }, url = "unlimited%20edition"},--Unlimited Edition
+[100]={id = 100, lang = { true }, fruc = { true }, url = "beta%20edition"},--Beta Edition
+[90] ={id =  90, lang = { true }, fruc = { true }, url = "alpha%20edition"},--Alpha Edition
 -- Expansions
 [818]={id = 818, lang = { true }, fruc = { true }, url = "dragons%20of%20tarkir"},--Dragons of Tarkir
 [816]={id = 816, lang = { true }, fruc = { true }, url = "fate%20reforged"},--Fate Reforged
@@ -567,7 +581,7 @@ site.sets = {
 [806]={id = 806, lang = { true }, fruc = { true }, url = "journey%20into%20nyx"},--Journey into Nyx
 [802]={id = 802, lang = { true }, fruc = { true }, url = "born%20of%20the%20gods"},--Born of the Gods
 [800]={id = 800, lang = { true }, fruc = { true }, url = "theros"},--Theros
-[795]={id = 795, lang = { true }, fruc = { true }, url = "Dragon's%20Maze"},--Dragon's Maze
+[795]={id = 795, lang = { true }, fruc = { true }, url = "dragon's%20maze"},--Dragon's Maze
 [793]={id = 793, lang = { true }, fruc = { true }, url = "gatecrash"},--Gatecrash
 [791]={id = 791, lang = { true }, fruc = { true }, url = "return%20to%20ravnica"},--Return to Ravnica
 [786]={id = 786, lang = { true }, fruc = { true }, url = "avacyn%20restored"},--Avacyn Restored
@@ -631,17 +645,17 @@ site.sets = {
 [120]={id = 120, lang = { true }, fruc = { true }, url = "arabian%20nights"},--Arabian Nights
 -- special sets
 [821]=nil,--Challenge Deck: Defeat a God
-[820]=nil,--Duel Decks: Elspeth vs. Kiora
-[819]=nil,--Modern Masters 2015 Edition
-[817]=nil,--Duel Decks: Anthology
+[820]={id = 820, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Elspeth%20vs.%20Kiora"},--Duel Decks: Elspeth vs. Kiora
+[819]={id = 819, lang = { true }, fruc = { true }, url = "modern%20masters%202015"},--Modern Masters 2015
+[817]={id = 817, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Anthology"},--Duel Decks: Anthology
 [815]=nil,--Fate Reforged Clash Pack
-[814]={id=814, lang = { true }, fruc = { true }, url = "Commander%202014"},--Commander 2014
-[812]={id=812, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Speed%20vs.%20Cunning"},--Duel Decks: Speed vs. Cunning
+[814]={id = 814, lang = { true }, fruc = { true }, url = "Commander%202014"},--Commander 2014
+[812]={id = 812, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Speed%20vs.%20Cunning"},--Duel Decks: Speed vs. Cunning
 [811]=nil,--Magic 2015 Clash Pack
-[810]={id=810, lang = { true }, fruc = { true }, url = "magic%20modern%20event%20deck"},--Modern Event Deck 2014
+[810]={id = 810, lang = { true }, fruc = { true }, url = "magic%20modern%20event%20deck"},--Modern Event Deck 2014
 [809]={id = 809, lang = { true }, fruc = { true }, url = "From%20the%20Vault:%20Annihilation"},--From the Vault: Annihilation
 [807]={id = 807, lang = { true }, fruc = { true }, url = "conspiracy"},--Conspiracy
-[805]={id=805, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Jace%20vs.%20Vraska"},--Duel Decks: Jace vs. Vraska
+[805]={id = 805, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Jace%20vs.%20Vraska"},--Duel Decks: Jace vs. Vraska
 [804]=nil,--Challenge Deck: Battle the Horde
 [803]=nil,--Challenge Deck: Face the Hydra
 [801]={id = 801, lang = { true }, fruc = { true }, url = "Commander%202013"},
@@ -744,10 +758,11 @@ site.sets = {
 -- unknown
 -- uncomment these while running helper.FindUnknownUrls
 -- "Media%20Promos": sorting out the single page seems more trouble than it's worth
-[9990]={id =   0, lang = { true }, fruc = { true }, url = "media%20promos"},--Media Promos
+--[9990]={id =   0, lang = { true }, fruc = { true }, url = "media%20promos"},--Media Promos
 -- "Special%20Occasion": sorting out the single page seems more trouble than it's worth
-[9991]={id =   0, lang = { true }, fruc = { true }, url = "special%20occasion"},--Special Occasion
-[9992]={id =   0, lang = { true }, fruc = { true }, url = "oversize-cards"},
+--[9991]={id =   0, lang = { true }, fruc = { true }, url = "special%20occasion"},--Special Occasion
+--[9992]={id =   0, lang = { true }, fruc = { true }, url = "oversize-cards"},
+--[9993]={id =   0, lang = { true }, fruc = { true }, url = "unique and miscellaneous promos"},
 } -- end table site.sets
 
 --[[- card name replacement tables.
@@ -1486,6 +1501,63 @@ site.namereplace = {
 ["Mountain (Arabian Nights)"]			= "Mountain",
 },
 -- special sets
+[820] = { -- Duel Decks: Elspeth vs. Kiora
+["AEtherize"]							= "Ætherize",
+},
+[819] = { -- Modern Masters 2015 Edition
+["Aethersnipe"]							= "Æthersnipe",
+},
+[817] = { -- Duel Decks: Anthology
+["Plains (26)"]						= "Plains (DVD 26)",
+["Plains (27)"]						= "Plains (DVD 27)",
+["Plains (28)"]						= "Plains (DVD 28)",
+["Plains (29)"]						= "Plains (DVD 29)",
+["Island (30)"]						= "Island (JVC 30)",
+["Island (31)"]						= "Island (JVC 31)",
+["Island (32)"]						= "Island (JVC 32)",
+["Island (33)"]						= "Island (JVC 33)",
+["Swamp (59)"]						= "Swamp (DVD 59)",
+["Swamp (60) (Divine vs Demonic)"]	= "Swamp (DVD 60)",
+["Swamp (60) (Garruk vs Liliana)"]	= "Swamp (GVL 60)",
+["Swamp (61) (Divine vs Demonic)"]	= "Swamp (DVD 61)",
+["Swamp (61) (Garruk vs Liliana)"]	= "Swamp (GVL 61)",
+["Swamp (62) (Divine vs Demonic)"]	= "Swamp (DVD 62)",
+["Swamp (62) (Garruk vs Liliana)"]	= "Swamp (GVL 62)",
+["Swamp (63)"]						= "Swamp (GVL 63)",
+["Mountain (59) (Goblins vs Elves)"]= "Mountain (EVG 59)",
+["Mountain (59) (Jace vs Chandra)"]	= "Mountain (JVC 59)",
+["Mountain (60) (Goblins vs Elves)"]= "Mountain (EVG 60)",
+["Mountain (60) (Jace vs Chandra)"]	= "Mountain (JVC 60)",
+["Mountain (61) (Goblins vs Elves)"]= "Mountain (EVG 61)",
+["Mountain (61) (Jace vs Chandra)"]	= "Mountain (JVC 61)",
+["Mountain (62) (Goblins vs Elves)"]= "Mountain (EVG 62)",
+["Mountain (62) (Jace vs Chandra)"]	= "Mountain (JVC 62)",
+["Forest (28) (Goblins vs Elves)"]	= "Forest (EVG 28)",
+--["Forest (29)"]						= "Forest (29)",
+["Forest (28) (Garruk vs Liliana)"]	= "Forest (GVL 28)",
+["Aethersnipe"]						= "Æthersnipe",
+["Angel's Feather"]					= "Angel’s Feather",
+["Corrupt (Divine v. Demonic)"]		= "Corrupt (55)",
+["Corrupt (Garruk v. Liliana)"]		= "Corrupt (57)",
+["Demon's Horn"]					= "Demon’s Horn",
+["Demon's Jester"]					= "Demon’s Jester",
+["Faith's Fetters"]					= "Faith’s Fetters",
+["Giant Growth (Garruk vs Liliana)"]= "Giant Growth (14)",
+["Giant Growth (Goblins vs Elves)"]	= "Giant Growth (21)",
+["Harmonize (Garruk vs Liliana)"]	= "Harmonize (21)",
+["Harmonize (Goblins vs Elves)"]	= "Harmonize (22)",
+["Man-o'-War"]						= "Man-o’-War",
+["Nature's Lore"]					= "Nature’s Lore",
+["Serra's Boon"]					= "Serra’s Boon",
+["Serra's Embrace"]					= "Serra’s Embrace",
+["Wren's Run Vanquisher"]			= "Wren’s Run Vanquisher",
+["(error)"]							= "(error) (DROP)",
+["Beast Token (3)"]					= "Beast Token (8)",
+["Beast Token (4)"]					= "Beast Token (9)",
+["Elemental"]						= "Elemental Token",
+["Elf Warrior"]						= "Elf Warrior Token",
+["Goblin"]							= "Goblin Token",
+},
 [814] = { -- Commander 2014
 ["AEther Gale"]								= "Æther Gale",
 ["AEther Snap"]								= "Æther Snap",
@@ -1497,7 +1569,7 @@ site.namereplace = {
 ["Emblem - Elspeth, Knight-Errant|Soldier Token"]	= "Soldier|Elspeth, Knight-Errant Emblem",
 ["Myr - Spirit Double Sided Token"]		= "Spirit|Myr Token",
 },
-[807] = { --Conspiracy
+[807] = { -- Conspiracy
 ["AEther Tradewinds"]					= "Æther Tradewinds",
 ["AEther Searcher"]						= "Æther Searcher",
 },
@@ -2044,7 +2116,10 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [120] = { namereplaced=18 },
 [130] = { namereplaced=17, dropped=1 },
 -- special sets
-[814] = {pset={ LHpi.Data.sets[814].cardcount.all-LHpi.Data.sets[814].cardcount.tok }, failed={ 24 }, foiltweaked=5, namereplaced=4, dropped=2 },--2 SOON
+[820] = { namereplaced=1, foiltweaked=2 },
+[819] = { pset={ LHpi.Data.sets[819].cardcount.reg }, failed={ 16 }, namereplaced=1 },--16 tokens not in MA
+[817] = { pset={ LHpi.Data.sets[817].cardcount.all-7 }, failed={ 7 }, namereplaced=48, foiltweaked=8, dropped=14 },--13 SOON,6 Forests and bat token missing
+[814] = { pset={ LHpi.Data.sets[814].cardcount.all-LHpi.Data.sets[814].cardcount.tok }, failed={ 24 }, foiltweaked=5, namereplaced=4, dropped=2 },--2 SOON
 [812] = { foiltweaked=2 },
 [810] = { namereplaced=3 },
 [807] = { pset={ LHpi.Data.sets[807].cardcount.both+LHpi.Data.sets[807].cardcount.nontrad }, namereplaced=2 },
@@ -2089,7 +2164,7 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [31]  = { failed= { 1 } },--Griselbrand 2015 not in MA
 [30]  = { pset={ LHpi.Data.sets[30].cardcount.all-1 }, namereplaced=1, foiltweaked=1, dropped=4 },--1 SOON, 2 "(Error)",1 is ARE [40]
 [27]  = { namereplaced=35 },
-[26]  = { pset={ 47 }, foiltweaked=18, dropped=2 },--2 SOON
+[26]  = { pset={ LHpi.Data.sets[26].cardcount.reg-5 }, foiltweaked=18, dropped=1 },--1 SOON
 [25]  = { pset={ LHpi.Data.sets[25].cardcount.all-2, [17]=1 }, failed={ 5 }, dropped=1+8, namereplaced=8, foiltweaked=3-1 },--5 Full Art lands not in MA, 1 not [25],8 SOON, 2 wolf tokens missing
 [24]  = { foiltweaked=5 },
 [23]  = { pset={ LHpi.Data.sets[23].cardcount.reg }, dropped=7+1, namereplaced=7 },--7 not GTW, 1 SOON (which will not be in GTW,too)

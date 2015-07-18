@@ -11,7 +11,7 @@ If you want to contact me about the script, try its release thread in http://www
 
 @module LHpi.site
 @author Christian Harms
-@copyright 2012-2014 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
+@copyright 2012-2015 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
 @release This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -30,7 +30,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 2.13.6.5
 added 814
 2.14.5.5
-removed url to filename changes that are done by the library if OFFLINE 
+removed url to filename changes that are done by the library if OFFLINE
+2.15.6.14
+synchronized with template
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -68,9 +70,9 @@ fairOrBest = "fair"
 -- @field [parent=#global] #boolean STRICTEXPECTED
 --STRICTEXPECTED = true
 
---- if true, exit with error on object type mismatch, else use object type 0 (all)
+--- if true, exit with error on object type mismatch, else use object type 0 (all);	default true
 -- @field [parent=#global] #boolean STRICTOBJTYPE
---STRICTOBJTYPE = true
+--STRICTOBJTYPE = false
 
 --- log to seperate logfile instead of Magic Album.log;	default true
 -- @field [parent=#global] #boolean SAVELOG
@@ -78,7 +80,7 @@ fairOrBest = "fair"
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
---OFFLINE = true
+OFFLINE = true--download from dummy, only change to false for release
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
@@ -101,28 +103,46 @@ fairOrBest = "fair"
 --DEBUGVARIANTS = true
 
 --- revision of the LHpi library to use
--- @field [parent=#global] #string libver
-libver = "2.15"
+-- @field #string libver
+local libver = "2.15"
 --- revision of the LHpi library datafile to use
--- @field [parent=#global] #string dataver
-dataver = "6"
+-- @field #string dataver
+local dataver = "6"
 --- sitescript revision number
--- @field [parent=#global] string scriptver
-scriptver = "6"
+-- @field  string scriptver
+local scriptver = "6"
 --- should be similar to the script's filename. Used for loging and savepath.
--- @field [parent=#global] #string scriptname
-scriptname = "LHpi.mtgprice.com-v" .. libver .. "." .. dataver .. "" .. scriptver .. ".lua"
+-- @field #string scriptname
+local scriptname = "LHpi.mtgprice.com-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
+--- savepath for OFFLINE (read) and SAVEHTML (write). must point to an existing directory relative to MA's root.
+-- set by LHpi lib unless specified here.
+-- @field  #string savepath
+--local savepath = "Prices\\" .. string.gsub( scriptname , "%-v%d+%.%d+%.lua$" , "" ) .. "\\"
+local savepath = savepath -- keep external global savepath
+--- log file name. must point to (nonexisting or writable) file in existing directory relative to MA's root.
+-- set by LHpi lib unless specified here. Defaults to LHpi.log unless SAVELOG is true.
+-- @field #string logfile
+--local logfile = "Prices\\" .. string.gsub( site.scriptname , "lua$" , "log" )
+local logfile = logfile -- keep external global logfile
 
 ---	LHpi library
 -- will be loaded by ImportPrice
+-- do not delete already present LHpi (needed for helper mode)
 -- @field [parent=#global] #table LHpi
-LHpi = {}
+LHpi = LHpi or {}
 
 --[[- Site specific configuration
- Settings that define the source site's structure and functions that depend on it
+ Settings that define the source site's structure and functions that depend on it,
+ as well as some properties of the sitescript.
  
- @type site ]]
-site={}
+ @type site
+ @field #string scriptname
+ @field #string dataver
+ @field #string logfile (optional)
+ @field #string savepath (optional)
+ @field #boolean sandbox 
+]]
+site={ scriptname=scriptname, dataver=dataver, logfile=logfile or nil, savepath=savepath or nil , sandbox=sandbox}
 
 --[[- regex matches shall include all info about a single card that one html-file has,
  i.e. "*CARDNAME*FOILSTATUS*PRICE*".
@@ -135,6 +155,12 @@ site.regex = '%{"cardId.-%}'
 site.currency = "$"
 --- @field #string encoding		default "cp1252"
 site.encoding="utf-8"
+
+--- support for global workdir, if used outside of Magic Album/Prices folder. do not change here.
+-- @field [parent=#local] #string workdir
+-- @field [parent=#local] #string mapath
+local workdir = workdir or "Prices\\"
+local mapath = mapath or ".\\"
 
 --[[- "main" function.
  called by Magic Album to import prices. Parameters are passed from MA.
@@ -159,12 +185,34 @@ function ImportPrice( importfoil , importlangs , importsets , scriptmode)
 		ma.Log( "Check " .. scriptname .. ".log for detailed information" )
 	end
 	ma.SetProgress( "Loading LHpi library", 0 )
-	do -- load LHpi library from external file
-		local libname = "Prices\\lib\\LHpi-v" .. libver .. ".lua"
-		local LHpilib = ma.GetFile( libname )
-		local oldlibname = "Prices\\LHpi-v" .. libver .. ".lua"
+	local loglater
+	LHpi, loglater = site.LoadLib()
+	collectgarbage() -- we now have LHpi table with all its functions inside, let's clear LHpilib and execlib() from memory
+	if loglater then
+		LHpi.Log(loglater ,0)
+	end
+	LHpi.Log( "LHpi lib is ready for use." )
+	site.Initialize( scriptmode ) -- keep site-specific stuff out of ImportPrice
+	LHpi.DoImport (importfoil , importlangs , importsets)
+	LHpi.Log( "Lua script " .. scriptname .. " finished" ,0)
+	collectgarbage()--try prevent MA crashes on exit
+	ma.Log( "Lua script " .. scriptname .. " finished" )
+end -- function ImportPrice
+
+--[[- load LHpi library from external file
+@function [parent=#site] LoadLib
+@return #table LHpi library object
+@return #string log concatenated strings to be logged when LHpi is available
+]]
+function site.LoadLib()
+	local LHpi
+	local libname = workdir .. "lib\\LHpi-v" .. libver .. ".lua"
+	local loglater
+	local LHpilib = ma.GetFile( libname )
+	if tonumber(libver) < 2.15 then
+		loglater = ""
+		local oldlibname = workdir .. "LHpi-v" .. libver .. ".lua"
 		local oldLHpilib = ma.GetFile ( oldlibname )
-		local loglater = ""
 		if oldLHpilib then
 			if DEBUG then
 				error("LHpi library found in deprecated location. Please move it to Prices\\lib subdirectory!")
@@ -175,42 +223,56 @@ function ImportPrice( importfoil , importlangs , importsets , scriptmode)
 				LHpilib = oldLHpilib
 			end
 		end
-		if not LHpilib then
-			error( "LHpi library " .. libname .. " not found." )
-		else -- execute LHpilib to make LHpi.* available
-			LHpilib = string.gsub( LHpilib , "^\239\187\191" , "" ) -- remove unicode BOM (0xEF, 0xBB, 0xBF) for files tainted by it :)
-			if VERBOSE then
-				ma.Log( "LHpi library " .. libname .. " loaded and ready for execution." )
-			end
-			local execlib,errormsg = load( LHpilib , "=(load) LHpi library" )
-			if not execlib then
-				error( errormsg )
-			end
-			LHpi = execlib()
-		end	-- if not LHpilib else
-		LHpi.Log(loglater)
-	end -- do load LHpi library
-	collectgarbage() -- we now have LHpi table with all its functions inside, let's clear LHpilib and execlib() from memory
-	LHpi.Log( "LHpi lib is ready to use." )
-	site.Initialize( scriptmode ) -- keep site-specific stuff out of ImportPrice
-	LHpi.DoImport (importfoil , importlangs , importsets)
-	ma.Log( "End of Lua script " .. scriptname )
-end -- function ImportPrice
+	end
+	if not LHpilib then
+		error( "LHpi library " .. libname .. " not found." )
+	else -- execute LHpilib to make LHpi.* available
+		LHpilib = string.gsub( LHpilib , "^\239\187\191" , "" ) -- remove unicode BOM (0xEF, 0xBB, 0xBF) for files tainted by it :)
+		if VERBOSE then
+			ma.Log( "LHpi library " .. libname .. " loaded and ready for execution." )
+		end
+		local execlib,errormsg = load( LHpilib , "=(load) LHpi library" )
+		if not execlib then
+			error( errormsg )
+		end
+		LHpi = execlib()
+	end	-- if not LHpilib else
+	return LHpi, loglater
+end--function site.LoadLib
 
 --[[- prepare script
  Do stuff here that needs to be done between loading the Library and calling LHpi.DoImport.
- At this point, LHpi's functions are avalable, but default values for missing fields have not yet been set.
+ At this point, LHpi's functions are available and OPTIONS are set,
+ but default values for functions and other missing fields have not yet been set.
  
- for LHpi.mkm, we need to configure and prepare the oauth client.
-@param #table mode { #boolean listsets, boolean checksets, ... }
+@param #table mode { #boolean flags for nonstandard modes of operation }
 	-- nil if called by Magic Album
-	-- testOAuth	tests the OAuth implementation
-	-- checksets	compares site.sets with setlist from dummyMA
-	-- getsets		fetches available expansions from server and saves a site.sets template.
+	-- mode.update	true to run update helper functions
  @function [parent=#site] Initialize
 ]]
 function site.Initialize( mode )
-end
+	if mode == nil then
+		mode = {}
+	elseif "table" ~= type(mode) then
+		local m=mode
+		mode = { [m]=true }
+	end
+	if not LHpi or not LHpi.version then
+		--error("LHpi library not loaded!")
+		print("LHpi lib not available, loading it now...")
+		LHpi = site.LoadLib()
+	end
+	LHpi.Log(site.scriptname.." started site.Initialize():",1)
+	
+	if mode.update then
+		if not dummy then error("ListUnknownUrls needs to be run from dummyMA!") end
+		dummy.CompareDummySets(mapath,site.libver)
+		dummy.CompareDataSets(site.libver,site.libver)
+		dummy.CompareSiteSets()
+	--	dummy.ListUnknownUrls(site.FetchExpansionList())
+		return
+	end
+end--function site.Initialize
 
 --[[-  build source url/filename.
  Has to be done in sitescript since url structure is site specific.
@@ -218,7 +280,10 @@ end
 
  foilonly and isfile fields can be nil and then are assumed to be false.
  while isfile is read and interpreted by the library, foilonly is not.
- Its only here as a convenient shortcut to set card.foil in your site.ParseHtmlData  
+ Its only here as a convenient shortcut to set card.foil in your site.ParseHtmlData
+
+Optionally, for setid=="list", you can return an url with a list of available sets.
+This will be used by site.FetchExpansionList().
  
  @function [parent=#site] BuildUrl
  @param #number setid		see site.sets
@@ -240,11 +305,13 @@ function site.BuildUrl( setid,langid,frucid )
 	end
 	for _i,seturl in pairs(urls) do
 		local url = site.domain .. site.setprefix .. seturl .. site.frucs[frucid].url
-		container[url].frucid = frucid -- keep frucid for ParseHtmlData
+		container[url] = { frucid = frucid }-- keep frucid for ParseHtmlData
 	end
 print(LHpi.Tostring(container))
 	return container
 end -- function site.BuildUrl
+
+--TODO FetchExpansionList from www.mtgprice.com/magic-the-gathering-prices.jsp
 
 --[[-  get data from foundstring.
  Has to be done in sitescript since html raw data structure is site specific.
@@ -265,9 +332,9 @@ end -- function site.BuildUrl
  @return #string newCard.name		(optional) will pre-set the card's unique (for the cardsetTable) identifying name.
  @return #table newCard.lang		(optional) will override LHpi.buildCardData generated values.
  @return #boolean newCard.drop		(optional) will override LHpi.buildCardData generated values.
- @return #table newCard.variant		(optional) will override LHpi.buildCardData generated values.
- @return #number or #table newCard.regprice		(optional) will override LHpi.buildCardData generated values. #number or #table { [#number langid]= #number,...}
- @return #number or #table newCard.foilprice 	(optional) will override LHpi.buildCardData generated values. #number or #table { [#number langid]= #number,...}
+ @return #table newCard.variant		(discouraged) will override LHpi.buildCardData generated values.
+ @return #number or #table newCard.regprice		(discouraged) will override LHpi.buildCardData generated values. #number or #table { [#number langid]= #number,...}
+ @return #number or #table newCard.foilprice 	(discouraged) will override LHpi.buildCardData generated values. #number or #table { [#number langid]= #number,...}
  
  @function [parent=#site] ParseHtmlData
  @param #string foundstring		one occurence of siteregex from raw html data
@@ -313,10 +380,7 @@ function site.ParseHtmlData( foundstring , urldetails )
 --		newCard.foil = true
 --	end
 	--print( "site.ParseHtmlData\t returns" .. LHpi.Tostring(newCard))
-	if DEBUG then
-		LHpi.Log( "site.ParseHtmlData\t returns" .. LHpi.Tostring(newCard) , 2 )
-	end
---print(LHpi.Tostring(newCard))	
+	LHpi.Log( "site.ParseHtmlData\t returns" .. LHpi.Tostring(newCard) ,2)
 	return { newCard }
 end -- function site.ParseHtmlData
 
@@ -334,9 +398,7 @@ end -- function site.ParseHtmlData
  			{ name= #string , (optional) drop= #boolean , lang= #table , (optional) names= #table , (optional) pluginData= #table , (preset fields) }
 ]]
 function site.BCDpluginPre ( card, setid, importfoil, importlangs )
-	if DEBUG then
-		LHpi.Log( "site.BCDpluginPre got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
-	end
+	LHpi.Log( "site.BCDpluginPre got " .. LHpi.Tostring( card ) .. " from set " .. setid ,2)
 
 	card.name = string.gsub( card.name , "AE" , "Æ")
 	card.name = string.gsub( card.name , "\\u0027" , "'")
@@ -358,9 +420,7 @@ end -- function site.BCDpluginPre
  			{ name= #string , drop= #boolean, lang= #table , (optional) names= #table , variant= (#table or nil), regprice= #table , foilprice= #table }
 ]]
 function site.BCDpluginPost( card , setid , importfoil, importlangs )
-	if DEBUG then
-		LHpi.Log( "site.BCDpluginPost got " .. LHpi.Tostring( card ) .. " from set " .. setid , 2 )
-	end
+	LHpi.Log( "site.BCDpluginPost got " .. LHpi.Tostring( card ) .. " from set " .. setid ,2)
 
 	local _s,_e,name,variant = string.find(card.name,"([^(]+) %((%d+)%)")
 	if variant then
@@ -386,9 +446,7 @@ function site.BCDpluginPost( card , setid , importfoil, importlangs )
 			regprice[variant]=card.regprice[lid]
 			card.regprice[lid]=regprice
 		end
-		if VERBOSE or DEBUG then
-			LHpi.Log((string.format( "variant catchall %q changed to %q with variant %s",oldname,card.name,LHpi.Tostring(card.variant) )), 1 )
-		end
+		LHpi.Log((string.format( "variant catchall %q changed to %q with variant %s",oldname,card.name,LHpi.Tostring(card.variant) )), 1)
 --		print(LHpi.Tostring(card))
 	end
 	card.pluginData=nil
@@ -944,7 +1002,7 @@ site.variants = {
  { #number (setid)= #table { #string (name)= #table { foil= #boolean } , ... } , ... }
  
  @type site.foiltweak
- @field [parent=#site.variants] #boolean override	(optional) if true, defaults from LHpi.Data will not be used at all
+ @field [parent=#site.foiltweak] #boolean override	(optional) if true, defaults from LHpi.Data will not be used at all
  @field [parent=#site.foiltweak] #table foilstatus
 ]]
 site.foiltweak = {
@@ -976,9 +1034,8 @@ function site.SetExpected( importfoil , importlangs , importsets )
  ]]
 	site.expected = {
 --- pset defaults to LHpi.Data.sets[setid].cardcount.reg, if available and not set otherwise here.
---  LHpi.Data.sets[setid]cardcount has 6 fields you can use avoid hardcoded numbers here: { reg, tok, both, nontrad, repl, all }.
+--  LHpi.Data.sets[setid]cardcount has 6 fields you can use to avoid hardcoded numbers here: { reg, tok, both, nontrad, repl, all }.
 
---- if EXPECTTOKENS is true, LHpi.Data.sets[setid].cardcount.tok is added to pset default.
 --- if site.expected.tokens is true, LHpi.Data.sets[setid].cardcount.tok is added to pset default.
 -- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
 -- @field [parent=#site.expected] #boolean or #table { #boolean,...} tokens
@@ -987,11 +1044,11 @@ function site.SetExpected( importfoil , importlangs , importsets )
 -- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
 -- @field [parent=#site.expected] #boolean nontrad
 	nontrad = false,
---- if site.expected.repl is true, LHpi.Data.sets[setid].cardcount.repl is added to pset default.
+--- if site.expected.replica is true, LHpi.Data.sets[setid].cardcount.repl is added to pset default.
 -- a boolean will set this for all languges, a table will be assumed to be of the form { [langid]=#boolean, ... }
 -- @field [parent=#site.expected] #boolean replica
 	replica = false,
---TODO expect a lot of namereplacements, for now just expect fails
+--TODO needs a lot of namereplacements, for now just expect fails
 -- Core Sets
 [808] = { pset={ LHpi.Data.sets[808].cardcount.reg-20 } },
 --[797] = { pset={ LHpi.Data.sets[797].cardcount.reg }, namereplaced=40 },
@@ -1035,8 +1092,8 @@ function site.SetExpected( importfoil , importlangs , importsets )
 --[] = { pset={ LHpi.Data.sets[].cardcount.reg-20 }, failed={  } },
 	}--end table site.expected
 	for sid,name in pairs(importsets) do
-		if not site.expected.sid then
-			site.expected.sid = {}
+		if not site.expected[sid] then
+			site.expected[sid] = {}
 		end
 		if site.namereplace[sid] then
 			local namereplaced=0
@@ -1057,4 +1114,5 @@ function site.SetExpected( importfoil , importlangs , importsets )
 		end
 	end--for sid,name
 end--function site.SetExpected()
+ma.Log(site.scriptname .. " loaded.")
 --EOF

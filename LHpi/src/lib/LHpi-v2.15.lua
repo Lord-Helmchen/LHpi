@@ -96,14 +96,16 @@ LHpi.version = "2.15"
  @param #table importlangs	{ #number = #string , ... }
  @param #table importsets	{ #number = #string , ... }
 ]]
-function ImportPrice( importfoil , importlangs , importsets )
-	ma.Log( "Called LHpi library instead of site script. Raising error to inform user via dialog box." )
-	ma.Log( "LHpi library should be in \\lib subdir to prevent this." )
-	LHpi.Log( LHpi.Tostring( importfoil ) ,1)
-	LHpi.Log( LHpi.Tostring( importlangs ) ,1)
-	LHpi.Log( LHpi.Tostring( importsets ) ,1)
-	error( "LHpi-v" .. LHpi.version .. " is a library. Please select a LHpi-sitescript instead!" )
-end -- function ImportPrice
+if not ImportPrice then -- only needed if accidentally called directly fom MA
+	function ImportPrice( importfoil , importlangs , importsets )
+		ma.Log( "Called LHpi library instead of site script. Raising error to inform user via dialog box." )
+		ma.Log( "LHpi library should be in \\lib subdir to prevent this." )
+		LHpi.Log( LHpi.Tostring( importfoil ) ,1)
+		LHpi.Log( LHpi.Tostring( importlangs ) ,1)
+		LHpi.Log( LHpi.Tostring( importsets ) ,1)
+		error( "LHpi-v" .. LHpi.version .. " is a library. Please select a LHpi-sitescript instead!" )
+	end -- function ImportPrice
+end--if
 
 --- All import data for current set, one row per card.
 -- declared here for scope, initialized in LHpi.MainImportCycle
@@ -231,7 +233,10 @@ function LHpi.Initialize()
 	end
 	---	LHpi static set data
 	--@field [parent=#LHpi] #table Data
-	LHpi.Data = LHpi.LoadData(site.dataver)
+	if not LHpi.Data then
+		ma.SetProgress( "Loading LHpi.Data", 0 )
+		LHpi.Data = LHpi.LoadData(site.dataver)
+	end
 end--function Initialize
 
 --[[- "main" function called by LHpi sitescript.
@@ -244,6 +249,7 @@ end--function Initialize
  @param #table importsets	{ #number (setid)= #string , ... }
 ]]
 function LHpi.DoImport (importfoil , importlangs , importsets)
+	ma.SetProgress( "Starting LHpi", 0 )
 	-- create empty dummy fields for undefined sitescript fields to allow graceful exit
 	if DEBUG and ((not site.langs) or (not next(site.langs)) ) then error("undefined site.langs!") end
 	if not site.langs then site.langs = {} end
@@ -351,6 +357,7 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 		end -- for sid,_setname
 	end -- if CHECKEXPECTED
 	
+	ma.SetProgress( "Beginning import", 0 )
 	-- build sourceList of urls/files to fetch
 	local sourceList, sourceCount = LHpi.ListSources( supImportfoil , supImportlangs , supImportsets )
 
@@ -393,7 +400,7 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 		if DEBUG then
 			print( string.format( "Total expected: " .. totalexpectedstring .. "; %i dropped, %i namereplaced and %i foiltweaked.", totalexpected.dropped, totalexpected.namereplaced, totalexpected.foiltweaked ) )
 		end
-		LHpi.Log( string.format( "count differs in %i sets: %s", LHpi.Length(setcountdiffers),LHpi.Tostring(setcountdiffers) ), 1)
+		LHpi.Log( string.format( "count differs in %i sets: %s", LHpi.Length(setcountdiffers),LHpi.Tostring(setcountdiffers,true) ), 0)
 	end -- if CHECKEXPECTED	
 end
 
@@ -624,7 +631,6 @@ end -- function LHpi.MainImportCycle
  ]]
 function LHpi.LoadData( version )
 	local Data=nil
-	ma.SetProgress( "Loading LHpi.Data", 0 )
 	do -- load LHpi predefined set data from external file
 		local dataname = LHpi.workdir.."lib\\LHpi.Data-v" .. version .. ".lua"
 		local LHpiData = ma.GetFile( dataname )
@@ -861,7 +867,6 @@ function LHpi.GetSourceData( url , details ) --
 		local _s,_e,results = string.find( sourcedata, site.resultregex )
 		LHpi.Log( "html source data claims to contain " .. tostring(results) .. " cards." ,0)
 	end
-
 	return sourcedata
 end -- function LHpi.GetSourceData
 
@@ -1832,7 +1837,9 @@ end -- function LHpi.Toutf8
  loglevels:
   -1 to use ma.Log instead
    1 for VERBOSE
-   2 for DEBUG, else log.
+   2 for DEBUG
+--TODO 1,warning,info,debug   
+   else log.
  add other levels as needed
 
  @function [parent=#LHpi] Log
@@ -1969,6 +1976,7 @@ end--function LHpi.OAuthEncode
 LHpi.Initialize()
 --LHpi.Log( "\239\187\191LHpi library loaded and executed successfully" , 0 , nil , 0 ) -- add unicode BOM to beginning of logfile
 LHpi.Log( "LHpi library " .. LHpi.version .. " loaded and executed successfully." , 0 , nil ,0)
-ma.Log("LHpi library " .. LHpi.version .. " loaded.")
+ma.Log("LHpi library " .. LHpi.version .. " loaded")
 return LHpi
+--FIXME savepath must be site, not LHpi namespace!
 --EOF

@@ -34,7 +34,7 @@ new 52,53,55,814,815,816,817,818,819,820,821
 fixed names for 21,40,814
 variant table for 15,22,25,26,27,33,40,45
 foiltweak table for 22,26,33
-cardcount fixed/updated in 9,105,106,762,791,800,813,816,30,22,21
+cardcount fixed/updated in 9,105,106,762,791,800,813,816,30,22,21,26
 fixed/updated variants for 43,69,201[ITA],758,764,766,781,787,800,813,22
 commented variants in 180,140,110,100,90,280,230,220,170,260,105,25
 foiltweak fixed/updated in 813
@@ -55,11 +55,13 @@ Data.version = "6"
  @param #table importlangs	{ #number (langid)= #string , ... }
  @param #table importsets	{ #number (setid)= #string , ... }
 ]]
-function ImportPrice( importfoil , importlangs , importsets )
-	ma.Log( "Called LHpi.Data instead of site script. Raising error to inform user via dialog box." )
-	ma.Log( "LHpi.Data should be in \\lib subdir to prevent this." )
-	error( "LHpi.Data-v" .. LHpi.Data.version .. " is a data file. Please select a LHpi-sitescript instead!" )
-end -- function ImportPrice
+if not ImportPrice then -- only needed if accidentally called directly fom MA
+	function ImportPrice( importfoil , importlangs , importsets )
+		ma.Log( "Called LHpi.Data instead of site script. Raising error to inform user via dialog box." )
+		ma.Log( "LHpi.Data should be in \\lib subdir to prevent this." )
+		error( "LHpi.Data-v" .. LHpi.Data.version .. " is a data file. Please select a LHpi-sitescript instead!" )
+	end -- function ImportPrice
+end--if
 
 --[[- all possible languages.
  fields are for subtables indexed by #number langid.
@@ -2445,7 +2447,7 @@ SpecialSets = nil,
 },
 [820] = { name="Duel Decks: Elspeth vs. Kiora",
 	foil="n",
-	cardcount={ reg=55, tok=2, nontrad=0, repl=0 },
+	cardcount={ reg=65, tok=2, nontrad=0, repl=0 },
 	variants={
 ["Plains"] 						= { "Plains"	, { 1    , 2    , 3    , 4    } },
 ["Island"] 						= { "Island" 	, { 1    , 2    , 3    } },
@@ -2732,18 +2734,18 @@ SpecialSets = nil,
 ["Wirewood Symbiote"]		 		= { "Wirewood Symbiote"				, { "EVG" } },
 ["Wood Elves"]		 				= { "Wood Elves"					, { "EVG" } },
 ["Wren’s Run Vanquisher"]			= { "Wren’s Run Vanquisher"			, { "EVG" } },
-["Bat"]					= { "Bat"				, { "GVL " } },
-["Beast"]				= { "Beast"				, { "GVL 1", "GVL 2" } },
-["Beast (8)"]			= { "Beast"				, { "GVL 2" } },
-["Beast (9)"]			= { "Beast"				, { "GVL 1" } },
-["Demon"]				= { "Demon"				, { "DVD " } },
-["Elemental"]			= { "Elemental"			, { "EVG " } },
-["Elemental Shaman"]	= { "Elemental Shaman"	, { "JVC " } },
-["Elephant"]			= { "Elephant"			, { "GVL " } },
-["Elf Warrior"]			= { "Elf Warrior"		, { "EVG " } },
-["Goblin"]				= { "Goblin"			, { "EVG " } },
-["Spirit"]				= { "Spirit"			, { "DVD " } },
-["Thrull"]				= { "Thrull"			, { "DVD " } },
+["Bat Token"]				= { "Bat Token"				, { "GVL" } },
+["Beast Token"]				= { "Beast Token"				, { "GVL 1", "GVL 2" } },
+["Beast Token (8)"]			= { "Beast Token"				, { "GVL 1", false   } },--3/3
+["Beast Token (9)"]			= { "Beast Token"				, { false  , "GVL 2" } },--4/4
+["Demon Token"]				= { "Demon Token"				, { "DVD" } },
+["Elemental Token"]			= { "Elemental Token"			, { "EVG" } },
+["Elemental Shaman Token"]	= { "Elemental Shaman Token"	, { "JVC" } },
+["Elephant Token"]			= { "Elephant Token"			, { "GVL" } },
+["Elf Warrior Token"]		= { "Elf Warrior Token"		, { "EVG" } },
+["Goblin Token"]			= { "Goblin Token"			, { "EVG" } },
+["Spirit Token"]			= { "Spirit Token"			, { "DVD" } },
+["Thrull Token"]			= { "Thrull Token"			, { "DVD" } },
 	},
 	foiltweak={
 ["Ambush Commander"]		= { foil = true },	
@@ -4660,7 +4662,7 @@ Promos = nil,
 },
 [26] = { name="Magic Game Day",
 	foil="y",--some no, some only, no yes
-	cardcount={ reg=47, tok=0, nontrad=3, repl=0 },
+	cardcount={ reg=53, tok=0, nontrad=3, repl=0 },
 	variants= {
 ["The Champion"]		= { "The Champion"		, { "Nontrad" } },
 ["The Slayer"]			= { "The Slayer"		, { "Nontrad" } },
