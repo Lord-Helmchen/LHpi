@@ -218,7 +218,7 @@ end
 dummy={}
 ---	dummy version
 -- @field [parent=#dummy] #string version
-dummy.version = "0.5"
+dummy.version = "0.6"
 
 --[[- loads LHpi library for testing.
 @function [parent=#dummy] loadlibonly
@@ -913,7 +913,7 @@ function main()
 	
 	-- select a predefined script to be tested
 --	dummy.fakesitescript()
-	local selection = 7
+	local selection = 4
 	local script=scripts[selection]
 	if script.oldloadertrue then
 		dummy.loadscript(script.name,script.path,script.savepath)--deprecated

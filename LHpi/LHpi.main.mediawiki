@@ -48,13 +48,13 @@ When I wanted to generalize my script for easy addaption to other sites, this pr
 
 ===magic.tcgplayer.com PriceGuide===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=20402 LHpi.tcgplayerPriceGuide.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=22738 LHpi.tcgplayerPriceGuide.lua.zip]
 |-
-|Sitescript version||2.13.5.13
+|Sitescript version||2.15.6.14
 |-
-|updated last on||2014-10-28
+|updated last on||2015-07-18
 |-
-|size|| 19.07 KiB
+|size|| 27.64 KiB
 |}
 [http://magic.tcgplayer.com/magic_price_guides.asp Tcgplayer Price Guide] claims to accumulate prices from 75 online vendors. They are priced in $. Their tables give a high, low and average price; the sitescript contains a variable to select which one of those it should use.
 <br />To change the column to import from, open the script in a text editor, find <code>himelo = 3</code> and change it to <code>himelo = 1</code> for high or <code>himelo = 2</code> for medium prices. You can have [[How-To_sitescriptTemplate#multiple_copies_ot_the_same_script|multiple copies of the same script]]
@@ -93,15 +93,15 @@ It still needs a lot of namereplace tables. I'm not that much interested in $ pr
 
 ==The LHpi Library==
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=20398 LHpi-v2.13.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=22737 LHpi-v2.15.lua.zip]
 |-
-|Tested with Ma version||1.6.3.343
+|Tested with Ma version||1.6.4.348
 |-
-|recommended Data version|| >=5
+|recommended Data version|| >=6
 |-
-|updated last on||2014-10-28
+|updated last on||2015-07-18
 |-
-|size|| 18.87 KiB
+|size|| 21 KiB
 |}
 It is not expected to be fast, but as reliable as possible:<br />
 It first compares the user requested sets and languages with what the sitescript has available and builds a table of urls to querry, seperated by set.<br />
@@ -115,13 +115,13 @@ Logging to a seperate file is now disabled by default again (but still configura
 
 ===LHpi.Data===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=20397 LHpi.Data-v5.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=22736 LHpi.Data-v6.lua.zip]
 |-
-|Library version||>=2.13
+|Library version||>=2.15
 |-
-|updated last on||2014-10-28
+|updated last on||2015-07-18
 |-
-|size|| 28.65 KiB
+|size|| 40.76 KiB
 |}
 Since library version 2.7, site-independent set data (number of cards,foilage, default variant and foiltweak tables) were moved into a seperate data file that gets loaded by the library on initialization. This will allow to distinguish between code updates (to the library) and set data updates (which are usually needed when a new set is released). Version numbering of the sitescripts will reflect both library and data versions used.
 
@@ -146,25 +146,25 @@ Detailed instructions on the properties and functions to define in your sitescri
 
 ===sitescriptTemplate===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=20396 LHpi.sitescriptTemplate-v2.13.5.11.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=22735 LHpi.sitescriptTemplate-v2.13.5.11.lua.zip]
 |-
-|Sitescript version||2.13.5.11
+|Sitescript version||2.16.6.13
 |-
-|updated last on||2014-10-28
+|updated last on||2015-07018
 |-
-|size|| 9.86 KiB
+|size|| 13.08 KiB
 |}
 This is just an empty, commented template to help write new sitescripts.
 
 ===dummyMA.lua===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=20395 dummyMA.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=22734 dummyMA.zip]
 |-
-|version||0.5
+|version||0.6
 |-
-|updated last on||2014-10-028
+|updated last on||2015-07-18
 |-
-|size|| 7.81 KiB
+|size|| 11.03 KiB
 |}
 Magic Album API dummy to test and debug LHpi within an IDE (such as eclipse) and without needing Magic Album. Now fixed for backwards compatibility with Lua 5.1 and paths outside of MA's "Prices" directory.
 
@@ -343,6 +343,55 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :* merge objtypes
 :SetPrice
 :* look for special variant names "token", "nontrad", "replica", "insert" and transform them into object types for ma.SetPrice
+;2.14
+:cardcount.nontr renamed to cardcount.nontrad
+:GetSourceData split into GetSourceData and ParseSourceData.
+:* this change is completely transparent to existing sitescripts, but having GetSourceData seperated allows to use it from the sitescript for special cases.
+:LHpi.GetSourceData( sourceurl,urldetails )
+:* defer fetching to sitescript for oauth
+:* now returns #string sourcedata
+:* converts url to filename if OFFLINE
+:* fixed savepath==nil handling (needed when called before DoImport has run)
+:* Log https status if not ok
+:LHpi.ParseSourceData( sourcedata,sourceurl,urldetails )
+:* does the parsing previously done by GetSourceData and returns the #table sourceTable
+:* shortcut return nil for sourcedata==nil
+:* now strictly expect site.ParseHtmlData to return card.price as #number (and not #table, as was possible before)
+:* do not sanitize nor check card.regprice or card.foilpriceBuildCardData
+:* counts namereplace and foiltweak even if card is dropped
+:BuildCardData
+:* remove "(nontrad)","(replica)","(plane)","(scheme)","(conspiracy)" and
+:"(oversized)" card.name infixes when no longer needed
+:* set objecttype replica for 105,106,69
+:* improved Token suffix handling
+:* keeps "Replica" suffix for variants
+:* removes "Insert" suffix
+:* keep (oversized) in set [40]
+:SetPrice
+:* objtype infixe handling improved
+:Logtable
+:* no longer strictly requires #table arguments
+:MainImportCycle
+:* fixed CHECKEXPECTED handling for semi-available languages
+:DoImport
+:* changed site.expected.EXPECTTOKENS to site.expected.tokens
+:* changed site.expected.EXPECTNONTRAD to site.expected.nontrad
+:* changed site.expected.EXPECTREPL to site.expected.replica
+:* all three can be #boolean (like before) or #table { [langid]=#boolean,... }
+:* DoImport passes supImportfoil,supImportlangs,supImportsets to site.SetExpected
+:* fixed expected defaults and checks
+:removed some leftover commented-out code
+:improved some comments and log msgs
+;[http://www.slightlymagic.net/forum/download/file.php?id=22737 2.15]
+:Split Initialize() from DoImport(importfoil , importlangs , importsets)
+:always run Initialize() before returning LHpi library table.
+:scriptname,savepath,logfile change from global to local (in site and LHpi)
+:Log now filters out VERBOSE and DEBUG lines by loglevel param to save "if DEBUG then Log() end" conditionals
+:*those conditionals have been cut and loglevel has been set for all existing LHpi.Log calls
+:DEBUGVARIANTS=true no longer sets DEBUG=false, instead remembers and restores previous DEBUG state
+:new LHpi.OAuthEncode(s) moved here from mkm-helper
+:workdir fixes
+:no longer check for Data in deprecated location
 
 ====LHpi.Data====
 ;[http://www.slightlymagic.net/forum/download/file.php?id=15850 1]
@@ -370,6 +419,17 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :add Nontrad,Replica variants to 807,769,787,70,761,786,784,782,801,778,23,21,20
 :new sets 809,810,811,812,813
 :fix cardcount, variant and/or foiltweak tables for 807,812,31,30,25,23,21,10
+;[http://www.slightlymagic.net/forum/download/file.php?id=22736 6]
+:new 52,53,55,814,815,816,817,818,819,820,821,822
+:added lang [17]="Phyrexian"
+:fixed names for 21,40,814
+:variant table for 15,22,25,26,27,33,40,45
+:foiltweak table for 22,26,33
+:cardcount fixed/updated in 9,105,106,762,791,800,813,816,30,22,21,26
+:fixed/updated variants for 43,69,201[ITA],758,764,766,781,787,800,813,22
+:commented variants in 180,140,110,100,90,280,230,220,170,260,105,25
+:foiltweak fixed/updated in 813
+
 
 ====LHpi.magicuniverseDE====
 ;[http://www.slightlymagic.net/forum/download/file.php?id=9264 2.0]
@@ -518,6 +578,20 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :add "Token" suffix to replacement names
 :update site.expected
 :synchronized with template
+;2.13.5.14
+:added 814
+;2.14.5.14
+:removed url to filename changes that are done by the library if OFFLINE
+;[http://www.slightlymagic.net/forum/download/file.php?id=22738 2.15.6.14]
+:added 816,818,815,817,819,820,821,40,32,27,25,23,22,21,822,340,55,45,822
+:new features from template/mkm branch
+:site.BuildUrl
+:* supports multiple urls per set
+:* set url.details.setid
+:special handling for 
+:* Dragonfury cards
+:* unusual lang cards
+:updated/fixed/added variants,namereplacements,expected
 
 ====LHpi.trader-onlineDE====
 ;2.0
@@ -623,6 +697,19 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :new EXPECTNONTRAD and EXPECTREPL options to site.expected
 :new sets 809,810,811,812,813
 :new STRICTOBJTYPE option
+;2.14.5.12
+:removed url to filename changes that are done by the library if OFFLINE
+;[http://www.slightlymagic.net/forum/download/file.php?id=22735 2.15.6.13]
+:script configuration variables local instead of global
+:workdir support
+:site.LoadLib split from ImportPrice
+:site.Initialize loads LHpi lib if not yet available (needed if ImportPrice is not called)
+:keep LHpi library table if already present
+:no longer check for lib and Data in deprecated location
+:removed site.CompareSiteSets
+:optional site.BuildUrl("list") behaviour
+:new optional function site.FetchExpansionList
+:site.BuildUrl supports multiple urls per set
 
 ====dummyMA====
 ;0
@@ -644,6 +731,23 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 ;[http://www.slightlymagic.net/forum/download/file.php?id=20395 0.5]
 :optional object type parameter in ma.SetPrice
 :new sets 801,803,804,805,806,807,808,809,810,811,812,813
+;[http://www.slightlymagic.net/forum/download/file.php?id=22734 0.6]
+:new	dummy.CompareDummySets(mapath,libver)
+:new	dummy.CompareDataSets(mapath,libver,dataver)
+:new dummy.CompareSiteSets (moved from LHpi.magickartenmarkt.lua)
+:new dummy.ListUnknownUrls(expansions,missing,file) (moved from LHpi.mkm-helper.lua)
+:error handling in ma.GetFile and ma.Putfile
+:for libver > 2.14 and Lua 5.2, use dofile instead of homemade loader
+:CompareDataSets compares with dummy's set tales instead of Database/Sets.txt
+:use global workdir as introduced in 2.15
+:added 52,53,55,814,815,816,817,818,819,820,821
+:fixed dummy.forceEnv
+:fixed savepath handling
+:deprecated dummy.loadlibonly and dummy.loadscript
+:dummy.mergetables no longer changes param #table teins
+:update helper functions ouput to log instead od stdout 
+:ma.GetUrl now uses luasockets instead of returning nil
+
 
 ==License==
 The LHpi library and all its sitescripts are released as open source under the [[http://www.gnu.org/licenses/gpl.html GNU General Public License]]. Please note that LHpi is thusly licensed seperately from Magic Album proper, which to date is closed source.
