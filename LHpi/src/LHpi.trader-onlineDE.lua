@@ -264,7 +264,7 @@ function site.Initialize( mode )
 		dummy.CompareDummySets(mapath,site.libver)
 		dummy.CompareDataSets(site.libver,site.libver)
 		dummy.CompareSiteSets()
-	--	dummy.ListUnknownUrls(site.FetchExpansionList())
+		dummy.ListUnknownUrls(site.FetchExpansionList())
 		return
 	end
 end--function site.Initialize
@@ -290,6 +290,9 @@ This will be used by site.FetchExpansionList().
 ]]
 function site.BuildUrl( setid,langid,frucid )
 	site.domain = "www.trader-online.de/"
+	if "list"==setid then
+		return site.domain .. "Magic-Einzelkarten_englisch.php"
+	end
 	if frucid == 1 then
 		site.frucfileprefix = "foil"
 	else
@@ -336,7 +339,45 @@ function site.BuildUrl( setid,langid,frucid )
 	return container
 end -- function site.BuildUrl
 
---TODO FetchExpansionList from www.trader-online.de/Magic-Einzelkarten_englisch.php
+--[[- fetch list of expansions to be used by update helper functions.
+ The returned table shall contain at least the sets' name and LHpi-comnpatible urlsuffix,
+ so it can be processed by dummy.ListUnknownUrls.
+ Implementing this function is optional and may not be possible for some sites.
+ @function [parent=#site] FetchExpansionList
+ @return #table  @return #table { #number= #table { name= #string , urlsuffix= #string , ... }
+]]
+--[[- fetch list of expansions to be used by update helper functions.
+ The returned table shall contain at least the sets' name and LHpi-comnpatible urlsuffix,
+ so it can be processed by dummy.ListUnknownUrls.
+ Implementing this function is optional and may not be possible for some sites.
+ @function [parent=#site] FetchExpansionList
+ @return #table  @return #table { #number= #table { name= #string , urlsuffix= #string , ... }
+]]
+function site.FetchExpansionList()
+	if OFFLINE then
+		LHpi.Log("OFFLINE mode active. Expansion list may not be up-to-date." ,1)
+	end
+	local expansionSource
+	local url = site.BuildUrl( "list" )
+	expansionSource = LHpi.GetSourceData ( url , urldetails )
+	if not expansionSource then
+		error(string.format("Expansion list not found at %s (OFFLINE=%s)",LHpi.Tostring(url),tostring(OFFLINE)) )
+	end
+	local setregex = 'serie=Serie%-([^"]+)">([^<]+)'
+	local expansions = { }
+	local i=0
+	for url,name in string.gmatch( expansionSource , setregex) do
+		i=i+1
+		url=string.gsub(url," ?%-[Ee]$","")
+		name=string.gsub(name," ?%(%w+%)$","")
+		table.insert(expansions, { name=name, urlsuffix=url} )
+	end
+	LHpi.Log(i.." expansions found" ,1)
+	return expansions
+end--function site.FetchExpansionList
+--[[- format string to use in dummy.ListUnknownUrls update helper function.
+ @field [parent=#site] #string updateFormatString ]]
+site.updateFormatString = "[%i]={id = %3i, lang = { true , [3]=true }, fruc = { true ,true }, url = %q},--%s"
 
 --[[-  get data from foundstring.
  Has to be done in sitescript since html raw data structure is site specific.

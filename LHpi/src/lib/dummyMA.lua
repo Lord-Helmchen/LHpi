@@ -873,7 +873,7 @@ function main()
 --		DEBUGVARIANTS = true,--default false
 --		SAVETABLE=true,--default false
 --		DEBUG = true,--default false
---		OFFLINE = true,--default false
+		OFFLINE = true,--default false
 	}
 	dummy.forceEnv()
 
@@ -900,12 +900,12 @@ function main()
 	
 	local scripts={
 		[0]={name="lib\\LHpi.sitescriptTemplate-v2.15.6.13.lua",savepath="."},
-		[1]={name="LHpi.mtgmintcard.lua",savepath=mapath.."Prices\\LHpi.mtgmintcard\\"},
-		[2]={name="LHpi.magicuniverseDE.lua",savepath=mapath.."Prices\\LHpi.magicuniverseDE\\"},
-		[3]={name="LHpi.trader-onlineDE.lua",savepath=mapath.."Prices\\LHpi.trader-onlineDE\\"},
-		[4]={name="LHpi.tcgplayerPriceGuide.lua",savepath=mapath.."Prices\\LHpi.tcgplayerPriceGuide\\"},
-		[5]={name="\\MTG Mint Card.lua",path=savepath,mapath=mapath,oldloader=true},
-		[6]={name="\\Import Prices.lua",path=mapath,savepath=mapath,oldloader=true},
+		[1]={name="\\MTG Mint Card.lua",path=savepath,mapath=mapath,oldloader=true},
+		[2]={name="\\Import Prices.lua",path=mapath,savepath=mapath,oldloader=true},
+		[3]={name="LHpi.mtgmintcard.lua",savepath=mapath.."Prices\\LHpi.mtgmintcard\\"},
+		[4]={name="LHpi.magicuniverseDE.lua",savepath=mapath.."Prices\\LHpi.magicuniverseDE\\"},
+		[5]={name="LHpi.trader-onlineDE.lua",savepath=mapath.."Prices\\LHpi.trader-onlineDE\\"},
+		[6]={name="LHpi.tcgplayerPriceGuide.lua",savepath=mapath.."Prices\\LHpi.tcgplayerPriceGuide\\"},
 		[7]={name="LHpi.mtgprice.com.lua",savepath=mapath.."Prices\\LHpi.mtgprice.com\\"},
 	--	[8]={name="LHpi.magickartenmarkt.lua",savepath=mapath.."Prices\\LHpi.magickartenmarkt\\"},
 	--	[9]={name="LHpi.mkm-helper.lua",savepath=mapath.."Prices\\LHpi.magickartenmarkt\\"},

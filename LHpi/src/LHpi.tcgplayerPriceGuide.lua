@@ -303,25 +303,24 @@ function site.BuildUrl( setid,langid,frucid )
 	site.file = "db/price_guide.asp"
 	site.setprefix = "?setname="
 	
-	local container = {}
 	if setid=="list" then --request price guide expansion list 
 		return site.domain .. "magic_price_guides.asp"
-	else -- usual LHpi behaviour
-		local url = site.domain .. site.file .. site.setprefix
-		if  type(site.sets[setid].url) == "table" then
-			urls = site.sets[setid].url
-		else
-			urls = { site.sets[setid].url }
-		end--if type(site.sets[setid].url)
-		for _i,seturl in pairs(urls) do
-			container[url .. seturl] = { setid=setid }
-			if LHpi.Data.sets[setid].foilonly then
-				container[url .. seturl].foilonly = true
-			else
-				container[url .. seturl].foilonly = false -- just to make the point :)
-			end
-		end--for _i,seturl
 	end
+	local container = {}
+	local url = site.domain .. site.file .. site.setprefix
+	if  type(site.sets[setid].url) == "table" then
+		urls = site.sets[setid].url
+	else
+		urls = { site.sets[setid].url }
+	end--if type(site.sets[setid].url)
+	for _i,seturl in pairs(urls) do
+		container[url .. seturl] = { setid=setid }
+		if LHpi.Data.sets[setid].foilonly then
+			container[url .. seturl].foilonly = true
+		else
+			container[url .. seturl].foilonly = false -- just to make the point :)
+		end
+	end--for _i,seturl
 	if setid==22 then
 		for url,_details in pairs(container) do
 			if string.find(url,"dragonfury") then
@@ -347,9 +346,11 @@ function site.FetchExpansionList()
 		error(string.format("Expansion list not found at %s (OFFLINE=%s)",LHpi.Tostring(url),tostring(OFFLINE)) )
 	end
 	local setregex = '<img [^>]+>[^<]*<a.-href="([^"]+)">([^<]+)</a><BR>'
+	local i=0
 	for url,name in string.gmatch( expansionSource , setregex) do
+		i=i+1
 		_,_,url=string.find(url,"setName=([^&]-)&")
-		url=string.gsub(url,"-"," ")
+		url=string.gsub(url,"%-"," ")
 		table.insert(expansions, { name=name, urlsuffix=LHpi.OAuthEncode(url)})
 	end
 	return expansions

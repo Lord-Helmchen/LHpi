@@ -271,7 +271,7 @@ function site.Initialize( mode )
 		dummy.CompareDummySets(mapath,site.libver)
 		dummy.CompareDataSets(site.libver,site.libver)
 		dummy.CompareSiteSets()
-	-- 	dummy.ListUnknownUrls(site.FetchExpansionList())
+	 	dummy.ListUnknownUrls(site.FetchExpansionList())
 		return
 	end
 end--function site.Initialize
@@ -296,17 +296,18 @@ This will be used by site.FetchExpansionList().
  @return #table { #string (url)= #table { isfile= #boolean, (optional) foilonly= #boolean, (optional) setid= #number, (optional) langid= #number, (optional) frucid= #number } , ... }
 ]]
 function site.BuildUrl( setid,langid,frucid )
-	local container = {}
-
-	site.domain = "www.mtgmintcard.com/"
-	site.prefix = "mtg/singles/"
+	site.domain = "www.mtgmintcard.com/mtg/singles/"
 	site.suffix = "?page="
 --	site.suffix = "?page_show=200&page="
 --	site.currency = "&currency_reference=EUR"
 
+	if "list"==setid then
+		return site.domain
+	end
+	local container = {}
 	for pagenr=1, site.sets[setid].pages do
 --		local url = site.domain .. site.prefix .. site.langs[langid].url .. "-" .. site.frucs[frucid].url .. "/" .. site.sets[setid].url .. site.suffix .. pagenr
-		local url = site.domain .. site.prefix .. site.sets[setid].url .. "/" .. site.langs[langid].url .. "-" .. site.frucs[frucid].url .. site.suffix .. pagenr
+		local url = site.domain .. site.sets[setid].url .. "/" .. site.langs[langid].url .. "-" .. site.frucs[frucid].url .. site.suffix .. pagenr
 		container[url] = { langid = langid }
 		if frucid == 1 then 
 			container[url].foilonly = true
@@ -318,7 +319,36 @@ function site.BuildUrl( setid,langid,frucid )
 	return container
 end -- function site.BuildUrl
 
---TODO FetchExpansionList from www.mtgmintcard.com/mtg/singles
+--[[- fetch list of expansions to be used by update helper functions.
+ The returned table shall contain at least the sets' name and LHpi-comnpatible urlsuffix,
+ so it can be processed by dummy.ListUnknownUrls.
+ Implementing this function is optional and may not be possible for some sites.
+ @function [parent=#site] FetchExpansionList
+ @return #table  @return #table { #number= #table { name= #string , urlsuffix= #string , ... }
+]]
+function site.FetchExpansionList()
+	if OFFLINE then
+		LHpi.Log("OFFLINE mode active. Expansion list may not be up-to-date." ,1)
+	end
+	local expansionSource
+	local url = site.BuildUrl( "list" )
+	expansionSource = LHpi.GetSourceData ( url , urldetails )
+	if not expansionSource then
+		error(string.format("Expansion list not found at %s (OFFLINE=%s)",LHpi.Tostring(url),tostring(OFFLINE)) )
+	end
+	local setregex = '<div class="col%-sm%-4">%s*<a href="http://www.mtgmintcard.com/mtg/singles/([^"]-)">%b<>%b<>%b<>%s?([^<]-)</a>'
+	local expansions = { }
+	local i=0
+	for url,name in string.gmatch( expansionSource , setregex) do
+		i=i+1
+		table.insert(expansions, { name=name, urlsuffix=url} )
+	end
+	LHpi.Log(i.." expansions found" ,1)
+	return expansions
+end--function site.FetchExpansionList
+--[[- format string to use in dummy.ListUnknownUrls update helper function.
+ @field [parent=#site] #string updateFormatString ]]
+site.updateFormatString = "[%i]={id = %3i, lang = { true , [9]=true }, fruc = { true , true }, pages=20, url = %q},--%s"
 
 --[[-  get data from foundstring.
  Has to be done in sitescript since html raw data structure is site specific.

@@ -77,9 +77,9 @@ workdir fixes
 no longer check for Data in deprecated location
 ]]
 
---TODO count averaging events with counter attached to prices
---todo nil unneeded Data.sets[sid] to save memory?
---todo change #boolean VERBOSE to #number verbosity and adjust loglevels?
+--TODO count averaging events with counter attached to prices. better: just build a seperate table to remember averaging happened.
+--TODO change #boolean VERBOSE to #number verbosity and adjust loglevels?
+--TODO savepath better in site namespace, not LHpi namespace?
 --FIXME clean leftover unused code
 
 local LHpi = {}
@@ -456,6 +456,10 @@ function LHpi.MainImportCycle( sourcelist , totalhtmlnum , importfoil , importla
 					if pagenr then pagenr=tonumber(pagenr) end
 				end
 				local sourcedata = LHpi.GetSourceData( sourceurl,urldetails )
+				if VERBOSE and site.resultregex then
+					local _s,_e,results = string.find( sourcedata, site.resultregex )
+					LHpi.Log( "html source data claims to contain " .. tostring(results) .. " cards." ,0)
+				end
 				local sourceTable = LHpi.ParseSourceData( sourcedata,sourceurl,urldetails )
 				-- process found data and fill cardsetTable
 				if sourceTable then
@@ -862,11 +866,6 @@ function LHpi.GetSourceData( url , details ) --
 		LHpi.Log( "Saving source html to file: \"" .. (LHpi.savepath or "") .. url .. "\"" ,0)
 		ma.PutFile( (LHpi.savepath or "") .. url , sourcedata , 0 )
 	end -- if SAVEHTML
-	
-	if VERBOSE and site.resultregex then
-		local _s,_e,results = string.find( sourcedata, site.resultregex )
-		LHpi.Log( "html source data claims to contain " .. tostring(results) .. " cards." ,0)
-	end
 	return sourcedata
 end -- function LHpi.GetSourceData
 
@@ -1837,8 +1836,7 @@ end -- function LHpi.Toutf8
  loglevels:
   -1 to use ma.Log instead
    1 for VERBOSE
-   2 for DEBUG
---TODO 1,warning,info,debug   
+   2 for DEBUG   
    else log.
  add other levels as needed
 
@@ -1978,5 +1976,4 @@ LHpi.Initialize()
 LHpi.Log( "LHpi library " .. LHpi.version .. " loaded and executed successfully." , 0 , nil ,0)
 ma.Log("LHpi library " .. LHpi.version .. " loaded")
 return LHpi
---FIXME savepath must be site, not LHpi namespace!
 --EOF

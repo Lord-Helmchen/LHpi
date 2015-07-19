@@ -327,33 +327,33 @@ This will be used by site.FetchExpansionList().
 --	local url = site.domain .. site.file
 --	if setid=="list" then --return url to get a list of available expansions
 --		return url .. "&expansions"
---	else -- usual LHpi behaviour
---		url = url ..  .. site.setprefix
---		if  type(site.sets[setid].url) == "table" then
---			urls = site.sets[setid].url
---		else
---			urls = { site.sets[setid].url }
---		end--if type(site.sets[setid].url)
---		for _i,seturl in pairs(urls) do
---			seturl = url .. seturl .. site.langprefix .. site.langs[langid].url .. site.frucprefix .. site.frucs[frucid].url .. site.suffix
---			local details = {}
---			if site.frucs[frucid].isfoil and not site.frucs[frucid].isnonfoil then
---				detals.foilonly = true
---			end--if
---
---			--LHpi.GetDourceData already does:
---			if OFFLINE then
---				--seturl = string.gsub(seturl, '[/\\:%*%?<>|"]', "_")
---				--details.isfile = true
---			end -- if OFFLINE
---			if not details.isfile then
---				seturl = "http://" .. seturl
---			end -- if isfile
-----		
---			container[seturl] = details
---		end--for
---		return container
---	end--if type(setid)
+--	end
+--	-- usual LHpi behaviour
+--	url = url .. site.setprefix
+--	if  type(site.sets[setid].url) == "table" then
+--		urls = site.sets[setid].url
+--	else
+--		urls = { site.sets[setid].url }
+--	end--if type(site.sets[setid].url)
+--	for _i,seturl in pairs(urls) do
+--		seturl = url .. seturl .. site.langprefix .. site.langs[langid].url .. site.frucprefix .. site.frucs[frucid].url .. site.suffix
+--		local details = {}
+--		if site.frucs[frucid].isfoil and not site.frucs[frucid].isnonfoil then
+--			detals.foilonly = true
+--		end--if
+--	
+--		--LHpi.GetDourceData already does:
+--		--if OFFLINE then
+--		--	--seturl = string.gsub(seturl, '[/\\:%*%?<>|"]', "_")
+--		--	--details.isfile = true
+--		--end -- if OFFLINE
+--		--if not details.isfile then
+--		--	seturl = "http://" .. seturl
+--		--end -- if isfile
+--		
+--	container[seturl] = details
+--	end--for
+--	return container
 --end -- function site.BuildUrl
 
 --[[- fetch list of expansions to be used by update helper functions.
@@ -383,10 +383,6 @@ function site.FetchExpansionList()
 		expansions[sid]={name=name, urlsuffix = LHpi.OAuthEncode(name)}
 	end
 
---	
---	for i,expansion in pairs(expansions) do
---		expansions[i].urlsuffix = LHpi.OAuthEncode(expansion.name)
---	end	
 	return expansions
 end--function site.FetchExpansionList
 --[[- format string to use in dummy.ListUnknownUrls update helper function.

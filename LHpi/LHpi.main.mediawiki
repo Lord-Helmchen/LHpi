@@ -48,7 +48,7 @@ When I wanted to generalize my script for easy addaption to other sites, this pr
 
 ===magic.tcgplayer.com PriceGuide===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=22738 LHpi.tcgplayerPriceGuide.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=22742 LHpi.tcgplayerPriceGuide.lua.zip]
 |-
 |Sitescript version||2.15.6.14
 |-
@@ -582,7 +582,7 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :added 814
 ;2.14.5.14
 :removed url to filename changes that are done by the library if OFFLINE
-;[http://www.slightlymagic.net/forum/download/file.php?id=22738 2.15.6.14]
+;[http://www.slightlymagic.net/forum/download/file.php?id=22742 2.15.6.14]
 :added 816,818,815,817,819,820,821,40,32,27,25,23,22,21,822,340,55,45,822
 :new features from template/mkm branch
 :site.BuildUrl
