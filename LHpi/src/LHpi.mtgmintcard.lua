@@ -72,7 +72,7 @@ synchronized with template
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
-OFFLINE = true--download from dummy, only change to false for release
+--OFFLINE = true--download from dummy, only change to false for release
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
@@ -102,7 +102,7 @@ local libver = "2.15"
 local dataver = "6"
 --- sitescript revision number
 -- @field  string scriptver
-local scriptver = "15"
+local scriptver = "14"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field #string scriptname
 local scriptname = "LHpi.mtgmintcard-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"

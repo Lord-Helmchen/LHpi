@@ -44,16 +44,16 @@ updated/fixed/added variants,namereplacements,expected
 
 --- more detailed log; default false
 -- @field [parent=#global] #boolean VERBOSE
-VERBOSE = true
+--VERBOSE = true
 --- also log dropped cards; default false
 -- @field [parent=#global] #boolean LOGDROPS
-LOGDROPS = true
+--LOGDROPS = true
 --- also log namereplacements; default false
 -- @field [parent=#global] #boolean LOGNAMEREPLACE
-LOGNAMEREPLACE = true
+--LOGNAMEREPLACE = true
 --- also log foiltweaking; default false
 -- @field [parent=#global] #boolean LOGFOILTWEAK
-LOGFOILTWEAK = true
+--LOGFOILTWEAK = true
 
 -- options unique to this sitescript
 
@@ -89,7 +89,7 @@ copyprice = nil
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
-OFFLINE = true--download from dummy, only change to false for release
+--OFFLINE = true--download from dummy, only change to false for release
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML

@@ -78,7 +78,7 @@ fixed/updated site.regex
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
-OFFLINE = true--download from dummy, only change to false for release
+--OFFLINE = true--download from dummy, only change to false for release
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML

@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 added 814
 2.14.5.5
 removed url to filename changes that are done by the library if OFFLINE
-2.15.6.14
+2.15.6.5
 synchronized with template
 ]]
 
@@ -80,7 +80,7 @@ fairOrBest = "fair"
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
-OFFLINE = true--download from dummy, only change to false for release
+--OFFLINE = true--download from dummy, only change to false for release
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
@@ -110,7 +110,7 @@ local libver = "2.15"
 local dataver = "6"
 --- sitescript revision number
 -- @field  string scriptver
-local scriptver = "6"
+local scriptver = "5"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field #string scriptname
 local scriptname = "LHpi.mtgprice.com-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
