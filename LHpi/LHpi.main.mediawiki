@@ -18,33 +18,65 @@ Sitescripts will need to provide
 ** a one-to-one name map for names that differ between the site and Magic Album's database
 ** tables to map card names to picture versions, in case the one-to-one map and LHpi's defaults are not sufficient
 ** a table with expected card count numbers for LHpi's sanity checks.
+** a function to report on expansion urls that are not used in the scripts table of available sets
+
+
+===magickartenmarkt===
+{|NOTYET LHpi.magickartenmarkt.lua.zip]
+|-
+|Sitescript version||2.15.6.3
+|-
+|updated last on||not released yet
+|-
+|size|| KiB
+|}
+[https://www.magickartenmarkt.de/ MagicKartenMarkt] (or [https://www.magiccardmarket.eu/ magiccardmarket] is "Europe's largest online marketplace for Magic the Gathering cards!". It has become the de facto standard way to acquire singles, at least in my local MtG circles. They are the only price source that I personally am interested in anymore, but the script is not in a releasable state yet. See the forum thread, starting at [http://www.slightlymagic.net/forum/viewtopic.php?f=32&t=8174&start=45#p182474 state of things] for details on how far along development is.
+
 ===magicuniverse.de===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=20399 LHpi.magicuniverseDE.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=22775 LHpi.magicuniverseDE.lua.zip]
 |-
-|Sitescript version||2.13.5.13
+|Sitescript version||2.15.6.14
 |-
-|updated last on||2014-10-28
+|updated last on||2015-07-21
 |-
-|size|| 13.7 KiB
+|size|| 15.57 KiB
 |}
 [http://www.magicuniverse.de/html/einzelkarten.php?menue Magic Universe] is a German site with German and English cards, priced in €.
 
 This site started it all, since I wanted prices in local currency, and my FLG apparently uses them as price reference.
 
+MAINTAINER WANTED!<tt>
+ :-( persetcount for Magic Origins (id 822) differs from expected.
+ :-( counted : 267 set &   5 failed  English cards ; 267 set &   5 failed   German cards ;   0 dropped,   0 namereplaced and   0 foiltweaked.
+ :-( expected: 286 set &   0 failed  English cards ; 286 set &   0 failed   German cards ;   0 dropped,   0 namereplaced and   0 foiltweaked.
+ Total counted : 19607 set, 457 failed English cards	17544 set, 492 failed German cards	1 set, 0 failed French cards	19 set, 0 failed Italian cards	; 1102 dropped, 190 namereplaced and 19 foiltweaked.
+ Total expected: 19630 set, 442 failed English cards	17926 set, 480 failed German cards	1 set, 0 failed French cards	19 set, 0 failed Italian cards	; 1132 dropped, 191 namereplaced and 15 foiltweaked.
+ count differs in 27 sets: { [139]="Revised Edition (FBB)";[150]="Legends";[160]="The Dark";[180]="4th Edition";[190]="Ice Age";[220]="Alliances";[230]="Mirage";[280]="Tempest";[300]="Exodus";[330]="Urzaâ€™s Saga";[400]="Mercadian Masques";[410]="Nemesis";[420]="Prophecy";[430]="Invasion";[460]="7th Edition";[470]="Apocalypse";[480]="Odyssey";[520]="Onslaught";[560]="Mirrodin";[590]="Champions of Kamigawa";[670]="Coldsnap";[800]="Theros";[813]="Khans of Tarkir";[814]="Commander 2014 Edition";[816]="Fate Reforged";[818]="Dragons of Tarkir";[822]="Magic Origins";}
+</tt>
+
 ===mtgmintcard.com===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=20400 LHpi.mtgmintcard.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=22773 LHpi.mtgmintcard.lua.zip]
 |-
-|Sitescript version||2.13.5.13
+|Sitescript version||2.15.6.14
 |-
-|updated last on||2014-10-28
+|updated last on||2015-07-21
 |-
-|size|| 12.41 KiB
+|size|| 14.02 KiB
 |}
 Functionally the same as [[#Other scripts|"MTG Mint Card.lua"]] by Goblin Hero and Stromglad1.
 
 When I wanted to generalize my script for easy addaption to other sites, this provided me with a good baseline, since I could search MA for cards that my script missed but should have set. Also, the site is easy to querry and parse. They do have a currency chooser, so I started by trying to make a mtgmintcard-Euro script. I failed, but salvaged the wreck for default $ prices.
+
+MAINTAINER WANTED!<tt>
+ :-( persetcount for Magic Origins (id 822) differs from expected.
+ :-( counted : 264 set &  37 failed  English cards ; 255 set &  46 failed Simplified Chinese cards ;   0 dropped,   0 namereplaced and   0 foiltweaked.
+ :-( expected: 286 set &   0 failed  English cards ; 272 set &   0 failed Simplified Chinese cards ;   0 dropped,   0 namereplaced and   0 foiltweaked.
+ Total counted : 24130 set, 128 failed English cards	8217 set, 307 failed Simplified Chinese cards	; 850 dropped, 136 namereplaced and 46 foiltweaked.
+ Total expected: 24352 set, 67 failed English cards	8780 set, 243 failed Simplified Chinese cards	; 813 dropped, 137 namereplaced and 39 foiltweaked.
+ count differs in 22 sets: { [390]="Starter 1999";[570]="Darksteel";[630]="9th Edition";[700]="Planar Chaos";[740]="Duel Decks: Elves vs. Goblins";[755]="Duel Decks: Jace vs. Chandra";[757]="Duel Decks: Divine vs. Demonic";[758]="Alara Reborn";[762]="Zendikar";[763]="Duel Decks: Garruk vs. Liliana";[778]="Magic: The Gathering Commander";[784]="Dark Ascension";[786]="Avacyn Restored";[800]="Theros";[808]="Magic 2015";[813]="Khans of Tarkir";[814]="Commander 2014 Edition";[816]="Fate Reforged";[818]="Dragons of Tarkir";[819]="Modern Masters 2015 Edition";[820]="Duel Decks: Elspeth vs. Kiora";[822]="Magic Origins";}
+</tt>
 
 ===magic.tcgplayer.com PriceGuide===
 {|
@@ -65,31 +97,49 @@ Lately, their version handling has somewhat improved, but there's still a lot of
 
 ===trader-online.de===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=20403 LHpi.trader-onlineDE.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=22772 LHpi.trader-onlineDE.lua.zip]
 |-
-|Sitescript version||2.13.5.13
+|Sitescript version||2.15.6.14
 |-
-|updated last on||2014-10-28
+|updated last on||2015-07-21
 |-
-|size|| 14.45 KiB
+|size|| 16.57 KiB
 |}
 [http://www.trader-online.de/Magic_Online-Shop.php Trader Online] is a German site with German and English cards, priced in €.
 
 I found this site while looking for Token images, found it to be parseable by sitescript, and decided to use it as a test on how well the library was adapted to support additional sites.
 
+MAINTAINER WANTED!<tt>
+ :-( persetcount for Magic Origins (id 822) differs from expected.
+ :-( counted : 281 set &   5 failed  English cards ; 270 set &  16 failed   German cards ;   0 dropped,   0 namereplaced and   0 foiltweaked.
+ :-( expected: 286 set &   0 failed  English cards ; 286 set &   0 failed   German cards ;   0 dropped,   0 namereplaced and   0 foiltweaked.
+ Total counted : 22346 set, 962 failed English cards	19547 set, 117 failed German cards	429 set, 0 failed Italian cards	; 1314 dropped, 333 namereplaced and 11 foiltweaked.
+ Total expected: 23069 set, 40 failed English cards	20536 set, 53 failed German cards	429 set, 0 failed Italian cards	; 1332 dropped, 339 namereplaced and 11 foiltweaked.
+ count differs in 12 sets: { [100]="Beta";[105]="Collectorsâ€™ Edition (Domestic)";[106]="Collectorsâ€™ Edition (International)";[110]="Unlimited";[800]="Theros";[813]="Khans of Tarkir";[814]="Commander 2014 Edition";[816]="Fate Reforged";[818]="Dragons of Tarkir";[819]="Modern Masters 2015 Edition";[820]="Duel Decks: Elspeth vs. Kiora";[822]="Magic Origins";}
+</tt>
+
 ===mtgprice.com===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=20401 LHpi.mtgprice.com.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=22774 LHpi.mtgprice.com.lua.zip]
 |-
-|Sitescript version||2.13.5.4
+|Sitescript version||2.15.6.5
 |-
-|updated last on||2014-10-28
+|updated last on||2015-07-21
 |-
-|size|| 10.17 KiB
+|size|| 14.34 KiB
 |}
 I did not plan to include it in the sitescript collection, but now that the cat is out of the bag and it has been downloaded a dual-digit number of times, I can at least upload the newer version to make it compatible with the latest lib and data...
 Contains a variable to select between "Fair Trade" and "best Buy" price column.
 It still needs a lot of namereplace tables. I'm not that much interested in $ prices, so if you are, consider volunteering to finish and maintain it. Post in the thread if you want to do it but are unsure what to do.
+
+MAINTAINER WANTED!<tt>
+ :-( persetcount for Magic Origins (id 822) differs from expected.
+ :-( counted : 225 set &  10 failed  English cards ;   0 dropped,   0 namereplaced and   0 foiltweaked.
+ :-( expected: 272 set &   0 failed  English cards ;   0 dropped,   0 namereplaced and   0 foiltweaked.
+ Total counted : 25436 set, 610 failed English cards	; 0 dropped, 311 namereplaced and 150 foiltweaked.
+ Total expected: 26027 set, 142 failed English cards	; 0 dropped, 380 namereplaced and 298 foiltweaked.
+ count differs in 56 sets: { [5]="Book Inserts";[6]="Comic Inserts";[7]="Magazine Inserts";[9]="Video Game Promos";[10]="Junior Series Promos";[21]="Release & Launch Parties Promos";[22]="Prerelease Promos";[23]="Gateway & WPN Promos";[25]="Judge Gift Cards";[26]="Magic Game Day";[27]="Alternate Art Lands";[30]="Friday Night Magic Promos";[40]="Arena/Colosseo Leagues Promos";[42]="Summer of Magic Promos";[120]="Arabian Nights";[160]="The Dark";[190]="Ice Age";[200]="Chronicles";[201]="Renaissance";[225]="Introductory Two-Player Set";[260]="Portal";[270]="Weatherlight";[320]="Unglued";[380]="Portal Three Kingdoms";[390]="Starter 1999";[415]="Starter 2000";[450]="Planeshift";[490]="Deckmasters";[550]="8th Edition";[600]="Unhinged";[630]="9th Edition";[670]="Coldsnap";[680]="Time Spiral";[690]="Time Spiral Timeshifted";[756]="Conflux";[769]="Archenemy";[776]="New Phyrexia";[782]="Innistrad";[784]="Dark Ascension";[787]="Planechase 2012 Edition";[791]="Return to Ravnica";[793]="Gatecrash";[794]="Duel Decks: Sorin vs. Tibalt";[799]="Duel Decks: Heroes vs. Monsters";[800]="Theros";[801]="Commander 2013 Edition";[805]="Duel Decks: Jace vs. Vraska";[807]="Conspiracy";[809]="From the Vault: Annihilation";[812]="Duel Decks: Speed vs. Cunning";[813]="Khans of Tarkir";[814]="Commander 2014 Edition";[816]="Fate Reforged";[818]="Dragons of Tarkir";[820]="Duel Decks: Elspeth vs. Kiora";[822]="Magic Origins";}
+</tt>
 
 ==The LHpi Library==
 {|
@@ -148,9 +198,9 @@ Detailed instructions on the properties and functions to define in your sitescri
 {|
 |[http://www.slightlymagic.net/forum/download/file.php?id=22735 LHpi.sitescriptTemplate-v2.13.5.11.lua.zip]
 |-
-|Sitescript version||2.16.6.13
+|Sitescript version||2.15.6.13
 |-
-|updated last on||2015-07018
+|updated last on||2015-07-18
 |-
 |size|| 13.08 KiB
 |}
@@ -168,12 +218,25 @@ This is just an empty, commented template to help write new sitescripts.
 |}
 Magic Album API dummy to test and debug LHpi within an IDE (such as eclipse) and without needing Magic Album. Now fixed for backwards compatibility with Lua 5.1 and paths outside of MA's "Prices" directory.
 
+===additional dependencies===
+{|
+|[http://www.slightlymagic.net/forum/download/file.php?id=22770 external dependencies.zip]
+|-
+|version||1
+|-
+|updated last on||2015-07-21
+|-
+|size|| 203.32 KiB
+|}
+Since 0.6, the dummy uses LuaSockets to implement ma.GetUrl. If you need them, here are the additional files. Included are LuaSockets files for http connections and the Lua interpreter that the LuaSockets dlls were built against. Extract the <code>ext</code> and <code>bin</code> folders into the <code>lib</code> folder of your LHpi setup (usually in <code>Magic Album\Prices</code>).
+
 ===Planned features===
 in no particular order
 * Promo and special sets for <s>magicuniverseDE</s>,mtgmintcards, tcgplayerPriceguide
 ** add all <s>special and</s> promo sets (cardcount,variants,foiltweak) to LHpi.Data
 * tweak log : better differentiation of log levels (normal,verbose,debug); rewrite normal-level logentries to be more pleasing to read.<br />I'd love to get users' feedback on this: how silent should normal level be; what should not be logged unless in debug mode?
 *<code>(((a+b)/2)+c)/2 != (a+b+c)/3 = (((a+b)/2*2)+c)/3</code><br/> For mathematically correct averaging, need to attach a counter to averaged prices, then on next averaging, do <code>if counter then newaverage=(oldaverage*(counter+1) + newprice) / (counter+2)</code>
+* generalize settweak from tcgplayerPriceGuide to library
 
 ===Possible features===
 in no particular order
@@ -474,6 +537,13 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :update site.expected
 :fix 140,420,801
 :synchronized with template
+;2.13.5.14
+:addded 813
+;2.14.5.14
+:removed url to filename changes that are done by the library if OFFLINE 
+;[http://www.slightlymagic.net/forum/download/file.php?id=22775 2.15.6.14]
+synchronized with template
+fixed/updated site.regex
 
 ====LHpi.mtgmintcard====
 ;[http://www.slightlymagic.net/forum/download/file.php?id=9265 2.0]
@@ -522,6 +592,12 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :add "Token" suffix to replacement names
 :update site.expected
 :fix 330,801,787,600
+:synchronized with template
+;2.13.6.14
+:added 814
+;2.14.5.14
+:removed url to filename changes that are done by the library if OFFLINE
+;[http://www.slightlymagic.net/forum/download/file.php?id=22773 2.15.6.14
 :synchronized with template
 
 ====LHpi.tcgplayerPriceGuide====
@@ -635,6 +711,13 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :update site.expected
 :fix 784,801,600
 :synchronized with template
+;2.13.6.13
+:added 814
+;2.14.5.13
+:removed url to filename changes that are done by the library if OFFLINE 
+;[http://www.slightlymagic.net/forum/download/file.php?id=22772 2.15.6.14]
+:synchronized with template
+
 
 ====LHpi.mtgpprice.com====
 ;[http://www.slightlymagic.net/forum/download/file.php?id=16280 2.9.2.1]
@@ -653,6 +736,13 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :new set 813
 :fix 250,180 (except basic lands)
 :synchronized with template
+;2.13.6.5
+:added 814
+;2.14.5.5
+:removed url to filename changes that are done by the library if OFFLINE
+;[http://www.slightlymagic.net/forum/download/file.php?id=22774 2.15.6.5]
+:synchronized with template
+
 
 ====LHpi.sitescriptTemplate====
 ;2.0
@@ -748,9 +838,14 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :update helper functions ouput to log instead od stdout 
 :ma.GetUrl now uses luasockets instead of returning nil
 
-
 ==License==
-The LHpi library and all its sitescripts are released as open source under the [[http://www.gnu.org/licenses/gpl.html GNU General Public License]]. Please note that LHpi is thusly licensed seperately from Magic Album proper, which to date is closed source.
+====LHpi====
+The LHpi library and all its sitescripts are released as open source under the [http://www.gnu.org/licenses/gpl.html GNU General Public License]. Please note that LHpi is thusly licensed seperately from Magic Album proper, which to date is closed source.
+====Lua====
+lua52.exe and lua52.dll are distributed under the [http://www.lua.org/license.html MIT license].
+====LuaSocket====
+[http://w3.impa.br/~diego/software/luasocket/ LuaSocket] is © 2004-2007 Diego Nehab and distributed under the the same terms and conditions as the Lua language.
+
 
 ==Other scripts==
 Just for reference: These unrelated pricing scripts exist
