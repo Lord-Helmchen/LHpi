@@ -567,6 +567,7 @@ site.frucs = {
 ]]
 site.sets = {
 -- Core Sets
+[822]={id = 822, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Magic%20Origins"},--Magic Origins
 [808]={id = 808, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "M2015"},
 [797]={id = 797, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "M2014"}, 
 [788]={id = 788, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "M2013"}, 
@@ -577,10 +578,7 @@ site.sets = {
 [630]={id = 630, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "9th_Edition"}, 
 [550]={id = 550, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "8th_Edition"}, 
 [460]={id = 460, lang = { true , [3]=true }, fruc = { false,true ,true ,false}, url = "7th_Edition"}, 
---[360]=nil,
---[250=nil,
 [180]={id = 180, lang = { true , [3]=true }, fruc = { false,true ,true ,false}, url = "4th_Edition"}, 
---[141]=nil,
 [140]={id = 140, lang = { true , [3]=true , [4]=true }, fruc = { false,true ,true ,true }, url = "Revised"},
 [139]={id = 139, lang = { false, [3]=true }, fruc = { false,true ,true ,true }, url = "deutsch_limitiert"},-- Revised Limited : url only provides cNameG
 [110]={id = 110, lang = { true , [3]=false}, fruc = { false,true ,true ,true }, url = "Unlimited"}, 
@@ -655,10 +653,14 @@ site.sets = {
 [130]={id = 130, lang = { true , [3]=false}, fruc = { false,true ,true ,true }, url = "Antiquities"},
 [120]={id = 120, lang = { true , [3]=false}, fruc = { false,true ,true ,true }, url = "Arabian_Nights"},
 -- Special sets
+[818]={id = 818, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Dragons%20of%20Tarkir"},--Dragons of Tarkir
+[816]={id = 816, lang = { true , [3]=true }, fruc = { true ,true ,true ,true }, url = "Fate%20Reforged"},--Fate Reforged
 [814]={id = 814, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Commander%202014"},
 [807]={id = 807, lang = { true , [3]=false}, fruc = { false,true ,true ,true }, url = "Conspiracy"},
 [801]={id = 801, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Commander%202013"},
--- other special and promo sets: sorting out the single page seems more trouble than it's worth
+--TODO Promo Cards
+-- uncomment these while running helper.FindUnknownUrls
+--[999]={id = 0, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Foils"},--miscelaneous Promos
 } -- end table site.sets
 
 --[[- card name replacement tables.

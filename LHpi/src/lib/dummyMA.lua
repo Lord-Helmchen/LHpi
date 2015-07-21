@@ -873,7 +873,7 @@ function main()
 --		DEBUGVARIANTS = true,--default false
 --		SAVETABLE=true,--default false
 --		DEBUG = true,--default false
-		OFFLINE = true,--default false
+--		OFFLINE = true,--default false
 	}
 	dummy.forceEnv()
 
@@ -892,11 +892,11 @@ function main()
 	 	}
 	local importsets = standard
 --	local importsets = { [0] = "fakeset"; }
---	local importsets = { [808]="some set" }
+--	local importsets = { [822]="some set" }
 --	local importsets = { [220]="foo";[800]="bar";[0]="baz"; }
 --	local importsets = dummy.coresets
 --	local importsets = dummy.expansionsets
-	local importsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
+--	local importsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 	
 	local scripts={
 		[0]={name="lib\\LHpi.sitescriptTemplate-v2.15.6.13.lua",savepath="."},
@@ -913,7 +913,7 @@ function main()
 	
 	-- select a predefined script to be tested
 --	dummy.fakesitescript()
-	local selection = 4
+	local selection = 6
 	local script=scripts[selection]
 	if script.oldloadertrue then
 		dummy.loadscript(script.name,script.path,script.savepath)--deprecated

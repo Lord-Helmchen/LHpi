@@ -456,7 +456,7 @@ function LHpi.MainImportCycle( sourcelist , totalhtmlnum , importfoil , importla
 					if pagenr then pagenr=tonumber(pagenr) end
 				end
 				local sourcedata = LHpi.GetSourceData( sourceurl,urldetails )
-				if VERBOSE and site.resultregex then
+				if VERBOSE and sourcedata~=nil and site.resultregex~=nil then
 					local _s,_e,results = string.find( sourcedata, site.resultregex )
 					LHpi.Log( "html source data claims to contain " .. tostring(results) .. " cards." ,0)
 				end

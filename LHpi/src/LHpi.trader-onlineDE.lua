@@ -141,7 +141,8 @@ site={ scriptname=scriptname, dataver=dataver, logfile=logfile or nil, savepath=
  it will be chopped into its parts by site.ParseHtmlData later. 
  @field [parent=#site] #string regex
 ]]
-site.regex = '<tr><td colspan="11"><hr noshade size=1></td></tr>\n%s*<tr>\n%s*(.-)</font></td>\n%s*<td width'
+--TODO: error must be here
+site.regex = '<tr><td colspan="11"><hr noshade size=1></td></tr>%s*<tr>%s*(.-)</font></td>%s*<td width'
 
 --- resultregex can be used to display in the Log how many card the source file claims to contain
 -- @field #string resultregex
@@ -302,39 +303,46 @@ function site.BuildUrl( setid,langid,frucid )
 	site.setprefix = "serie="
 	local container = {}
 
-	local seturl = site.sets[setid].url
-	if langid == 3 then
-		if setid == 220 then
-	 		seturl = "Allianzen"
-	 	elseif setid == 520 then
-	 		seturl = "Aufmarsch"
-		end
-	elseif langid == 5 then
-		seturl = "i" .. string.gsub( seturl, "%%20", "" )
-	end
-	local url = site.domain ..  site.frucfileprefix .. site.file .. site.setprefix .. site.frucs[frucid].url .. "-" .. seturl .. site.langs[langid].url
-	container[url] = {}
-	if site.frucs[frucid].isfoil then -- mark url as foil-only
-		container[url].foilonly = true
+--	local seturl = site.sets[setid].url
+	if  type(site.sets[setid].url) == "table" then
+		urls = site.sets[setid].url
 	else
-		-- url without foil marker
-	end -- if foil-only url
-
-	if setid == 772 or setid == 757 then --special case for Duel Decks
-		container = {}
-		local url1=url
-		local url2=url
-		url1 = string.gsub( url1 , "ELSTEZ" , "ELS" )
-		url1 = string.gsub( url1 , "DvD" , "DvD-W" )
-		url2 = string.gsub( url2 , "ELSTEZ" , "TEZ" )
-		url2 = string.gsub( url2 , "DvD" , "DvD-B" )
-		container[url1] = {}			
-		container[url2] = {}			
-		if site.frucs[frucid].isfoil then
-			container[url1].foilonly = true
-			container[url2].foilonly = true
+		urls = { site.sets[setid].url }
+	end--if type(site.sets[setid].url)
+	for _i,seturl in pairs(urls) do
+		if langid == 3 then
+			if setid == 220 then
+		 		seturl = "Allianzen"
+		 	elseif setid == 520 then
+		 		seturl = "Aufmarsch"
+			end
+		elseif langid == 5 then
+			seturl = "i" .. string.gsub( seturl, "%%20", "" )
 		end
-	end--if setid
+		local url = site.domain ..  site.frucfileprefix .. site.file .. site.setprefix .. site.frucs[frucid].url .. "-" .. seturl .. site.langs[langid].url
+		container[url] = {}
+		if site.frucs[frucid].isfoil then -- mark url as foil-only
+			container[url].foilonly = true
+		else
+			-- url without foil marker
+		end -- if foil-only url
+	end--for _i,seturl
+
+--	if setid == 772 or setid == 757 then --special case for Duel Decks
+--		container = {}
+--		local url1=url
+--		local url2=url
+--		url1 = string.gsub( url1 , "ELSTEZ" , "ELS" )
+--		url1 = string.gsub( url1 , "DvD" , "DvD-W" )
+--		url2 = string.gsub( url2 , "ELSTEZ" , "TEZ" )
+--		url2 = string.gsub( url2 , "DvD" , "DvD-B" )
+--		container[url1] = {}			
+--		container[url2] = {}			
+--		if site.frucs[frucid].isfoil then
+--			container[url1].foilonly = true
+--			container[url2].foilonly = true
+--		end
+--	end--if setid
 	
 	return container
 end -- function site.BuildUrl
@@ -368,9 +376,9 @@ function site.FetchExpansionList()
 	local i=0
 	for url,name in string.gmatch( expansionSource , setregex) do
 		i=i+1
-		url=string.gsub(url," ?%-[Ee]$","")
+		url=string.gsub(url,"%-[Ee]$","")
 		name=string.gsub(name," ?%(%w+%)$","")
-		table.insert(expansions, { name=name, urlsuffix=url} )
+		table.insert(expansions, { name=name, urlsuffix=LHpi.OAuthEncode(url)} )
 	end
 	LHpi.Log(i.." expansions found" ,1)
 	return expansions
@@ -569,6 +577,7 @@ site.frucs = {
 ]]
 site.sets = {
 -- Core Sets
+[822]={id = 822, lang = { true , [3]=true }, fruc = { true ,true }, url = "ORI"},--Magic Origins
 [808]={id = 808, lang = { true , [3]=true }, fruc = { true ,true }, url = "M15"}, 
 [797]={id = 797, lang = { true , [3]=true }, fruc = { true ,true }, url = "M14"}, 
 [788]={id = 788, lang = { true , [3]=true }, fruc = { true ,true }, url = "M13"}, 
@@ -587,8 +596,9 @@ site.sets = {
 [139]={id = 139, lang = { false, [3]=true }, fruc = { false,true }, url = "DL"}, -- deutsch limitiert
 [110]={id = 110, lang = { true , [3]=false}, fruc = { false,true }, url = "UN"},  
 [100]={id = 100, lang = { true , [3]=false}, fruc = { false,true }, url = "B%20"},
-[90] = nil, -- Alpha 
  -- Expansions
+[818]={id = 818, lang = { true , [3]=true }, fruc = { true ,true }, url = "DTK"},--Dragons of Tarkir
+[816]={id = 816, lang = { true , [3]=true }, fruc = { true ,true }, url = "FRF"},--Fate Reforged
 [813]={id = 813, lang = { true , [3]=true }, fruc = { true ,true }, url = "KTK"},--Khans of Tarkir
 [806]={id = 806, lang = { true , [3]=true }, fruc = { true ,true }, url = "JOU"},
 [802]={id = 802, lang = { true , [3]=true }, fruc = { true ,true }, url = "BNG"},
@@ -656,7 +666,9 @@ site.sets = {
 [130]={id = 130, lang = { true , [3]=false }, fruc = { false,true }, url = "AQ"},
 [120]={id = 120, lang = { true , [3]=false }, fruc = { false,true }, url = "AN"},
 -- special sets
---[814]={id = 814, lang = { true , [3]=false}, fruc = { false,true }, url = "C14"},--Commander 2014
+[820]={id = 820, lang = { true , [3]=true }, fruc = { true ,true }, url = "EVK"},--Duel Decks: Elspeth vs. Kiora
+[819]={id = 819, lang = { true , [3]=true }, fruc = { true ,true }, url = "MM2"},--Modern Masters 2015
+[814]={id = 814, lang = { true , [3]=true }, fruc = { true ,true }, url = "C14"},--Commander 2014
 [812]={id = 812, lang = { true , [3]=false}, fruc = { false,true }, url = "DDN"}, -- Duel Decks: Speed vs. Cunning
 [807]={id = 807, lang = { true , [3]=false}, fruc = { true ,true }, url = "CNS"},--Conspiracy
 [805]={id = 805, lang = { true , [3]=false}, fruc = { false,true }, url = "JVV"}, -- Duel Decks: Jace vs. Vaska
@@ -665,14 +677,16 @@ site.sets = {
 [794]={id = 794, lang = { true , [3]=false}, fruc = { false,true }, url = "SVT"},--Duel Decks: Sorin vs. Tibalt
 [790]={id = 790, lang = { true , [3]=false}, fruc = { false,true }, url = "IZZ"},--Duel Decks: Izzet vs. Golgari
 [785]={id = 785, lang = { true , [3]=false}, fruc = { false,true }, url = "VEN"},--Duel Decks: Venser vs. Koth
-[772]={id = 772, lang = { false, [3]=true }, fruc = { false,true }, url = "ELSTEZ"},--Duel Decks: Elspeth vs. Tezzeret
-[757]={id = 757, lang = { true , [3]=false}, fruc = { false,true }, url = "DvD"},--Duel Decks: Divine vs. Demonic
+[772]={id = 772, lang = { false, [3]=true }, fruc = { false,true }, url = {"ELS","TEZ"} },--Duel Decks: Elspeth vs. Tezzeret
+[757]={id = 757, lang = { true , [3]=false}, fruc = { false,true }, url = {"DvD-W","DvD-B"} },--Duel Decks: Divine vs. Demonic
 [600]={id = 600, lang = { true , [3]=false}, fruc = { true ,true }, url = "UH"}, -- Unhinged
 [320]={id = 320, lang = { true , [3]=false}, fruc = { false,true }, url = "UG"}, -- Unglued
 [310]={id = 310, lang = { true , [3]=true }, fruc = { false,true }, url = "PT2"}, -- Portal Second Age
 [260]={id = 260, lang = { true , [3]=true }, fruc = { false,true }, url = "PT1"}, -- Portal
 [201]={id = 201, lang = { false, [3]=true }, fruc = { false,true }, url = "REN"}, -- Renaissance 
 [200]={id = 200, lang = { true , [3]=false}, fruc = { false,true }, url = "CH"}, -- Chronicles
+[106]={id = 106, lang = { true , [3]=true }, fruc = { true ,true }, url = "CE"},--Collectors' Edition (CE/IE)
+[105]={id = 105, lang = { true , [3]=true }, fruc = { true ,true }, url = "CE"},--Collectors' Edition (CE/IE)
 } -- end table site.sets
 
 --[[- card name replacement tables.
