@@ -4783,7 +4783,7 @@ Promos = nil,
 },
 [22] = { name="Prerelease Promos",
 	foil="y",-- "o" might be better to catch most foils, but there are 5 "yes" cards in here...
-	--TODO check whether the 5 "yes" are really "yes", if they're "Only" change to foilonly=true and cut "true" from foiltweak.
+	--TODO [22] foiltweak - check whether the 5 "yes" are really "yes", if they're "Only" change to foilonly=true and cut "true" from foiltweak.
 	cardcount={ reg=195, tok=2, nontrad=17, repl=5 }, 
 	variants={
 ["Lu Bu, Master-at-Arms"] 				= { "Lu Bu, Master-at-Arms"		, { "April", "July" } },

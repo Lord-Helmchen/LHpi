@@ -141,7 +141,6 @@ site={ scriptname=scriptname, dataver=dataver, logfile=logfile or nil, savepath=
  it will be chopped into its parts by site.ParseHtmlData later. 
  @field [parent=#site] #string regex
 ]]
---TODO: error must be here
 site.regex = '<tr><td colspan="11"><hr noshade size=1></td></tr>%s*<tr>%s*(.-)</font></td>%s*<td width'
 
 --- resultregex can be used to display in the Log how many card the source file claims to contain
