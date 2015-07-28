@@ -75,6 +75,8 @@ DEBUGVARIANTS=true no longer sets DEBUG=false, instead remembers and restores pr
 new LHpi.OAuthEncode(s) moved here from mkm-helper
 workdir fixes
 no longer check for Data in deprecated location
+
+merged back into mkm branch
 ]]
 
 --TODO count averaging events with counter attached to prices. better: just build a seperate table to remember averaging happened.

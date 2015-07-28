@@ -2,6 +2,7 @@
 /Downloadstatistics.ods
 /release archive
 *.log
-/timelog.txt
+*.zip
+*.7z
 /MyProfilingReport.txt
 /missorted.json

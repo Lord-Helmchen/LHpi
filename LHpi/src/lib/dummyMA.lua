@@ -40,6 +40,8 @@ deprecated dummy.loadlibonly and dummy.loadscript
 dummy.mergetables no longer changes param #table teins
 update helper functions ouput to log instead od stdout 
 ma.GetUrl now uses luasockets instead of returning nil
+
+merged back into mkm branch
 ]]
 
 --[[- "main" function called by Magic Album; just display error and return.

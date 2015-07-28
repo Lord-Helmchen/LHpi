@@ -38,6 +38,8 @@ removed site.CompareSiteSets
 optional site.BuildUrl("list") behaviour
 new optional function site.FetchExpansionList
 site.BuildUrl supports multiple urls per set
+
+merged back into mkm branch
 ]]
 
 -- options that control the amount of feedback/logging done by the script

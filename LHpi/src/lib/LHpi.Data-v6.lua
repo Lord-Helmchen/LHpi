@@ -38,6 +38,8 @@ cardcount fixed/updated in 9,105,106,762,791,800,813,816,30,22,21,26
 fixed/updated variants for 43,69,201[ITA],758,764,766,781,787,800,813,22
 commented variants in 180,140,110,100,90,280,230,220,170,260,105,25
 foiltweak fixed/updated in 813
+
+merged back into mkm branch
 ]]
 
 

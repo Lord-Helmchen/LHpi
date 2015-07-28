@@ -38,6 +38,8 @@ special handling for
 * Dragonfury cards
 * unusual lang cards
 updated/fixed/added variants,namereplacements,expected
+
+merged back into mkm branch
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -165,6 +167,7 @@ site.regex = '<TR height=20>(.-)</TR>'
 -- @field [parent=#local] #string mapath
 local workdir = workdir or "Prices\\"
 local mapath = mapath or ".\\"
+--TODO do we need mapath in sitescript??
 
 --[[- "main" function.
  called by Magic Album to import prices. Parameters are passed from MA.

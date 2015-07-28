@@ -34,6 +34,8 @@ removed url to filename changes that are done by the library if OFFLINE
 2.15.6.14
 synchronized with template
 fixed/updated site.regex
+
+merged back into mkm branch
 ]]
 
 -- options unique to this site
