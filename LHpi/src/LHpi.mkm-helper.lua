@@ -29,8 +29,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 --[[ CHANGES
 Initial release, no changelog yet
-* seperated price data retrival from LHpi.magickartenmarkt.lua
+* separated price data retrieval from LHpi.magickartenmarkt.lua
 ]]
+
+-- options unique to this script
+-- @field #table MODE
+--MODE=nil
+MODE = { download=true, sets="standard" }
+--	MODE = { download=true, sets=nil }
+--	MODE = { boostervalue=true, sets="standard" }
 
 --  Don't change anything below this line unless you know what you're doing :-) --
 
@@ -44,7 +51,7 @@ workdir="src\\"
 local libver = "2.15"
 --- revision of the LHpi library datafile to use
 -- @field #string dataver
-local dataver = "5"
+local dataver = "6"
 --- sitescript revision number
 -- @field string scriptver
 local scriptver = "1"
@@ -56,6 +63,8 @@ local scriptname = "LHpi.mkm-helper-v".. libver .. "." .. dataver .. "." .. scri
 -- @field  #string savepath
 --local savepath = string.gsub( scriptname , "%-v%d+%.%d+%.lua$" , "" ) .. "\\"
 local savepath = savepath or "LHpi.magickartenmarkt\\"
+--FIXME remove savepath prefix for release
+savepath = "..\\..\\..\\Magic Album\\Prices\\" .. savepath
 --- log file name. can be set explicitely via site.logfile or automatically.
 -- defaults to LHpi.log unless SAVELOG is true.
 -- @field #string logfile
@@ -102,11 +111,8 @@ end -- function ImportPrice
 
 function main( mode )
 --TODO filenameoptions to select mode (downloadl-std,downloadl-all,boostervalue-std,boostervalue-all)
-	print("mode="..tostring(mode))
 	if mode==nil then
-		mode = { download=true, sets="standard" }
---		mode = { download=true, sets=nil }
---		mode = { boostervalue=true, sets="standard" }
+		error("set global MODE to select what the helper should do.")
 	end
 	if "table" ~= type (mode) then
 		local m=mode
@@ -120,16 +126,24 @@ function main( mode )
 	if mode.sets=="all" then
 		sets=site.sets
 	elseif ( mode.sets=="std" ) or ( mode.sets=="standard" ) then
-		sets = { -- standard as of May 2015
---			[] = "Magic Origins";
-			[818] = "Dragons of Tarkir";
-			[816] =	"Fate Reforged";
-			[813] = "Khans of Tarkir";
-			[808] = "Magic 2015";
-			[806] = "Journey into Nyx";
-			[802] = "Born of the Gods";
-			[800] = "Theros";
+		sets = { -- standard as of July 2015
+			[822] = "Magic Origins",
+			[818] = "Dragons of Tarkir",
+			[816] =	"Fate Reforged",
+			[813] = "Khans of Tarkir",
+			[808] = "Magic 2015",
+			[806] = "Journey into Nyx",
+			[802] = "Born of the Gods",
+			[800] = "Theros",
 		} 
+	elseif ( mode.sets=="cur" ) or ( mode.sets=="current" ) then
+		sets = { 
+			[822] = "Magic Origins",
+			[819] = "Modern Masters 2015",
+			[818] = "Dragons of Tarkir",
+			[816] =	"Fate Reforged",
+			[813] = "Khans of Tarkir",
+		}
 --	else
 --		sets = {}
 	end
@@ -147,6 +161,7 @@ function main( mode )
 	if site.sandbox then
 		LHpi.savepath = workdir .. "..\\" .. "LHpi.magickartenmarkt.sandbox" .. "\\"
 	end
+	print("mode="..LHpi.Tostring(mode))
 	if mode.helper then
 		return ("mkm-helper running in helper mode (passive)")
 	elseif mode.testoauth then
@@ -203,6 +218,11 @@ function helper.GetSourceData(sets)
 			end--401 exceptions
 		end--for _,exp
 	end--if sets
+
+--	for url,details in pairs(seturls) do
+--	print(url)
+--	end
+--	if true then return end
 	
 	for url,details in pairs(seturls) do
 		local setdata = LHpi.GetSourceData( url , details )
@@ -453,16 +473,16 @@ if not ma then
 		end
 	end--function ma.PutFile
 
---	--- Log.
---	-- Adds debug message to Magic Album log file.
---	-- 
---	-- dummy: just prints to stdout instead.
---	-- 
---	-- @function [parent=#ma] Log
---	-- @param #string message
---	function ma.Log(message)
---		print("ma.Log\t" .. tostring(message) )
---	end--function ma.Log
+	--- Log.
+	-- Adds debug message to Magic Album log file.
+	-- 
+	-- dummy: just prints to stdout instead.
+	-- 
+	-- @function [parent=#ma] Log
+	-- @param #string message
+	function ma.Log(message)
+		print("ma.Log\t" .. tostring(message) )
+	end
 	
 	--- SetProgress.
 	-- Sets progress bar text and position. Position is a numeric value in range 0..100.

@@ -29,14 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --[[ CHANGES
 Initial release, no changelog yet
 
-migrate to other sitescripts:
-*Initialize()
-*site.priceTypes Table and local global option
-workdir support
-site.LoadLib split from ImportPrice
-no longer check for lib and Data in deprecated location
-site.Initialize loads LHpi lib if not yet available (needed if ImportPrice is not called)
-new site.FetchExpansionList() 
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -294,8 +286,10 @@ function site.Initialize( mode )
 		LHpi = site.LoadLib()
 	end
 	LHpi.Log(site.scriptname.." started site.Initialize():",1)
-	if OFFLINE~=true and (not mode.helper ) then--allow or mode.update later
-		error("LHpi.magickartenmarkt only works in OFFLINE mode. Use LHpi.mkm-helper.lua to fetch source data.")
+	if OFFLINE~=true then
+		if not (mode.helper or mode.update) then
+			error("LHpi.magickartenmarkt only works in OFFLINE mode. Use LHpi.mkm-helper.lua to fetch source data.")
+		end
 	end
 	if mode.helper then
 		print("starting LHpi.magickartenmarkt.lua in helper mode")
@@ -352,7 +346,7 @@ function site.Initialize( mode )
 	end
 	if mode.update then
 		if not dummy then error("ListUnknownUrls needs to be run from dummyMA!") end
-	 	dummy.ListUnknownUrls(site.FetchExpansionList(),dummy.CompareSiteSets())
+	 	dummy.ListUnknownUrls(site.FetchExpansionList())
 		return
 	end
 end
@@ -551,7 +545,7 @@ end--function site.FetchExpansionList
 
 --[[- format string to use in dummy.ListUnknownUrls update helper function.
  @field [parent=#site] #string updateFormatString ]]
-site.updateFormatString = "[%i]={id=%3i, lang={ true,[2]=true,[3]=true,[4]=true,[5]=true,[6]=true,[7]=true,[8]=true,[9]=true,[10]=true,[11]=true }, fruc={ true }, url=%q},--%s"
+site.updateFormatString = '[%i]={id=%3i, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url=%q},--%s'
 
 --[[-  get data from foundstring.
  Has to be done in sitescript since html raw data structure is site specific.
@@ -1219,6 +1213,7 @@ local all = { "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",
 ]]
 site.sets = {
 -- coresets
+[822]={id=822, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Magic%20Origins"},--Magic Origins
 [808]={id=808, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Magic%202015"},--Magic 2015
 [797]={id=797, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Magic%202014"},--Magic 2014
 [788]={id=788, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Magic%202013"},--Magic 2013
@@ -1319,6 +1314,9 @@ site.sets = {
 [120]={id=120, lang={ "ENG" }, fruc={ true }, url="Arabian%20Nights"},--Arabian Nights
 -- specialsets
 --[0]={id=  0, lang=all, fruc={ true }, url="Duel%20Decks:%20Anthology"},--Duel Decks: Anthology
+[820]={id=820, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Duel%20Decks:%20Elspeth%20vs.%20Kiora"},--Duel Decks: Elspeth vs. Kiora
+[819]={id=  0, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Modern%20Masters%202015"},--Modern Masters 2015
+[817]={id=817, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Duel%20Decks:%20Anthology"},--Duel Decks: Anthology
 [814]={id=814, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Commander%202014"},--Commander 2014
 [812]={id=812, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel%20Decks:%20Speed%20vs.%20Cunning"},--Duel Decks: Speed vs. Cunning
 [811]={id=811, lang={ "ENG" }, fruc={ true }, url="M15%20Clash%20Pack"},--M15 Clash Pack
@@ -1381,7 +1379,7 @@ site.sets = {
 											} },
 [380]={id=380, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Portal%20Three%20Kingdoms"},--Portal Three Kingdoms
 [340]={id=340, lang={ "ENG" }, fruc={ true }, url="Anthologies"},--Anthologies
-[235] =nil, -- Multiverse Gift Box not distinguished from normal [240] Visions cards
+[235]={id=235, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Multiverse%20Gift%20Box"},--Multiverse Gift Box
 [320]={id=320, lang={ "ENG" }, fruc={ true }, url="Unglued"},--Unglued
 [310]={id=310, lang={ "ENG",[3]="GER",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Portal%20Second%20Age"},--Portal Second Age
 [260]={id=260, lang={ "ENG",[3]="GER",[8]="JPN" }, fruc={ true }, url="Portal"},--Portal
@@ -1410,8 +1408,13 @@ site.sets = {
 											"DCI%20Promos",--DCI Promos
 											"Promos", -- "Geist of Saint Traft"
 											} },
-[32] ={id= 32, lang={ "ENG",[8]="JPN" }, fruc={ true } , url="DCI%20Promos"}, -- Pro Tour Promos in DCI Promos
+[32] ={id= 32, lang={ "ENG",[8]="JPN" }, fruc={ true } , url={ --Pro Tour Promos
+											"DCI%20Promos", -- Pro Tour Promos in DCI Promos
+											"Pro%20Tour%20Promos", --Pro Tour Promos
+											}, 
+},
 [31] ={id= 31, lang={ "ENG" }, fruc={ true }, url={ -- Grand Prix Promos
+											"Grand%20Prix%20Promos", --Grand Prix Promos
 											"DCI%20Promos",--DCI Promos
 											} },
 [30] ={id= 30, lang={ "ENG",[2]="RUS",[3]="GER",[5]="ITA",[7]="SPA" }, fruc={ true }, url="Friday%20Night%20Magic%20Promos"},--Friday Night Magic Promos
@@ -1453,8 +1456,9 @@ site.sets = {
 											} },
 [20] ={id= 20, lang={ "ENG" }, fruc={ true }, url="Player%20Rewards%20Promos"},--Player Rewards Promos
 [15]= {id= 15, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN" }, fruc={ true }, url={-- Convention Promos
+											"Convention%20Promos", --Convention Promos
 											"San%20Diego%20Comic-Con%202013%20Promos", --San Diego Comic-Con 2013 Promos
-											"San%20Diego%20Comic-Con%202014%20Promos",--San Diego Comic-Con 2014 Promos
+											"San%20Diego%20Comic-Con%202014%20Promos", --San Diego Comic-Con 2014 Promos
 											"Oversized%206x9%20Promos", -- "Serra Angel (oversized)","Hurloon Minotaur (oversized)"
 											"DCI%20Promos", -- 6 cards
 											"Promos", -- "Stealer of Secrets" (Gamescon 2014, not yet in MA)
@@ -1555,6 +1559,7 @@ site.sets = {
 										} },
 [9999]={id=  0, lang=all, fruc={ true }, url={ -- custom tokens
 										"Custom%20Tokens",--Custom Tokens
+										"Yummy%20Tokens",--Yummy Tokens
 										"Revista%20Serra%20Promos",--Revista Serra Promos
 										"Your%20Move%20Games%20Tokens",--Your Move Games Tokens
 										"Tierra%20Media%20Tokens",--Tierra Media Tokens

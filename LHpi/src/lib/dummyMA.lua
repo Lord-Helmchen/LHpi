@@ -876,6 +876,7 @@ function main()
 --		SAVETABLE=true,--default false
 --		DEBUG = true,--default false
 --		OFFLINE = true,--default false
+--		OFFLINE = false,--scripts should be set to true unless preparing for release
 	}
 	dummy.forceEnv()
 
@@ -909,13 +910,13 @@ function main()
 		[5]={name="LHpi.trader-onlineDE.lua",savepath=mapath.."Prices\\LHpi.trader-onlineDE\\"},
 		[6]={name="LHpi.tcgplayerPriceGuide.lua",savepath=mapath.."Prices\\LHpi.tcgplayerPriceGuide\\"},
 		[7]={name="LHpi.mtgprice.com.lua",savepath=mapath.."Prices\\LHpi.mtgprice.com\\"},
-	--	[8]={name="LHpi.magickartenmarkt.lua",savepath=mapath.."Prices\\LHpi.magickartenmarkt\\"},
-	--	[9]={name="LHpi.mkm-helper.lua",savepath=mapath.."Prices\\LHpi.magickartenmarkt\\"},
+		[8]={name="LHpi.magickartenmarkt.lua",savepath=mapath.."Prices\\LHpi.magickartenmarkt\\"},
+		[9]={name="LHpi.mkm-helper.lua",savepath=mapath.."Prices\\LHpi.magickartenmarkt\\"},
 	}
 	
 	-- select a predefined script to be tested
 --	dummy.fakesitescript()
-	local selection = 6
+	local selection = 8
 	local script=scripts[selection]
 	if script.oldloadertrue then
 		dummy.loadscript(script.name,script.path,script.savepath)--deprecated
@@ -935,7 +936,7 @@ function main()
 	
 	-- now try to break the script :-)
 	--LHpi.DoImport(importfoil, importlangs, importsets)
-	ImportPrice( importfoil, importlangs, importsets )
+	--ImportPrice( importfoil, importlangs, importsets )
 
 	-- utility functions from dummy:
 	--only run sitescript update helpers
