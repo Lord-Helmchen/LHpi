@@ -875,14 +875,14 @@ function main()
 --		DEBUGVARIANTS = true,--default false
 --		SAVETABLE=true,--default false
 --		DEBUG = true,--default false
---		OFFLINE = true,--default false
+		OFFLINE = true,--default false
 --		OFFLINE = false,--scripts should be set to true unless preparing for release
 	}
 	dummy.forceEnv()
 
 	local importfoil = "y"
 	local importlangs = dummy.alllangs
---	local importlangs = { [1] = "eng" }
+	local importlangs = { [1] = "eng" }
 	local standard = {
 	 	[800] = "Theros";
 	 	[802] = "Born of the Gods";
@@ -891,7 +891,8 @@ function main()
 		[818] = "Dragons of Tarkir";
 		[816] = "Fate Reforged";
 		[813] = "Khans of Tarkir";
-	 	[822] = "Magic Origins"; 
+		[819] = "Modern Masters 2015",
+		[822] = "Magic Origins"; 
 	 	}
 	local importsets = standard
 --	local importsets = { [0] = "fakeset"; }
@@ -936,7 +937,7 @@ function main()
 	
 	-- now try to break the script :-)
 	--LHpi.DoImport(importfoil, importlangs, importsets)
-	--ImportPrice( importfoil, importlangs, importsets )
+	ImportPrice( importfoil, importlangs, importsets )
 
 	-- utility functions from dummy:
 	--only run sitescript update helpers

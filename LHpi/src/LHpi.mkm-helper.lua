@@ -35,9 +35,21 @@ Initial release, no changelog yet
 -- options unique to this script
 -- @field #table MODE
 --MODE=nil
-MODE = { download=true, sets="standard" }
---	MODE = { download=true, sets=nil }
---	MODE = { boostervalue=true, sets="standard" }
+--MODE = { download=true, sets="standard" }
+--MODE = { boostervalue=true, sets="standard" }
+local sets ={
+			[822] = "Magic Origins",
+			[819] = "Modern Masters 2015",
+			[818] = "Dragons of Tarkir",
+			[816] =	"Fate Reforged",
+			[813] = "Khans of Tarkir",
+			[808] = "Magic 2015",
+			[806] = "Journey into Nyx",
+			[802] = "Born of the Gods",
+			[800] = "Theros",
+			}
+MODE = { download=true, sets=sets }
+--MODE = { boostervalue=true, sets="sets" }
 
 --  Don't change anything below this line unless you know what you're doing :-) --
 
@@ -62,9 +74,8 @@ local scriptname = "LHpi.mkm-helper-v".. libver .. "." .. dataver .. "." .. scri
 -- set by LHpi lib unless specified here.
 -- @field  #string savepath
 --local savepath = string.gsub( scriptname , "%-v%d+%.%d+%.lua$" , "" ) .. "\\"
-local savepath = savepath or "LHpi.magickartenmarkt\\"
+local savepath = savepath or "..\\..\\..\\Magic Album\\Prices\\LHpi.magickartenmarkt\\"
 --FIXME remove savepath prefix for release
-savepath = "..\\..\\..\\Magic Album\\Prices\\" .. savepath
 --- log file name. can be set explicitely via site.logfile or automatically.
 -- defaults to LHpi.log unless SAVELOG is true.
 -- @field #string logfile
@@ -144,8 +155,8 @@ function main( mode )
 			[816] =	"Fate Reforged",
 			[813] = "Khans of Tarkir",
 		}
---	else
---		sets = {}
+	else
+		sets = mode.sets or {}
 	end
 	
 	package.path = workdir..'lib\\ext\\?.lua;' .. package.path
@@ -207,7 +218,7 @@ function helper.GetSourceData(sets)
 			end--for url
 		end--for sid,set
 	else -- fetch list of available expansions and download all
-		sets = helper.FetchExpansionList()
+		sets = site.FetchExpansionList()
 		sets = Json.decode(sets).expansion
 		for _,exp in pairs(sets) do
 			local request = site.BuildUrl( exp )
@@ -219,38 +230,53 @@ function helper.GetSourceData(sets)
 		end--for _,exp
 	end--if sets
 
+--	print("OFFLINE "..tostring(OFFLINE))
 --	for url,details in pairs(seturls) do
---	print(url)
+--		print(url .. " : " .. LHpi.Tostring(details))
 --	end
 --	if true then return end
 	
+	local totalcount={fetched=0, found=0 }
 	for url,details in pairs(seturls) do
 		local setdata = LHpi.GetSourceData( url , details )
 		if setdata then
+			local count= { fetched=0, found=0 }
+			url = string.gsub(url, '[/\\:%*%?<>|"]', "_")
+			LHpi.Log( "Backup source to file: \"" .. (LHpi.savepath or "") .. "BACKUP-" .. url .. "\"" ,1)
+			ma.PutFile( (LHpi.savepath or "") .. "BACKUP-" .. url , setdata , 0 )
 			LHpi.Log("integrating priceGuide entries into " .. url ,1)
-print("integrating priceGuide entries into " .. url)
+			print("integrating priceGuide entries into " .. url)
 			setdata = Json.decode(setdata)
 			for cid,card in pairs(setdata.card) do
 				local cardurl = site.BuildUrl(card)
-print("fetching single card from " .. cardurl)
-				local proddata,status = site.FetchSourceDataFromOAuth( cardurl )
+				print("fetching single card from " .. cardurl)
+				--local proddata,status = site.FetchSourceDataFromOAuth( cardurl )
+				local proddata,status = LHpi.GetSourceData( cardurl , { oauth=true } )
 				if proddata then
+					count.fetched=count.fetched+1
 					proddata = Json.decode(proddata).product
 				end--if proddata
-				setdata.card[cid].priceGuide=proddata.priceGuide
+				if proddata.priceGuide~=nil then
+					count.found=count.found+1
+					setdata.card[cid].priceGuide=proddata.priceGuide
+				end
 			end--for cid,card
 			setdata = Json.encode(setdata)
-			url = string.gsub(url, '[/\\:%*%?<>|"]', "_")
 			LHpi.Log( "Saving rebuilt source to file: \"" .. (LHpi.savepath or "") .. url .. "\"" ,1)
-print( "Saving rebuilt source to file: \"" .. (LHpi.savepath or "") .. url .. "\"")
+			LHpi.Log( string.format("%i cards have been fetched, and %i pricesGuides were found. LHpi.Data claims %i cards in set %q.",count.fetched,count.found,LHpi.Data.sets[details.setid].cardcount.all,LHpi.Data.sets[details.setid].name ) ,1)
+			print( "Saving rebuilt source to file: \"" .. (LHpi.savepath or "") .. url .. "\"")
 			ma.PutFile( (LHpi.savepath or "") .. url , setdata , 0 )
+			totalcount.fetched=totalcount.fetched+count.fetched
+			totalcount.found=totalcount.found+count.found
 		else
 			LHpi.Log("no data from "..url ,1)
-print("no data from "..url ,1)
+			print("no data from "..url ,1)
 		end--if setdata
 	end--for url,details
 	OFFLINE=o
 	SAVEHTML=s
+	print( string.format("%i cards have been fetched, and %i pricesGuides were found.",totalcount.fetched,totalcount.found) )
+	LHpi.Log( string.format("%i cards have been fetched, and %i pricesGuides were found.",totalcount.fetched,totalcount.found) ,1)
 end--function GetSourceData
 
 --[[- determine the Expected Value of a booster from chosen sets.

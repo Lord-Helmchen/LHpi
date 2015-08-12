@@ -512,7 +512,7 @@ function site.BuildUrl( setid,langid,frucid )
 			urls = { site.sets[setid].url }
 		end--if type(site.sets[setid].url)
 	for _i,seturl in pairs(urls) do
-		container[url .. "/" .. seturl] = { oauth=true }
+		container[url .. "/" .. seturl] = { oauth=true, setid=setid }
 	end--for _i,seturl
 	return container
 	end--if type(setid)
@@ -598,10 +598,15 @@ function site.ParseHtmlData( foundstring , urldetails )
 	--	newCard.names[langid] = prodName.productName
 	--	newFoilCard.names[langid] = prodName.productName
 	--end--for i,prodName
---	local regprice  = string.gsub( product.priceGuide[priceType] , "[,.]" , "" ) --nonfoil price, use AVG by default
---	local foilprice = string.gsub( product.priceGuide["LOWFOIL"] , "[,.]" , "" ) --foil price
-	local regprice  = tonumber(product.priceGuide[regpriceType])*100 --nonfoil price, use AVG by default
-	local foilprice = tonumber(product.priceGuide[foilpriceType])*100 --foil price
+	local regprice,foilprice
+	if product.priceGuide then
+	--	local regprice  = string.gsub( product.priceGuide[priceType] , "[,.]" , "" ) --nonfoil price, use AVG by default
+	--	local foilprice = string.gsub( product.priceGuide["LOWFOIL"] , "[,.]" , "" ) --foil price
+		regprice  = tonumber(product.priceGuide[regpriceType])*100 --nonfoil price, use AVG by default
+		foilprice = tonumber(product.priceGuide[foilpriceType])*100 --foil price
+	else
+		LHpi.Log(string.format("PriceGuide field missing for %s",newCard.names[1]),1)
+	end
 	for lid,lang in pairs(site.sets[urldetails.setid].lang) do
 		if site.sets[urldetails.setid].lang[lid] then
 			newCard.lang[lid] = LHpi.Data.languages[lid].abbr
@@ -1315,7 +1320,7 @@ site.sets = {
 -- specialsets
 --[0]={id=  0, lang=all, fruc={ true }, url="Duel%20Decks:%20Anthology"},--Duel Decks: Anthology
 [820]={id=820, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Duel%20Decks:%20Elspeth%20vs.%20Kiora"},--Duel Decks: Elspeth vs. Kiora
-[819]={id=  0, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Modern%20Masters%202015"},--Modern Masters 2015
+[819]={id=819, lang={ "ENG",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Modern%20Masters%202015"},--Modern Masters 2015
 [817]={id=817, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Duel%20Decks:%20Anthology"},--Duel Decks: Anthology
 [814]={id=814, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Commander%202014"},--Commander 2014
 [812]={id=812, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel%20Decks:%20Speed%20vs.%20Cunning"},--Duel Decks: Speed vs. Cunning
@@ -1585,6 +1590,9 @@ site.sets = {
  @field [parent=#site.namereplace] #string name
 ]]
 site.namereplace = {
+[822]={
+["Ashaya, the Awoken World"]	= "Ashaya, the Awoken World Token",
+},
 [139]={-- Revised Edition (FBB)
 ["Plains (293)"]		= "Plains (1)",
 ["Plains (294)"]		= "Plains (2)",
@@ -1602,19 +1610,22 @@ site.namereplace = {
 ["Forest (285)"]		= "Forest (2)",
 ["Forest (286)"]		= "Forest (3)",
 },
+[818] = { -- Dragons  of Tarkir
+["Narset Transcendent Emblem"]				= "Narset Emblem",
+},
 [813] = { -- Khans of Tarkir
-["Avalanche Tusker (1)"]			= "Avalanche Tusker",
-["Avalanche Tusker (2)"]			= "Avalanche Tusker (Intro)",
-["Ivorytusk Fortress (1)"]			= "Ivorytusk Fortress",
-["Ivorytusk Fortress (2)"]			= "Ivorytusk Fortress (Intro)",
-["Sage of the Inward Eye (1)"]		= "Sage of the Inward Eye",
-["Sage of the Inward Eye (2)"]		= "Sage of the Inward Eye (Intro)",
-["Rakshasa Vizier (1)"]				= "Rakshasa Vizier",
-["Rakshasa Vizier (2)"]				= "Rakshasa Vizier (Intro)",
-["Ankle Shanker (1)"]				= "Ankle Shanker",
-["Ankle Shanker (2)"]				= "Ankle Shanker (Intro)",
-["Sultai Charm (1)"]				= "Sultai Charm",
-["Sultai Charm (2)"]				= "Sultai Charm (Holiday Gift Box)",
+--["Avalanche Tusker (1)"]			= "Avalanche Tusker",
+--["Avalanche Tusker (2)"]			= "Avalanche Tusker (Intro)",
+--["Ivorytusk Fortress (1)"]			= "Ivorytusk Fortress",
+--["Ivorytusk Fortress (2)"]			= "Ivorytusk Fortress (Intro)",
+--["Sage of the Inward Eye (1)"]		= "Sage of the Inward Eye",
+--["Sage of the Inward Eye (2)"]		= "Sage of the Inward Eye (Intro)",
+--["Rakshasa Vizier (1)"]				= "Rakshasa Vizier",
+--["Rakshasa Vizier (2)"]				= "Rakshasa Vizier (Intro)",
+--["Ankle Shanker (1)"]				= "Ankle Shanker",
+--["Ankle Shanker (2)"]				= "Ankle Shanker (Intro)",
+--["Sultai Charm (1)"]				= "Sultai Charm",
+--["Sultai Charm (2)"]				= "Sultai Charm (Holiday Gift Box)",
 },
 [802] = { -- Born of the Gods
 ["Unravel the Æther"]				= "Unravel the AEther",
@@ -2616,6 +2627,7 @@ function site.SetExpected( importfoil , importlangs , importsets )
 -- @field [parent=#site.expected] #boolean replica
 	replica = true,
 -- Core sets
+[822] = { pset={ dup=LHpi.Data.sets[822].cardcount.reg }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, failed={ 16+1,dup=LHpi.Data.sets[822].cardcount.tok+16+1 }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, namereplaced=2 },--273–288 of 272 and Checklist not in MA
 [808] = { pset={ dup=LHpi.Data.sets[808].cardcount.reg }, duppset={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, failed={ dup=LHpi.Data.sets[808].cardcount.tok }, dupfail={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
 [797] = { pset={ dup=LHpi.Data.sets[797].cardcount.reg }, failed={ dup=LHpi.Data.sets[797].cardcount.tok }, duppset={ [2]="RUS",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
 [788] = { pset={ dup=LHpi.Data.sets[788].cardcount.reg }, failed={ dup=LHpi.Data.sets[788].cardcount.tok }, duppset={ [7]="SPA" }, dupfail={ [7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
@@ -2628,10 +2640,12 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [180] = { pset={ dup=LHpi.Data.sets[180].cardcount.reg,[6]=375 }, duppset={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[8]="JPN" }, failed={ [6]=3 } },
 [179] = { pset={ [6]=LHpi.Data.sets[179].cardcount.reg-3, [8]=LHpi.Data.sets[179].cardcount.reg}, failed={ [6]=3 } },--3 cards not in POR
 -- Expansions
-[813] = { pset={ dup=LHpi.Data.sets[813].cardcount.reg-5 }, failed={ dup=LHpi.Data.sets[813].cardcount.tok+5 }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=2 },--5 "Intro" variants only in ENG
+[818] = { pset={ dup=LHpi.Data.sets[818].cardcount.reg }, failed={ dup=LHpi.Data.sets[818].cardcount.tok }, duppset={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, namereplaced=2 },
+[816] = { pset={ dup=LHpi.Data.sets[816].cardcount.reg }, failed={ dup=LHpi.Data.sets[816].cardcount.tok }, duppset={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
+[813] = { pset={ dup=LHpi.Data.sets[813].cardcount.reg }, failed={ dup=LHpi.Data.sets[813].cardcount.tok }, duppset={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
 [806] = { pset={ dup=LHpi.Data.sets[806].cardcount.reg }, failed={ dup=LHpi.Data.sets[806].cardcount.tok }, duppset={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=44 },
 [802] = { pset={ dup=LHpi.Data.sets[802].cardcount.reg }, failed={ dup=LHpi.Data.sets[802].cardcount.tok }, duppset={ [4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=2*22 },
-[800] = { pset={ dup=LHpi.Data.sets[800].cardcount.reg }, failed={ dup=LHpi.Data.sets[800].cardcount.tok }, duppset={ [7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=62 },
+[800] = { pset={ dup=LHpi.Data.sets[800].cardcount.reg }, failed={ dup=LHpi.Data.sets[800].cardcount.tok }, duppset={ [7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=30+14 },--15 Challenge, 7 Hero
 [795] = { pset={ dup=LHpi.Data.sets[795].cardcount.reg }, failed={ dup=LHpi.Data.sets[795].cardcount.tok }, duppset={ [2]="RUS",[3]="GER",[7]="SPA" }, dupfail={ [2]="RUS",[3]="GER",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
 [793] = { pset={ dup=LHpi.Data.sets[793].cardcount.reg }, failed={ dup=LHpi.Data.sets[793].cardcount.tok }, duppset={ [2]="RUS",[7]="SPA" }, dupfail={ [2]="RUS",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
 [791] = { pset={ dup=LHpi.Data.sets[791].cardcount.reg-1,[3]=LHpi.Data.sets[791].cardcount.both-1,[4]=LHpi.Data.sets[791].cardcount.both-1,[5]=LHpi.Data.sets[791].cardcount.both-1,[6]=LHpi.Data.sets[791].cardcount.both-1 }, failed={ dup=LHpi.Data.sets[791].cardcount.tok+1,[3]=1,[4]=1,[5]=1,[6]=1 }, duppset={ [2]="RUS",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=48 },
@@ -2657,6 +2671,7 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [210] = { pset={ [6]=LHpi.Data.sets[210].cardcount.reg-1 }, failed= { [6]=1 } },-- no POR Timmerian Fiends
 [190] = { pset={ [6]=LHpi.Data.sets[190].cardcount.reg-1 }, failed= { [6]=1 } },-- no POR Amulet of Quoz
 -- special sets
+[819] = { failed={ dup=14 }, dupfail={ "ENG",[8]="JPN",[9]="SZH" } },-- no tokens in MA
 [814] = { pset={ dup=LHpi.Data.sets[814].cardcount.reg+LHpi.Data.sets[814].cardcount.repl }, duppset={ [3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN",[9]="SZH" }, failed={ dup=LHpi.Data.sets[814].cardcount.tok }, dupfail={ [3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN",[9]="SZH" } },
 [812] = { pset={ [8]=LHpi.Data.sets[812].cardcount.both } },
 [807] = { pset={ dup=LHpi.Data.sets[807].cardcount.reg+LHpi.Data.sets[807].cardcount.nontrad }, failed={ dup=LHpi.Data.sets[807].cardcount.tok }, duppset={ [8]="JPN",[9]="SZH" }, dupfail={ [8]="JPN",[9]="SZH" } },

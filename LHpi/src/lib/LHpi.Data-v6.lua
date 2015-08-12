@@ -28,25 +28,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-v6
-new 52,53,55,814,815,816,817,818,819,820,821,822
-added lang [17]="Phyrexian"
-fixed names for 21,40,814
-variant table for 15,22,25,26,27,33,40,45
-foiltweak table for 22,26,33
-cardcount fixed/updated in 9,105,106,762,791,800,813,816,30,22,21,26
-fixed/updated variants for 43,69,201[ITA],758,764,766,781,787,800,813,22
-commented variants in 180,140,110,100,90,280,230,220,170,260,105,25
-foiltweak fixed/updated in 813
+v7
+fixed variants in 822
 
-merged back into mkm branch
 ]]
-
+--TODO increment filename
 
 local Data={}
 ---	data file version
 -- @field [parent=#Data] #string version
-Data.version = "6"
+Data.version = "7"
 
 --[[- "main" function called by Magic Album; just display error and return.
  Called by Magic Album to import prices. Parameters are passed from MA.
@@ -107,33 +98,33 @@ Data.sets = {
 -- @field [parent=#Data.sets] #table Coresets
 Coresets = nil,
 [822] = { name="Magic Origins",
-	cardcount={ reg = 272, tok = 14 },
+	cardcount={ reg = 272, tok = 14 },--TODO cards [822] 273–288 of 272 not in MA
 	variants={
 ["Plains"] 						= { "Plains"	, { 1    , 2    , 3    , 4     } },
 ["Island"] 						= { "Island" 	, { 1    , 2    , 3    , 4     } },
 ["Swamp"] 						= { "Swamp"		, { 1    , 2    , 3    , 4     } },
 ["Mountain"] 					= { "Mountain"	, { 1    , 2    , 3    , 4     } },
 ["Forest"] 						= { "Forest" 	, { 1    , 2    , 3    , 4     } },
-["Plains (250)"]				= { "Plains"	, { 1    , false, false, false } }, 
-["Plains (251)"]				= { "Plains"	, { false, 2    , false, false } },
-["Plains (252)"]				= { "Plains"	, { false, false, 3    , false } },
-["Plains (253)"]				= { "Plains"	, { false, false, false, 4     } },
-["Island (254)"]				= { "Island"	, { 1    , false, false, false } },
-["Island (255)"]				= { "Island"	, { false, 2    , false, false } },
-["Island (256)"]				= { "Island"	, { false, false, 3    , false } },
-["Island (257)"]				= { "Island"	, { false, false, false, 4     } },
-["Swamp (258)"]					= { "Swamp"		, { 1    , false, false, false } },
-["Swamp (259)"]					= { "Swamp"		, { false, 2    , false, false } },
-["Swamp (260)"]					= { "Swamp"		, { false, false, 3    , false } },
-["Swamp (261)"]					= { "Swamp"		, { false, false, false, 4     } },
-["Mountain (262)"]				= { "Mountain"	, { 1    , false, false, false } },
-["Mountain (263)"]				= { "Mountain"	, { false, 2    , false, false } },
-["Mountain (264)"]				= { "Mountain"	, { false, false, 3    , false } },
-["Mountain (265)"]				= { "Mountain"	, { false, false, false, 4     } },
-["Forest (266)"]				= { "Forest"	, { 1    , false, false, false } },
-["Forest (267)"]				= { "Forest"	, { false, 2    , false, false } },
-["Forest (268)"]				= { "Forest"	, { false, false, 3    , false } },
-["Forest (269)"]				= { "Forest"	, { false, false, false, 4     } },
+["Plains (253)"]				= { "Plains"	, { 1    , false, false, false } }, 
+["Plains (254)"]				= { "Plains"	, { false, 2    , false, false } },
+["Plains (255)"]				= { "Plains"	, { false, false, 3    , false } },
+["Plains (256)"]				= { "Plains"	, { false, false, false, 4     } },
+["Island (257)"]				= { "Island"	, { 1    , false, false, false } },
+["Island (258)"]				= { "Island"	, { false, 2    , false, false } },
+["Island (259)"]				= { "Island"	, { false, false, 3    , false } },
+["Island (260)"]				= { "Island"	, { false, false, false, 4     } },
+["Swamp (261)"]					= { "Swamp"		, { 1    , false, false, false } },
+["Swamp (262)"]					= { "Swamp"		, { false, 2    , false, false } },
+["Swamp (263)"]					= { "Swamp"		, { false, false, 3    , false } },
+["Swamp (264)"]					= { "Swamp"		, { false, false, false, 4     } },
+["Mountain (265)"]				= { "Mountain"	, { 1    , false, false, false } },
+["Mountain (266)"]				= { "Mountain"	, { false, 2    , false, false } },
+["Mountain (267)"]				= { "Mountain"	, { false, false, 3    , false } },
+["Mountain (268)"]				= { "Mountain"	, { false, false, false, 4     } },
+["Forest (269)"]				= { "Forest"	, { 1    , false, false, false } },
+["Forest (270)"]				= { "Forest"	, { false, 2    , false, false } },
+["Forest (271)"]				= { "Forest"	, { false, false, 3    , false } },
+["Forest (272)"]				= { "Forest"	, { false, false, false, 4     } },
 ["Thopter Token"]				= { "Thopter Token"	, { 1    , 2     } },
 ["Thopter Token (10)"]			= { "Thopter Token"	, { 1    , false } },--Svetlin Velinov
 ["Thopter Token (11)"]			= { "Thopter Token"	, { false, 2     } },--Adam Paquette
@@ -2506,6 +2497,7 @@ SpecialSets = nil,
 [819] = { name="Modern Masters 2015 Edition",
 	foil="y",
 	cardcount={ reg=249, tok=0, nontrad=0, repl=0 },
+	--TODO [819] tokens not in MA
 },
 [817] = { name="Duel Decks: Anthology",
 	foil="n",
