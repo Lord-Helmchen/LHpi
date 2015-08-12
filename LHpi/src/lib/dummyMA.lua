@@ -900,7 +900,7 @@ function main()
 --	local importsets = { [220]="foo";[800]="bar";[0]="baz"; }
 --	local importsets = dummy.coresets
 --	local importsets = dummy.expansionsets
---	local importsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
+	local importsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 	
 	local scripts={
 		[0]={name="lib\\LHpi.sitescriptTemplate-v2.15.6.13.lua",savepath="."},
@@ -937,7 +937,7 @@ function main()
 	
 	-- now try to break the script :-)
 	--LHpi.DoImport(importfoil, importlangs, importsets)
-	ImportPrice( importfoil, importlangs, importsets )
+--	ImportPrice( importfoil, importlangs, importsets )
 
 	-- utility functions from dummy:
 	--only run sitescript update helpers

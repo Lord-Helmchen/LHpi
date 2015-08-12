@@ -758,6 +758,12 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 				card.name = card.name .. " (DROP not Starter 1999)"
 			end
 		end
+	elseif setid == 200 then -- Chronicles
+		if card.pluginData.set == "Chronicles" then
+			card.lang = { [2]="ENG" }
+		elseif card.pluginData.set == "Chronicles: Japanese" then
+			card.lang = { [8]="JPN" }
+		end
 	elseif setid == 201 then -- Renaissance/Rinascimento
 		if card.pluginData.set == "Renaissance" then
 			card.lang = { [3]="GER", [4]="FRA" }
@@ -995,6 +1001,9 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 		elseif card.pluginData.set == "Magic Scholarship Series Promos" then
 			card.lang = { "ENG" }
 			card.name = card.name .. " (J)"
+		elseif card.pluginData.set == "Junior APAC Series Promos" then
+			card.lang = { "ENG" }
+			card.name = card.name .. " (apac)"
 		end
 	elseif setid == 9 then -- Video Game Promos
 		if card.pluginData.set == "Oversized 6x9 Promos" then
@@ -1318,28 +1327,32 @@ site.sets = {
 [130]={id=130, lang={ "ENG" }, fruc={ true }, url="Antiquities"},--Antiquities
 [120]={id=120, lang={ "ENG" }, fruc={ true }, url="Arabian%20Nights"},--Arabian Nights
 -- specialsets
---[0]={id=  0, lang=all, fruc={ true }, url="Duel%20Decks:%20Anthology"},--Duel Decks: Anthology
+[900]={id=900, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="From%20the%20Vault:%20Angels"},--From the Vault: Angels
 [820]={id=820, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Duel%20Decks:%20Elspeth%20vs.%20Kiora"},--Duel Decks: Elspeth vs. Kiora
 [819]={id=819, lang={ "ENG",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Modern%20Masters%202015"},--Modern Masters 2015
 [817]={id=817, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Duel%20Decks:%20Anthology"},--Duel Decks: Anthology
+[815]={id=815, lang={ "ENG" }, fruc={ true }, url={ -- Fate Reforged Clash Pack
+											"Clash%20Pack%20Promos",--Clash Pack Promos
+											} },
 [814]={id=814, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Commander%202014"},--Commander 2014
 [812]={id=812, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel%20Decks:%20Speed%20vs.%20Cunning"},--Duel Decks: Speed vs. Cunning
-[811]={id=811, lang={ "ENG" }, fruc={ true }, url="M15%20Clash%20Pack"},--M15 Clash Pack
+[811]={id=811, lang={ "ENG" }, fruc={ true }, url={ -- Magic 2015 Clash Pack
+											"M15%20Clash%20Pack",--M15 Clash Pack
+											"Clash%20Pack%20Promos",--Clash Pack Promos
+											} },
 [810]={id=810, lang={ "ENG" }, fruc={ true }, url="Modern%20Event%20Deck%202014"},--Modern Event Deck 2014
 [809]={id=809, lang={ "ENG" }, fruc={ true }, url="From%20the%20Vault:%20Annihilation"},--From the Vault: Annihilation
 [807]={id=807, lang={ "ENG",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Conspiracy"},--Conspiracy
 [805]={id=805, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel%20Decks:%20Jace%20vs.%20Vraska"},--Duel Decks: Jace vs. Vraska
---[[
-[0]={id=0, lang={ "ENG",[3]="GER" }, fruc={ true }, url={ -- Challenge Deck: Deicide
-"Journey%20into%20Nyx"
-} },
-]]
+[821]={id=821, lang={ "ENG",[3]="GER" }, fruc={ true }, url={ -- Challenge Deck: Defeat a God
+											"Journey%20into%20Nyx"
+											} },
 [804]={id=804, lang={ "ENG",[3]="GER" }, fruc={ true }, url={ -- Challenge Deck: Battle the Horde
-"Born%20of%20the%20Gods"
-} },
+											"Born%20of%20the%20Gods"
+											} },
 [803]={id=803, lang={ "ENG",[3]="GER" }, fruc={ true }, url={ -- Challenge Deck: Face the Hydra
-"Theros"
-} },
+											"Theros"
+											} },
 [801]={id=801, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Commander%202013"},--Commander 2013
 [799]={id=799, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel%20Decks:%20Heroes%20vs.%20Monsters"},--Duel Decks: Heroes vs. Monsters
 [798]={id=798, lang={ "ENG" }, fruc={ true }, url="From%20the%20Vault:%20Twenty"},--From the Vault: Twenty
@@ -1372,7 +1385,7 @@ site.sets = {
 [675]={id=675, lang={ "ENG",[3]="GER",[5]="ITA" }, fruc={ true }, url="Coldsnap%20Theme%20Decks"},--Coldsnap Theme Decks
 [636]={id=636, lang={ [7]="SPA" }, fruc={ true }, url="Salvat-Hachette%202011"},--Salvat-Hachette 2011
 --TODO [635] Data.variants, site.namereplace
---[635]={id=635, lang={ [4]="FRA",[5]="ITA",[7]="SPA" }, fruc={ true }, url="Salvat-Hachette"},--Salvat Magic Encyclopedia
+[635]={id=635, lang={ [4]="FRA",[5]="ITA",[7]="SPA" }, fruc={ true }, url="Salvat-Hachette"},--Salvat Magic Encyclopedia
 [600]={id=600, lang={ "ENG" }, fruc={ true }, url="Unhinged"},--Unhinged
 [490]={id=490, lang={ "ENG" }, fruc={ true }, url="Deckmasters"},--Deckmasters
 [440]={id=440, lang={ "ENG" }, fruc={ true }, url="Beatdown"},--Beatdown
@@ -1390,12 +1403,16 @@ site.sets = {
 [260]={id=260, lang={ "ENG",[3]="GER",[8]="JPN" }, fruc={ true }, url="Portal"},--Portal
 [225]={id=225, lang={ "ENG",[3]="GER",[4]="FRA",[7]="SPA" }, fruc={ true }, url="Introductory%20Two-Player%20Set"},--Introductory Two-Player Set
 [201]={id=201, lang={ [3]="GER", [4]="FRA", [5]="ITA" }, fruc={ true }, url={ "Renaissance", "Rinascimento" } },--Renaissance
-[200]={id=200, lang={ "ENG" }, fruc={ true }, url="Chronicles"},--Chronicles
+[200]={id=200, lang={ "ENG",[8]="JPN" }, fruc={ true }, url={
+											"Chronicles",--Chronicles
+											"Chronicles:%20Japanese",--Chronicles: Japanese
+											} },
 [106]={id=106, lang={ "ENG" }, fruc={ true }, url="International%20Edition"},--Collectors' Edition International
 [105]={id=105, lang={ "ENG" }, fruc={ true }, url="Collectors%27%20Edition"},--Collectors' Edition
 [70] ={id= 70, lang={ "ENG" }, fruc={ true }, url="Vanguard"},--Vanguard
 [69] ={id= 69, lang={ "ENG" }, fruc={ true }, url="Oversized%20Box%20Toppers"},--Oversized Box Toppers
 -- promosets
+[55] ={id= 55, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Ugin%27s%20Fate%20Promos"},--Ugin's Fate Promos
 [50] ={id= 50, lang={ "ENG",[3]="GER",[4]="FRA",[6]="POR",[7]="SPA",[8]="JPN" }, fruc={ true }, url={ --Buy a Box Promos
 											"Buy%20a%20Box%20Promos",
 											"Promos", -- "Ruthless Cullblade (JPN)","Pestilence Demon (JPN)"
@@ -1406,6 +1423,7 @@ site.sets = {
 [41] ={id= 41, lang={ "ENG" }, fruc={ true }, url="Happy%20Holidays%20Promos"},--Happy Holidays Promos
 [40] ={id= 40, lang={ "ENG",[3]="GER",[8]="JPN" }, fruc={ true }, url={ --Arena/Colosseo Leagues Promos
 											"Arena%20League%20Promos",--Arena League Promos
+											"League%20Tokens",--League Tokens
 											"Oversized%206x9%20Promos",--Oversized 6x9 Promos
 											"Promos", -- 6 Tokens
 											} },
@@ -1416,8 +1434,7 @@ site.sets = {
 [32] ={id= 32, lang={ "ENG",[8]="JPN" }, fruc={ true } , url={ --Pro Tour Promos
 											"DCI%20Promos", -- Pro Tour Promos in DCI Promos
 											"Pro%20Tour%20Promos", --Pro Tour Promos
-											}, 
-},
+											} },
 [31] ={id= 31, lang={ "ENG" }, fruc={ true }, url={ -- Grand Prix Promos
 											"Grand%20Prix%20Promos", --Grand Prix Promos
 											"DCI%20Promos",--DCI Promos
@@ -1438,15 +1455,20 @@ site.sets = {
 											"Journey%20into%20Nyx", -- "The Champion"
 											} },
 [25] ={id= 25, lang={ "ENG",[3]="GER",[17]="PHY" }, fruc={ true }, url={ --Judge Gift Cards
-											"Judge%20Rewards%20Promos",
-											"Promos", -- Centaur Token
+											"Judge%20Rewards%20Promos",-- Judge Rewards Promos
+											"Judge%20Program%20Tokens",--Judge Program Tokens
+--											"Promos", -- Centaur Token
 											} },
 [24] ={id= 24, lang={ "ENG" }, fruc={ true }, url="Champs%20&%20States%20Promos"},--Champs & States Promos
 [23] ={id= 23, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Gateway%20Promos"},--Gateway Promos
 [22] ={id= 22, lang={ "ENG",[2]="RUS",[3]="GER",[7]="SPA",[12]="HEB",[13]="ARA",[14]="LAT",[15]="SAN",[16]="GRC" }, fruc={ true }, url={ --Prerelease Promos
 											"Prerelease%20Promos", -- Prerelease Promos
-											"Oversized%206x9%20Promos", -- Oversized 6x9 Promos "Garruk the Slayer (oversized)"
-											"DCI%20Promos", -- DCI Promos "Griselbrand"
+											"Magic%20Origins:%20Promos",--Magic Origins: Promos
+											"Dragons%20Of%20Tarkir:%20Promos",--Dragons Of Tarkir: Promos
+											"Fate%20Reforged:%20Promos",--Fate Reforged: Promos
+											"Khans%20of%20Tarkir:%20Promos",--Khans of Tarkir: Promos
+											"Oversized%206x9%20Promos", -- Oversized 6x9 Promos ("Garruk the Slayer (oversized)")
+											"DCI%20Promos", -- DCI Promos ("Griselbrand")
 											"Theros" , -- Theros (5 Hero Cards)
 											"Born%20of%20the%20Gods", -- Born of the Gods (5 Hero Cards)
 											"Journey%20into%20Nyx", -- Journey into Nyx (5 Hero Cards)
@@ -1462,6 +1484,7 @@ site.sets = {
 [20] ={id= 20, lang={ "ENG" }, fruc={ true }, url="Player%20Rewards%20Promos"},--Player Rewards Promos
 [15]= {id= 15, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN" }, fruc={ true }, url={-- Convention Promos
 											"Convention%20Promos", --Convention Promos
+											"San%20Diego%20Comic-Con%202015%20Promos",--San Diego Comic-Con 2015 Promos
 											"San%20Diego%20Comic-Con%202013%20Promos", --San Diego Comic-Con 2013 Promos
 											"San%20Diego%20Comic-Con%202014%20Promos", --San Diego Comic-Con 2014 Promos
 											"Oversized%206x9%20Promos", -- "Serra Angel (oversized)","Hurloon Minotaur (oversized)"
@@ -1472,6 +1495,7 @@ site.sets = {
 [12] ={id= 12, lang={ [8]="JPN" }, fruc={ true }, url="Hobby%20Japan%20Commemorative%20Promos"},--Hobby Japan Commemorative Promos
 [11] = nil, -- Redemption Program Cards
 [10] ={id= 10, lang={ "ENG",[8]="JPN" }, fruc={ true }, url={ -- Junior Series Promos
+											"Junior%20APAC%20Series%20Promos",--Junior APAC Series Promos
 											"Junior%20Series%20Promos",--Junior Series Promos
 											"Junior%20Super%20Series%20Promos",--Junior Super Series Promos
 											"Japan%20Junior%20Tournament%20Promos",--Japan Junior Tournament Promos
@@ -1482,7 +1506,8 @@ site.sets = {
 											"Oversized%206x9%20Promos", -- "Aswan Jaguar (oversized)"
 											} },
 [8]=  {id=  8, lang={ "ENG",[5]="ITA",[8]="JPN" }, fruc={ true }, url={ -- Stores Promos
-											"Walmart%20Promos", -- Walmart Promos
+											"Resale%20Promos",--Resale Promos
+--											"Walmart%20Promos", -- Walmart Promos
 											"DCI%20Promos", -- DCI Promos
 											"Promos", -- 3 jp
 											} },
@@ -1509,8 +1534,13 @@ site.sets = {
 -- unknown
 -- uncomment these while running helper.FindUnknownUrls
 [9991]={id=  0, lang=all, fruc={ true }, url="Simplified%20Chinese%20Alternate%20Art%20Cards"},--Simplified Chinese Alternate Art Cards
-[9992]={id=  0, lang=all, fruc={ true }, url="Misprints"},--Misprints
-[9993]={id=  0, lang=all, fruc={ true }, url={-- these are preconstructed decks
+[9992]={id=  0, lang=all, fruc={ true }, url={
+										"Misprints",--Misprints
+										"Fallen%20Empires:%20Wyvern%20Misprints",--Fallen Empires: Wyvern Misprints
+										} },
+[9993]={id=  0, lang=all, fruc={ true }, url="Oversized%209x12%20Promos"},--Oversized 9x12 Promos
+[9994]={id=  0, lang={ "ENG" }, fruc={ true }, url="Fourth%20Edition:%20Alternate"},--Fourth Edition: Alternate ("Summer 4th")
+[9995]={id=  0, lang=all, fruc={ true }, url={-- these are preconstructed decks
 										"Pro%20Tour%201996:%20Mark%20Justice",--Pro Tour 1996: Mark Justice
 										"Pro%20Tour%201996:%20Michael%20Locanto",--Pro Tour 1996: Michael Locanto
 										"Pro%20Tour%201996:%20Bertrand%20Lestree",--Pro Tour 1996: Bertrand Lestree
@@ -1520,7 +1550,8 @@ site.sets = {
 										"Pro%20Tour%201996:%20George%20Baxter",--Pro Tour 1996: George Baxter
 										"Pro%20Tour%201996:%20Leon%20Lindback",--Pro Tour 1996: Leon Lindback
 										} },
-[9994]={id=  0, lang=all, fruc={ true }, url={"World%20Championship%20Decks",--World Championship Decks
+[9996]={id=  0, lang=all, fruc={ true }, url={
+										"World%20Championship%20Decks",--World Championship Decks
 										"WCD%201997:%20Svend%20Geertsen",--WCD 1997: Svend Geertsen
 										"WCD%201997:%20Jakub%20Slemr",--WCD 1997: Jakub Slemr
 										"WCD%201997:%20Janosch%20Kuhn",--WCD 1997: Janosch Kuhn
@@ -1529,11 +1560,11 @@ site.sets = {
 										"WCD%201998:%20Randy%20Buehler",--WCD 1998: Randy Buehler
 										"WCD%201998:%20Brian%20Hacker",--WCD 1998: Brian Hacker
 										"WCD%201998:%20Ben%20Rubin",--WCD 1998: Ben Rubin
-										"WCD%201999:%20Jakub%20Slemr",--WCD 1999: Jakub Šlemr
+										"WCD%201999:%20Jakub%20%C5%A0lemr",--WCD 1999: Jakub Šlemr
 										"WCD%201999:%20Matt%20Linde",--WCD 1999: Matt Linde
 										"WCD%201999:%20Mark%20Le%20Pine",--WCD 1999: Mark Le Pine
 										"WCD%201999:%20Kai%20Budde",--WCD 1999: Kai Budde
-										"WCD%202000:%20Janosch%20uhn",--WCD 2000: Janosch Kühn
+										"WCD%202000:%20Janosch%20K%C3%BChn",--WCD 2000: Janosch Kühn
 										"WCD%202000:%20Jon%20Finkel",--WCD 2000: Jon Finkel
 										"WCD%202000:%20Nicolas%20Labarre",--WCD 2000: Nicolas Labarre
 										"WCD%202000:%20Tom%20Van%20de%20Logt",--WCD 2000: Tom Van de Logt
@@ -1547,16 +1578,18 @@ site.sets = {
 										"WCD%202002:%20Brian%20Kibler",--WCD 2002: Brian Kibler
 										"WCD%202003:%20Dave%20Humpherys",--WCD 2003: Dave Humpherys
 										"WCD%202003:%20Daniel%20Zink",--WCD 2003: Daniel Zink
-										"WCD%202003:%20Peer%20Kroger",--WCD 2003: Peer Kröger
+										"WCD%202003:%20Peer%20Kr%C3%B6ger",--WCD 2003: Peer Kröger
 										"WCD%202003:%20Wolfgang%20Eder",--WCD 2003: Wolfgang Eder
 										"WCD%202004:%20Gabriel%20Nassif",--WCD 2004: Gabriel Nassif
 										"WCD%202004:%20Manuel%20Bevand",--WCD 2004: Manuel Bevand
 										"WCD%202004:%20Aeo%20Paquette",--WCD 2004: Aeo Paquette
 										"WCD%202004:%20Julien%20Nuijten",--WCD 2004: Julien Nuijten
-} },
-[9995]={id=  0, lang=all, fruc={ true }, url="Ultra-Pro%20Puzzle%20Cards"},--Ultra-Pro Puzzle Cards
-[9996]={id=  0, lang=all, fruc={ true }, url="Filler%20Cards"},--Filler Cards
-[9997]={id=  0, lang=all, fruc={ true }, url="Blank%20Cards"},--Blank Cards
+										} },
+[9997]={id=  0, lang=all, fruc={ true }, url={
+										"Ultra-Pro%20Puzzle%20Cards",--Ultra-Pro Puzzle Cards
+										"Filler%20Cards",--Filler Cards
+										"Blank%20Cards",--Blank Cards
+										} },
 [9998]={id=  0, lang=all, fruc={ true }, url={ -- actual Pro-Players on baseballcard-like cards
 										"2005%20Player%20Cards",--2005 Player Cards
 										"2006%20Player%20Cards",--2006 Player Cards
@@ -1564,12 +1597,14 @@ site.sets = {
 										} },
 [9999]={id=  0, lang=all, fruc={ true }, url={ -- custom tokens
 										"Custom%20Tokens",--Custom Tokens
+										"GamingEtc%20Tokens",--GamingEtc Tokens
 										"Yummy%20Tokens",--Yummy Tokens
 										"Revista%20Serra%20Promos",--Revista Serra Promos
 										"Your%20Move%20Games%20Tokens",--Your Move Games Tokens
 										"Tierra%20Media%20Tokens",--Tierra Media Tokens
 										"TokyoMTG%20Products",--TokyoMTG Products
 										"Mystic%20Shop%20Products",--Mystic Shop Products
+										"Tokens%20for%20MTG",--Tokens for MTG
 										"JingHe%20Age:%202002%20Tokens",--JingHe Age: 2002 Tokens
 										"JingHe%20Age:%20MtG%2010th%20Anniversary%20Tokens",--JingHe Age: MtG 10th Anniversary Tokens
 										"Starcity%20Games:%20Commemorative%20Tokens",--Starcity Games: Commemorative Tokens
