@@ -937,7 +937,7 @@ function main()
 	
 	-- now try to break the script :-)
 	--LHpi.DoImport(importfoil, importlangs, importsets)
---	ImportPrice( importfoil, importlangs, importsets )
+	ImportPrice( importfoil, importlangs, importsets )
 
 	-- utility functions from dummy:
 	--only run sitescript update helpers

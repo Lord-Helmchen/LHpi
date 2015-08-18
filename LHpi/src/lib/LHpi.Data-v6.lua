@@ -30,7 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --[[ CHANGES
 v7
 fixed variants in 822
-
+removed Holiday Gigt Box cards from 800,791 variants
 ]]
 --TODO increment filename
 
@@ -839,8 +839,6 @@ Expansions = nil,
 ["Soldat Token (2)"]			= { "Soldat Token"	, { 1    , false, false } },
 ["Soldat Token (3)"]			= { "Soldat Token"	, { false, 2    , false } },
 ["Soldat Token (7)"]			= { "Soldat Token"	, { false, false, 3     } },
---["Karametra's Acolyte"]						= { "Karametra's Acolyte"	, { ""   , false              } },
---["Karametra's Acolyte (Holiday Gift Box)"]	= { "Karametra's Acolyte"	, { false, "Holiday Gift Box" } },
 	},
 },
 [795] = { name="Dragon’s Maze",
@@ -852,7 +850,7 @@ Expansions = nil,
 	variants={}
 },
 [791] = { name="Return to Ravnica",
-	cardcount={ reg = 274+1, tok = 12 },
+	cardcount={ reg = 274, tok = 12 },
 	variants={
 ["Plains"] 						= { "Plains"	, { 1    , 2    , 3    , 4    , 5     } },
 ["Island"] 						= { "Island" 	, { 1    , 2    , 3    , 4    , 5     } },
@@ -884,8 +882,6 @@ Expansions = nil,
 ["Forest (272)"]				= { "Forest"	, { false, false, 3    , false, false } },
 ["Forest (273)"]				= { "Forest"	, { false, false, false, 4    , false } },
 ["Forest (274)"]				= { "Forest"	, { false, false, false, false, 5     } },
-["Dreg Mangler"]					= { "Dreg Mangler"	, { ""   , false              } },
-["Dreg Mangler (Holiday Gift Box)"]	= { "Dreg Mangler"	, { false, "Holiday Gift Box" } },
 	},
 },
 [786] = { name="Avacyn Restored",

@@ -37,7 +37,7 @@ Initial release, no changelog yet
 --MODE=nil
 --MODE = { download=true, sets="standard" }
 --MODE = { boostervalue=true, sets="standard" }
-local sets ={
+local standard ={--standard + MM15
 			[822] = "Magic Origins",
 			[819] = "Modern Masters 2015",
 			[818] = "Dragons of Tarkir",
@@ -48,10 +48,43 @@ local sets ={
 			[802] = "Born of the Gods",
 			[800] = "Theros",
 			}
+local sets={--
+ [775] = "Mirrodin Besieged";
+}
+local fetchedsets={--already fetched expansinsets
+ [795] = "Dragon’s Maze";
+ [793] = "Gatecrash";
+ [791] = "Return to Ravnica";
+ [786] = "Avacyn Restored";
+ [784] = "Dark Ascension";
+ [782] = "Innistrad";
+ [776] = "New Phyrexia";
+ [773] = "Scars of Mirrodin";
+ [767] = "Rise of the Eldrazi";
+ [765] = "Worldwake";
+ [762] = "Zendikar";
+ [758] = "Alara Reborn";
+ [756] = "Conflux";
+ [754] = "Shards of Alara";
+}
+
 MODE = { download=true, sets=sets }
---MODE = { boostervalue=true, sets="sets" }
+--MODE = { boostervalue=true, sets=coresets }
 
 --  Don't change anything below this line unless you know what you're doing :-) --
+
+---	read source data from #string savepath instead of site url; default false
+--	helper.GetSourceData normally overrides OFFLINE switch from LHpi.magickartenmarkt.lua.
+--	This forces the script to stay in OFFLINE mode. Only really useful for testing.
+-- @field [parent=#global] #boolean STAYOFFLINE
+--STAYOFFLINE = true
+
+--- save a local copy of each individual card source json to #string savepath if not in OFFLINE mode; default false
+--	helper.GetSourceData normally overrides SAVEHTML switch from LHpi.magickartenmarkt.lua to enforce SAVEDATA.
+--	SAVECARDDATA instructs the script to save not only the (reconstructed) set sources, but also the individual card sources
+--	where the priceGuide field is fetched from. Only really useful for testing.
+-- @field [parent=#global] #boolean SAVECARDDATA
+SAVECARDDATA = true
 
 --- global working directory to allow operation outside of MA\Prices hierarchy
 -- @field [parent=#global] workdir
@@ -146,7 +179,7 @@ function main( mode )
 			[806] = "Journey into Nyx",
 			[802] = "Born of the Gods",
 			[800] = "Theros",
-		} 
+		}
 	elseif ( mode.sets=="cur" ) or ( mode.sets=="current" ) then
 		sets = { 
 			[822] = "Magic Origins",
@@ -199,7 +232,6 @@ end--function main
  @param #table setlist (optional) { #number sid= #string name } list of sets to download
 ]]
 function helper.GetSourceData(sets)
-	
 	ma.PutFile(LHpi.savepath .. "testfolderwritable" , "true", 0 )
 	local folderwritable = ma.GetFile( LHpi.savepath .. "testfolderwritable" )
 	if not folderwritable then
@@ -207,7 +239,9 @@ function helper.GetSourceData(sets)
 	end -- if not folderwritable
 	local s = SAVEHTML
 	local o = OFFLINE
-	OFFLINE=false
+	if STAYOFFLINE~=true then
+		OFFLINE=false
+	end
 	SAVEHTML=true
 	local seturls={}
 	if sets then
@@ -250,8 +284,13 @@ function helper.GetSourceData(sets)
 			for cid,card in pairs(setdata.card) do
 				local cardurl = site.BuildUrl(card)
 				print("fetching single card from " .. cardurl)
+				local s2=SAVEHTML
+				if SAVECARDDATA~=true then
+					SAVEHTML=false
+				end
 				--local proddata,status = site.FetchSourceDataFromOAuth( cardurl )
 				local proddata,status = LHpi.GetSourceData( cardurl , { oauth=true } )
+				SAVEHTML=s2
 				if proddata then
 					count.fetched=count.fetched+1
 					proddata = Json.decode(proddata).product
@@ -280,7 +319,7 @@ function helper.GetSourceData(sets)
 end--function GetSourceData
 
 --[[- determine the Expected Value of a booster from chosen sets.
- site.sets can be used as parameter, but any table with MA setids as index can be used.
+ site.sets could be used as parameter, but any table with MA setids as index can be used.
  
  @function [parent=#helper] ExpectedBoosterValue
  @param #table setlist { #number sid= #string name } list of sets to work on
@@ -293,35 +332,41 @@ function helper.ExpectedBoosterValue(sets)
 		for url,details in pairs(urls) do
 			local sourcedata = LHpi.GetSourceData(url,details)
 			if sourcedata then
---				sourcedata = Json.decode(sourcedata).card
 				sourcedata = Json.decode(sourcedata)
+				sourcedata = sourcedata.card
 				for _,card in pairs(sourcedata) do
 					if not card.category then
 						print(sid .. " :not card.category!")
-						break
-					end
-					resultstrings[sid]={rareSlot="",booster=""}
-					if not values then values={} end
-					if card.category.categoryName~="Magic Single" then
-						print(LHpi.Tostring(card.category))
+						print(LHpi.Tostring(card))
 					else
-						if not values[card.rarity] then
-							values[card.rarity]={ count=0, sum={} }
-						end--if not values[card.rarity]
-						values[card.rarity].count=values[card.rarity].count+1
-						if card.priceGuide~=nil then
-							for ptype,value in pairs(card.priceGuide) do
-								if not values[card.rarity].sum[ptype] then
-									values[card.rarity].sum[ptype]=0
-								end--if not values[card.rarity].sum[ptype]
-								values[card.rarity].sum[ptype]=values[card.rarity].sum[ptype]+value
-							end--for ptype,value
-						end--if card.priceGuide
-					end--if card.category.categoryName
+						resultstrings[sid]={rareSlot="",booster=""}
+						if not values then values={} end
+						if card.category.categoryName~="Magic Single" then
+							print(LHpi.Tostring(card.category))
+						else
+							if not values[card.rarity] then
+								values[card.rarity]={ count=0, sum={} }
+							end--if not values[card.rarity]
+							values[card.rarity].count=values[card.rarity].count+1
+							if card.priceGuide~=nil then
+								for ptype,value in pairs(card.priceGuide) do
+									if not values[card.rarity].sum[ptype] then
+										values[card.rarity].sum[ptype]=0
+									end--if not values[card.rarity].sum[ptype]
+									values[card.rarity].sum[ptype]=values[card.rarity].sum[ptype]+value
+								end--for ptype,value
+							else
+								print(string.format("no priceGuide in setid %i, skipping %s",sid,LHpi.Data.sets[sid].name))
+								LHpi.Log(string.format("no priceGuide in setid %i, skipping %s",sid,LHpi.Data.sets[sid].name) ,1)
+								break
+							end--if card.priceGuide
+						end--if card.category.categoryName
+					end--if not card.category
 				end--for _,card
 			else
 				print("no data for ["..sid.."] ")
-			end--if sourcedata
+				LHpi.Log("no data for ["..sid.."] " ,1)
+			end--if sourcedata1
 		end--for url,details
 		if values then
 			for rarity,_ in pairs(values) do
@@ -333,22 +378,32 @@ function helper.ExpectedBoosterValue(sets)
 			values.EV={}
 			for ptype,_ in pairs(values["Rare"].average) do
 				values.EV[ptype]={ }
-				values.EV[ptype].RMonly=(values["Rare"].average[ptype]+7/8)+(values["Mythic"].average[ptype]/8)
+				if values["Mythic"] then
+					values.EV[ptype].RMonly=(values["Rare"].average[ptype]*7/8)+(values["Mythic"].average[ptype]/8)
+				else
+					values.EV[ptype].RMonly=values["Rare"].average[ptype]
+				end
 				values.EV[ptype].MRUC=values.EV[ptype].RMonly+(values["Uncommon"].average[ptype]*3)+(values["Common"].average[ptype]*10)
-				values.EV[ptype].MRUCL=values.EV[ptype].MRUC+values["Land"].average[ptype]
+--TODO dynamically check whether to add Landslot
+				--values.EV[ptype].MRUCL=values.EV[ptype].MRUC+values["Land"].average[ptype]
 			end--for ptype,_
 			--print(sid .. " : Rare " .. LHpi.Tostring(values["Rare"]) .. " Mythic " .. LHpi.Tostring(values["Mythic"]))
-			resultstrings[sid].rareSlot=(string.format("%20s: EW RareSlot AVG=%2.3f SELL=%2.3f TREND=%2.3f LOWEX=%2.3f",set,values.EV["AVG"].RMonly,values.EV["SELL"].RMonly,values.EV["TREND"].RMonly,values.EV["LOWEX"].RMonly))
-			resultstrings[sid].booster=(string.format("%20s: EW Booster  AVG=%2.3f SELL=%2.3f TREND=%2.3f LOWEX=%2.3f",set,values.EV["AVG"].MRUCL,values.EV["SELL"].MRUCL,values.EV["TREND"].MRUCL,values.EV["LOWEX"].MRUCL))
+--TODO dynamically build resultstrings from available price categories
+			resultstrings[sid].rareSlot=(string.format("%20s: EW RareSlot AVG=%2.3f SELL=%2.3f TREND=%2.3f LOWEX=%2.3f",set,values.EV.AVG.RMonly,values.EV.SELL.RMonly,values.EV.TREND.RMonly,values.EV.LOWEX.RMonly))
+			resultstrings[sid].booster=(string.format("%20s: EW Booster  AVG=%2.3f SELL=%2.3f TREND=%2.3f LOWEX=%2.3f",set,values.EV.AVG.MRUC,values.EV.SELL.MRUC,values.EV.TREND.MRUC,values.EV.LOWEX.MRUC))
 		end--if values
 		--return("early")
 	end--for sid,set
+--TODO sort sets by sid before looping
 	for sid,result in pairs(resultstrings) do
 		print(result.rareSlot)
+		LHpi.Log(result.rareSlot ,0)
 	end
 	print()
+	LHpi.Log("" ,0)
 	for sid,result in pairs(resultstrings) do
 		print(result.booster)
+		LHpi.Log(result.booster ,0)
 	end
 	
 end--function ExpectedBoosterValue
