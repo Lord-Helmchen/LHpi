@@ -70,6 +70,17 @@ local useAsFoilprice=6
 --local mkmtokenfile = "mkmtokens.sandbox"
 local mkmtokenfile = "mkmtokens.DarkHelmet"
 
+--- use a persistent counter of all OAuth requests sent to the server.
+-- this could be helpful, as MKM's server will respond with http 429 errors
+-- after 5.000 (50.000?) requests.
+-- @field [parent=#global] #boolean COUNTREQUESTS
+COUNTREQUESTS = true
+--- reset the persistent request counter to 0.
+-- MKM's server resets the request count at at 0:00 CE(S)T,
+-- so we would want to be able to start counting at 0 again. 
+-- @field [parent=#global] #boolean COUNTREQUESTS
+RESETCOUNTER = false
+
 --  Don't change anything below this line unless you know what you're doing :-) --
 
 --- choose how the site sends the requested data.
@@ -285,11 +296,19 @@ function site.Initialize( mode )
 		print("LHpi lib not available, loading it now...")
 		LHpi = site.LoadLib()
 	end
-	LHpi.Log(site.scriptname.." started site.Initialize():",1)
+	LHpi.Log(site.scriptname.." started site.Initialize():" ,1)
+	if site.sandbox then
+		LHpi.Log("using mkm sandbox instead of live server!" ,1)
+		print("using mkm sandbox instead of live server!")
+		LHpi.savepath = string.gsub(LHpi.savepath,"\\+$",".sandbox\\")
+	end--if sandbox
 	if OFFLINE~=true then
 		if not (mode.helper or mode.update) then
 			error("LHpi.magickartenmarkt only works in OFFLINE mode. Use LHpi.mkm-helper.lua to fetch source data.")
 		end
+	end
+	if RESETCOUNTER then
+		LHpi.Log("0",0,workdir.."\\requestcounter",0)
 	end
 	if mode.helper then
 		print("starting LHpi.magickartenmarkt.lua in helper mode")
@@ -345,7 +364,10 @@ function site.Initialize( mode )
 		site.settweak = site.settweak or {}
 	end
 	if mode.update then
-		if not dummy then error("ListUnknownUrls needs to be run from dummyMA!") end
+		if not dummy then error("Update mode needs to be called by dummyMA!") end
+		dummy.CompareDummySets(mapath,site.libver)
+		dummy.CompareDataSets(site.libver,site.libver)
+		dummy.CompareSiteSets()
 	 	dummy.ListUnknownUrls(site.FetchExpansionList())
 		return
 	end
@@ -428,6 +450,12 @@ function site.FetchSourceDataFromOAuth( url )
 --		--error("stopped before actually contacting the server")
 --		print("PerformRequest:")
 --	end
+	if COUNTREQUESTS then
+		local counter = ma.GetFile(workdir.."\\requestcounter")
+		counter = tonumber(counter)
+		counter = counter + 1
+		LHpi.Log(counter,0,workdir.."\\requestcounter",0)
+	end
 	
 	local code, headers, status, body = site.oauth.client:PerformRequest( "GET", url )
 	if code == 200 or code == 204 then
@@ -438,18 +466,19 @@ function site.FetchSourceDataFromOAuth( url )
 		print("status=", LHpi.Tostring(status))
 	end
 	if code == 206 then
-		error("206 Partial Content not implemented yet")
+		error("206 Partial Content - not implemented yet")
+		--TODO for 206 (Partial Content) modify Content-Range and recursively call LHpi.GetSourceData(url , details)
 	elseif code==401 then
-		if DEBUG then
-			error("401 Unauthorized - check url and OAuth!")
-		end
+		--if DEBUG then
+		error("401 Unauthorized - check url and OAuth!")
+		--end
+	elseif code == 429 then
+		LHpi.Log("429 Too many requests :limited to 50000 requests per day, resets at 0:00 CE(S)T." ,1)
+		print("reply="..LHpi.Tostring(body))
+		error("429 Too many requests - limited to 50000 requests per day, resets at 0:00 CE(S)T.")
 	elseif code == 400 then
 		print("reply="..LHpi.Tostring(body))
 		LHpi.Log("reply="..LHpi.Tostring(body) ,2)
-	elseif code == 429 then
-		print("reply="..LHpi.Tostring(body))
-		LHpi.Log("reply="..LHpi.Tostring(body) ,2)
-		error("429 Too many requests (rate limited?)")
 	else
 		LHpi.Log(("headers=".. LHpi.Tostring(headers)) ,2)
 		--error (LHpi.Tostring(statusline))
@@ -510,7 +539,9 @@ function site.BuildUrl( setid,langid,frucid )
 		return url .. "/expansion/1"
 	else -- usual LHpi behaviour
 		url = url .. "/expansion/1"
-		if  type(site.sets[setid].url) == "table" then
+		if site.sets[setid]==nil then
+			return {}
+		elseif  type(site.sets[setid].url) == "table" then
 			urls = site.sets[setid].url
 		else
 			urls = { site.sets[setid].url }
@@ -628,6 +659,8 @@ end -- function site.ParseHtmlData
 --[[- special cases card data manipulation.
  Ties into LHpi.buildCardData to make changes that are specific to one site and thus don't belong into the library.
  This Plugin is called before most of LHpi's BuildCardData processing.
+ It's probably safest to only make name modifications here.
+ --TODO prevent LHpi.BuildCardData from overwriting fields that have been set here.
 
  @function [parent=#site] BCDpluginPre
  @param #table card			the card LHpi.BuildCardData is working on
@@ -641,7 +674,6 @@ end -- function site.ParseHtmlData
 function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 	LHpi.Log( "site.BCDpluginPre got " .. LHpi.Tostring( card ) .. " from set " .. setid ,2)		
 	if "Land" == card.pluginData.rarity
-	--or "Magic Premiere Shop Promos" == card.pluginData.set
 	then
 		if card.pluginData.collectNr and card.pluginData.set ~= "Zendikar" then
 			card.name = string.gsub( card.name,"%(Version %d+%)","("..card.pluginData.collectNr..")" )
@@ -683,6 +715,36 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 		if card.pluginData.rarity ~= "Time Shifted" then
 			card.name = card.name .. " (DROP not Timeshfted)"
 		end
+	elseif setid == 240 then --Visions
+		--TODO 240: Jamuuran Lion versioning
+	elseif setid == 821 then -- Challenge Deck: Defeat a God
+		if card.pluginData.set == "Journey into Nyx" then
+			if card.name == "Dance of Flame"
+			or card.name == "Dance of Panic"
+--			or card.name == "Ecstatic Piper"
+			or card.name == "Estatic Piper"
+			or card.name == "Impulsive Charge"
+			or card.name == "Impulsive Destruction"
+			or card.name == "Impulsive Return"
+			or card.name == "Maddened Oread"
+			or card.name == "Pheres-Band Revelers"
+			or card.name == "Rip to Pieces"
+			or card.name == "Rollicking Throng"
+			or card.name == "Serpent Dancers"
+			or card.name == "Wild Maenads"
+			or card.name == "Xenagos Ascended"
+--			or card.name == "Xenagos’s Scorn"
+			or card.name == "Xenagos's Scorn"
+--			or card.name == "Xenagos’s Strike"
+			or card.name == "Xenagos's Strike"
+			then
+				card.name = card.name .. " (nontrad)"
+				-- objtype is later overwritten by lib :(
+				card.objtype = 3
+			else
+				card.name = card.name .. " (DROP not Defeat a God)"
+			end
+		end
 	elseif setid == 804 then -- Challenge Deck: Battle the Horde
 		if card.pluginData.set == "Born of the Gods" then
 			if card.name == "Altar of Mogis"
@@ -702,6 +764,8 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 			or card.name == "Vitality Salve"
 			then
 				card.name = card.name .. " (nontrad)"
+				-- objtype is later overwritten by lib :(
+				card.objtype = 3
 			else
 				card.name = card.name .. " (DROP not Battle the Horde)"
 			end
@@ -725,6 +789,8 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 			or card.name == "Unified Lunge"
 			then
 				card.name = card.name .. " (nontrad)"
+				-- objtype is later overwritten by lib :(
+				card.objtype = 3
 			else
 				card.name = card.name .. " (DROP not Face the Hydra)"
 			end
@@ -741,6 +807,15 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 			card.lang = { [8]="JPN" }
 			card.name = string.gsub(card.name," %(Version 2%)","")
 		end
+	elseif setid == 635 then -- Salvat Magic Encyclopedia
+		if card.pluginData.rarity~="Land" then
+			card.name = string.gsub( card.name,"%(Version %d+%)","("..card.pluginData.collectNr..")" )
+			if string.find(card.name,"^Selesnya Guildmage") then
+				card.name=string.gsub(card.name,"02%-","Elves ")
+				card.name=string.gsub(card.name,"10%-","Thallids ")
+			end
+			card.name = string.gsub(card.name,"%(%d+-(%d+)%)","(%1)")
+		end
 	elseif setid ==  390 then -- Starter 1999
 		if card.pluginData.set == "Oversized 6x9 Promos" then
 			if card.name == "Thorn Elemental" then
@@ -751,7 +826,7 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 		end
 	elseif setid == 200 then -- Chronicles
 		if card.pluginData.set == "Chronicles" then
-			card.lang = { [2]="ENG" }
+			card.lang = { [1]="ENG" }
 		elseif card.pluginData.set == "Chronicles: Japanese" then
 			card.lang = { [8]="JPN" }
 		end
@@ -1312,26 +1387,28 @@ site.sets = {
 [130]={id=130, lang={ "ENG" }, fruc={ true }, url="Antiquities"},--Antiquities
 [120]={id=120, lang={ "ENG" }, fruc={ true }, url="Arabian%20Nights"},--Arabian Nights
 -- specialsets
+[901]={id=901, lang={ "ENG" }, fruc={ true }, url={ -- Origins Clash Pack
+											"Clash%20Pack%20Promos",--Clash Pack Promos
+											} },
 [900]={id=900, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="From%20the%20Vault:%20Angels"},--From the Vault: Angels
-[820]={id=820, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Duel%20Decks:%20Elspeth%20vs.%20Kiora"},--Duel Decks: Elspeth vs. Kiora
+[821]={id=821, lang={ "ENG" }, fruc={ true }, url={ -- Challenge Deck: Defeat a God
+											"Journey%20into%20Nyx"
+											} },
+[820]={id=820, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel%20Decks:%20Elspeth%20vs.%20Kiora"},--Duel Decks: Elspeth vs. Kiora
 [819]={id=819, lang={ "ENG",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Modern%20Masters%202015"},--Modern Masters 2015
-[817]={id=817, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Duel%20Decks:%20Anthology"},--Duel Decks: Anthology
+[817]={id=817, lang={ "ENG" }, fruc={ true }, url="Duel%20Decks:%20Anthology"},--Duel Decks: Anthology
 [815]={id=815, lang={ "ENG" }, fruc={ true }, url={ -- Fate Reforged Clash Pack
 											"Clash%20Pack%20Promos",--Clash Pack Promos
 											} },
 [814]={id=814, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Commander%202014"},--Commander 2014
 [812]={id=812, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel%20Decks:%20Speed%20vs.%20Cunning"},--Duel Decks: Speed vs. Cunning
 [811]={id=811, lang={ "ENG" }, fruc={ true }, url={ -- Magic 2015 Clash Pack
-											"M15%20Clash%20Pack",--M15 Clash Pack
 											"Clash%20Pack%20Promos",--Clash Pack Promos
 											} },
 [810]={id=810, lang={ "ENG" }, fruc={ true }, url="Modern%20Event%20Deck%202014"},--Modern Event Deck 2014
 [809]={id=809, lang={ "ENG" }, fruc={ true }, url="From%20the%20Vault:%20Annihilation"},--From the Vault: Annihilation
 [807]={id=807, lang={ "ENG",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Conspiracy"},--Conspiracy
 [805]={id=805, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel%20Decks:%20Jace%20vs.%20Vraska"},--Duel Decks: Jace vs. Vraska
-[821]={id=821, lang={ "ENG",[3]="GER" }, fruc={ true }, url={ -- Challenge Deck: Defeat a God
-											"Journey%20into%20Nyx"
-											} },
 [804]={id=804, lang={ "ENG",[3]="GER" }, fruc={ true }, url={ -- Challenge Deck: Battle the Horde
 											"Born%20of%20the%20Gods"
 											} },
@@ -1382,7 +1459,7 @@ site.sets = {
 											} },
 [380]={id=380, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Portal%20Three%20Kingdoms"},--Portal Three Kingdoms
 [340]={id=340, lang={ "ENG" }, fruc={ true }, url="Anthologies"},--Anthologies
-[235]={id=235, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Multiverse%20Gift%20Box"},--Multiverse Gift Box
+[235]={id=235, lang={ "ENG" }, fruc={ true }, url="Multiverse%20Gift%20Box"},--Multiverse Gift Box
 [320]={id=320, lang={ "ENG" }, fruc={ true }, url="Unglued"},--Unglued
 [310]={id=310, lang={ "ENG",[3]="GER",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Portal%20Second%20Age"},--Portal Second Age
 [260]={id=260, lang={ "ENG",[3]="GER",[8]="JPN" }, fruc={ true }, url="Portal"},--Portal
@@ -1398,6 +1475,15 @@ site.sets = {
 [69] ={id= 69, lang={ "ENG" }, fruc={ true }, url="Oversized%20Box%20Toppers"},--Oversized Box Toppers
 -- promosets
 [55] ={id= 55, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Ugin%27s%20Fate%20Promos"},--Ugin's Fate Promos
+[53] ={id= 53, lang={ "ENG" }, fruc={ true }, url={ --Holiday Gift Box Promos
+											"Promos", -- "Dreg Mangler", "Karametra’s Acolyte"
+											"Khans%20of%20Tarkir:%20Promos",-- "Sultai Charm"
+											} },
+[52] ={id= 52, lang={ "ENG" }, fruc={ true }, url={ --Intro Pack Promos
+											"Dragons%20Of%20Tarkir:%20Promos",--Dragons Of Tarkir: Promos
+											"Fate%20Reforged:%20Promos",--Fate Reforged: Promos
+											"Khans%20of%20Tarkir:%20Promos",--Khans of Tarkir: Promos
+											} },
 [50] ={id= 50, lang={ "ENG",[3]="GER",[4]="FRA",[6]="POR",[7]="SPA",[8]="JPN" }, fruc={ true }, url={ --Buy a Box Promos
 											"Buy%20a%20Box%20Promos",
 											"Promos", -- "Ruthless Cullblade (JPN)","Pestilence Demon (JPN)"
@@ -1525,7 +1611,12 @@ site.sets = {
 										} },
 [9993]={id=  0, lang=all, fruc={ true }, url="Oversized%209x12%20Promos"},--Oversized 9x12 Promos
 [9994]={id=  0, lang={ "ENG" }, fruc={ true }, url="Fourth%20Edition:%20Alternate"},--Fourth Edition: Alternate ("Summer 4th")
-[9995]={id=  0, lang=all, fruc={ true }, url={-- these are preconstructed decks
+[9995]={id=  0, lang=all, fruc={ true }, url={
+										"Ultra-Pro%20Puzzle%20Cards",--Ultra-Pro Puzzle Cards
+										"Filler%20Cards",--Filler Cards
+										"Blank%20Cards",--Blank Cards
+										} },
+[9996]={id=  0, lang=all, fruc={ true }, url={-- these are preconstructed decks
 										"Pro%20Tour%201996:%20Mark%20Justice",--Pro Tour 1996: Mark Justice
 										"Pro%20Tour%201996:%20Michael%20Locanto",--Pro Tour 1996: Michael Locanto
 										"Pro%20Tour%201996:%20Bertrand%20Lestree",--Pro Tour 1996: Bertrand Lestree
@@ -1535,7 +1626,7 @@ site.sets = {
 										"Pro%20Tour%201996:%20George%20Baxter",--Pro Tour 1996: George Baxter
 										"Pro%20Tour%201996:%20Leon%20Lindback",--Pro Tour 1996: Leon Lindback
 										} },
-[9996]={id=  0, lang=all, fruc={ true }, url={
+[9997]={id=  0, lang=all, fruc={ true }, url={
 										"World%20Championship%20Decks",--World Championship Decks
 										"WCD%201997:%20Svend%20Geertsen",--WCD 1997: Svend Geertsen
 										"WCD%201997:%20Jakub%20Slemr",--WCD 1997: Jakub Slemr
@@ -1569,11 +1660,6 @@ site.sets = {
 										"WCD%202004:%20Manuel%20Bevand",--WCD 2004: Manuel Bevand
 										"WCD%202004:%20Aeo%20Paquette",--WCD 2004: Aeo Paquette
 										"WCD%202004:%20Julien%20Nuijten",--WCD 2004: Julien Nuijten
-										} },
-[9997]={id=  0, lang=all, fruc={ true }, url={
-										"Ultra-Pro%20Puzzle%20Cards",--Ultra-Pro Puzzle Cards
-										"Filler%20Cards",--Filler Cards
-										"Blank%20Cards",--Blank Cards
 										} },
 [9998]={id=  0, lang=all, fruc={ true }, url={ -- actual Pro-Players on baseballcard-like cards
 										"2005%20Player%20Cards",--2005 Player Cards
@@ -1633,7 +1719,67 @@ site.namereplace = {
 [818] = { -- Dragons  of Tarkir
 ["Narset Transcendent Emblem"]				= "Narset Emblem",
 },
-[813] = { -- Khans of Tarkir
+[817] = { --Duel Decks: Anthology
+["Plains (5026)"]		= "Plains (DVD 26)",
+["Plains (5027)"]		= "Plains (DVD 27)",
+["Plains (5028)"]		= "Plains (DVD 28)",
+["Plains (5029)"]		= "Plains (DVD 29)",
+["Island (3030)"]		= "Island (JVC 30)",
+["Island (3031)"]		= "Island (JVC 31)",
+["Island (3032)"]		= "Island (JVC 32)",
+["Island (3033)"]		= "Island (JVC 33)",
+["Swamp (6059)"]			= "Swamp (DVD 59)",
+["Swamp (6060)"]			= "Swamp (DVD 60)",
+["Swamp (6061)"]			= "Swamp (DVD 61)",
+["Swamp (6062)"]			= "Swamp (DVD 62)",
+["Swamp (8060)"]			= "Swamp (GVL 60)",
+["Swamp (8061)"]			= "Swamp (GVL 61)",
+["Swamp (8062)"]			= "Swamp (GVL 62)",
+["Swamp (8063)"]			= "Swamp (GVL 63)",
+["Mountain (2059)"]		= "Mountain (EVG 59)",
+["Mountain (2060)"]		= "Mountain (EVG 60)",
+["Mountain (2061)"]		= "Mountain (EVG 61)",
+["Mountain (2062)"]		= "Mountain (EVG 62)",
+["Mountain (4059)"]		= "Mountain (JVC 59)",
+["Mountain (4060)"]		= "Mountain (JVC 60)",
+["Mountain (4061)"]		= "Mountain (JVC 61)",
+["Mountain (4062)"]		= "Mountain (JVC 62)",
+["Forest (1028)"]		= "Forest (EVG 28)",
+["Forest (1029)"]		= "Forest (EVG 29)",
+["Forest (1030)"]		= "Forest (EVG 30)",
+["Forest (1031)"]		= "Forest (EVG 31)",
+["Forest (7028)"]		= "Forest (GVL 28)",
+["Forest (7029)"]		= "Forest (GVL 29)",
+["Forest (7030)"]		= "Forest (GVL 30)",
+["Forest (7031)"]		= "Forest (GVL 31)",
+["Angel's Feather"]			= "Angel’s Feather",
+["Demon's Horn"]			= "Demon’s Horn",
+["Demon's Jester"]			= "Demon’s Jester",
+["Faith's Fetters"]			= "Faith’s Fetters",
+["Man-o'-War"]				= "Man-o’-War",
+["Nature's Lore"]			= "Nature’s Lore",
+["Serra's Boon"]			= "Serra’s Boon",
+["Serra's Embrace"]			= "Serra’s Embrace",
+["Wren's Run Vanquisher"]	= "Wren’s Run Vanquisher",
+["Corrupt (1)"]				= "Corrupt (55)",
+["Corrupt (2)"]				= "Corrupt (57)",
+["Flamewave Invoker (1)"]	= "Flamewave Invoker (40)",
+["Flamewave Invoker (2)"]	= "Flamewave Invoker (36)",
+["Giant Growth (1)"]		= "Giant Growth (14)",
+["Giant Growth (2)"]		= "Giant Growth (21)",
+["Harmonize (1)"]			= "Harmonize (22)",
+["Harmonize (2)"]			= "Harmonize (21)",
+["Bat Token (11)"]				= "Bat Token",
+["Demon Token (6)"]				= "Demon Token",
+["Elf Warrior Token (2)"]		= "Elf Warrior Token",
+["Elemental Token (1)"]			= "Elemental Token",
+["Elemental Shaman Token (4)"]	= "Elemental Shaman Token",
+["Elephant Token (10)"]			= "Elephant Token",
+["Goblin Token (3)"]			= "Goblin Token",
+["Spirit Token (5)"]			= "Spirit Token",
+["Thrull Token (7)"]			= "Thrull Token",
+},
+--[813] = { -- Khans of Tarkir
 --["Avalanche Tusker (1)"]			= "Avalanche Tusker",
 --["Avalanche Tusker (2)"]			= "Avalanche Tusker (Intro)",
 --["Ivorytusk Fortress (1)"]			= "Ivorytusk Fortress",
@@ -1646,7 +1792,7 @@ site.namereplace = {
 --["Ankle Shanker (2)"]				= "Ankle Shanker (Intro)",
 --["Sultai Charm (1)"]				= "Sultai Charm",
 --["Sultai Charm (2)"]				= "Sultai Charm (Holiday Gift Box)",
-},
+--},
 [802] = { -- Born of the Gods
 ["Unravel the Æther"]				= "Unravel the AEther",
 },
@@ -1773,6 +1919,11 @@ site.namereplace = {
 ["Jamuraan Lion (2)"]				= "Jamuraan Lion",
 },
 -- special sets and promos
+[821] = { --Challenge Deck: Defeat a God
+["Estatic Piper (nontrad)"]				= "Ecstatic Piper (nontrad)",
+["Xenagos's Scorn (nontrad)"]			= "Xenagos’s Scorn (nontrad)",
+["Xenagos's Strike (nontrad)"]			= "Xenagos’s Strike (nontrad)",
+},
 [814] = { --Commander 2014
 ["Daretti, Scrap Savant (1)"]			= "Daretti, Scrap Savant",
 ["Daretti, Scrap Savant (2)"]			= "Daretti, Scrap Savant (oversized)",
@@ -2007,6 +2158,329 @@ site.namereplace = {
 ["Forest (4)"]			= "Forest (224)",
 ["Eyeblight's Ending"]	= "Fin de la desgracia visual",
 ["Hurricane"]			= "Huracán",
+},
+[635] = { -- Salvat Magic Encyclopedia
+-- 1Plains=Cats,Swamp=Rats,Mountain=Beasts,Forest=Cats
+-- 2 Elves
+-- 3 Spirits
+-- 4 Slivers
+-- 5 Ninjas
+-- 6 Zombies
+-- 7 Angels
+-- 8 Wizards
+-- 9 Berserkers
+-- 10 Thallids
+["Plains (03-08)"]	= "Plains (Spirits 8)",
+["Plains (03-09)"]	= "Plains (Spirits 9)",
+["Plains (03-10)"]	= "Plains (Spirits 10)",
+["Plains (03-20)"]	= "Plains (Spirits 20)",
+["Plains (03-21)"]	= "Plains (Spirits 21)",
+["Plains (03-33)"]	= "Plains (Spirits 33)",
+["Plains (03-34)"]	= "Plains (Spirits 34)",
+["Plains (03-44)"]	= "Plains (Spirits 44)",
+["Plains (03-45)"]	= "Plains (Spirits 45)",
+["Plains (03-46)"]	= "Plains (Spirits 46)",
+["Plains (03-56)"]	= "Plains (Spirits 56)",
+["Plains (03-57)"]	= "Plains (Spirits 57)",
+["Plains (07-08)"]	= "Plains (Angels 8)",
+["Plains (07-09)"]	= "Plains (Angels 9)",
+["Plains (07-10)"]	= "Plains (Angels 10)",
+["Plains (07-20)"]	= "Plains (Angels 20)",
+["Plains (07-21)"]	= "Plains (Angels 21)",
+["Plains (07-22)"]	= "Plains (Angels 22)",
+["Plains (07-23)"]	= "Plains (Angels 23)",
+["Plains (07-32)"]	= "Plains (Angels 32)",
+["Plains (07-33)"]	= "Plains (Angels 33)",
+["Plains (07-34)"]	= "Plains (Angels 34)",
+["Plains (07-45)"]	= "Plains (Angels 45)",
+["Plains (07-46)"]	= "Plains (Angels 46)",
+["Plains (07-56)"]	= "Plains (Angels 56)",
+["Plains (07-57)"]	= "Plains (Angels 57)",
+["Plains (07-58)"]	= "Plains (Angels 58)",
+["Plains (10-11)"]	= "Plains (Thallids 11)",
+["Plains (10-12)"]	= "Plains (Thallids 12)",
+["Plains (10-23)"]	= "Plains (Thallids 23)",
+["Plains (10-24)"]	= "Plains (Thallids 24)",
+["Plains (10-35)"]	= "Plains (Thallids 35)",
+["Plains (10-36)"]	= "Plains (Thallids 36)",
+["Plains (10-47)"]	= "Plains (Thallids 47)",
+["Plains (10-48)"]	= "Plains (Thallids 48)",
+["Plains (10-59)"]	= "Plains (Thallids 59)",
+["Plains (10-60)"]	= "Plains (Thallids 60)",
+["Plains (47)"]		= "Plains (Cats 47)",
+["Plains (58)"]		= "Plains (Cats 58)",
+["Plains (59)"]		= "Plains (Cats 59)",
+--missing 9 Plains : Cats 9,10,11,21,22,23,35,46,57
+--retval "40"; expected was 49
+["Island (05-08)"]	= "Island (Ninjas 8)",
+["Island (05-09)"]	= "Island (Ninjas 9)",
+["Island (05-10)"]	= "Island (Ninjas 10)",
+["Island (05-20)"]	= "Island (Ninjas 20)",
+["Island (05-21)"]	= "Island (Ninjas 21)",
+["Island (05-32)"]	= "Island (Ninjas 32)",
+["Island (05-33)"]	= "Island (Ninjas 33)",
+["Island (05-34)"]	= "Island (Ninjas 34)",
+["Island (05-45)"]	= "Island (Ninjas 45)",
+["Island (05-46)"]	= "Island (Ninjas 46)",
+["Island (05-56)"]	= "Island (Ninjas 56)",
+["Island (05-57)"]	= "Island (Ninjas 57)",
+["Island (05-58)"]	= "Island (Ninjas 58)",
+["Island (07-11)"]	= "Island (Angels 11)",
+["Island (07-12)"]	= "Island (Angels 12)",
+["Island (07-24)"]	= "Island (Angels 24)",
+["Island (07-35)"]	= "Island (Angels 35)",
+["Island (07-36)"]	= "Island (Angels 36)",
+["Island (07-47)"]	= "Island (Angels 47)",
+["Island (07-48)"]	= "Island (Angels 48)",
+["Island (07-59)"]	= "Island (Angels 59)",
+["Island (07-60)"]	= "Island (Angels 60)",
+["Island (08-08)"]	= "Island (Wizards 8)",
+["Island (08-09)"]	= "Island (Wizards 9)",
+["Island (08-10)"]	= "Island (Wizards 10)",
+["Island (08-11)"]	= "Island (Wizards 11)",
+["Island (08-12)"]	= "Island (Wizards 12)",
+["Island (08-20)"]	= "Island (Wizards 20)",
+["Island (08-21)"]	= "Island (Wizards 21)",
+["Island (08-22)"]	= "Island (Wizards 22)",
+["Island (08-23)"]	= "Island (Wizards 23)",
+["Island (08-24)"]	= "Island (Wizards 24)",
+["Island (08-32)"]	= "Island (Wizards 32)",
+["Island (08-33)"]	= "Island (Wizards 33)",
+["Island (08-34)"]	= "Island (Wizards 34)",
+["Island (08-35)"]	= "Island (Wizards 35)",
+["Island (08-36)"]	= "Island (Wizards 36)",
+["Island (08-45)"]	= "Island (Wizards 45)",
+["Island (08-46)"]	= "Island (Wizards 46)",
+["Island (08-47)"]	= "Island (Wizards 47)",
+["Island (08-48)"]	= "Island (Wizards 48)",
+["Island (08-56)"]	= "Island (Wizards 56)",
+["Island (08-57)"]	= "Island (Wizards 57)",
+["Island (08-58)"]	= "Island (Wizards 58)",
+["Island (08-59)"]	= "Island (Wizards 59)",
+["Island (08-60)"]	= "Island (Wizards 60)",
+-- missing 0 Islands
+["Swamp (04-33)"]	= "Swamp (Slivers 33)",
+["Swamp (04-34)"]	= "Swamp (Slivers 34)",
+["Swamp (04-35)"]	= "Swamp (Slivers 35)",
+["Swamp (04-36)"]	= "Swamp (Slivers 36)",
+["Swamp (04-45)"]	= "Swamp (Slivers 45)",
+["Swamp (04-46)"]	= "Swamp (Slivers 46)",
+["Swamp (04-56)"]	= "Swamp (Slivers 56)",
+["Swamp (05-11)"]	= "Swamp (Ninjas 11)",
+["Swamp (05-12)"]	= "Swamp (Ninjas 12)",
+["Swamp (05-22)"]	= "Swamp (Ninjas 22)",
+["Swamp (05-23)"]	= "Swamp (Ninjas 23)",
+["Swamp (05-24)"]	= "Swamp (Ninjas 24)",
+["Swamp (05-35)"]	= "Swamp (Ninjas 35)",
+["Swamp (05-36)"]	= "Swamp (Ninjas 36)",
+["Swamp (05-47)"]	= "Swamp (Ninjas 47)",
+["Swamp (05-48)"]	= "Swamp (Ninjas 48)",
+["Swamp (05-59)"]	= "Swamp (Ninjas 59)",
+["Swamp (05-60)"]	= "Swamp (Ninjas 60)",
+["Swamp (06-08)"]	= "Swamp (Zombies 8)",
+["Swamp (06-09)"]	= "Swamp (Zombies 9)",
+["Swamp (06-10)"]	= "Swamp (Zombies 10)",
+["Swamp (06-11)"]	= "Swamp (Zombies 11)",
+["Swamp (06-12)"]	= "Swamp (Zombies 12)",
+["Swamp (06-20)"]	= "Swamp (Zombies 20)",
+["Swamp (06-21)"]	= "Swamp (Zombies 21)",
+["Swamp (06-22)"]	= "Swamp (Zombies 22)",
+["Swamp (06-23)"]	= "Swamp (Zombies 23)",
+["Swamp (06-24)"]	= "Swamp (Zombies 24)",
+["Swamp (06-32)"]	= "Swamp (Zombies 32)",
+["Swamp (06-33)"]	= "Swamp (Zombies 33)",
+["Swamp (06-34)"]	= "Swamp (Zombies 34)",
+["Swamp (06-35)"]	= "Swamp (Zombies 35)",
+["Swamp (06-36)"]	= "Swamp (Zombies 36)",
+["Swamp (06-45)"]	= "Swamp (Zombies 45)",
+["Swamp (06-46)"]	= "Swamp (Zombies 46)",
+["Swamp (06-47)"]	= "Swamp (Zombies 47)",
+["Swamp (06-48)"]	= "Swamp (Zombies 48)",
+["Swamp (06-56)"]	= "Swamp (Zombies 56)",
+["Swamp (06-57)"]	= "Swamp (Zombies 57)",
+["Swamp (06-58)"]	= "Swamp (Zombies 58)",
+["Swamp (06-59)"]	= "Swamp (Zombies 59)",
+["Swamp (06-60)"]	= "Swamp (Zombies 60)",
+["Swamp (8)"]		= "Swamp (Rats 8)",
+["Swamp (9)"]		= "Swamp (Rats 9)",
+["Swamp (10)"]		= "Swamp (Rats 10)",
+["Swamp (11)"]		= "Swamp (Rats 11)",
+["Swamp (12)"]		= "Swamp (Rats 12)",
+["Swamp (20)"]		= "Swamp (Rats 20)",
+["Swamp (21)"]		= "Swamp (Rats 21)",
+["Swamp (22)"]		= "Swamp (Rats 22)",
+["Swamp (23)"]		= "Swamp (Rats 23)",
+["Swamp (24)"]		= "Swamp (Rats 24)",
+["Swamp (32)"]		= "Swamp (Rats 32)",
+["Swamp (33)"]		= "Swamp (Rats 33)",
+["Swamp (34)"]		= "Swamp (Rats 34)",
+["Swamp (35)"]		= "Swamp (Rats 35)",
+["Swamp (36)"]		= "Swamp (Rats 36)",
+["Swamp (45)"]		= "Swamp (Rats 45)",
+["Swamp (46)"]		= "Swamp (Rats 46)",
+["Swamp (47)"]		= "Swamp (Rats 47)",
+["Swamp (48)"]		= "Swamp (Rats 48)",
+["Swamp (56)"]		= "Swamp (Rats 56)",
+["Swamp (57)"]		= "Swamp (Rats 57)",
+["Swamp (58)"]		= "Swamp (Rats 58)",
+["Swamp (59)"]		= "Swamp (Rats 59)",
+["Swamp (60)"]		= "Swamp (Rats 60)",
+-- missing 0 Swamps
+["Mountain (03-11)"]	= "Mountain (Spirits 11)",
+["Mountain (03-12)"]	= "Mountain (Spirits 12)",
+["Mountain (03-22)"]	= "Mountain (Spirits 22)",
+["Mountain (03-23)"]	= "Mountain (Spirits 23)",
+["Mountain (03-24)"]	= "Mountain (Spirits 24)",
+["Mountain (03-35)"]	= "Mountain (Spirits 35)",
+["Mountain (03-36)"]	= "Mountain (Spirits 36)",
+["Mountain (03-47)"]	= "Mountain (Spirits 47)",
+["Mountain (03-48)"]	= "Mountain (Spirits 48)",
+["Mountain (03-58)"]	= "Mountain (Spirits 58)",
+["Mountain (03-59)"]	= "Mountain (Spirits 59)",
+["Mountain (03-60)"]	= "Mountain (Spirits 60)",
+["Mountain (04-09)"]	= "Mountain (Slivers 9)",
+["Mountain (04-10)"]	= "Mountain (Slivers 10)",
+["Mountain (04-21)"]	= "Mountain (Slivers 21)",
+["Mountain (04-22)"]	= "Mountain (Slivers 22)",
+["Mountain (04-47)"]	= "Mountain (Slivers 47)",
+["Mountain (04-57)"]	= "Mountain (Slivers 57)",
+["Mountain (04-58)"]	= "Mountain (Slivers 58)",
+["Mountain (09-09)"]	= "Mountain (Berserkers 9)",
+["Mountain (09-10)"]	= "Mountain (Berserkers 10)",
+["Mountain (09-11)"]	= "Mountain (Berserkers 11)",
+["Mountain (09-12)"]	= "Mountain (Berserkers 12)",
+["Mountain (09-20)"]	= "Mountain (Berserkers 20)",
+["Mountain (09-21)"]	= "Mountain (Berserkers 21)",
+["Mountain (09-22)"]	= "Mountain (Berserkers 22)",
+["Mountain (09-23)"]	= "Mountain (Berserkers 23)",
+["Mountain (09-24)"]	= "Mountain (Berserkers 24)",
+["Mountain (09-32)"]	= "Mountain (Berserkers 32)",
+["Mountain (09-44)"]	= "Mountain (Berserkers 44)",
+["Mountain (09-45)"]	= "Mountain (Berserkers 45)",
+["Mountain (09-57)"]	= "Mountain (Berserkers 57)",
+["Mountain (36)"]		= "Mountain (Beasts 36)",
+["Mountain (48)"]		= "Mountain (Beasts 48)",
+["Mountain (59)"]		= "Mountain (Beasts 59)",
+["Mountain (60)"]		= "Mountain (Beasts 60)",
+-- Missing 4 Mountains: Beasts 11,12,24,35
+["Forest (02-08)"]	= "Forest (Elves 8)",
+["Forest (02-09)"]	= "Forest (Elves 9)",
+["Forest (02-10)"]	= "Forest (Elves 10)",
+["Forest (02-11)"]	= "Forest (Elves 11)",
+["Forest (02-12)"]	= "Forest (Elves 12)",
+["Forest (02-20)"]	= "Forest (Elves 20)",
+["Forest (02-21)"]	= "Forest (Elves 21)",
+["Forest (02-22)"]	= "Forest (Elves 22)",
+["Forest (02-23)"]	= "Forest (Elves 23)",
+["Forest (02-24)"]	= "Forest (Elves 24)",
+["Forest (02-33)"]	= "Forest (Elves 33)",
+["Forest (02-34)"]	= "Forest (Elves 34)",
+["Forest (02-35)"]	= "Forest (Elves 35)",
+["Forest (02-36)"]	= "Forest (Elves 36)",
+["Forest (02-45)"]	= "Forest (Elves 45)",
+["Forest (02-46)"]	= "Forest (Elves 46)",
+["Forest (02-47)"]	= "Forest (Elves 47)",
+["Forest (02-48)"]	= "Forest (Elves 48)",
+["Forest (02-56)"]	= "Forest (Elves 56)",
+["Forest (02-57)"]	= "Forest (Elves 57)",
+["Forest (02-58)"]	= "Forest (Elves 58)",
+["Forest (02-59)"]	= "Forest (Elves 59)",
+["Forest (02-60)"]	= "Forest (Elves 60)",
+["Forest (04-11)"]	= "Forest (Slivers 11)",
+["Forest (04-12)"]	= "Forest (Slivers 12)",
+["Forest (04-23)"]	= "Forest (Slivers 23)",
+["Forest (04-24)"]	= "Forest (Slivers 24)",
+["Forest (04-48)"]	= "Forest (Slivers 48)",
+["Forest (04-59)"]	= "Forest (Slivers 59)",
+["Forest (04-60)"]	= "Forest (Slivers 60)",
+["Forest (09-33)"]	= "Forest (Berserkers 33)",
+["Forest (09-34)"]	= "Forest (Berserkers 34)",
+["Forest (09-35)"]	= "Forest (Berserkers 35)",
+["Forest (09-36)"]	= "Forest (Berserkers 36)",
+["Forest (09-46)"]	= "Forest (Berserkers 46)",
+["Forest (09-47)"]	= "Forest (Berserkers 47)",
+["Forest (09-48)"]	= "Forest (Berserkers 48)",
+["Forest (09-58)"]	= "Forest (Berserkers 58)",
+["Forest (09-59)"]	= "Forest (Berserkers 59)",
+["Forest (09-60)"]	= "Forest (Berserkers 60)",
+["Forest (10-08)"]	= "Forest (Thallids 8)",
+["Forest (10-09)"]	= "Forest (Thallids 9)",
+["Forest (10-10)"]	= "Forest (Thallids 10)",
+["Forest (10-20)"]	= "Forest (Thallids 20)",
+["Forest (10-21)"]	= "Forest (Thallids 21)",
+["Forest (10-22)"]	= "Forest (Thallids 22)",
+["Forest (10-33)"]	= "Forest (Thallids 33)",
+["Forest (10-34)"]	= "Forest (Thallids 34)",
+["Forest (10-44)"]	= "Forest (Thallids 44)",
+["Forest (10-45)"]	= "Forest (Thallids 45)",
+["Forest (10-46)"]	= "Forest (Thallids 46)",
+["Forest (10-56)"]	= "Forest (Thallids 56)",
+["Forest (10-57)"]	= "Forest (Thallids 57)",
+["Forest (10-58)"]	= "Forest (Thallids 58)",
+["Forest (24)"]		= "Forest (Cats 24)",
+["Forest (48)"]		= "Forest (Cats 48)",
+["Forest (60)"]		= "Forest (Cats 60)",
+--missing 2+16 Forests : Cats 12,36, Beasts 8,9,10,20,21,22,23,32,33,34,45,46,47,56,57,58
+--retval "54"; expected was 75
+["Arctic Nishoba (686)"]		= "Arctic Nishoba (26)",
+["Bonesplitter (700)"]			= "Bonesplitter (40)",
+["Darigaaz's Charm (39)"]		= "Darigaaz’s Charm (39)",
+["Darigaaz's Charm (51)"]		= "Darigaaz’s Charm (51)",
+["Enormous Baloth (650)"]		= "Enormous Baloth (50)",
+["Fangren Pathcutter (614)"]	= "Fangren Pathcutter (14)",
+["Fangren Pathcutter (615)"]	= "Fangren Pathcutter (15)",
+["Flowstone Shambler (653)"]	= "Flowstone Shambler (53)",
+["Grifter's Blade (27)"]		= "Grifter’s Blade (27)",
+["Grifter's Blade (710)"]		= "Grifter’s Blade (50)",
+["Groffskithur (641)"]			= "Groffskithur (41)",
+["Groffskithur (642)"]			= "Groffskithur (42)",
+["Groffskithur (655)"]			= "Groffskithur (55)",
+["Guardian's Magemark (5)"]		= "Guardian’s Magemark (5)",
+["Guardian's Magemark (52)"]	= "Guardian’s Magemark (52)",
+["Indrik Stomphowler (38)"]		= "Indrik Stomphowler (Berserkers 38)",
+["Indrik Stomphowler (638)"]	= "Indrik Stomphowler (Beasts 38)",
+["Indrik Stomphowler (651)"]	= "Indrik Stomphowler (51)",
+["Infiltrator's Magemark (19)"]	= "Infiltrator’s Magemark (19)",
+["Infiltrator's Magemark (7)"]	= "Infiltrator’s Magemark (7)",
+["Iron-Barb Hellion (603)"]		= "Iron-Barb Hellion (3)",
+["Iron-Barb Hellion (604)"]		= "Iron-Barb Hellion (4)",
+["Leonin Den-Guard (689)"]		= "Leonin Den-Guard (29)",
+["Leonin Den-Guard (690)"]		= "Leonin Den-Guard (30)",
+["Lure (639)"]					= "Lure (39)",
+["Nezumi Graverobber (38)"]		= "Nezumi Graverobber|Nighteyes the Desecrator (38)",
+["Nezumi Graverobber (39)"]		= "Nezumi Graverobber|Nighteyes the Desecrator (39)",
+["Rampant Growth (628)"]		= "Rampant Growth (28)",
+["Rats' Feast (44)"]			= "Rats’ Feast (44)",
+["Rats' Feast (55)"]			= "Rats’ Feast (55)",
+["Saltblast (713)"]				= "Saltblast (53)",
+["Selesnya Sanctuary (704)"]	= "Selesnya Sanctuary (44)",
+["Selesnya Signet (715)"]		= "Selesnya Signet (55)",
+["Selesnya Signet (716)"]		= "Selesnya Signet (56)",
+["Shinen of Fury's Fire (42)"]	= "Shinen of Fury’s Fire (42)",
+["Shinen of Fury's Fire (54)"]	= "Shinen of Fury’s Fire (54)",
+["Shinen of Fury's Fire (55)"]	= "Shinen of Fury’s Fire (55)",
+["Skyhunter Cub (678)"]			= "Skyhunter Cub (18)",
+["Skyhunter Cub (702)"]			= "Skyhunter Cub (42)",
+["Skyhunter Patrol (714)"]		= "Skyhunter Patrol (54)",
+["Skyhunter Skirmisher (699)"]	= "Skyhunter Skirmisher (39)",
+["Supply|Demand (16)"]			= "Supply|Demand (16)",
+["Supply|Demand (28)"]			= "Supply|Demand (28)",
+["Terramorphic Expanse (680)"]	= "Terramorphic Expanse (20)",
+["Terramorphic Expanse (694)"]	= "Terramorphic Expanse (34)",
+["Terramorphic Expanse (705)"]	= "Terramorphic Expanse (45)",
+["Volcanic Hammer (617)"]		= "Volcanic Hammer (17)",
+["Volcanic Hammer (631)"]		= "Volcanic Hammer (31)",
+["Wayfarer's Bauble (43)"]		= "Wayfarer’s Bauble (43)",
+["Wayfarer's Bauble (44)"]		= "Wayfarer’s Bauble (44)",
+["Darigaaz's Caldera"]			= "Darigaaz’s Caldera",
+["Jedit's Dragoons"]			= "Jedit’s Dragoons",
+["Kirtar's Wrath"]				= "Kirtar’s Wrath",
+["Kitsune Mystic"]				= "Kitsune Mystic|Autumn-Tail, Kitsune Sage",
+["Kodama's Reach"]				= "Kodama’s Reach",
+["Predator's Strike"]			= "Predator’s Strike",
+["Sinstriker's Will"]			= "Sinstriker’s Will",
+["Seht's Tiger"]				= "Seht’s Tiger",
+["Specter's Shroud"]			= "Specter’s Shroud",
 },
 [600] = { -- Unhinged
 ['"Ach! Hans, Run!"']				= '“Ach! Hans, Run!”',
@@ -2380,9 +2854,9 @@ site.namereplace = {
  @field [parent=#site.settweak] #string name
 ]]
 site.settweak = {
-[813] = { -- KTK
-["Sultai Charm (Holiday Gift Box)"]	= "Holiday Gift Box",
-},
+--[813] = { -- KTK
+--["Sultai Charm (Holiday Gift Box)"]	= "Holiday Gift Box",
+--},
 [806] = { -- JOU
 ["Spear of the General"]		= "Prerelease Promos",
 ["Cloak of the Philosopher"]	= "Prerelease Promos",
@@ -2546,7 +3020,7 @@ site.settweak = {
  When variants for the same card are set here and in LHpi.Data, sitescript's entry overwrites Data's.
  
  fields are for subtables indexed by #number setid.
- { #number (setid)= #table { #string (name)= #table { #string, #table { #string or #boolean , ... } } , ... } , ...  }
+ { #number (setid)= #table { override=#boolean , #string (name)= #table { #string, #table { #string or #boolean , ... } } , ... } , ...  }
 
  @type site.variants
  @field [parent=#site.variants] #boolean override	(optional) if true, defaults from LHpi.Data will not be used at all
@@ -2592,7 +3066,7 @@ site.variants = {
  When variants for the same card are set here and in LHpi.Data, sitescript's entry overwrites Data's.
 
   fields are for subtables indexed by #number setid.
- { #number (setid)= #table { #string (name)= #table { foil= #boolean } , ... } , ... }
+ { #number (setid)= #table { override=#boolean , #string (name)= #table { foil= #boolean } , ... } , ... }
  
  @type site.foiltweak
  @field [parent=#site.foiltweak] #boolean override	(optional) if true, defaults from LHpi.Data will not be used at all
@@ -2662,6 +3136,7 @@ function site.SetExpected( importfoil , importlangs , importsets )
 -- Expansions
 [818] = { pset={ dup=LHpi.Data.sets[818].cardcount.reg }, failed={ dup=LHpi.Data.sets[818].cardcount.tok }, duppset={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, namereplaced=2 },
 [816] = { pset={ dup=LHpi.Data.sets[816].cardcount.reg }, failed={ dup=LHpi.Data.sets[816].cardcount.tok }, duppset={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
+[814] = { pset={ LHpi.Data.sets[814].cardcount.reg+LHpi.Data.sets[814].cardcount.repl}, failed={ dup=24 }, dupfail={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN",[9]="SZH" } },-- tokens are (24) doublesided in MKM, (36) single sided in MA
 [813] = { pset={ dup=LHpi.Data.sets[813].cardcount.reg }, failed={ dup=LHpi.Data.sets[813].cardcount.tok }, duppset={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
 [806] = { pset={ dup=LHpi.Data.sets[806].cardcount.reg }, failed={ dup=LHpi.Data.sets[806].cardcount.tok }, duppset={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=44 },
 [802] = { pset={ dup=LHpi.Data.sets[802].cardcount.reg }, failed={ dup=LHpi.Data.sets[802].cardcount.tok }, duppset={ [4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=2*22 },
@@ -2682,8 +3157,8 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [758] = { failed={ dup=LHpi.Data.sets[758].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" } },
 [756] = { failed={ dup=LHpi.Data.sets[756].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" }, dropped=8 },--4 inserts
 [754] = { failed={ dup=LHpi.Data.sets[754].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" }, dropped=2 },--1 insert
-[752] = { failed={ dup=LHpi.Data.sets[752].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" } },
-[751] = { failed={ dup=LHpi.Data.sets[751].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" } },
+[752] = { failed={ dup=LHpi.Data.sets[752].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" }, dropped=16 },-- 8 inserts
+[751] = { failed={ dup=LHpi.Data.sets[751].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" }, dropped=6 },-- 3 inserts
 [750] = { failed={ dup=LHpi.Data.sets[750].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" } },
 [730] = { failed={ dup=LHpi.Data.sets[730].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" } },
 [690] = { dropped=602 },--  301 cards non-Timeshifted
@@ -2691,9 +3166,13 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [210] = { pset={ [6]=LHpi.Data.sets[210].cardcount.reg-1 }, failed= { [6]=1 } },-- no POR Timmerian Fiends
 [190] = { pset={ [6]=LHpi.Data.sets[190].cardcount.reg-1 }, failed= { [6]=1 } },-- no POR Amulet of Quoz
 -- special sets
+[821] = { dropped=356 },
+[820] = { pset={ [8]=LHpi.Data.sets[820].cardcount.both } },
 [819] = { failed={ dup=14 }, dupfail={ "ENG",[8]="JPN",[9]="SZH" } },-- no tokens in MA
+[815] = { failed={ 12 } },-- url contains CP1,CP2,CP3
 [814] = { pset={ dup=LHpi.Data.sets[814].cardcount.reg+LHpi.Data.sets[814].cardcount.repl }, duppset={ [3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN",[9]="SZH" }, failed={ dup=LHpi.Data.sets[814].cardcount.tok }, dupfail={ [3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN",[9]="SZH" } },
 [812] = { pset={ [8]=LHpi.Data.sets[812].cardcount.both } },
+[811] = { failed={ 12 } },-- url contains CP1,CP2,CP3
 [807] = { pset={ dup=LHpi.Data.sets[807].cardcount.reg+LHpi.Data.sets[807].cardcount.nontrad }, failed={ dup=LHpi.Data.sets[807].cardcount.tok }, duppset={ [8]="JPN",[9]="SZH" }, dupfail={ [8]="JPN",[9]="SZH" } },
 [805] = { failed={ [8]=LHpi.Data.sets[805].cardcount.tok } },
 [804] = { dropped=366 },
@@ -2706,11 +3185,14 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [777] = { pset={ [5]=LHpi.Data.sets[777].cardcount.reg }, failed={ [5]=LHpi.Data.sets[777].cardcount.tok } },
 [772] = { pset={ [5]=LHpi.Data.sets[772].cardcount.reg }, failed={ [5]=LHpi.Data.sets[772].cardcount.tok } },
 [755] = { pset={ [8]=LHpi.Data.sets[755].cardcount.both } },
+--TODO report FRA varnames MA bug
+[635] = { pset={ [4]=600-35, [5]=LHpi.Data.sets[635].cardcount.reg-31, [7]=600 }, failed={ [4]=120+35, [5]=9+4+18, [7]=120 } },--missing 9 Plains,4 Mountains,18 Forests; 35 FRA varnames wrong in MA
 [415] = { pset={ [7]=1 }, failed={ [7]=LHpi.Data.sets[415].cardcount.reg-1  } },
 [390] = { dropped=188 },
 [340] = { dropped=4 },
 [310] = { pset={ [5]=LHpi.Data.sets[310].cardcount.reg+1,[6]=49 }, failed={ [5]=1,[6]=LHpi.Data.sets[310].cardcount.reg-49 } },-- FIXME why does ma.SetPrice(setid="310",langid="5",cardname="Ogre Berserker",cardversion="",regprice="0.14",foilprice="0",objtype="1") return 2 ?!
-[260] = { pset={ dup=LHpi.Data.sets[260].cardcount.reg-6 }, failed={ dup=6 }, duppset={ [3]="GER",[8]="JPN" }, dupfail={ [3]="GER",[8]="JPN" } },
+[260] = { pset={ dup=LHpi.Data.sets[260].cardcount.reg-6 }, failed={ 2,dup=2+6 }, duppset={ [3]="GER",[8]="JPN" }, dupfail={ [3]="GER",[8]="JPN" }, dropped=20 },-- 10 inserts, 2 "Complete Portal Card List"
+[225] = { dropped=4 },-- 2 inserts
 [201] = { pset={ [5]=69 } },
 -- Promos
 [50]  = { pset={ [3]=19,[4]=1,[6]=1,[7]=5;[8]=4 }, failed={ [3]=3,[4]=21,[6]=21,[7]=17;[8]=20 }, dropped=46 },

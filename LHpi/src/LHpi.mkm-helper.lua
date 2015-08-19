@@ -48,28 +48,9 @@ local standard ={--standard + MM15
 			[802] = "Born of the Gods",
 			[800] = "Theros",
 			}
-local sets={--
- [775] = "Mirrodin Besieged";
-}
-local fetchedsets={--already fetched expansinsets
- [795] = "Dragon’s Maze";
- [793] = "Gatecrash";
- [791] = "Return to Ravnica";
- [786] = "Avacyn Restored";
- [784] = "Dark Ascension";
- [782] = "Innistrad";
- [776] = "New Phyrexia";
- [773] = "Scars of Mirrodin";
- [767] = "Rise of the Eldrazi";
- [765] = "Worldwake";
- [762] = "Zendikar";
- [758] = "Alara Reborn";
- [756] = "Conflux";
- [754] = "Shards of Alara";
-}
 
-MODE = { download=true, sets=sets }
---MODE = { boostervalue=true, sets=coresets }
+MODE = { download=true, sets=standard }
+--MODE = { boostervalue=true, sets=fetchedsets }
 
 --  Don't change anything below this line unless you know what you're doing :-) --
 
@@ -85,6 +66,10 @@ MODE = { download=true, sets=sets }
 --	where the priceGuide field is fetched from. Only really useful for testing.
 -- @field [parent=#global] #boolean SAVECARDDATA
 SAVECARDDATA = true
+
+--- when running helper.ExpectedBoosterValue, also give the EV of a full Booster Box.
+-- @field [parent=#global] #boolean BOXEV
+BOXEV = false
 
 --- global working directory to allow operation outside of MA\Prices hierarchy
 -- @field [parent=#global] workdir
@@ -166,7 +151,34 @@ function main( mode )
 	local sets
 	if "string"==type(mode.sets) then
 		mode.sets=string.lower(mode.sets)
+		-- continue when dummyMA is loaded
+	else
+		sets = mode.sets or {}
 	end
+
+	
+	package.path = workdir..'lib\\ext\\?.lua;' .. package.path
+	package.cpath= workdir..'lib\\bin\\?.dll;' .. package.cpath
+	--print(package.path.."\n"..package.cpath)	
+	if not ma then
+	-- define ma namespace to recycle code from sitescripts and dummy.
+		if tonumber(libver)>2.14 and not (_VERSION == "Lua 5.1") then
+			print("Loading dummyMA.lua for ma namespace and functions...")
+			dummymode = "helper"
+			dofile(workdir.."lib\\dummyMA.lua")
+		else
+			error("need libver>2.14 and Lua version 5.2.")
+		end -- if libver
+	end -- if not ma
+	site = { scriptname=scriptname, dataver=dataver, logfile=logfile or nil, savepath=savepath or nil }
+	LHpi = dofile(workdir.."lib\\LHpi-v"..libver..".lua")
+	LHpi.Log( "LHpi lib is ready for use." ,1)
+	dofile(workdir.."LHpi.magickartenmarkt.lua")
+	site.logfile =string.gsub(LHpi.logfile,"src\\","")
+	site.savepath=helper.savepath
+	site.Initialize({helper=true})
+	print("mode="..LHpi.Tostring(mode))
+
 	if mode.sets=="all" then
 		sets=site.sets
 	elseif ( mode.sets=="std" ) or ( mode.sets=="standard" ) then
@@ -188,28 +200,20 @@ function main( mode )
 			[816] =	"Fate Reforged",
 			[813] = "Khans of Tarkir",
 		}
-	else
-		sets = mode.sets or {}
+	elseif ( mode.sets=="cor" ) or ( mode.sets=="core" ) or ( mode.sets=="coresets" ) then
+		sets = dummy.coresets
+	elseif ( mode.sets=="exp" ) or ( mode.sets=="expansions" ) or ( mode.sets=="expansionsets" ) then
+		sets = dummy.expansionsets
+	elseif ( mode.sets=="spc" ) or ( mode.sets=="special" ) or ( mode.sets=="specialsets" ) then
+		sets = dummy.specialsets
+	elseif ( mode.sets=="pro" ) or ( mode.sets=="promo" ) or ( mode.sets=="promosets" ) then
+		sets = dummy.promosets
 	end
-	
-	package.path = workdir..'lib\\ext\\?.lua;' .. package.path
-	package.cpath= workdir..'lib\\bin\\?.dll;' .. package.cpath
-	--print(package.path.."\n"..package.cpath)
-	site = { scriptname=scriptname, dataver=dataver, logfile=logfile or nil, savepath=savepath or nil }
-	LHpi = dofile(workdir.."lib\\LHpi-v"..libver..".lua")
-	LHpi.Log( "LHpi lib is ready for use." ,1)
-	dofile(workdir.."LHpi.magickartenmarkt.lua")
-	site.logfile =string.gsub(LHpi.logfile,"src\\","")
-	site.savepath=helper.savepath
-	site.Initialize({helper=true})
-	if site.sandbox then
-		LHpi.savepath = workdir .. "..\\" .. "LHpi.magickartenmarkt.sandbox" .. "\\"
-	end
-	print("mode="..LHpi.Tostring(mode))
+
 	if mode.helper then
 		return ("mkm-helper running in helper mode (passive)")
 	elseif mode.testoauth then
-		-- basic tests (use local mkmtokenfile = "mkmtokens.example" in LHpi.magickartenmarkt.lua)
+		-- basic tests (remember to set local mkmtokenfile = "mkmtokens.example" in LHpi.magickartenmarkt.lua!)
 		DEBUG=true
 		helper.OAuthTest( site.oauth.params )
 		return ("testoauth done")
@@ -244,6 +248,7 @@ function helper.GetSourceData(sets)
 	end
 	SAVEHTML=true
 	local seturls={}
+	LHpi.Log("Building table of set-urls..." ,1)
 	if sets then
 		for sid,set in pairs(sets) do
 			local urls = site.BuildUrl( sid )
@@ -258,6 +263,7 @@ function helper.GetSourceData(sets)
 			local request = site.BuildUrl( exp )
 			if string.find(exp.name,"Janosch") or string.find(exp.name,"Jakub") or string.find(exp.name,"Peer") then
 				print(exp.name .. " encoding Problem results in 401 Unauthorized")
+				LHpi.Log(exp.name .. " skipped.")
 			else--this is what should happen
 				seturls[request]={oauth=true}
 			end--401 exceptions
@@ -269,7 +275,6 @@ function helper.GetSourceData(sets)
 --		print(url .. " : " .. LHpi.Tostring(details))
 --	end
 --	if true then return end
-	
 	local totalcount={fetched=0, found=0 }
 	for url,details in pairs(seturls) do
 		local setdata = LHpi.GetSourceData( url , details )
@@ -289,6 +294,7 @@ function helper.GetSourceData(sets)
 					SAVEHTML=false
 				end
 				--local proddata,status = site.FetchSourceDataFromOAuth( cardurl )
+				--TODO try/catch block here?
 				local proddata,status = LHpi.GetSourceData( cardurl , { oauth=true } )
 				SAVEHTML=s2
 				if proddata then
@@ -316,10 +322,14 @@ function helper.GetSourceData(sets)
 	SAVEHTML=s
 	print( string.format("%i cards have been fetched, and %i pricesGuides were found.",totalcount.fetched,totalcount.found) )
 	LHpi.Log( string.format("%i cards have been fetched, and %i pricesGuides were found.",totalcount.fetched,totalcount.found) ,1)
+	local counter = ma.GetFile(workdir.."\\requestcounter")
+	LHpi.Log("Persistent request counter now is at "..counter ,1)
+	print("Persistent request counter now is at "..counter ,1)
 end--function GetSourceData
 
 --[[- determine the Expected Value of a booster from chosen sets.
  site.sets could be used as parameter, but any table with MA setids as index can be used.
+ This may be incorrect and/or nor work at all for (older) sets with nonstandard booster contents. 
  
  @function [parent=#helper] ExpectedBoosterValue
  @param #table setlist { #number sid= #string name } list of sets to work on
@@ -391,6 +401,10 @@ function helper.ExpectedBoosterValue(sets)
 --TODO dynamically build resultstrings from available price categories
 			resultstrings[sid].rareSlot=(string.format("%20s: EW RareSlot AVG=%2.3f SELL=%2.3f TREND=%2.3f LOWEX=%2.3f",set,values.EV.AVG.RMonly,values.EV.SELL.RMonly,values.EV.TREND.RMonly,values.EV.LOWEX.RMonly))
 			resultstrings[sid].booster=(string.format("%20s: EW Booster  AVG=%2.3f SELL=%2.3f TREND=%2.3f LOWEX=%2.3f",set,values.EV.AVG.MRUC,values.EV.SELL.MRUC,values.EV.TREND.MRUC,values.EV.LOWEX.MRUC))
+			if BOXEV then
+				resultstrings[sid].boxRares=(string.format("%20s: Box RareSlot AVG=%2.3f SELL=%2.3f TREND=%2.3f LOWEX=%2.3f",set,36*values.EV.AVG.RMonly,36*values.EV.SELL.RMonly,36*values.EV.TREND.RMonly,36*values.EV.LOWEX.RMonly))
+				resultstrings[sid].box=(string.format("%20s: EW Full Box  AVG=%2.3f SELL=%2.3f TREND=%2.3f LOWEX=%2.3f",set,36*values.EV.AVG.MRUC,36*values.EV.SELL.MRUC,36*values.EV.TREND.MRUC,36*values.EV.LOWEX.MRUC))
+			end--if BOXEV
 		end--if values
 		--return("early")
 	end--for sid,set
@@ -398,14 +412,27 @@ function helper.ExpectedBoosterValue(sets)
 	for sid,result in pairs(resultstrings) do
 		print(result.rareSlot)
 		LHpi.Log(result.rareSlot ,0)
-	end
+	end--for sid
 	print()
 	LHpi.Log("" ,0)
 	for sid,result in pairs(resultstrings) do
 		print(result.booster)
 		LHpi.Log(result.booster ,0)
-	end
-	
+	end--for sid
+	if BOXEV then
+		print()
+		LHpi.Log("" ,0)
+		for sid,result in pairs(resultstrings) do
+			print(result.boxRares)
+			LHpi.Log(result.boxRares ,0)
+		end--for sid
+		print()
+		LHpi.Log("" ,0)
+		for sid,result in pairs(resultstrings) do
+			print(result.box)
+			LHpi.Log(result.box ,0)
+		end--for sid
+	end--if BOXEV	
 end--function ExpectedBoosterValue
 
 --[[- test OAuth implementation
@@ -483,102 +510,6 @@ print(params.url)
 	print("status_line=", LHpi.Tostring(response_status_line))
 	print("body=", LHpi.Tostring(response_body))
 end--function OAuthTest
-
---- define ma namespace to recycle code from sitescripts and dummy.
-if not ma then
-	ma={}
-
-	--- GetFile.
-	-- Returns loaded file or nil if there was an error (file not found, out of memory, etc.).
-	-- For security reasons only files from the Magic Album folder can be loaded.
-	-- filepath is relative to the Magic Album folder. I.e. if you call
-	--  file = ma.GetFile("Prices\\test.dat")
-	-- "MA_FOLDER\Prices\test.dat" will be loaded. Do not forget to use double slashes for paths.
-	-- 
-	-- dummy: functional. DANGER: no security implemented.
-	-- 
-	-- @function [parent=#ma] GetFile
-	-- @param #string filepath
-	-- @return #string file OR nil instead on error
-	function ma.GetFile(filepath)
-		if DEBUG then
-			print(string.format("ma.GetFile(%s)", filepath) )
-		end
-		local handle,err = io.open(filepath,"r")
-		if err then print("GetFile error: " .. tostring(err)) end
-		local file = nil
-	    if handle then
-			local temp = io.input()	-- save current file
-			io.input( handle )		-- open a new current file
-			file = io.read( "*all" )
-			io.input():close()		-- close current file
-			io.input(temp)			-- restore previous current file
-		end
-		return file
-	end--function ma.GetFile
-	
-	--- PutFile.
-	-- Saves data to the file. For security reasons the file is placed inside the Magic Album folder.
-	-- "filepath" is relative to the Magic Album folder (see GetFile description).
-	-- If "append" parameter is missing or 0 - file will be overwritten.
-	-- Otherwise data will be added to the end of file.
-	-- 
-	-- dummy: functional. DANGER: no security implemented.
-	-- 
-	-- @function [parent=#ma] PutFile
-	-- @param #string filepath
-	-- @param #string data
-	-- @param #number append nil or 0 for overwrite
-	function ma.PutFile(filepath, data, append)
-		if DEBUG then
-			if not string.find(filepath,"log") then
-				print(string.format("ma.PutFile(%s ,DATA, append=%q)",filepath, tostring(append) ) )
-			end
-		end
-		local a = append or 0
-		local handle,err
-		if append == 0 then
-			handle,err = io.open(filepath,"w")	-- get file handle in new file mode
-		else
-			handle,err = io.open(filepath,"a")	-- get file handle in append mode
-		end
-		if err then
-			print("PutFile error: " .. tostring(err))
-			print("PutFile Data was: '" .. data .. "'")
-		else
-			local temp = io.output()	-- save current file
-			io.output( handle )			-- open a new current file
-			io.write( data )	
-			io.output():close()			-- close current file
-		    io.output(temp)				-- restore previous current file
-		end
-	end--function ma.PutFile
-
-	--- Log.
-	-- Adds debug message to Magic Album log file.
-	-- 
-	-- dummy: just prints to stdout instead.
-	-- 
-	-- @function [parent=#ma] Log
-	-- @param #string message
-	function ma.Log(message)
-		print("ma.Log\t" .. tostring(message) )
-	end
-	
-	--- SetProgress.
-	-- Sets progress bar text and position. Position is a numeric value in range 0..100.
-	-- 
-	-- dummy: just prints request to stdout
-	-- 
-	-- @function [parent=#ma] SetProgress
-	-- @param #string text
-	-- @param #number position	0 ... 100
-	function ma.SetProgress(text, position)
-		--print("ma.SetProgress\t " .. position .. " %\t: \"" .. text .. "\"")
-		print(string.format("ma.SetProgress:%3.2f%%\t: %q",position,text))
-	end--function ma.SetProgress
-	
-end--if not ma
 
 --run main function
 local retval = main(MODE)

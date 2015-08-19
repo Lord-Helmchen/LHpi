@@ -660,7 +660,7 @@ site.sets = {
 [814]={id = 814, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Commander%202014"},
 [807]={id = 807, lang = { true , [3]=false}, fruc = { false,true ,true ,true }, url = "Conspiracy"},
 [801]={id = 801, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Commander%202013"},
---TODO Promo Cards
+--TODO Promo Cards (when settweak is in lib)
 -- uncomment these while running helper.FindUnknownUrls
 --[999]={id = 0, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Foils"},--miscelaneous Promos
 } -- end table site.sets
