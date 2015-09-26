@@ -5240,7 +5240,7 @@ Promos = nil,
 },
 [50] = { name="Full Box Promotion",
 	foilonly=true,
-	cardcount={ reg=22, tok=0, nontrad=0, repl=0 }, 
+	cardcount={ reg=25, tok=0, nontrad=0, repl=0 },-- 1 FRA, 19 GER, 1 POR, 1 RUS, 5 SPA
 },
 [45] = { name="Magic Premiere Shop",
 --JPN only
@@ -5495,41 +5495,41 @@ Promos = nil,
 	foil="n",
 	cardcount={ reg=35, tok=0, nontrad=0, repl=0 }, 
 	variants={
-["Plains (APAC Blue)"]		= { "Plains"	, { "APAC Blue" ,false        ,false      ,false       ,false         ,false      ,false  } },
-["Plains (APAC Clear)"]		= { "Plains"	, { false       ,"APAC Clear" ,false      ,false       ,false         ,false      ,false  } },
-["Plains (APAC Red)"]		= { "Plains"	, { false       ,false        ,"APAC Red" ,false       ,false         ,false      ,false  } },
-["Plains (Euro Blue)"]		= { "Plains"	, { false       ,false        ,false      ,"Euro Blue" ,false         ,false      ,false  } },
-["Plains (Euro Purple)"]	= { "Plains"	, { false       ,false        ,false      ,false       ,"Euro Purple" ,false      ,false  } },
-["Plains (Euro Red)"]		= { "Plains"	, { false       ,false        ,false      ,false       ,false         ,"Euro Red" ,false  } },
-["Plains (Guru)"]			= { "Plains"	, { false       ,false        ,false      ,false       ,false         ,false      ,"Guru" } },
-["Island (APAC Blue)"]		= { "Island"	, { "APAC Blue" ,false        ,false      ,false       ,false         ,false      ,false  } },
-["Island (APAC Clear)"]		= { "Island"	, { false       ,"APAC Clear" ,false      ,false       ,false         ,false      ,false  } },
-["Island (APAC Red)"]		= { "Island"	, { false       ,false        ,"APAC Red" ,false       ,false         ,false      ,false  } },
-["Island (Euro Blue)"]		= { "Island"	, { false       ,false        ,false      ,"Euro Blue" ,false         ,false      ,false  } },
-["Island (Euro Purple)"]	= { "Island"	, { false       ,false        ,false      ,false       ,"Euro Purple" ,false      ,false  } },
-["Island (Euro Red)"]		= { "Island"	, { false       ,false        ,false      ,false       ,false         ,"Euro Red" ,false  } },
-["Island (Guru)"]			= { "Island"	, { false       ,false        ,false      ,false       ,false         ,false      ,"Guru" } },
-["Swamp (APAC Blue)"]		= { "Swamp"		, { "APAC Blue" ,false        ,false      ,false       ,false         ,false      ,false  } },
-["Swamp (APAC Clear)"]		= { "Swamp"		, { false       ,"APAC Clear" ,false      ,false       ,false         ,false      ,false  } },
-["Swamp (APAC Red)"]		= { "Swamp"		, { false       ,false        ,"APAC Red" ,false       ,false         ,false      ,false  } },
-["Swamp (Euro Blue)"]		= { "Swamp"		, { false       ,false        ,false      ,"Euro Blue" ,false         ,false      ,false  } },
-["Swamp (Euro Purple)"]		= { "Swamp"		, { false       ,false        ,false      ,false       ,"Euro Purple" ,false      ,false  } },
-["Swamp (Euro Red)"]		= { "Swamp"		, { false       ,false        ,false      ,false       ,false         ,"Euro Red" ,false  } },
-["Swamp (Guru)"]			= { "Swamp"		, { false       ,false        ,false      ,false       ,false         ,false      ,"Guru" } },
-["Mountain (APAC Blue)"]	= { "Mountain"	, { "APAC Blue" ,false        ,false      ,false       ,false         ,false      ,false  } },
-["Mountain (APAC Clear)"]	= { "Mountain"	, { false       ,"APAC Clear" ,false      ,false       ,false         ,false      ,false  } },
-["Mountain (APAC Red)"]		= { "Mountain"	, { false       ,false        ,"APAC Red" ,false       ,false         ,false      ,false  } },
-["Mountain (Euro Blue)"]	= { "Mountain"	, { false       ,false        ,false      ,"Euro Blue" ,false         ,false      ,false  } },
-["Mountain (Euro Purple)"]	= { "Mountain"	, { false       ,false        ,false      ,false       ,"Euro Purple" ,false      ,false  } },
-["Mountain (Euro Red)"]		= { "Mountain"	, { false       ,false        ,false      ,false       ,false         ,"Euro Red" ,false  } },
-["Mountain (Guru)"]			= { "Mountain"	, { false       ,false        ,false      ,false       ,false         ,false      ,"Guru" } },
-["Forest (APAC Blue)"]		= { "Forest"	, { "APAC Blue" ,false        ,false      ,false       ,false         ,false      ,false  } },
-["Forest (APAC Clear)"]		= { "Forest"	, { false       ,"APAC Clear" ,false      ,false       ,false         ,false      ,false  } },
-["Forest (APAC Red)"]		= { "Forest"	, { false       ,false        ,"APAC Red" ,false       ,false         ,false      ,false  } },
-["Forest (Euro Blue)"]		= { "Forest"	, { false       ,false        ,false      ,"Euro Blue" ,false         ,false      ,false  } },
-["Forest (Euro Purple)"]	= { "Forest"	, { false       ,false        ,false      ,false       ,"Euro Purple" ,false      ,false  } },
-["Forest (Euro Red)"]		= { "Forest"	, { false       ,false        ,false      ,false       ,false         ,"Euro Red" ,false  } },
-["Forest (Guru)"]			= { "Forest"	, { false       ,false        ,false      ,false       ,false         ,false      ,"Guru" } },
+["Plains (APAC Blue)"]		= { "Plains"	, { "APAC Blue" ,false        ,false      ,false       ,false         ,false      ,false  } },-- Art: Colin MacNeil
+["Plains (APAC Clear)"]		= { "Plains"	, { false       ,"APAC Clear" ,false      ,false       ,false         ,false      ,false  } },-- Art: Rebecca Guay
+["Plains (APAC Red)"]		= { "Plains"	, { false       ,false        ,"APAC Red" ,false       ,false         ,false      ,false  } },-- Art: Ron Spears
+["Plains (Euro Blue)"]		= { "Plains"	, { false       ,false        ,false      ,"Euro Blue" ,false         ,false      ,false  } },-- Scottish Highlands, UK
+["Plains (Euro Purple)"]	= { "Plains"	, { false       ,false        ,false      ,false       ,"Euro Purple" ,false      ,false  } },-- Steppe Tundra, Russia
+["Plains (Euro Red)"]		= { "Plains"	, { false       ,false        ,false      ,false       ,false         ,"Euro Red" ,false  } },-- Lowlands, Netherlands
+["Plains (Guru)"]			= { "Plains"	, { false       ,false        ,false      ,false       ,false         ,false      ,"Guru" } },-- 
+["Island (APAC Blue)"]		= { "Island"	, { "APAC Blue" ,false        ,false      ,false       ,false         ,false      ,false  } },-- Art: Bob Eggleton
+["Island (APAC Clear)"]		= { "Island"	, { false       ,"APAC Clear" ,false      ,false       ,false         ,false      ,false  } },-- Art: Rob Alexander
+["Island (APAC Red)"]		= { "Island"	, { false       ,false        ,"APAC Red" ,false       ,false         ,false      ,false  } },-- Art: Edward P. Beard Jr.
+["Island (Euro Blue)"]		= { "Island"	, { false       ,false        ,false      ,"Euro Blue" ,false         ,false      ,false  } },-- Danish Island, Scandinavia
+["Island (Euro Purple)"]	= { "Island"	, { false       ,false        ,false      ,false       ,"Euro Purple" ,false      ,false  } },-- White Cliffs of Dover, UK
+["Island (Euro Red)"]		= { "Island"	, { false       ,false        ,false      ,false       ,false         ,"Euro Red" ,false  } },-- Venezia, Italy
+["Island (Guru)"]			= { "Island"	, { false       ,false        ,false      ,false       ,false         ,false      ,"Guru" } },-- 
+["Swamp (APAC Blue)"]		= { "Swamp"		, { "APAC Blue" ,false        ,false      ,false       ,false         ,false      ,false  } },-- Art: Ron Spears
+["Swamp (APAC Clear)"]		= { "Swamp"		, { false       ,"APAC Clear" ,false      ,false       ,false         ,false      ,false  } },-- Art: Ron Spears
+["Swamp (APAC Red)"]		= { "Swamp"		, { false       ,false        ,"APAC Red" ,false       ,false         ,false      ,false  } },-- Art: Edward P. Beard Jr.
+["Swamp (Euro Blue)"]		= { "Swamp"		, { false       ,false        ,false      ,"Euro Blue" ,false         ,false      ,false  } },-- Ardennes Fagnes, Belgium
+["Swamp (Euro Purple)"]		= { "Swamp"		, { false       ,false        ,false      ,false       ,"Euro Purple" ,false      ,false  } },-- Camargue, France
+["Swamp (Euro Red)"]		= { "Swamp"		, { false       ,false        ,false      ,false       ,false         ,"Euro Red" ,false  } },-- Lake District National Park, UK
+["Swamp (Guru)"]			= { "Swamp"		, { false       ,false        ,false      ,false       ,false         ,false      ,"Guru" } },-- 
+["Mountain (APAC Blue)"]	= { "Mountain"	, { "APAC Blue" ,false        ,false      ,false       ,false         ,false      ,false  } },-- Art: Rebecca Guay
+["Mountain (APAC Clear)"]	= { "Mountain"	, { false       ,"APAC Clear" ,false      ,false       ,false         ,false      ,false  } },-- Art: Edward P. Beard Jr.
+["Mountain (APAC Red)"]		= { "Mountain"	, { false       ,false        ,"APAC Red" ,false       ,false         ,false      ,false  } },-- Art: Heather Hudson
+["Mountain (Euro Blue)"]	= { "Mountain"	, { false       ,false        ,false      ,"Euro Blue" ,false         ,false      ,false  } },-- Vesuvio, Italy
+["Mountain (Euro Purple)"]	= { "Mountain"	, { false       ,false        ,false      ,false       ,"Euro Purple" ,false      ,false  } },-- Mont Blanc, France
+["Mountain (Euro Red)"]		= { "Mountain"	, { false       ,false        ,false      ,false       ,false         ,"Euro Red" ,false  } },-- Pyrenees, Spain
+["Mountain (Guru)"]			= { "Mountain"	, { false       ,false        ,false      ,false       ,false         ,false      ,"Guru" } },-- 
+["Forest (APAC Blue)"]		= { "Forest"	, { "APAC Blue" ,false        ,false      ,false       ,false         ,false      ,false  } },-- Art: Christopher Rush
+["Forest (APAC Clear)"]		= { "Forest"	, { false       ,"APAC Clear" ,false      ,false       ,false         ,false      ,false  } },-- Art: Edward P. Beard Jr.
+["Forest (APAC Red)"]		= { "Forest"	, { false       ,false        ,"APAC Red" ,false       ,false         ,false      ,false  } },-- Art: Pete Venters
+["Forest (Euro Blue)"]		= { "Forest"	, { false       ,false        ,false      ,"Euro Blue" ,false         ,false      ,false  } },-- Schwarzwald, Germany
+["Forest (Euro Purple)"]	= { "Forest"	, { false       ,false        ,false      ,false       ,"Euro Purple" ,false      ,false  } },-- Nottingham Forest, UK
+["Forest (Euro Red)"]		= { "Forest"	, { false       ,false        ,false      ,false       ,false         ,"Euro Red" ,false  } },-- Brocéliande, France
+["Forest (Guru)"]			= { "Forest"	, { false       ,false        ,false      ,false       ,false         ,false      ,"Guru" } },-- 
 	},
 },
 [26] = { name="Magic Game Day",
@@ -5876,7 +5876,7 @@ Promos = nil,
 },
 [15] = { name="Convention Promos",
 	foilonly=true,
-	cardcount={ reg=11, tok=0, nontrad=0, repl=2 }, 
+	cardcount={ reg=12, tok=0, nontrad=0, repl=2 }, 
 	variants={
 ["Hurloon Minotaur"]			= { "Hurloon Minotaur"	, { "Replica" } },
 ["Serra Angel"]					= { "Serra Angel"		, { "Replica" } },
@@ -5939,7 +5939,7 @@ Promos = nil,
 },
 [8] = { name="Stores Promos",
 	foilonly=true,
-	cardcount={ reg=10, tok=0, nontrad=0, repl=0 }, 
+	cardcount={ reg=13, tok=0, nontrad=0, repl=0 }, -- 1 ITA, 3 JPN
 },
 [7] = { name="Magazine Inserts",
 	foil="n",

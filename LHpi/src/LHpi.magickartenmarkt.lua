@@ -842,6 +842,44 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 		elseif card.pluginData.set == "Foreign White Bordered" then
 			card.lang = { [3]="GER", [4]="FRA", [5]="ITA" }
 		end
+	elseif setid == 53 then -- Holiday Gift Box Promos
+		if card.pluginData.set == "Promos" then
+			if card.name == "Dreg Mangler"
+			or card.name == "Karametra's Acolyte"
+			then
+			else
+				card.name = card.name .. " (DROP not Holiday Gift Box Promos)"
+			end
+		elseif card.pluginData.set == "Khans of Tarkir: Promos" then
+			if card.name ~= "Sultai Charm" then
+				card.name = card.name .. "(DROP not Holiday Gift Box Promos)"
+			end
+		end
+	elseif setid == 52 then -- Intro Pack Promos
+		if card.pluginData.set == "Khans of Tarkir: Promos" and
+			( card.name == "Ankle Shanker (Version 2)"
+			or card.name == "Avalanche Tusker (Version 2)"
+			or card.name == "Ivorytusk Fortress (Version 2)"
+			or card.name == "Rakshasa Vizier (Version 2)"
+			or card.name == "Sage of the Inward Eye (Version 2)"
+		) then
+		elseif card.pluginData.set == "Fate Reforged: Promos" and
+			( card.name == "Archfiend of Depravity (Version 2)"
+			or card.name == "Dragonscale General (Version 2)"
+			or card.name == "Flamerush Rider (Version 2)"
+			or card.name == "Sage-Eye Avengers (Version 2)"
+			--or card.name == "Temur War Shaman (Version 2)"
+		) then
+		elseif card.pluginData.set == "Dragons Of Tarkir: Promos" and
+			( card.name == "Arashin Sovereign (Version 2)"
+			or card.name == "Boltwing Marauder (Version 2)"
+			or card.name == "Harbinger of the Hunt (Version 2)"
+			or card.name == "Necromaster Dragon (Version 2)"
+			or card.name == "Pristine Skywise (Version 2)"
+		) then
+		else
+			card.name = card.name .. " (DROP not Intro Pack Promos)"
+		end
 	elseif setid ==  50 then -- Full Box Promotion
 		if card.pluginData.set == "Promos" then
 			if card.name == "Ruthless Cullblade"
@@ -992,6 +1030,15 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 			or card.name == "Axe of the Warmonger"
 			or card.name == "Bow of the Hunter"
 			then
+			else
+				card.name = card.name .. " (DROP not Prerelease Promos)"
+			end
+		elseif card.pluginData.set == "Khans of Tarkir: Promos"
+		or card.pluginData.set == "Fate Reforged: Promos"
+		or card.pluginData.set == "Dragons Of Tarkir: Promos"
+		or card.pluginData.set == "Magic Origins: Promos"
+		then
+			if string.find(card.name,"%(Version %d%)") then
 			else
 				card.name = card.name .. " (DROP not Prerelease Promos)"
 			end
@@ -1446,7 +1493,6 @@ site.sets = {
 [740]={id=740, lang={ "ENG" }, fruc={ true }, url="Duel%20Decks:%20Elves%20vs.%20Goblins"},--Duel Decks: Elves vs. Goblins
 [675]={id=675, lang={ "ENG",[3]="GER",[5]="ITA" }, fruc={ true }, url="Coldsnap%20Theme%20Decks"},--Coldsnap Theme Decks
 [636]={id=636, lang={ [7]="SPA" }, fruc={ true }, url="Salvat-Hachette%202011"},--Salvat-Hachette 2011
---TODO [635] Data.variants, site.namereplace
 [635]={id=635, lang={ [4]="FRA",[5]="ITA",[7]="SPA" }, fruc={ true }, url="Salvat-Hachette"},--Salvat Magic Encyclopedia
 [600]={id=600, lang={ "ENG" }, fruc={ true }, url="Unhinged"},--Unhinged
 [490]={id=490, lang={ "ENG" }, fruc={ true }, url="Deckmasters"},--Deckmasters
@@ -1474,7 +1520,7 @@ site.sets = {
 [70] ={id= 70, lang={ "ENG" }, fruc={ true }, url="Vanguard"},--Vanguard
 [69] ={id= 69, lang={ "ENG" }, fruc={ true }, url="Oversized%20Box%20Toppers"},--Oversized Box Toppers
 -- promosets
-[55] ={id= 55, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Ugin%27s%20Fate%20Promos"},--Ugin's Fate Promos
+[55] ={id= 55, lang={ "ENG" }, fruc={ true }, url="Ugin%27s%20Fate%20Promos"},--Ugin's Fate Promos
 [53] ={id= 53, lang={ "ENG" }, fruc={ true }, url={ --Holiday Gift Box Promos
 											"Promos", -- "Dreg Mangler", "Karametra’s Acolyte"
 											"Khans%20of%20Tarkir:%20Promos",-- "Sultai Charm"
@@ -1515,7 +1561,7 @@ site.sets = {
 											"APAC%20Lands",
 											"Euro%20Lands",
 											"Guru%20Lands",
-											"Promos", -- "Magic Guru" (not in set, but if anywhere, this would where it belonged
+											--"Promos", -- "Magic Guru" (not in set, but if anywhere, this would where it belonged
 											} },
 [26] ={id= 26, lang={ "ENG",[2]="RUS",[3]="GER",[7]="SPA" }, fruc={ true }, url={ -- "Magic Game Day"
 											"Game%20Day%20Promos", -- Game Day Promos
@@ -1539,7 +1585,8 @@ site.sets = {
 											"Fate%20Reforged:%20Promos",--Fate Reforged: Promos
 											"Khans%20of%20Tarkir:%20Promos",--Khans of Tarkir: Promos
 											"Oversized%206x9%20Promos", -- Oversized 6x9 Promos ("Garruk the Slayer (oversized)")
-											"DCI%20Promos", -- DCI Promos ("Griselbrand")
+--FIXME DCI Griselbrand is GP? Prerelease Griselbrand is oversized!
+--	no griselbrand here						"DCI%20Promos", -- DCI Promos ("Griselbrand")
 											"Theros" , -- Theros (5 Hero Cards)
 											"Born%20of%20the%20Gods", -- Born of the Gods (5 Hero Cards)
 											"Journey%20into%20Nyx", -- Journey into Nyx (5 Hero Cards)
@@ -2592,6 +2639,26 @@ site.namereplace = {
 ["Two-Headed Dragon (1)"]		= "Two-Headed Dragon (8ED)", 
 ["Two-Headed Dragon (2)"]		= "Two-Headed Dragon (PRM)", 
 },
+[53] = { -- Holiday Gift Box Promos
+["Karametra's Acolyte"]			= "Karametra’s Acolyte",
+},
+[52] = { -- Intro Pack Promos
+["Ankle Shanker (2)"]			= "Ankle Shanker",-- KTK
+["Avalanche Tusker (2)"]		= "Avalanche Tusker",-- KTK
+["Ivorytusk Fortress (2)"]		= "Ivorytusk Fortress",-- KTK
+["Rakshasa Vizier (2)"]			= "Rakshasa Vizier",-- KTK
+["Sage of the Inward Eye (2)"]	= "Sage of the Inward Eye",-- KTK
+["Archfiend of Depravity (2)"]	= "Archfiend of Depravity",-- FRF
+["Dragonscale General (2)"]		= "Dragonscale General",-- FRF
+["Flamerush Rider (2)"]			= "Flamerush Rider",-- FRF
+["Sage-Eye Avengers (2)"]		= "Sage-Eye Avengers",-- FRF
+["Temur War Shaman (2)"]		= "Temur War Shaman",-- FRF
+["Arashin Sovereign (2)"]		= "Arashin Sovereign",-- DTK
+["Boltwing Marauder (2)"]		= "Boltwing Marauder",-- DTK
+["Harbinger of the Hunt (2)"]	= "Harbinger of the Hunt",-- DTK
+["Necromaster Dragon (2)"]		= "Necromaster Dragon",-- DTK
+["Pristine Skywise (2)"]		= "Pristine Skywise",-- DTK
+},
 [45] = { -- Magic Premiere Shop Promos
 ["Plains (7)"]		= "Plains (ALA)",
 ["Plains (10)"]		= "Plains (ISD)",
@@ -2644,7 +2711,7 @@ site.namereplace = {
 ["Forest (3)"]		= "Forest (Selesnya)",
 ["Forest (4)"]		= "Forest (Simic)",
 },
-[40] = {
+[40] = {-- Arena/Coloseo League
 ["Plains (1)"]		= "Plains (1996)",
 ["Plains (2)"]		= "Plains (1999)",
 ["Plains (3)"]		= "Plains (2000)",
@@ -2726,33 +2793,33 @@ site.namereplace = {
 ["Soldier Token (1)"]						= "Soldier Token (GTC)",-- RW 1/1
 },
 [27] = { -- Alternate Art Lands
-["Plains (1) (APAC)"]	= "Plains (APAC Red)",
-["Plains (2) (APAC)"]	= "Plains (APAC Blue)",
-["Plains (3) (APAC)"]	= "Plains (APAC Clear)",
-["Island (1) (APAC)"]	= "Island (APAC Red)",
-["Island (2) (APAC)"]	= "Island (APAC Blue)",
-["Island (3) (APAC)"]	= "Island (APAC Clear)",
-["Swamp (1) (APAC)"]	= "Swamp (APAC Red)",
-["Swamp (2) (APAC)"]	= "Swamp (APAC Blue)",
-["Swamp (3) (APAC)"]	= "Swamp (APAC Clear)",
-["Mountain (1) (APAC)"]	= "Mountain (APAC Red)",
-["Mountain (2) (APAC)"]	= "Mountain (APAC Blue)",
-["Mountain (3) (APAC)"]	= "Mountain (APAC Clear)",
-["Forest (1) (APAC)"]	= "Forest (APAC Red)",
-["Forest (2) (APAC)"]	= "Forest (APAC Blue)",
-["Forest (3) (APAC)"]	= "Forest (APAC Clear)",
-["Plains (1) (Euro)"]	= "Plains (Euro Blue)",
-["Plains (2) (Euro)"]	= "Plains (Euro Red)",
-["Plains (3) (Euro)"]	= "Plains (Euro Purple)",
-["Island (1) (Euro)"]	= "Island (Euro Blue)",
-["Island (2) (Euro)"]	= "Island (Euro Red)",
-["Island (3) (Euro)"]	= "Island (Euro Purple)",
-["Swamp (1) (Euro)"]	= "Swamp (Euro Blue)",
-["Swamp (2) (Euro)"]	= "Swamp (Euro Red)",
-["Swamp (3) (Euro)"]	= "Swamp (Euro Purple)",
-["Mountain (1) (Euro)"]	= "Mountain (Euro Blue)",
-["Mountain (2) (Euro)"]	= "Mountain (Euro Red)",
-["Mountain (3) (Euro)"]	= "Mountain (Euro Purple)",
+["Plains (R1) (APAC)"]	= "Plains (APAC Red)",
+["Plains (B1) (APAC)"]	= "Plains (APAC Blue)",
+["Plains (C1) (APAC)"]	= "Plains (APAC Clear)",
+["Island (R2) (APAC)"]	= "Island (APAC Red)",
+["Island (B2) (APAC)"]	= "Island (APAC Blue)",
+["Island (C2) (APAC)"]	= "Island (APAC Clear)",
+["Swamp (R3) (APAC)"]	= "Swamp (APAC Red)",
+["Swamp (B3) (APAC)"]	= "Swamp (APAC Blue)",
+["Swamp (C3) (APAC)"]	= "Swamp (APAC Clear)",
+["Mountain (R4) (APAC)"]= "Mountain (APAC Red)",
+["Mountain (B4) (APAC)"]= "Mountain (APAC Blue)",
+["Mountain (C4) (APAC)"]= "Mountain (APAC Clear)",
+["Forest (R5) (APAC)"]	= "Forest (APAC Red)",
+["Forest (B5) (APAC)"]	= "Forest (APAC Blue)",
+["Forest (C5) (APAC)"]	= "Forest (APAC Clear)",
+["Plains (10) (Euro)"]	= "Plains (Euro Blue)",
+["Plains (11) (Euro)"]	= "Plains (Euro Red)",
+["Plains (12) (Euro)"]	= "Plains (Euro Purple)",
+["Island (4) (Euro)"]	= "Island (Euro Blue)",
+["Island (5) (Euro)"]	= "Island (Euro Red)",
+["Island (6) (Euro)"]	= "Island (Euro Purple)",
+["Swamp (13) (Euro)"]	= "Swamp (Euro Blue)",
+["Swamp (14) (Euro)"]	= "Swamp (Euro Red)",
+["Swamp (15) (Euro)"]	= "Swamp (Euro Purple)",
+["Mountain (7) (Euro)"]	= "Mountain (Euro Blue)",
+["Mountain (8) (Euro)"]	= "Mountain (Euro Red)",
+["Mountain (9) (Euro)"]	= "Mountain (Euro Purple)",
 ["Forest (1) (Euro)"]	= "Forest (Euro Blue)",
 ["Forest (2) (Euro)"]	= "Forest (Euro Red)",
 ["Forest (3) (Euro)"]	= "Forest (Euro Purple)",
@@ -2989,6 +3056,7 @@ site.settweak = {
 ["Kor Skyfisher"]			= "Convention Promos",
 ["Merfolk Mesmerist"]		= "Convention Promos",
 ["Steward of Valeron"]		= "Convention Promos",
+--FIXME is this the GP Griselbrand? Prerelease is oversized...
 ["Griselbrand"]				= "Prerelease Promos",
 ["Counterspell"]			= "DCI Legend Membership",
 ["Incinerate"]				= "DCI Legend Membership",
@@ -2997,6 +3065,8 @@ site.settweak = {
 ["Relentless Rats"]			= "Stores Promos",--ITA
 ["Serra Angel"]				= "Stores Promos",
 ["Underworld Dreams"]		= "Two-Headed Giant Promo",
+["Thalia, Guardian of Thraben"]	= "WMCQ",
+["Liliana of the Veil"]		= "Regional PTQ",
 },
 [23] = { -- Gateway
 ["Naya Sojourners"]				= "Magic Game Day",
@@ -3195,29 +3265,32 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [225] = { dropped=4 },-- 2 inserts
 [201] = { pset={ [5]=69 } },
 -- Promos
-[50]  = { pset={ [3]=19,[4]=1,[6]=1,[7]=5;[8]=4 }, failed={ [3]=3,[4]=21,[6]=21,[7]=17;[8]=20 }, dropped=46 },
-[45]  = { pset={ [8]=LHpi.Data.sets[45].cardcount.reg-1 } },-- "Jaya Ballard, Task Mage" missing
-[43]  = { dropped= 60 },
-[42]  = { dropped= 130 },
+[53]  = { dropped=130 },
+[52]  = { pset={ LHpi.Data.sets[52].cardcount.reg-1 }, namereplaced=15-1 },-- "Temur War Shaman (Version 2)" missing
+[50]  = { pset={ [3]=19,[4]=1,[6]=1,[7]=5;[8]=4 }, failed={ [3]=3,[4]=21,[6]=21,[7]=17;[8]=20 }, dropped=40 },
+[45]  = { pset={ 0,[8]=LHpi.Data.sets[45].cardcount.reg-1 } },-- "Jaya Ballard, Task Mage" missing
+[43]  = { dropped=22 },
+[42]  = { dropped=130 },
+[41]  = { failed={ 1 } },-- "Mishra's Toy Workshop" not in MA
 [40]  = { pset={ LHpi.Data.sets[40].cardcount.all,[3]=LHpi.Data.sets[40].cardcount.tok,[8]=6 }, failed={ 4,[3]=170,[8]=169 }, dropped=62 },--Mad Auntie only JAP, missing Minotaur Token, 3 of 3 Soldier Tokens
-[33]  = { pset={ 3 }, dropped=106 },-- all but 3 cards are one-of-a-kind
-[32]  = { pset={ LHpi.Data.sets[32].cardcount.reg,[8]=1 }, failed={ [8]=LHpi.Data.sets[32].cardcount.reg-1 }, dropped=52 },
-[31]  = { dropped=42 },
-[30]  = { pset={ [2]=9,[3]=35,[5]=1,[7]=6 }, failed={ 3,[2]=167,[3]=141,[5]=175,[7]=170 } },--3 not yet in MA
-[27]  = { failed={ dup=1 }, dupfail= { "ENG" }, dropped=48 },-- "Magic Guru" not in MA
-[26]  = { pset={ [2]=2,[3]=24,[7]=4 }, failed={ [2]=48,[3]=26,[7]=46 }, dropped=1540 },
+[33]  = { pset={ 3 }, dropped=62 },-- all but 3 cards are one-of-a-kind
+[32]  = { pset={ LHpi.Data.sets[32].cardcount.reg,[8]=1 }, failed={ [8]=LHpi.Data.sets[32].cardcount.reg-1 }, dropped=24 },
+[31]  = { dropped=24 },
+[30]  = { pset={ [2]=9,[3]=35,[5]=1,[7]=6 }, failed={ 1,[2]=167,[3]=141,[5]=175,[7]=170 } },--1 not yet in MA
+--[27]  = { failed={ dup=1 }, dupfail= { "ENG" }, dropped=48 },-- "Magic Guru" not in MA
+[26]  = { pset={ [2]=9,[3]=24,[7]=4 }, failed={ [2]=56-9,[3]=56-24,[7]=56-4 }, dropped=1574 },
 [25]  = { pset={ LHpi.Data.sets[25].cardcount.reg,[3]=0,[17]=1 }, failed={ 5,[3]=92 }, dropped=50 },-- 5 FullArt foil Basic lands not in MA
 [23]  = { pset={ [3]=39-2,[4]=12,[5]=11,[7]=11,[8]=4 }, failed={ [3]=27,[4]=52,[5]=53,[7]=53,[8]=60 }, dropped=6 },-- "Fling (50 DCI)","Sylvan Ranger (51 DCI)" are version "1" in ENG, but "" in GER
 [22]  = { pset={ [2]=6,[3]=50,[7]=14,[12]=1,[13]=1,[14]=1,[15]=1,[16]=1 }, failed={ 1,[2]=140,[3]=96,[7]=132 }, dropped=1538 },-- Laquatus's Champion only RUS
 [21]  = { pset={ [2]=3,[3]=29,[4]=1,[5]=1,[7]=7,[8]=1 }, failed={ 1,[2]=51,[3]=25,[4]=53,[5]=53,[7]=47,[8]=53 }, dropped=1772 },-- Shivan Dragon only RUS
-[15]  = { pset={ [3]=1,[4]=2,[5]=3,[7]=2,[8]=2 }, failed={ 7,[3]=19,[4]=18,[5]=17,[7]=18,[8]=19 }, dropped=290 },--6 SanDiego'14(not in MA);5SanDiego'13,2 oversized Caravan Tours
+[15]  = { pset={ [3]=1,[4]=2,[5]=3,[7]=2,[8]=2 }, failed={ 11,[3]=19,[4]=18,[5]=17,[7]=18,[8]=19 }, dropped=290 },--5 SanDiego'15(not in MA);6 SanDiego'14(not in MA);5SanDiego'13,2 oversized Caravan Tours
 [10]  = { pset= { 10+13+5,[8]=11 }, failed={ 11,[8]=21 } },-- 10 JSS, 13 JSSP,11 JJTP, 5 MSSP; missing 5 APACJS (MA has ENG 32, JPN 11)
 [9]   = { pset={ [2]=3,[3]=12,[4]=3,[7]=3 }, failed={ [2]=12,[3]=3,[4]=12,[7]=12 }, dropped=188 },-- not all nonENG in MA
-[8]	  = { pset={ [5]=1,[8]=3 }, failed={ 2,[5]=0,[8]=0 }, dropped=102 },
-[7]   = { pset={ [3]=1,[8]=4-2 }, failed={ 4 }, dropped=224 },-- fail 4 Lifecounter cards; MA has JPN 4 Gotta Magazine, GER 1 Kartefakt
-[6]   = { pset={ [8]=7 }, dropped=232 },
-[5]   = { pset={ [4]=5,[5]=3,[6]=2,[7]=5 }, failed={ [4]=1,[5]=3,[6]=4,[7]=1 }, dropped=60 },
-[2]   = { dropped=2*29 },
+[8]	  = { pset={ [5]=1,[8]=3 }, failed={ [5]=12,[8]=12 }, dropped=58 },
+[7]   = { pset={ [3]=1,[8]=4-2 }, failed={ 4 }, dropped=218 },-- fail 4 Lifecounter cards; MA has JPN 4 Gotta Magazine, GER 1 Kartefakt
+[6]   = { pset={ [8]=7 }, dropped=226 },
+[5]   = { pset={ [4]=5,[5]=3,[6]=2,[7]=5 }, failed={ [4]=1,[5]=3,[6]=4,[7]=1 }, dropped=22 },
+[2]   = { dropped=20 },
 
 	}--end table site.expected
 	-- I'm too lazy to fill in site.expected myself, let the script do it ;-)
