@@ -40,6 +40,12 @@ deprecated dummy.loadlibonly and dummy.loadscript
 dummy.mergetables no longer changes param #table teins
 update helper functions ouput to log instead od stdout 
 ma.GetUrl now uses luasockets instead of returning nil
+
+merged back into mkm branch
+
+can run as helper to simply define ma namespace and functions
+ma.GetFile and ma.PutFile only print if DEBUG
+
 ]]
 
 --[[- "main" function called by Magic Album; just display error and return.
@@ -101,7 +107,9 @@ end
 -- @param #string filepath
 -- @return #string file OR nil instead on error
 function ma.GetFile(filepath)
-	print(string.format("ma.GetFile(%s)", filepath) )
+	if DEBUG then
+		print(string.format("ma.GetFile(%s)", filepath) )
+	end
 	local handle,err = io.open(filepath,"r")
 	if err then print("GetFile error: " .. tostring(err)) end
 	local file = nil
@@ -128,8 +136,10 @@ end--function ma.GetFile
 -- @param #string data
 -- @param #number append nil or 0 for overwrite
 function ma.PutFile(filepath, data, append)
-	if not string.find(filepath,"log") then
-		print(string.format("ma.PutFile(%s ,DATA, append=%q)",filepath, tostring(append) ) )
+	if DEBUG then
+		if not string.find(filepath,"log") then
+			print(string.format("ma.PutFile(%s ,DATA, append=%q)",filepath, tostring(append) ) )
+		end
 	end
 	local a = append or 0
 	local handle,err
@@ -846,7 +856,10 @@ dummy.coresets = {
 
 @function [parent=#global] main
 ]]
-function main()
+function main(mode)
+	if mode == "helper" then
+		return("dummyMA running as helper. ma namespace and dummy implementations are now available.")
+	end
 	print("dummy says: Hello " .. _VERSION .. "!")
 	local t1 = os.clock()
 	--- global working directory to allow operation outside of MA\Prices hierarchy
@@ -873,7 +886,8 @@ function main()
 --		DEBUGVARIANTS = true,--default false
 --		SAVETABLE=true,--default false
 --		DEBUG = true,--default false
---		OFFLINE = true,--default false
+		OFFLINE = true,--default false
+--		OFFLINE = false,--scripts should be set to true unless preparing for release
 	}
 	dummy.forceEnv()
 
@@ -888,15 +902,16 @@ function main()
 		[818] = "Dragons of Tarkir";
 		[816] = "Fate Reforged";
 		[813] = "Khans of Tarkir";
-	 	[822] = "Magic Origins"; 
+		[819] = "Modern Masters 2015",
+		[822] = "Magic Origins"; 
 	 	}
 	local importsets = standard
 --	local importsets = { [0] = "fakeset"; }
---	local importsets = { [822]="some set" }
+--	local importsets = { [635]="some set" }
 --	local importsets = { [220]="foo";[800]="bar";[0]="baz"; }
 --	local importsets = dummy.coresets
 --	local importsets = dummy.expansionsets
---	local importsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
+	local importsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 	
 	local scripts={
 		[0]={name="lib\\LHpi.sitescriptTemplate-v2.15.6.13.lua",savepath="."},
@@ -907,8 +922,8 @@ function main()
 		[5]={name="LHpi.trader-onlineDE.lua",savepath=mapath.."Prices\\LHpi.trader-onlineDE\\"},
 		[6]={name="LHpi.tcgplayerPriceGuide.lua",savepath=mapath.."Prices\\LHpi.tcgplayerPriceGuide\\"},
 		[7]={name="LHpi.mtgprice.com.lua",savepath=mapath.."Prices\\LHpi.mtgprice.com\\"},
-	--	[8]={name="LHpi.magickartenmarkt.lua",savepath=mapath.."Prices\\LHpi.magickartenmarkt\\"},
-	--	[9]={name="LHpi.mkm-helper.lua",savepath=mapath.."Prices\\LHpi.magickartenmarkt\\"},
+--		[8]={name="LHpi.magickartenmarkt.lua",savepath=mapath.."Prices\\LHpi.magickartenmarkt\\"},
+--		[9]={name="LHpi.mkm-helper.lua",savepath=mapath.."Prices\\LHpi.magickartenmarkt\\"},
 	}
 	
 	-- select a predefined script to be tested
@@ -931,10 +946,6 @@ function main()
 	dummy.forceEnv(dummy.env)
 	print("dummy says: script loaded.")
 	
-	-- now try to break the script :-)
-	--LHpi.DoImport(importfoil, importlangs, importsets)
-	ImportPrice( importfoil, importlangs, importsets )
-
 	-- utility functions from dummy:
 	--only run sitescript update helpers
 	if site.Initialize then
@@ -945,6 +956,10 @@ function main()
 		dummy.CompareSiteSets()	
 	end
 	
+	-- now try to break the script :-)
+	--LHpi.DoImport(importfoil, importlangs, importsets)
+	ImportPrice( importfoil, importlangs, importsets )
+
 	-- demo LHpi helper functions:
 --	print(LHpi.Tostring( { ["this"]=1, is=2, [3]="a", ["table"]="string" } ))
 --	print(LHpi.ByteRep("Zwölffüßler"))
@@ -973,6 +988,7 @@ function main()
 	return "dummy says: Goodbye lua!"
 end--main()
 
-local ret = main()
+local dummymode = dummymode or nil
+local ret = main(dummymode)
 print(tostring(ret))
 --EOF
