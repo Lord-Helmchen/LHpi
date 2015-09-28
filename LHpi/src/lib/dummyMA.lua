@@ -25,27 +25,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-new	dummy.CompareDummySets(mapath,libver)
-new	dummy.CompareDataSets(mapath,libver,dataver)
-new dummy.CompareSiteSets (moved from LHpi.magickartenmarkt.lua)
-new dummy.ListUnknownUrls(expansions,missing,file) (moved from LHpi.mkm-helper.lua)
-error handling in ma.GetFile and ma.Putfile
-for libver > 2.14 and Lua 5.2, use dofile instead of homemade loader
-CompareDataSets compares with dummy's set tales instead of Database/Sets.txt
-use global workdir as introduced in 2.15
-added 52,53,55,814,815,816,817,818,819,820,821
-fixed dummy.forceEnv
-fixed savepath handling
-deprecated dummy.loadlibonly and dummy.loadscript
-dummy.mergetables no longer changes param #table teins
-update helper functions ouput to log instead od stdout 
-ma.GetUrl now uses luasockets instead of returning nil
-
-merged back into mkm branch
-
 can run as helper to simply define ma namespace and functions
 ma.GetFile and ma.PutFile only print if DEBUG
-
+new 825,823,824,826
 ]]
 
 --[[- "main" function called by Magic Album; just display error and return.
@@ -690,6 +672,9 @@ dummy.promosets = {
 
 --- @field [parent=#dummy] #table specialsets
 dummy.specialsets = {
+ [826] = "Zendikar Expeditions";
+ [824] = "Duel Decks: Zendikar vs. Eldrazi";
+ [823] = "From the Vault: Angels";
  [821] = "Challenge Deck: Defeat a God";
  [820] = "Duel Decks: Elspeth vs. Kiora";
  [819] = "Modern Masters 2015 Edition";
@@ -758,6 +743,7 @@ dummy.specialsets = {
 }
 --- @field [parent=#dummy] #table expansionsets
 dummy.expansionsets = {
+ [825] = "Battle for Zendikar";
  [818] = "Dragons of Tarkir";
  [816] = "Fate Reforged";
  [813] = "Khans of Tarkir";
@@ -866,7 +852,7 @@ function main(mode)
 	-- @field [parent=#global] workdir
 	workdir="src\\"
 	local libver=2.15
-	local dataver=6
+	local dataver=7
 	
 	--don't keep a seperate dev savepath, though
 	mapath = "..\\..\\..\\Magic Album\\"
@@ -895,19 +881,16 @@ function main(mode)
 	local importlangs = dummy.alllangs
 --	local importlangs = { [1] = "eng" }
 	local standard = {
-	 	[800] = "Theros";
-	 	[802] = "Born of the Gods";
-	 	[806] = "Journey into Nyx";
-	 	[808] = "Magic 2015";
 		[818] = "Dragons of Tarkir";
 		[816] = "Fate Reforged";
 		[813] = "Khans of Tarkir";
 		[819] = "Modern Masters 2015",
 		[822] = "Magic Origins"; 
+		[825] = "Battle for Zendikar";
 	 	}
 	local importsets = standard
 --	local importsets = { [0] = "fakeset"; }
---	local importsets = { [635]="some set" }
+--	local importsets = { [22]="some set" }
 --	local importsets = { [220]="foo";[800]="bar";[0]="baz"; }
 --	local importsets = dummy.coresets
 --	local importsets = dummy.expansionsets

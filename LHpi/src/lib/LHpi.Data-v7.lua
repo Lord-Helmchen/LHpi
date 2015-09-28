@@ -28,23 +28,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-v6
-new 52,53,55,814,815,816,817,818,819,820,821,822
-added lang [17]="Phyrexian"
-fixed names for 21,40,814
-variant table for 15,22,25,26,27,33,40,45
-foiltweak table for 22,26,33
-cardcount fixed/updated in 9,105,106,762,791,800,813,816,30,22,21,26
-fixed/updated variants for 43,69,201[ITA],758,764,766,781,787,800,813,22
-commented variants in 180,140,110,100,90,280,230,220,170,260,105,25
-foiltweak fixed/updated in 813
+v7
+new 825,823,824,826
+fixed variants for 822,819,25
+updated cardcount for 822,22
 ]]
-
 
 local Data={}
 ---	data file version
 -- @field [parent=#Data] #string version
-Data.version = "6"
+Data.version = "7"
 
 --[[- "main" function called by Magic Album; just display error and return.
  Called by Magic Album to import prices. Parameters are passed from MA.
@@ -105,33 +98,33 @@ Data.sets = {
 -- @field [parent=#Data.sets] #table Coresets
 Coresets = nil,
 [822] = { name="Magic Origins",
-	cardcount={ reg = 272, tok = 14 },
+	cardcount={ reg = 288, tok = 14 },
 	variants={
 ["Plains"] 						= { "Plains"	, { 1    , 2    , 3    , 4     } },
 ["Island"] 						= { "Island" 	, { 1    , 2    , 3    , 4     } },
 ["Swamp"] 						= { "Swamp"		, { 1    , 2    , 3    , 4     } },
 ["Mountain"] 					= { "Mountain"	, { 1    , 2    , 3    , 4     } },
 ["Forest"] 						= { "Forest" 	, { 1    , 2    , 3    , 4     } },
-["Plains (250)"]				= { "Plains"	, { 1    , false, false, false } }, 
-["Plains (251)"]				= { "Plains"	, { false, 2    , false, false } },
-["Plains (252)"]				= { "Plains"	, { false, false, 3    , false } },
-["Plains (253)"]				= { "Plains"	, { false, false, false, 4     } },
-["Island (254)"]				= { "Island"	, { 1    , false, false, false } },
-["Island (255)"]				= { "Island"	, { false, 2    , false, false } },
-["Island (256)"]				= { "Island"	, { false, false, 3    , false } },
-["Island (257)"]				= { "Island"	, { false, false, false, 4     } },
-["Swamp (258)"]					= { "Swamp"		, { 1    , false, false, false } },
-["Swamp (259)"]					= { "Swamp"		, { false, 2    , false, false } },
-["Swamp (260)"]					= { "Swamp"		, { false, false, 3    , false } },
-["Swamp (261)"]					= { "Swamp"		, { false, false, false, 4     } },
-["Mountain (262)"]				= { "Mountain"	, { 1    , false, false, false } },
-["Mountain (263)"]				= { "Mountain"	, { false, 2    , false, false } },
-["Mountain (264)"]				= { "Mountain"	, { false, false, 3    , false } },
-["Mountain (265)"]				= { "Mountain"	, { false, false, false, 4     } },
-["Forest (266)"]				= { "Forest"	, { 1    , false, false, false } },
-["Forest (267)"]				= { "Forest"	, { false, 2    , false, false } },
-["Forest (268)"]				= { "Forest"	, { false, false, 3    , false } },
-["Forest (269)"]				= { "Forest"	, { false, false, false, 4     } },
+["Plains (253)"]				= { "Plains"	, { 1    , false, false, false } }, 
+["Plains (254)"]				= { "Plains"	, { false, 2    , false, false } },
+["Plains (255)"]				= { "Plains"	, { false, false, 3    , false } },
+["Plains (256)"]				= { "Plains"	, { false, false, false, 4     } },
+["Island (257)"]				= { "Island"	, { 1    , false, false, false } },
+["Island (258)"]				= { "Island"	, { false, 2    , false, false } },
+["Island (259)"]				= { "Island"	, { false, false, 3    , false } },
+["Island (260)"]				= { "Island"	, { false, false, false, 4     } },
+["Swamp (261)"]					= { "Swamp"		, { 1    , false, false, false } },
+["Swamp (262)"]					= { "Swamp"		, { false, 2    , false, false } },
+["Swamp (263)"]					= { "Swamp"		, { false, false, 3    , false } },
+["Swamp (264)"]					= { "Swamp"		, { false, false, false, 4     } },
+["Mountain (265)"]				= { "Mountain"	, { 1    , false, false, false } },
+["Mountain (266)"]				= { "Mountain"	, { false, 2    , false, false } },
+["Mountain (267)"]				= { "Mountain"	, { false, false, 3    , false } },
+["Mountain (268)"]				= { "Mountain"	, { false, false, false, 4     } },
+["Forest (269)"]				= { "Forest"	, { 1    , false, false, false } },
+["Forest (270)"]				= { "Forest"	, { false, 2    , false, false } },
+["Forest (271)"]				= { "Forest"	, { false, false, 3    , false } },
+["Forest (272)"]				= { "Forest"	, { false, false, false, 4     } },
 ["Thopter Token"]				= { "Thopter Token"	, { 1    , 2     } },
 ["Thopter Token (10)"]			= { "Thopter Token"	, { 1    , false } },--Svetlin Velinov
 ["Thopter Token (11)"]			= { "Thopter Token"	, { false, 2     } },--Adam Paquette
@@ -715,6 +708,74 @@ Coresets = nil,
 --- not really a seperate subtable, just a bookmark for quick navigation in eclipse.
 -- @field [parent=#Data.sets] #table Expansions
 Expansions = nil,
+[825] = { name="Battle for Zendikar",
+	cardcount={ reg = 299, tok = 14 },
+	variants={
+	-- (000F) is Full Art, (000) is normal
+["Plains"] 						= { "Plains"	, { 1    , 2    , 3    , 4    , 5    , "1F" , "2F" , "3F" , "4F" , "5F"  } },
+["Island"] 						= { "Island" 	, { 1    , 2    , 3    , 4    , 5    , "1F" , "2F" , "3F" , "4F" , "5F"  } },
+["Swamp"] 						= { "Swamp"		, { 1    , 2    , 3    , 4    , 5    , "1F" , "2F" , "3F" , "4F" , "5F"  } },
+["Mountain"] 					= { "Mountain"	, { 1    , 2    , 3    , 4    , 5    , "1F" , "2F" , "3F" , "4F" , "5F"  } },
+["Forest"] 						= { "Forest" 	, { 1    , 2    , 3    , 4    , 5    , "1F" , "2F" , "3F" , "4F" , "5F"  } },
+["Plains (250)"]				= { "Plains"	, { 1    , false, false, false, false, false, false, false, false, false } },
+["Plains (250F)"]				= { "Plains"	, { false, false, false, false, false, "1F" , false, false, false, false } },
+["Plains (251)"]				= { "Plains"	, { false, 2    , false, false, false, false, false, false, false, false } },
+["Plains (251F)"]				= { "Plains"	, { false, false, false, false, false, false, "2F" , false, false, false } },
+["Plains (252)"]				= { "Plains"	, { false, false, 3    , false, false, false, false, false, false, false } },
+["Plains (252F)"]				= { "Plains"	, { false, false, false, false, false, false, false, "3F" , false, false } },
+["Plains (253)"]				= { "Plains"	, { false, false, false, 4    , false, false, false, false, false, false } },
+["Plains (253F)"]				= { "Plains"	, { false, false, false, false, false, false, false, false, "4F" , false } },
+["Plains (254)"]				= { "Plains"	, { false, false, false, false , 5   , false, false, false ,false, false } },
+["Plains (254F)"]				= { "Plains"	, { false, false, false, false ,false, false, false, false ,false, "5F"  } },
+["Island (255)"]				= { "Island"	, { 1    , false, false, false, false, false, false, false, false, false } },
+["Island (255F)"]				= { "Island"	, { false, false, false, false, false, "1F" , false, false, false, false } },
+["Island (256)"]				= { "Island"	, { false, 2    , false, false, false, false, false, false, false, false } },
+["Island (256F)"]				= { "Island"	, { false, false, false, false, false, false, "2F" , false, false, false } },
+["Island (257)"]				= { "Island"	, { false, false, 3    , false, false, false, false, false, false, false } },
+["Island (257F)"]				= { "Island"	, { false, false, false, false, false, false, false, "3F" , false, false } },
+["Island (258)"]				= { "Island"	, { false, false, false, 4    , false, false, false, false, false, false } },
+["Island (258F)"]				= { "Island"	, { false, false, false, false, false, false, false, false, "4F" , false } },
+["Island (259)"]				= { "Island"	, { false, false, false, false, 5    , false, false, false, false, false } },
+["Island (259F)"]				= { "Island"	, { false, false, false, false ,false, false, false, false ,false, "5F"  } },
+["Swamp (260)"]					= { "Swamp"		, { 1    , false, false, false, false, false, false, false, false, false } },
+["Swamp (260F)"]				= { "Swamp"		, { false, false, false, false, false, "1F" , false, false, false, false } },
+["Swamp (261)"]					= { "Swamp"		, { false, 2    , false, false, false, false, false, false, false, false } },
+["Swamp (261F)"]				= { "Swamp"		, { false, false, false, false, false, false, "2F" , false, false, false } },
+["Swamp (262)"]					= { "Swamp"		, { false, false, 3    , false, false, false, false, false, false, false } },
+["Swamp (262F)"]				= { "Swamp"		, { false, false, false, false, false, false, false, "3F" , false, false } },
+["Swamp (263)"]					= { "Swamp"		, { false, false, false, 4    , false, false, false, false, false, false } },
+["Swamp (263F)"]				= { "Swamp"		, { false, false, false, false, false, false, false, false, "4F" , false } },
+["Swamp (264)"]					= { "Swamp"		, { false, false, false, false, 5    , false, false, false, false, false } },
+["Swamp (264F)"]				= { "Swamp"		, { false, false, false, false ,false, false, false, false ,false, "5F"  } },
+["Mountain (265)"]				= { "Mountain"	, { 1    , false, false, false, false, false, false, false, false, false } },
+["Mountain (265F)"]				= { "Mountain"	, { false, false, false, false, false, "1F" , false, false, false, false } },
+["Mountain (266)"]				= { "Mountain"	, { false, 2    , false, false, false, false, false, false, false, false } },
+["Mountain (266F)"]				= { "Mountain"	, { false, false, false, false, false, false, "2F" , false, false, false } },
+["Mountain (267)"]				= { "Mountain"	, { false, false, 3    , false, false, false, false, false, false, false } },
+["Mountain (267F)"]				= { "Mountain"	, { false, false, false, false, false, false, false, "3F" , false, false } },
+["Mountain (268)"]				= { "Mountain"	, { false, false, false, 4    , false, false, false, false, false, false } },
+["Mountain (268F)"]				= { "Mountain"	, { false, false, false, false, false, false, false, false, "4F" , false } },
+["Mountain (269)"]				= { "Mountain"	, { false, false, false, false, 5    , false, false, false, false, false } },
+["Mountain (269F)"]				= { "Mountain"	, { false, false, false, false ,false, false, false, false ,false, "5F"  } },
+["Forest (270)"]				= { "Forest"	, { 1    , false, false, false, false, false, false, false, false, false } },
+["Forest (270F)"]				= { "Forest"	, { false, false, false, false, false, "1F" , false, false, false, false } },
+["Forest (271)"]				= { "Forest"	, { false, 2    , false, false, false, false, false, false, false, false } },
+["Forest (271F)"]				= { "Forest"	, { false, false, false, false, false, false, "2F" , false, false, false } },
+["Forest (272)"]				= { "Forest"	, { false, false, 3    , false, false, false, false, false, false, false } },
+["Forest (272F)"]				= { "Forest"	, { false, false, false, false, false, false, false, "3F" , false, false } },
+["Forest (273)"]				= { "Forest"	, { false, false, false, 4    , false, false, false, false, false, false } },
+["Forest (273F)"]				= { "Forest"	, { false, false, false, false, false, false, false, false, "4F" , false } },
+["Forest (274)"]				= { "Forest"	, { false, false, false, false, 5    , false, false, false, false, false } },
+["Forest (274F)"]				= { "Forest"	, { false, false, false, false ,false, false, false, false ,false, "5F"  } },
+["Eldrazi Scion Token"]		= { "Eldrazi Scion Token"		, { "1"   , "2"   , "3"   } },
+["Eldrazi Scion Token (2)"]	= { "Eldrazi Scion Token"		, { "1"   , false , false } }, -- art:Izzy
+["Eldrazi Scion Token (3)"]	= { "Eldrazi Scion Token"		, { false , "2"   , false } }, -- art:Winona Nelson
+["Eldrazi Scion Token (4)"]	= { "Eldrazi Scion Token"		, { false , false , "3"   } }, -- art:Svetlin Velinov
+["Elemental Token"]			= { "Elemental Token"		, { 1     , 2     } },
+["Elemental Token (9)"]		= { "Elemental Token"		, { 1     , false } }, -- R
+["Elemental Token (11)"]	= { "Elemental Token"		, { false , 2     } }, -- RG
+	},
+},
 [818] = { name = "Dragons of Tarkir",
 	cardcount = { reg=264, tok=8 },
 	variants={
@@ -2474,6 +2535,45 @@ Expansions = nil,
 --- not really a seperate subtable, just a bookmark for quick navigation in eclipse.
 -- @field [parent=#Data.sets] #table SpecialSets
 SpecialSets = nil,
+[826] = { name="Zendikar Expeditions",
+	foilonly=true,
+	cardcount={ reg=25, tok=0, nontrad=0, repl=0 },
+},
+[824] = { name="Duel Decks: Zendikar vs. Eldrazi",
+	foil="n",
+	cardcount={ reg=75, tok=5, nontrad=0, repl=0 },
+	variants={
+["Plains"] 						= { "Plains"	, { 1    , 2    , 3     } },
+["Island"] 						= { "Island" 	, { 1    , 2    , 3     } },
+["Swamp"] 						= { "Swamp" 	, { 1    , 2    , 3     } },
+["Mountain"] 					= { "Mountain" 	, { 1    , 2    , 3     } },
+["Plains (35)"]					= { "Plains" 	, { 1    , false, false } },
+["Plains (36)"]					= { "Plains" 	, { false, 2    , false } },
+["Plains (37)"]					= { "Plains" 	, { false, false, 3     } },
+["Plains (33)"]					= { "Plains" 	, { false, false, false } },
+["Forest (38)"]					= { "Forest"	, { 1    , false, false } },
+["Forest (39)"]					= { "Forest"	, { false, 2    , false } },
+["Forest (40)"]					= { "Forest"	, { false, false, 3     } },
+["Swamp (70)"]					= { "Swamp"		, { 1    , false, false } },
+["Swamp (71)"]					= { "Swamp"		, { false, 2    , false } },
+["Swamp (72)"]					= { "Swamp"		, { false, false, 3     } },
+["Mountain (73)"]				= { "Mountain"	, { 1    , false, false } },
+["Mountain (74)"]				= { "Mountain"	, { false, 2    , false } },
+["Mountain (75)"]				= { "Mountain"	, { false, false, 3     } },
+["Eldrazi Spawn Token"]			= { "Eldrazi Spawn Token"	, { "1"   , "2"   , "3"   } },
+["Eldrazi Spawn Token (76)"]	= { "Eldrazi Spawn Token"	, { "1"   , false , false } }, -- art:Aleksi Briclot
+["Eldrazi Spawn Token (77)"]	= { "Eldrazi Spawn Token"	, { false , "2"   , false } }, -- art:Véronique Meignaud
+["Eldrazi Spawn Token (78)"]	= { "Eldrazi Spawn Token"	, { false , false , "3"   } }, -- art:Mark Tedin
+	},
+	foiltweak={
+["Avenger of Zendikar"]		= { foil = true},
+["Oblivion Sower"]			= { foil = true},
+	},
+},
+[823] = { name="From the Vault: Angels",
+	foilonly=true,
+	cardcount={ reg=15, tok=0, nontrad=0, repl=0 },
+},
 [821] = { name="Challenge Deck: Defeat a God",
 	foil="n",
 	cardcount={ reg=0, tok=0, nontrad=15, repl=0 },
@@ -2503,7 +2603,13 @@ SpecialSets = nil,
 },
 [819] = { name="Modern Masters 2015 Edition",
 	foil="y",
-	cardcount={ reg=249, tok=0, nontrad=0, repl=0 },
+	cardcount={ reg=249, tok=16, nontrad=0, repl=0 },
+	variants={
+["Eldrazi Spawn Token"]			= { "Eldrazi Spawn Token"	, { 1    , 2    , 3     } },
+["Eldrazi Spawn Token (1)"]		= { "Eldrazi Spawn Token"	, { 1    , false, false } }, -- art:Aleksi Briclot
+["Eldrazi Spawn Token (2)"]		= { "Eldrazi Spawn Token"	, { false, 2    , false } }, -- art:Véronique Meignaud
+["Eldrazi Spawn Token (3)"]		= { "Eldrazi Spawn Token"	, { false, false, 3     } }, -- art:Mark Tedin
+	},
 },
 [817] = { name="Duel Decks: Anthology",
 	foil="n",
@@ -4734,8 +4840,8 @@ Promos = nil,
 ["Vindicate"]					= { "Vindicate"	, { 1     , 2     } },
 ["Vindicate (4)"]				= { "Vindicate"	, { 1     , false } },--2007
 ["Vindicate (7)"]				= { "Vindicate"	, { false , 2     } },--2013
-["Wolf│Make a Positive Mark"]	= { "Wolf"	, { "" } },
-["Wolf│Open New Worlds"]		= { "Wolf"	, { "" } },
+--["Wolf│Make a Positive Mark"]	= { "Wolf"	, { "" } },
+--["Wolf│Open New Worlds"]		= { "Wolf"	, { "" } },
 	},
 	foiltweak={
 ["Centaur Token"]				= { foil = false},
@@ -4784,7 +4890,7 @@ Promos = nil,
 [22] = { name="Prerelease Promos",
 	foil="y",-- "o" might be better to catch most foils, but there are 5 "yes" cards in here...
 	--TODO [22] foiltweak - check whether the 5 "yes" are really "yes", if they're "Only" change to foilonly=true and cut "true" from foiltweak.
-	cardcount={ reg=195, tok=2, nontrad=17, repl=5 }, 
+	cardcount={ reg=235, tok=2, nontrad=17, repl=5 },
 	variants={
 ["Lu Bu, Master-at-Arms"] 				= { "Lu Bu, Master-at-Arms"		, { "April", "July" } },
 ["Lu Bu, Master-at-Arms (April)"] 		= { "Lu Bu, Master-at-Arms"		, { "April", false  } },
