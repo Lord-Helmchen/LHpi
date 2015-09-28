@@ -43,13 +43,15 @@ local standard ={--standard + MM15
 			[818] = "Dragons of Tarkir",
 			[816] =	"Fate Reforged",
 			[813] = "Khans of Tarkir",
-			[808] = "Magic 2015",
-			[806] = "Journey into Nyx",
-			[802] = "Born of the Gods",
-			[800] = "Theros",
+			}
+local newBFZ ={--825,823,824,826
+ [825] = "Battle for Zendikar";
+ [826] = "Zendikar Expeditions";
+ [824] = "Duel Decks: Zendikar vs. Eldrazi";
+ [823] = "From the Vault: Angels";
 			}
 
-MODE = { download=true, sets=standard }
+MODE = { download=true, sets=newBFZ }
 --MODE = { boostervalue=true, sets=fetchedsets }
 
 --  Don't change anything below this line unless you know what you're doing :-) --
@@ -81,7 +83,7 @@ workdir="src\\"
 local libver = "2.15"
 --- revision of the LHpi library datafile to use
 -- @field #string dataver
-local dataver = "6"
+local dataver = "7"
 --- sitescript revision number
 -- @field string scriptver
 local scriptver = "1"

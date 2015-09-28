@@ -134,7 +134,7 @@ OFFLINE = true
 local libver = "2.15"
 --- revision of the LHpi library datafile to use
 -- @field #string dataver
-local dataver = "6"
+local dataver = "7"
 --- sitescript revision number
 -- @field  string scriptver
 local scriptver = "2"
@@ -675,10 +675,13 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 	LHpi.Log( "site.BCDpluginPre got " .. LHpi.Tostring( card ) .. " from set " .. setid ,2)		
 	if "Land" == card.pluginData.rarity
 	then
-		if card.pluginData.collectNr and card.pluginData.set ~= "Zendikar" then
-			card.name = string.gsub( card.name,"%(Version %d+%)","("..card.pluginData.collectNr..")" )
-		else
+		if (not card.pluginData.collectNr)
+		or card.pluginData.set == "Zendikar"
+		or card.pluginData.set == "Battle for Zendikar"
+		then
 			card.name = string.gsub( card.name,"%(Version (%d+)%)","(%1)" )
+		else
+			card.name = string.gsub( card.name,"%(Version %d+%)","("..card.pluginData.collectNr..")" )
 		end
 	elseif "Token" == card.pluginData.rarity then
 		if card.pluginData.collectNr then
@@ -1365,6 +1368,7 @@ site.sets = {
 [100]={id=100, lang={ "ENG" }, fruc={ true }, url="Beta"},--Beta
 [90] ={id= 90, lang={ "ENG" }, fruc={ true }, url="Alpha"},--Alpha
 -- expansionsets
+[825]={id=825, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Battle%20for%20Zendikar"},--Battle for Zendikar
 [818]={id=818, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Dragons%20of%20Tarkir"},--Dragons of Tarkir
 [816]={id=816, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Fate%20Reforged"},--Fate Reforged
 [813]={id=813, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Khans%20of%20Tarkir"},--Khans of Tarkir
@@ -1437,7 +1441,9 @@ site.sets = {
 [901]={id=901, lang={ "ENG" }, fruc={ true }, url={ -- Origins Clash Pack
 											"Clash%20Pack%20Promos",--Clash Pack Promos
 											} },
-[900]={id=900, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="From%20the%20Vault:%20Angels"},--From the Vault: Angels
+[826]={id=826, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Zendikar%20Expeditions"},--Zendikar Expeditions
+[824]={id=824, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel%20Decks:%20Zendikar%20vs.%20Eldrazi"},--Duel Decks: Zendikar vs. Eldrazi
+[823]={id=823, lang={ "ENG" }, fruc={ true }, url="From%20the%20Vault:%20Angels"},--From the Vault: Angels
 [821]={id=821, lang={ "ENG" }, fruc={ true }, url={ -- Challenge Deck: Defeat a God
 											"Journey%20into%20Nyx"
 											} },
@@ -1524,11 +1530,13 @@ site.sets = {
 [53] ={id= 53, lang={ "ENG" }, fruc={ true }, url={ --Holiday Gift Box Promos
 											"Promos", -- "Dreg Mangler", "Karametra’s Acolyte"
 											"Khans%20of%20Tarkir:%20Promos",-- "Sultai Charm"
+											"Battle%20for%20Zendikar:%20Promos",-- "Scythe Leopard"
 											} },
 [52] ={id= 52, lang={ "ENG" }, fruc={ true }, url={ --Intro Pack Promos
 											"Dragons%20Of%20Tarkir:%20Promos",--Dragons Of Tarkir: Promos
 											"Fate%20Reforged:%20Promos",--Fate Reforged: Promos
 											"Khans%20of%20Tarkir:%20Promos",--Khans of Tarkir: Promos
+											"Battle%20for%20Zendikar:%20Promos",-- "Drowner of Hope"
 											} },
 [50] ={id= 50, lang={ "ENG",[3]="GER",[4]="FRA",[6]="POR",[7]="SPA",[8]="JPN" }, fruc={ true }, url={ --Buy a Box Promos
 											"Buy%20a%20Box%20Promos",
@@ -1651,6 +1659,10 @@ site.sets = {
 [2]  ={id=  2, lang={ "ENG" }, fruc={ true }, url="DCI%20Promos"},-- DCI Legend Membership in DCI Promos
 -- unknown
 -- uncomment these while running helper.FindUnknownUrls
+[9990]={id=  0, lang=all, fruc={ true }, url={
+										"MKM%20Products",--MKM Products
+										"MKM%20Series%20Promos",--MKM Series Promos
+										} },
 [9991]={id=  0, lang=all, fruc={ true }, url="Simplified%20Chinese%20Alternate%20Art%20Cards"},--Simplified Chinese Alternate Art Cards
 [9992]={id=  0, lang=all, fruc={ true }, url={
 										"Misprints",--Misprints
@@ -1762,6 +1774,58 @@ site.namereplace = {
 ["Forest (284)"]		= "Forest (1)",
 ["Forest (285)"]		= "Forest (2)",
 ["Forest (286)"]		= "Forest (3)",
+},
+[825] = { --Battle for Zendikar
+["Plains (1)"]			= "Plains (250)",
+["Plains (2)"]			= "Plains (250F)",
+["Plains (3)"]			= "Plains (251)",
+["Plains (4)"]			= "Plains (251F)",
+["Plains (5)"]			= "Plains (252)",
+["Plains (6)"]			= "Plains (252F)",
+["Plains (7)"]			= "Plains (253)",
+["Plains (8)"]			= "Plains (253F)",
+["Plains (9)"]			= "Plains (254)",
+["Plains (10)"]			= "Plains (254F)",
+["Island (1)"]			= "Island (255)",
+["Island (2)"]			= "Island (255F)",
+["Island (3)"]			= "Island (256)",
+["Island (4)"]			= "Island (256F)",
+["Island (5)"]			= "Island (257)",
+["Island (6)"]			= "Island (257F)",
+["Island (7)"]			= "Island (258)",
+["Island (8)"]			= "Island (258F)",
+["Island (9)"]			= "Island (259)",
+["Island (10)"]			= "Island (259F)",
+["Swamp (1)"]			= "Swamp (260)",
+["Swamp (2)"]			= "Swamp (260F)",
+["Swamp (3)"]			= "Swamp (261)",
+["Swamp (4)"]			= "Swamp (261F)",
+["Swamp (5)"]			= "Swamp (262)",
+["Swamp (6)"]			= "Swamp (262F)",
+["Swamp (7)"]			= "Swamp (263)",
+["Swamp (8)"]			= "Swamp (263F)",
+["Swamp (9)"]			= "Swamp (264)",
+["Swamp (10)"]			= "Swamp (264F)",
+["Mountain (1)"]		= "Mountain (265)",
+["Mountain (2)"]		= "Mountain (265F)",
+["Mountain (3)"]		= "Mountain (266)",
+["Mountain (4)"]		= "Mountain (266F)",
+["Mountain (5)"]		= "Mountain (267)",
+["Mountain (6)"]		= "Mountain (267F)",
+["Mountain (7)"]		= "Mountain (268)",
+["Mountain (8)"]		= "Mountain (268F)",
+["Mountain (9)"]		= "Mountain (269)",
+["Mountain (10)"]		= "Mountain (269F)",
+["Forest (1)"]			= "Forest (270)",
+["Forest (2)"]			= "Forest (270F)",
+["Forest (3)"]			= "Forest (271)",
+["Forest (4)"]			= "Forest (271F)",
+["Forest (5)"]			= "Forest (272)",
+["Forest (6)"]			= "Forest (272F)",
+["Forest (7)"]			= "Forest (273)",
+["Forest (8)"]			= "Forest (273F)",
+["Forest (9)"]			= "Forest (274)",
+["Forest (10)"]			= "Forest (274F)",
 },
 [818] = { -- Dragons  of Tarkir
 ["Narset Transcendent Emblem"]				= "Narset Emblem",
@@ -3191,7 +3255,7 @@ function site.SetExpected( importfoil , importlangs , importsets )
 -- @field [parent=#site.expected] #boolean replica
 	replica = true,
 -- Core sets
-[822] = { pset={ dup=LHpi.Data.sets[822].cardcount.reg }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, failed={ 16,dup=LHpi.Data.sets[822].cardcount.tok+16 }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, namereplaced=2, dropped=2 },--273–288 of 272 not in MA, Checklist dropped
+[822] = { pset={ dup=LHpi.Data.sets[822].cardcount.reg }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, failed={ dup=LHpi.Data.sets[822].cardcount.tok }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, namereplaced=2, dropped=2 },--273–288 of 272 not in MA, Checklist dropped
 [808] = { pset={ dup=LHpi.Data.sets[808].cardcount.reg }, duppset={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, failed={ dup=LHpi.Data.sets[808].cardcount.tok }, dupfail={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
 [797] = { pset={ dup=LHpi.Data.sets[797].cardcount.reg }, failed={ dup=LHpi.Data.sets[797].cardcount.tok }, duppset={ [7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
 [788] = { pset={ dup=LHpi.Data.sets[788].cardcount.reg }, failed={ dup=LHpi.Data.sets[788].cardcount.tok }, duppset={ [7]="SPA" }, dupfail={ [7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=28 },-- 14 inserts
@@ -3236,6 +3300,8 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [210] = { pset={ [6]=LHpi.Data.sets[210].cardcount.reg-1 }, failed= { [6]=1 } },-- no POR Timmerian Fiends
 [190] = { pset={ [6]=LHpi.Data.sets[190].cardcount.reg-1 }, failed= { [6]=1 } },-- no POR Amulet of Quoz
 -- special sets
+[826] = { pset={ dup=0 }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, failed={ dup=LHpi.Data.sets[826].cardcount.reg }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
+[824] = { pset={ [8]=LHpi.Data.sets[824].cardcount.both } },
 [821] = { dropped=356 },
 [820] = { pset={ [8]=LHpi.Data.sets[820].cardcount.both } },
 [819] = { failed={ dup=14 }, dupfail={ "ENG",[8]="JPN",[9]="SZH" } },-- no tokens in MA
