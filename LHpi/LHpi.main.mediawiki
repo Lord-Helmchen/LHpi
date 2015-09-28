@@ -80,13 +80,13 @@ MAINTAINER WANTED!<tt>
 
 ===magic.tcgplayer.com PriceGuide===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=22742 LHpi.tcgplayerPriceGuide.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=23252 LHpi.tcgplayerPriceGuide.lua.zip]
 |-
-|Sitescript version||2.15.6.14
+|Sitescript version||2.15.7.15
 |-
-|updated last on||2015-07-18
+|updated last on||2015-09-28
 |-
-|size|| 27.64 KiB
+|size|| 28 08
 |}
 [http://magic.tcgplayer.com/magic_price_guides.asp Tcgplayer Price Guide] claims to accumulate prices from 75 online vendors. They are priced in $. Their tables give a high, low and average price; the sitescript contains a variable to select which one of those it should use.
 <br />To change the column to import from, open the script in a text editor, find <code>himelo = 3</code> and change it to <code>himelo = 1</code> for high or <code>himelo = 2</code> for medium prices. You can have [[How-To_sitescriptTemplate#multiple_copies_ot_the_same_script|multiple copies of the same script]]
@@ -165,13 +165,13 @@ Logging to a seperate file is now disabled by default again (but still configura
 
 ===LHpi.Data===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=22736 LHpi.Data-v6.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=23253 LHpi.Data-v7.lua.zip]
 |-
 |Library version||>=2.15
 |-
-|updated last on||2015-07-18
+|updated last on||2015-09-28
 |-
-|size|| 40.76 KiB
+|size|| 41.96 KiB
 |}
 Since library version 2.7, site-independent set data (number of cards,foilage, default variant and foiltweak tables) were moved into a seperate data file that gets loaded by the library on initialization. This will allow to distinguish between code updates (to the library) and set data updates (which are usually needed when a new set is released). Version numbering of the sitescripts will reflect both library and data versions used.
 
@@ -196,7 +196,7 @@ Detailed instructions on the properties and functions to define in your sitescri
 
 ===sitescriptTemplate===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=22735 LHpi.sitescriptTemplate-v2.13.5.11.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=22735 LHpi.sitescriptTemplate-v2.15.6.13.lua.zip]
 |-
 |Sitescript version||2.15.6.13
 |-
@@ -492,7 +492,10 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :fixed/updated variants for 43,69,201[ITA],758,764,766,781,787,800,813,22
 :commented variants in 180,140,110,100,90,280,230,220,170,260,105,25
 :foiltweak fixed/updated in 813
-
+;[http://www.slightlymagic.net/forum/download/file.php?id=23253 7]
+:new 825,823,824,826
+:fixed variants for 822,819,25
+:updated cardcount for 822,22
 
 ====LHpi.magicuniverseDE====
 ;[http://www.slightlymagic.net/forum/download/file.php?id=9264 2.0]
@@ -668,6 +671,9 @@ fixed/updated site.regex
 :* Dragonfury cards
 :* unusual lang cards
 :updated/fixed/added variants,namereplacements,expected
+;[http://www.slightlymagic.net/forum/download/file.php?id=23252 2.15.7.15]
+:added 825,823,824,826
+:fixed namereplace 822,808,110,100,90,751,570,220,170,820,819,814,807,801,796,787,600,45,23,22
 
 ====LHpi.trader-onlineDE====
 ;2.0
@@ -718,7 +724,6 @@ fixed/updated site.regex
 ;[http://www.slightlymagic.net/forum/download/file.php?id=22772 2.15.6.14]
 :synchronized with template
 
-
 ====LHpi.mtgpprice.com====
 ;[http://www.slightlymagic.net/forum/download/file.php?id=16280 2.9.2.1]
 :initial release, unfinished
@@ -742,7 +747,6 @@ fixed/updated site.regex
 :removed url to filename changes that are done by the library if OFFLINE
 ;[http://www.slightlymagic.net/forum/download/file.php?id=22774 2.15.6.5]
 :synchronized with template
-
 
 ====LHpi.sitescriptTemplate====
 ;2.0
