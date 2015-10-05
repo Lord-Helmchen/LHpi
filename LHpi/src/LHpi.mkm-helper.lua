@@ -37,22 +37,16 @@ Initial release, no changelog yet
 --MODE=nil
 --MODE = { download=true, sets="standard" }
 --MODE = { boostervalue=true, sets="standard" }
-local standard ={--standard + MM15
+local standard ={--standard
+			[825] = "Battle for Zendikar";
 			[822] = "Magic Origins",
-			[819] = "Modern Masters 2015",
 			[818] = "Dragons of Tarkir",
 			[816] =	"Fate Reforged",
 			[813] = "Khans of Tarkir",
 			}
-local newBFZ ={--825,823,824,826
- [825] = "Battle for Zendikar";
- [826] = "Zendikar Expeditions";
- [824] = "Duel Decks: Zendikar vs. Eldrazi";
- [823] = "From the Vault: Angels";
-			}
 
-MODE = { download=true, sets=newBFZ }
---MODE = { boostervalue=true, sets=fetchedsets }
+MODE = { download=true, sets=standard }
+--MODE = { boostervalue=true, sets=standard }
 
 --  Don't change anything below this line unless you know what you're doing :-) --
 
@@ -215,7 +209,7 @@ function main( mode )
 	if mode.helper then
 		return ("mkm-helper running in helper mode (passive)")
 	elseif mode.testoauth then
-		-- basic tests (remember to set local mkmtokenfile = "mkmtokens.example" in LHpi.magickartenmarkt.lua!)
+		-- basic tests (remember to set local mkmtokenfile = "LHpi.mkm.tokens.example" in LHpi.magickartenmarkt.lua!)
 		DEBUG=true
 		helper.OAuthTest( site.oauth.params )
 		return ("testoauth done")
@@ -324,7 +318,7 @@ function helper.GetSourceData(sets)
 	SAVEHTML=s
 	print( string.format("%i cards have been fetched, and %i pricesGuides were found.",totalcount.fetched,totalcount.found) )
 	LHpi.Log( string.format("%i cards have been fetched, and %i pricesGuides were found.",totalcount.fetched,totalcount.found) ,1)
-	local counter = ma.GetFile(workdir.."\\requestcounter")
+	local counter = ma.GetFile(workdir.."\\lib\LHpi.mkm.requestcounter")
 	LHpi.Log("Persistent request counter now is at "..counter ,1)
 	print("Persistent request counter now is at "..counter ,1)
 end--function GetSourceData

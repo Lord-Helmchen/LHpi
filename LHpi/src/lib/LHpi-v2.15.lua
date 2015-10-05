@@ -544,8 +544,8 @@ function LHpi.MainImportCycle( sourcelist , totalhtmlnum , importfoil , importla
 			if CHECKEXPECTED then
 				if site.expected[sid] then
 					local allgood = true
-					LHpi.Log("site.expected.pset:"..LHpi.Tostring(site.expected[cSet.id].pset) ,1)
-					LHpi.Log("persetcount.pset  :"..LHpi.Tostring(persetcount.pset) ,1)					
+					LHpi.Log("site.expected.pset:"..LHpi.Tostring(site.expected[cSet.id].pset,1) ,1)
+					LHpi.Log("persetcount.pset  :"..LHpi.Tostring(persetcount.pset,1) ,1)					
 					for lid,cLang in pairs(importlangs) do
 						if (site.expected[cSet.id].pset[lid] or 0) ~= (persetcount.pset[lid] or 0) then
 							allgood = false
