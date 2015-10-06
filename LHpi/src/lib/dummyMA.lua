@@ -850,7 +850,8 @@ function main(mode)
 	local t1 = os.clock()
 	--- global working directory to allow operation outside of MA\Prices hierarchy
 	-- @field [parent=#global] workdir
-	workdir="src\\"
+	--workdir="src\\"
+	workdir=".\\"
 	local libver=2.15
 	local dataver=7
 	

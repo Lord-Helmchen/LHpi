@@ -1,4 +1,3 @@
-print("OAuth.lua start")
 local Base64 = require "base64"
 local Crypto = require "crypto"
 local core = require "OAuth.coreLuaSocket"
@@ -517,12 +516,12 @@ function BuildRequest(self, method, url, arguments, headers)
 	if arguments_is_table then
 		-- recycle nonce and timestamp from arguments (for testing)
 		if arguments.nonce then
-			print("nonce" .. arguments.nonce)
+			--print("nonce" .. arguments.nonce)
 			args.oauth_nonce = arguments.nonce
 			arguments.nonce = nil
 		end
 		if arguments.timestamp then
-			print("timestamp" .. arguments.timestamp)
+			--print("timestamp" .. arguments.timestamp)
 			args.oauth_timestamp = arguments.timestamp
 			arguments.timestamp = nil
 		end

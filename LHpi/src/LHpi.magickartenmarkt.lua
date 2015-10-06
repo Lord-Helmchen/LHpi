@@ -72,17 +72,22 @@ local mkmtokenfile = "LHpi.mkm.tokens.DarkHelmet"
 
 --- use a persistent counter of all OAuth requests sent to the server.
 -- this could be helpful, as MKM's server will respond with http 429 errors
--- after 5.000 (50.000?) requests.
+-- after 5.000 requests.
 -- @field #boolean COUNTREQUESTS
 local COUNTREQUESTS = true
+
+--  Don't change anything below this line unless you know what you're doing :-) --
 
 --- reset the persistent request counter to 0.
 -- MKM's server resets the request count at at 0:00 CE(S)T,
 -- so we would want to be able to start counting at 0 again. 
+-- 
+-- Having this here is mostly in preparation for when/if we can do without mkm-helper
+-- running outside of MA.
+-- For now, the prefered method to reset the counter is from LHpi.mkm-helper.lua.
+-- 
 -- @field #boolean COUNTREQUESTS
 local RESETCOUNTER = false
-
---  Don't change anything below this line unless you know what you're doing :-) --
 
 --- choose how the site sends the requested data.
 -- mkm api offers json and xml format. Only json parsing is implemented yet,
@@ -141,7 +146,8 @@ local dataver = "7"
 local scriptver = "2"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field  #string scriptname
-local scriptname = "LHpi.magickartenmarkt-v".. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
+--local scriptname = "LHpi.magickartenmarkt-v".. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
+local scriptname = string.gsub(arg[0],"%.lua","-v".. libver .. "." .. dataver .. "." .. scriptver .. ".lua")
 --- savepath for OFFLINE (read) and SAVEHTML (write). must point to an existing directory relative to MA's root.
 -- set by LHpi lib unless specified here.
 -- @field  #string savepath
@@ -314,7 +320,7 @@ function site.Initialize( mode )
 		function ImportPrice()
 			error("ImportPrice disabled by helper mode!")
 		end
-		LHpi.Log(scriptname .. " running as helper. ImportPrice() deleted." ,1)
+		LHpi.Log(site.scriptname .. " running as helper. ImportPrice() deleted." ,1)
 	end
 	if RESETCOUNTER then
 		LHpi.Log("0",0,workdir.."\\lib\\LHpi.mkm.requestcounter",0)
@@ -358,12 +364,12 @@ function site.Initialize( mode )
 		site.oauth = {}
 		site.oauth.client, site.oauth.params = site.PrepareOAuth()
 	end
-	if not mode.helper then
-		--create an empty file to hold missorted cards
-		-- that is, the mkm expansion does not match the MA set
-		LHpi.Log("site.sets = {" ,0 , "missorted."..responseFormat , 0 )-- new missorted.json
-		site.settweak = site.settweak or {}
-	end
+--	if not mode.helper then
+--		--create an empty file to hold missorted cards
+--		-- that is, the mkm expansion does not match the MA set
+--		LHpi.Log("site.sets = {" ,0 , "missorted."..responseFormat , 0 )-- new missorted.json
+--		site.settweak = site.settweak or {}
+--	end
 	if mode.update then
 		if not dummy then error("Update mode needs to be called by dummyMA!") end
 		dummy.CompareDummySets(mapath,site.libver)
@@ -474,9 +480,9 @@ function site.FetchSourceDataFromOAuth( url )
 		error("401 Unauthorized - check url and OAuth!")
 		--end
 	elseif code == 429 then
-		LHpi.Log("429 Too many requests :limited to 50000 requests per day, resets at 0:00 CE(S)T." ,1)
+		LHpi.Log("429 Too many requests :limited to 5000 requests per day, resets at 0:00 CE(S)T." ,1)
 		print("reply="..LHpi.Tostring(body))
-		error("429 Too many requests - limited to 50000 requests per day, resets at 0:00 CE(S)T.")
+		error("429 Too many requests - limited to 5000 requests per day, resets at 0:00 CE(S)T.")
 	elseif code == 400 then
 		print("reply="..LHpi.Tostring(body))
 		LHpi.Log("reply="..LHpi.Tostring(body) ,2)
@@ -3646,5 +3652,5 @@ function site.SetExpected( importfoil , importlangs , importsets )
 		end
 	end--for sid,name
 end--function site.SetExpected()
-ma.Log(site.scriptname .. " loaded.")
+ma.Log(site.scriptname or arg[0] .. " loaded.")
 --EOF

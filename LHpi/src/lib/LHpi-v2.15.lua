@@ -77,6 +77,7 @@ workdir fixes
 no longer check for Data in deprecated location
 
 merged back into mkm branch
+set scriptname via arg[0]
 ]]
 
 --TODO count averaging events with counter attached to prices. better: just build a seperate table to remember averaging happened.
@@ -187,12 +188,8 @@ function LHpi.Initialize()
 	end
 	if not site.scriptname then
 	-- should usually be similar to the sitescript filename, as it is used to determine default logfile and savepath.
-		local _s,_e,myname = string.find( ( ma.GetFile( "Magic Album.log" ) or "" ) , "Starting Lua script .-([^\\]+%.lua)$" )
-		if myname and myname ~= "" then
-			site.scriptname = myname
-		else -- use hardcoded scriptname as fallback
-			site.scriptname = "LHpi.SITESCRIPT_NAME_NOT_SET-v" .. LHpi.version .. ".lua"
-		end
+		--site.scriptname = "LHpi.SITESCRIPT_NAME_NOT_SET-v" .. LHpi.version .. ".lua"
+		site.scriptname = arg[0]
 	end -- if
 	--- log file name. can be set explicitely via site.logfile or automatically.
 	-- defaults to LHpi.log unless SAVELOG is true.

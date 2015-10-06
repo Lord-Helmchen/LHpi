@@ -40,6 +40,7 @@ new optional function site.FetchExpansionList
 site.BuildUrl supports multiple urls per set
 
 merged back into mkm branch
+set scriptname via arg[0]
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -112,7 +113,8 @@ local dataver = "6"
 local scriptver = "13"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field #string scriptname
-local scriptname = "LHpi.sitescriptTemplate-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
+--local scriptname = "LHpi.sitescriptTemplate-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
+local scriptname = string.gsub(arg[0],"%.lua","-v".. libver .. "." .. dataver .. "." .. scriptver .. ".lua")
 --- savepath for OFFLINE (read) and SAVEHTML (write). must point to an existing directory relative to MA's root.
 -- set by LHpi lib unless specified here.
 -- @field  #string savepath
