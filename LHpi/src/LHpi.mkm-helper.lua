@@ -33,39 +33,50 @@ Initial release, no changelog yet
 ]]
 
 -- options unique to this script
+
+--- select a mode of operation (and a set of sets to operate on)
+-- Modes are selected by setting a #boolean true.
+-- mode.helper to only initialize mkm-helper without it doing anything
+-- mode.testoauth to test the OAuth implementation
+-- mode.download to fetch data for mode.sets from MKM
+-- mode.boostervalue to estimate the Expected Value of booster from mode.sets
+-- mode.sets can be a table, or one of the predefined strings
+-- "standard", "core", "expansions", "special", "promo"
 -- @field #table MODE
 --MODE=nil
 --MODE = { download=true, sets="standard" }
 --MODE = { boostervalue=true, sets="standard" }
-local standard ={--standard
-			[825] = "Battle for Zendikar";
-			[822] = "Magic Origins",
-			[818] = "Dragons of Tarkir",
-			[816] =	"Fate Reforged",
-			[813] = "Khans of Tarkir",
-			}
+--MODE={ test=true ,createtestdata=false}
+MODE = { download=true, sets="core" }
 
-MODE = { download=true, sets=standard }
---MODE = { boostervalue=true, sets=standard }
+--- how long before stored price info is considered too old.
+-- To help with MKM's daily request limit, and because MKM and MA sets do not map one-to-one,
+-- helper.GetSourceData keeps a persistent list of urls and when the url was last fetched from MKM.
+-- If the Data age is less than DATASTALEAGE seconds, the url will be skipped.
+-- See also #boolean COUNTREQUESTS and #boolean COUNTREQUESTS in LHpi.magickartenmarkt.lua
+-- @field #boolean DATASTALEAGE
+--local DATASTALEAGE = 60*60*24 -- one day
+local DATASTALEAGE = 60*60*24*7
+--local DATASTALEAGE = 60
 
 --  Don't change anything below this line unless you know what you're doing :-) --
 
 ---	read source data from #string savepath instead of site url; default false
 --	helper.GetSourceData normally overrides OFFLINE switch from LHpi.magickartenmarkt.lua.
 --	This forces the script to stay in OFFLINE mode. Only really useful for testing.
--- @field [parent=#global] #boolean STAYOFFLINE
---STAYOFFLINE = true
+-- @field #boolean STAYOFFLINE
+--local STAYOFFLINE = true
 
 --- save a local copy of each individual card source json to #string savepath if not in OFFLINE mode; default false
 --	helper.GetSourceData normally overrides SAVEHTML switch from LHpi.magickartenmarkt.lua to enforce SAVEDATA.
 --	SAVECARDDATA instructs the script to save not only the (reconstructed) set sources, but also the individual card sources
 --	where the priceGuide field is fetched from. Only really useful for testing.
--- @field [parent=#global] #boolean SAVECARDDATA
-SAVECARDDATA = true
+-- @field #boolean SAVECARDDATA
+--local SAVECARDDATA = true
 
 --- when running helper.ExpectedBoosterValue, also give the EV of a full Booster Box.
--- @field [parent=#global] #boolean BOXEV
-BOXEV = false
+-- @field #boolean BOXEV
+local BOXEV = false
 
 --- global working directory to allow operation outside of MA\Prices hierarchy
 -- @field [parent=#global] workdir
@@ -143,16 +154,14 @@ function main( mode )
 		local m=mode
 		mode = { [m]=true }
 	end
-	
 	local sets
 	if "string"==type(mode.sets) then
 		mode.sets=string.lower(mode.sets)
-		-- continue when dummyMA is loaded
+		-- convert string to table when dummyMA is loaded
 	else
 		sets = mode.sets or {}
 	end
 
-	
 	package.path = workdir..'lib\\ext\\?.lua;' .. package.path
 	package.cpath= workdir..'lib\\bin\\?.dll;' .. package.cpath
 	--print(package.path.."\n"..package.cpath)	
@@ -178,20 +187,9 @@ function main( mode )
 	if mode.sets=="all" then
 		sets=site.sets
 	elseif ( mode.sets=="std" ) or ( mode.sets=="standard" ) then
-		sets = { -- standard as of July 2015
+		sets = { -- standard as of September 2015
+			[825] = "Battle for Zendikar";
 			[822] = "Magic Origins",
-			[818] = "Dragons of Tarkir",
-			[816] =	"Fate Reforged",
-			[813] = "Khans of Tarkir",
-			[808] = "Magic 2015",
-			[806] = "Journey into Nyx",
-			[802] = "Born of the Gods",
-			[800] = "Theros",
-		}
-	elseif ( mode.sets=="cur" ) or ( mode.sets=="current" ) then
-		sets = { 
-			[822] = "Magic Origins",
-			[819] = "Modern Masters 2015",
 			[818] = "Dragons of Tarkir",
 			[816] =	"Fate Reforged",
 			[813] = "Khans of Tarkir",
@@ -237,6 +235,8 @@ function helper.GetSourceData(sets)
 	if not folderwritable then
 		error( "failed to write file to savepath " .. LHpi.savepath .. "!" )
 	end -- if not folderwritable
+	local dataAge = Json.decode( ma.GetFile(workdir.."\\lib\\LHpi.mkm.offlinedataage") )
+	-- ["#string url"] = { timestamp = #number, requests = #number }
 	local s = SAVEHTML
 	local o = OFFLINE
 	if STAYOFFLINE~=true then
@@ -252,75 +252,85 @@ function helper.GetSourceData(sets)
 				seturls[url]=details
 			end--for url
 		end--for sid,set
-	else -- fetch list of available expansions and download all
+	else -- fetch list of available expansions and select all for download
 		sets = site.FetchExpansionList()
 		sets = Json.decode(sets).expansion
 		for _,exp in pairs(sets) do
 			local request = site.BuildUrl( exp )
 			if string.find(exp.name,"Janosch") or string.find(exp.name,"Jakub") or string.find(exp.name,"Peer") then
 				print(exp.name .. " encoding Problem results in 401 Unauthorized")
-				LHpi.Log(exp.name .. " skipped.")
+				LHpi.Log(exp.name .. " skipped." ,1)
 			else--this is what should happen
 				seturls[request]={oauth=true}
 			end--401 exceptions
 		end--for _,exp
 	end--if sets
 
---	print("OFFLINE "..tostring(OFFLINE))
---	for url,details in pairs(seturls) do
---		print(url .. " : " .. LHpi.Tostring(details))
---	end
---	if true then return end
 	local totalcount={fetched=0, found=0 }
 	for url,details in pairs(seturls) do
-		local setdata = LHpi.GetSourceData( url , details )
-		if setdata then
-			local count= { fetched=0, found=0 }
-			url = string.gsub(url, '[/\\:%*%?<>|"]', "_")
-			LHpi.Log( "Backup source to file: \"" .. (LHpi.savepath or "") .. "BACKUP-" .. url .. "\"" ,1)
-			ma.PutFile( (LHpi.savepath or "") .. "BACKUP-" .. url , setdata , 0 )
-			LHpi.Log("integrating priceGuide entries into " .. url ,1)
-			print("integrating priceGuide entries into " .. url)
-			setdata = Json.decode(setdata)
-			for cid,card in pairs(setdata.card) do
-				local cardurl = site.BuildUrl(card)
-				print("fetching single card from " .. cardurl)
-				local s2=SAVEHTML
-				if SAVECARDDATA~=true then
-					SAVEHTML=false
-				end
-				--local proddata,status = site.FetchSourceDataFromOAuth( cardurl )
-				--TODO try/catch block here?
-				local proddata,status = LHpi.GetSourceData( cardurl , { oauth=true } )
-				SAVEHTML=s2
-				if proddata then
-					count.fetched=count.fetched+1
-					proddata = Json.decode(proddata).product
-				end--if proddata
-				if proddata.priceGuide~=nil then
-					count.found=count.found+1
-					setdata.card[cid].priceGuide=proddata.priceGuide
-				end
-			end--for cid,card
-			setdata = Json.encode(setdata)
-			LHpi.Log( "Saving rebuilt source to file: \"" .. (LHpi.savepath or "") .. url .. "\"" ,1)
-			LHpi.Log( string.format("%i cards have been fetched, and %i pricesGuides were found. LHpi.Data claims %i cards in set %q.",count.fetched,count.found,LHpi.Data.sets[details.setid].cardcount.all,LHpi.Data.sets[details.setid].name ) ,1)
-			print( "Saving rebuilt source to file: \"" .. (LHpi.savepath or "") .. url .. "\"")
-			ma.PutFile( (LHpi.savepath or "") .. url , setdata , 0 )
-			totalcount.fetched=totalcount.fetched+count.fetched
-			totalcount.found=totalcount.found+count.found
+		if not dataAge[url] then
+			dataAge[url]={timestamp=0}
+		end
+		if os.time()-dataAge[url].timestamp>DATASTALEAGE then
+			print(string.format("refreshing stale data for %s, last fetched on %s",url,os.date("%c",dataAge[url].timestamp)))
+			LHpi.Log(string.format("refreshing stale data for %s, last fetched on %s",url,os.date("%c",dataAge[url].timestamp)) ,1)
+			local reqCountPre=ma.GetFile(workdir.."\\lib\\LHpi.mkm.requestcounter")
+			local setdata = LHpi.GetSourceData( url , details )
+			if setdata then
+				local count= { fetched=0, found=0 }
+				local fileurl = string.gsub(url, '[/\\:%*%?<>|"]', "_")
+				--LHpi.Log( "Backup source to file: \"" .. (LHpi.savepath or "") .. "BACKUP-" .. fileurl .. "\"" ,1)
+				--ma.PutFile( (LHpi.savepath or "") .. "BACKUP-" .. fileurl , setdata , 0 )
+				LHpi.Log("integrating priceGuide entries into " .. fileurl ,1)
+				print("integrating priceGuide entries into " .. fileurl)
+				setdata = Json.decode(setdata)
+				for cid,card in pairs(setdata.card) do
+					local cardurl = site.BuildUrl(card)
+					print("fetching single card from " .. cardurl)
+					local s2=SAVEHTML
+					if SAVECARDDATA~=true then
+						SAVEHTML=false
+					end
+					--TODO try/catch block here?
+					local proddata,status = LHpi.GetSourceData( cardurl , { oauth=true } )
+					SAVEHTML=s2
+					if proddata then
+						count.fetched=count.fetched+1
+						proddata = Json.decode(proddata).product
+					end--if proddata
+					if proddata.priceGuide~=nil then
+						count.found=count.found+1
+						setdata.card[cid].priceGuide=proddata.priceGuide
+					end
+				end--for cid,card
+				setdata = Json.encode(setdata)
+				LHpi.Log( "Saving rebuilt source to file: \"" .. (LHpi.savepath or "") .. fileurl .. "\"" ,1)
+				LHpi.Log( string.format("%i cards have been fetched, and %i pricesGuides were found. LHpi.Data claims %i cards in set %q.",count.fetched,count.found,LHpi.Data.sets[details.setid].cardcount.all,LHpi.Data.sets[details.setid].name ) ,1)
+				print( "Saving rebuilt source to file: \"" .. (LHpi.savepath or "") .. fileurl .. "\"")
+				ma.PutFile( (LHpi.savepath or "") .. fileurl , setdata , 0 )
+				totalcount.fetched=totalcount.fetched+count.fetched
+				totalcount.found=totalcount.found+count.found
+			else
+				LHpi.Log("no data from "..url ,1)
+				print("no data from "..url)
+			end--if setdata
+			local reqCountPost=ma.GetFile(workdir.."\\lib\\LHpi.mkm.requestcounter")
+			dataAge[url].requests=reqCountPost-reqCountPre
+			dataAge[url].timestamp=os.time()
 		else
-			LHpi.Log("no data from "..url ,1)
-			print("no data from "..url ,1)
-		end--if setdata
+			print(string.format("data for %s was fetched on %s and is still fresh.",url,os.date("%c",dataAge[url].timestamp)))
+			LHpi.Log(string.format("data for %s was fetched on %s and is still fresh.",url,os.date("%c",dataAge[url].timestamp)) ,1)
+		end
+		ma.PutFile(workdir.."\\lib\\LHpi.mkm.offlinedataage", Json.encode( dataAge,{ indent = true } ) ,0)
 	end--for url,details
 	OFFLINE=o
 	SAVEHTML=s
+	ma.PutFile(workdir.."\\lib\\LHpi.mkm.offlinedataage", Json.encode( dataAge,{ indent = true } ) ,0)
 	print( string.format("%i cards have been fetched, and %i pricesGuides were found.",totalcount.fetched,totalcount.found) )
 	LHpi.Log( string.format("%i cards have been fetched, and %i pricesGuides were found.",totalcount.fetched,totalcount.found) ,1)
-	local counter = ma.GetFile(workdir.."\\lib\LHpi.mkm.requestcounter")
+	local counter = ma.GetFile(workdir.."\\lib\\LHpi.mkm.requestcounter")
 	LHpi.Log("Persistent request counter now is at "..counter ,1)
-	print("Persistent request counter now is at "..counter ,1)
+	print("Persistent request counter now is at "..counter)
 end--function GetSourceData
 
 --[[- determine the Expected Value of a booster from chosen sets.
@@ -446,7 +456,7 @@ function helper.OAuthTest( params )
 	params.oauth_timestamp = params.oauth_timestamp or tostring(os.time())
 	params.oauth_nonce = params.oauth_nonce or Crypto.hmac.digest("sha1", tostring(math.random()) .. "random" .. tostring(os.time()), "keyyyy")
 
-print(params.url)
+	print(params.url)
 	local baseString = "GET&" .. LHpi.OAuthEncode( params.url ) .. "&"
 	print(baseString)
 	local paramString = "oauth_consumer_key=" .. LHpi.OAuthEncode(params.oauth_consumer_key) .. "&"

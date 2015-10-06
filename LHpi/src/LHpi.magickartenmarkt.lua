@@ -73,13 +73,14 @@ local mkmtokenfile = "LHpi.mkm.tokens.DarkHelmet"
 --- use a persistent counter of all OAuth requests sent to the server.
 -- this could be helpful, as MKM's server will respond with http 429 errors
 -- after 5.000 (50.000?) requests.
--- @field [parent=#global] #boolean COUNTREQUESTS
-COUNTREQUESTS = true
+-- @field #boolean COUNTREQUESTS
+local COUNTREQUESTS = true
+
 --- reset the persistent request counter to 0.
 -- MKM's server resets the request count at at 0:00 CE(S)T,
 -- so we would want to be able to start counting at 0 again. 
--- @field [parent=#global] #boolean COUNTREQUESTS
-RESETCOUNTER = false
+-- @field #boolean COUNTREQUESTS
+local RESETCOUNTER = false
 
 --  Don't change anything below this line unless you know what you're doing :-) --
 
@@ -316,7 +317,7 @@ function site.Initialize( mode )
 		LHpi.Log(scriptname .. " running as helper. ImportPrice() deleted." ,1)
 	end
 	if RESETCOUNTER then
-		LHpi.Log("0",0,workdir.."\\lib\LHpi.mkm.requestcounter",0)
+		LHpi.Log("0",0,workdir.."\\lib\\LHpi.mkm.requestcounter",0)
 	end
 	useAsRegprice = useAsRegprice or 3
 	useAsFoilprice = useAsFoilprice or 5	
@@ -451,10 +452,10 @@ function site.FetchSourceDataFromOAuth( url )
 --		print("PerformRequest:")
 --	end
 	if COUNTREQUESTS then
-		local counter = ma.GetFile(workdir.."\\lib\LHpi.mkm.requestcounter")
+		local counter = ma.GetFile(workdir.."\\lib\\LHpi.mkm.requestcounter")
 		counter = tonumber(counter)
 		counter = counter + 1
-		LHpi.Log(counter,0,workdir.."\\lib\LHpi.mkm.requestcounter",0)
+		LHpi.Log(counter,0,workdir.."\\lib\\LHpi.mkm.requestcounter",0)
 	end
 	
 	local code, headers, status, body = site.oauth.client:PerformRequest( "GET", url )
@@ -1257,7 +1258,7 @@ end -- function site.BCDpluginPre
 ]]
 function site.BCDpluginPost( card , setid , importfoil, importlangs )
 	LHpi.Log( "site.BCDpluginPost got " .. LHpi.Tostring( card ) .. " from set " .. setid ,2)
-	--FIXME migrate settweak to library?
+	--TODO migrate settweak to library?
 	if site.settweak[setid] and site.settweak[setid][card.name] then
 		if LOGSETTWEAK then
 			LHpi.Log( string.format( "settweak saved %s with new set %s" ,card.name, site.settweak[setid][card.name] ) ,0)
