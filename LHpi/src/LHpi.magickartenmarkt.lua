@@ -97,7 +97,9 @@ local responseFormat = "json"
 
 ---
 local widgetonly = false
---local sandbox = true
+--- use mkm sandbox instead of live server.
+-- @field #boolean sandbox
+local sandbox = false
 
 --- also complain if drop,namereplace or foiltweak count differs; default false
 -- @field [parent=#global] #boolean STRICTEXPECTED
@@ -146,18 +148,19 @@ local dataver = "7"
 local scriptver = "2"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field  #string scriptname
---local scriptname = "LHpi.magickartenmarkt-v".. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
-local scriptname = string.gsub(arg[0],"%.lua","-v".. libver .. "." .. dataver .. "." .. scriptver .. ".lua")
+local scriptname = "LHpi.magickartenmarkt-v".. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
 --- savepath for OFFLINE (read) and SAVEHTML (write). must point to an existing directory relative to MA's root.
 -- set by LHpi lib unless specified here.
+-- Can also be set externally via global variable.
 -- @field  #string savepath
 --local savepath = "Prices\\" .. string.gsub( scriptname , "%-v%d+%.%d+%.lua$" , "" ) .. "\\"
-local savepath = savepath
+local savepath = savepath -- keep external global savepath
 --- log file name. must point to (nonexisting or writable) file in existing directory relative to MA's root.
 -- set by LHpi lib unless specified here. Defaults to LHpi.log unless SAVELOG is true.
+-- Can also be set externally via global variable.
 -- @field #string logfile
 --local logfile = "Prices\\" .. string.gsub( site.scriptname , "lua$" , "log" )
-local logfile = logfile
+local logfile = logfile -- keep external global logfile
 
 ---	LHpi library
 -- will be loaded by ImportPrice
@@ -176,7 +179,7 @@ LHpi = LHpi or {}
  @field #string savepath (optional)
  @field #boolean sandbox 
 ]]
-site={ scriptname=scriptname, dataver=dataver, logfile=logfile or nil, savepath=savepath or nil , sandbox=sandbox}
+site={ scriptname=scriptname, dataver=dataver, logfile=logfile or nil, savepath=savepath or nil }
 
 --[[- regex matches shall include all info about a single card that one html-file has,
  i.e. "*CARDNAME*FOILSTATUS*PRICE*".
@@ -200,7 +203,8 @@ site.currency = "€"
 --- @field #string encoding		default "cp1252"
 site.encoding="utf8"
 
---- support for global workdir, if used outside of Magic Album/Prices folder. do not change here.
+--- support for global workdir, if used outside of Magic Album/Prices folder. Do not change here!
+-- Can be set externally via global variable.
 site.workdir = workdir or "Prices\\"
 
 --[[- "main" function.
@@ -304,7 +308,7 @@ function site.Initialize( mode )
 		LHpi = site.LoadLib()
 	end
 	LHpi.Log(site.scriptname.." started site.Initialize():" ,1)
-	if site.sandbox then
+	if sandbox then
 		LHpi.Log("using mkm sandbox instead of live server!" ,1)
 		print("using mkm sandbox instead of live server!")
 		LHpi.savepath = string.gsub(LHpi.savepath,"\\+$",".sandbox\\")
@@ -323,7 +327,7 @@ function site.Initialize( mode )
 		LHpi.Log(site.scriptname .. " running as helper. ImportPrice() deleted." ,1)
 	end
 	if RESETCOUNTER then
-		LHpi.Log("0",0,workdir.."\\lib\\LHpi.mkm.requestcounter",0)
+		LHpi.Log("0",0,LHpi.savepath.."LHpi.mkm.requestcounter",0)
 	end
 	useAsRegprice = useAsRegprice or 3
 	useAsFoilprice = useAsFoilprice or 5	
@@ -458,10 +462,10 @@ function site.FetchSourceDataFromOAuth( url )
 --		print("PerformRequest:")
 --	end
 	if COUNTREQUESTS then
-		local counter = ma.GetFile(workdir.."\\lib\\LHpi.mkm.requestcounter")
+		local counter = ma.GetFile(LHpi.savepath.."LHpi.mkm.requestcounter")
 		counter = tonumber(counter)
 		counter = counter + 1
-		LHpi.Log(counter,0,workdir.."\\lib\\LHpi.mkm.requestcounter",0)
+		LHpi.Log(counter,0,LHpi.savepath.."LHpi.mkm.requestcounter",0)
 	end
 	
 	local code, headers, status, body = site.oauth.client:PerformRequest( "GET", url )

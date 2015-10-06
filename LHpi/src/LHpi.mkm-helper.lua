@@ -45,16 +45,15 @@ Initial release, no changelog yet
 -- mode.resetcounter 	resets LHpi.magickartenmarkt.lua's persistent MKM request counter.
 -- 						MKM's server will respond with http 429 errors after 5.000 requests.
 --	 					It resets the request count at at 0:00 CE(S)T, so we would want to be able to start counting at 0 again. 
--- mode.sets			can be a table { #number setid = #string ,... }, a set id or set name, or one of the predefined strings
+-- mode.sets			can be a table { #number setid = #string ,... }, a set id, TLA or name, or one of the predefined strings
 -- 						"standard", "core", "expansion", "special", "promo"
 -- 
 -- Additionally, command line arguments will be parsed for known modes and set strings.
 -- Both may interfere with the MODE you set here.
 -- 
--- @field #table MODE
+-- @field [parent=#global] #table MODE
 --MODE = { download=true, sets="standard" }
-MODE=nil
-local MODE={ test=true }
+MODE={ test=true, }
 
 --- how long before stored price info is considered too old.
 -- To help with MKM's daily request limit, and because MKM and MA sets do not map one-to-one,
@@ -63,7 +62,7 @@ local MODE={ test=true }
 -- See also #boolean COUNTREQUESTS and #boolean COUNTREQUESTS in LHpi.magickartenmarkt.lua
 -- @field #boolean DATASTALEAGE
 --local DATASTALEAGE = 60*60*24 -- one day
-local DATASTALEAGE = 60*60*24*7
+local DATASTALEAGE = 60*60*24*7 -- one week
 --local DATASTALEAGE = 60
 
 --  Don't change anything below this line unless you know what you're doing :-) --
@@ -89,10 +88,7 @@ local BOXEV = false
 
 --- global working directory to allow operation outside of MA\Prices hierarchy
 -- @field [parent=#global] workdir
---workdir="src\\"
 workdir=".\\"
---FIXME check what needs to be set here when operating in MA\Prices. Should be nil
--- workdir="Prices\\" -- this is default in LHpi lib
 
 --- revision of the LHpi library to use
 -- @field #string libver
@@ -105,13 +101,13 @@ local dataver = "7"
 local scriptver = "1"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field #string scriptname
---local scriptname = "LHpi.mkm-helper-v".. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
-local scriptname = string.gsub(arg[0],"%.lua","-v".. libver .. "." .. dataver .. "." .. scriptver .. ".lua")
+local scriptname = "LHpi.mkm-helper-v".. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
+--local scriptname = string.gsub(arg[0],"%.lua","-v".. libver .. "." .. dataver .. "." .. scriptver .. ".lua")
 --- savepath for OFFLINE (read) and SAVEHTML (write). must point to an existing directory relative to MA\\Prices.
 -- set by LHpi lib unless specified here.
 -- @field  #string savepath
---local savepath = string.gsub( scriptname , "%-v%d+%.%d+%.lua$" , "" ) .. "\\"
-local savepath = savepath or "..\\..\\..\\Magic Album\\Prices\\LHpi.magickartenmarkt\\"
+local savepath = savepath or "LHpi.magickartenmarkt\\"
+--local savepath = "..\\..\\..\\Magic Album\\Prices\\LHpi.magickartenmarkt\\"
 --FIXME remove savepath prefix for release
 --- log file name. can be set explicitely via site.logfile or automatically.
 -- defaults to LHpi.log unless SAVELOG is true.
@@ -120,7 +116,7 @@ local savepath = savepath or "..\\..\\..\\Magic Album\\Prices\\LHpi.magickartenm
 local logfile = logfile or nil
 
 ---	LHpi library
--- will be loaded by LoadLib()
+-- will be loaded in main()
 -- @field [parent=#global] #table LHpi
 LHpi = {}
 
@@ -128,12 +124,8 @@ LHpi = {}
  site namespace is taken by LHpi.magickartenmarkt.lua
  
  @type helper
- @field #string scriptname
- @field #string dataver
- @field #string logfile (optional)
- @field #string savepath (optional)
 ]]
-helper={ scriptname=scriptname, dataver=dataver, logfile=logfile or nil, savepath=savepath or nil }
+helper={ scriptname=scriptname }
 
 ---	command line arguments can set MODE and MODE.sets.
 -- need to declare here for scope.
@@ -171,8 +163,7 @@ function ImportPrice( importfoil , importlangs , importsets )
 end -- function ImportPrice
 
 function main( mode )
---TODO filenameoptions to select mode (downloadl-std,downloadl-all,boostervalue-std,boostervalue-all)
-	if mode==nil then
+	if mode==nil or next(mode)==nil then
 		error("set global MODE or supply cmdline arguments to select what the helper should do.")
 	end
 	if "table" ~= type (mode) then
@@ -184,7 +175,7 @@ function main( mode )
 	package.cpath= workdir..'lib\\bin\\?.dll;' .. package.cpath
 	--print(package.path.."\n"..package.cpath)	
 	if not ma then
-	-- define ma namespace to recycle code from sitescripts and dummy.
+	-- load dummyMA to define ma namespace and helper functions
 		if tonumber(libver)>2.14 and not (_VERSION == "Lua 5.1") then
 			print("Loading LHpi.dummyMA.lua for ma namespace and functions...")
 			dummymode = "helper"
@@ -193,6 +184,7 @@ function main( mode )
 			error("need libver>2.14 and Lua version 5.2.")
 		end -- if libver
 	end -- if not ma
+	--load library now, instead of letting the sitescript configure it.
 	site = { scriptname=scriptname, dataver=dataver, logfile=logfile or nil, savepath=savepath or nil }
 	LHpi = dofile(workdir.."lib\\LHpi-v"..libver..".lua")
 	LHpi.Log( "LHpi lib is ready for use." ,1)
@@ -218,21 +210,28 @@ function main( mode )
 				[816] =	"Fate Reforged",
 				[813] = "Khans of Tarkir",
 			}
-		elseif ( setString=="cor" ) or ( setString=="core" ) or ( setString=="coresets" ) then
+		elseif setString=="core" then
 			return dummy.coresets
-		elseif ( setString=="exp" ) or ( setString=="expansions" ) or ( setString=="expansionsets" ) then
+		elseif setString=="expansion" or setString=="expansionsets" then
 			return dummy.expansionsets
-		elseif ( setString=="spc" ) or ( setString=="special" ) or ( setString=="specialsets" ) then
+		elseif setString=="special" then
 			return dummy.specialsets
-		elseif ( setString=="pro" ) or ( setString=="promo" ) or ( setString=="promosets" ) then
+		elseif setString=="promo" then
 			return dummy.promosets
 		-- add more set strings here
 		--elseif ( setString=="mod" ) or ( setString=="modern" ) then
 		else
 			--TODO scan for TLA
 			for sid,set in pairs(LHpi.Data.sets) do
-				if setString == string.lower(set.name) then
-					print(string.format("recognized setname %q",setString))
+				if setString == string.lower(set.tla) then
+					print(string.format("recognized TLA %q for set %q",set.tla,set.name))
+					LHpi.Log(string.format("recognized TLA %q for set %q",set.tla,set.name) ,2)
+					local s = {}
+					s[sid] = set.name
+					return s
+				elseif setString == string.lower(set.name) then
+					print(string.format("recognized setname %q",set.name))
+					LHpi.Log(string.format("recognized setname %q",set.name) ,2)
 					local s = {}
 					s[sid] = set.name
 					return s
@@ -257,28 +256,27 @@ function main( mode )
 		end
 		arg[i]=nil
 	end--for
-	print("mode="..LHpi.Tostring(mode))
-	print("sets="..LHpi.Tostring(sets))
 
 	-- load LHpi.magickartenmarkt in helper mode
 	dofile(workdir.."LHpi.magickartenmarkt.lua")
-	site.logfile =string.gsub(LHpi.logfile,"src\\","")
-	site.savepath=helper.savepath
+	site.scriptname = helper.scriptname
 	site.Initialize({helper=true})
 
 	if mode.test then
 		print("mkm-helper experiments mode")
 		print("arg: "..LHpi.Tostring(arg))
+		print("mode="..LHpi.Tostring(mode))
+		print("sets="..LHpi.Tostring(sets))
 	end--mode.test
 
 	if mode.resetcounter then
-		LHpi.Log("0",0,workdir.."\\lib\\LHpi.mkm.requestcounter",0)
+		LHpi.Log("0",0,LHpi.savepath.."LHpi.mkm.requestcounter",0)
 	end--mode.resetcounter
 	if mode.helper then
 		return ("mkm-helper running in helper mode (passive)")
 	end--mode.helper
 	if mode.testoauth then
-		print('basic OAuth tests (remember to set local mkmtokenfile = "LHpi.mkm.tokens.example" in LHpi.magickartenmarkt.lua!)')
+		print('basic OAuth tests (check mkmtokenfile setting!)')
 		LHpi.Log('basic OAuth tests (remember to set local mkmtokenfile = "LHpi.mkm.tokens.example" in LHpi.magickartenmarkt.lua!)' ,0)
 		DEBUG=true
 		helper.OAuthTest( site.oauth.params )
@@ -309,7 +307,7 @@ function helper.GetSourceData(sets)
 	if not folderwritable then
 		error( "failed to write file to savepath " .. LHpi.savepath .. "!" )
 	end -- if not folderwritable
-	local dataAge = Json.decode( ma.GetFile(workdir.."\\lib\\LHpi.mkm.offlinedataage") )
+	local dataAge = Json.decode( ma.GetFile(savepath.."LHpi.mkm.offlinedataage") )
 	-- ["#string url"] = { timestamp = #number, requests = #number }
 	local s = SAVEHTML
 	local o = OFFLINE
@@ -332,8 +330,7 @@ function helper.GetSourceData(sets)
 		for _,exp in pairs(sets) do
 			local request = site.BuildUrl( exp )
 			if string.find(exp.name,"Janosch") or string.find(exp.name,"Jakub") or string.find(exp.name,"Peer") then
-				print(exp.name .. " encoding Problem results in 401 Unauthorized")
-				LHpi.Log(exp.name .. " skipped." ,1)
+				LHpi.Log(exp.name .. " encoding Problem results in 401 Unauthorized. Set skipped." ,2)
 			else--this is what should happen
 				seturls[request]={oauth=true}
 			end--401 exceptions
@@ -346,9 +343,9 @@ function helper.GetSourceData(sets)
 			dataAge[url]={timestamp=0}
 		end
 		if os.time()-dataAge[url].timestamp>DATASTALEAGE then
-			print(string.format("refreshing stale data for %s, last fetched on %s",url,os.date("%c",dataAge[url].timestamp)))
+			print(string.format("stale data for %s was fetched on %s, refreshing...",url,os.date("%c",dataAge[url].timestamp)))
 			LHpi.Log(string.format("refreshing stale data for %s, last fetched on %s",url,os.date("%c",dataAge[url].timestamp)) ,0)
-			local reqCountPre=ma.GetFile(workdir.."\\lib\\LHpi.mkm.requestcounter")
+			local reqCountPre=ma.GetFile(LHpi.savepath.."LHpi.mkm.requestcounter")
 			local reqPrediction = reqCountPre+(dataAge[url].requests or 1)
 			if reqPrediction < 5000 then
 				local setdata = LHpi.GetSourceData( url , details )
@@ -390,25 +387,25 @@ function helper.GetSourceData(sets)
 					LHpi.Log("no data from "..url ,1)
 					print("no data from "..url)
 				end--if setdata
-				local reqCountPost=ma.GetFile(workdir.."\\lib\\LHpi.mkm.requestcounter")
+				local reqCountPost=ma.GetFile(LHpi.savepath.."LHpi.mkm.requestcounter")
 				dataAge[url].requests=reqCountPost-reqCountPre
 				dataAge[url].timestamp=os.time()
 			else-- reqPredition > 5000
-				print(string.format("Fetching data for %s would result in %s requests (%i total for today). Skipping url to prevent http 429 errors. ",url,(dataAge[url].requests or "unknown"),reqPrediction))
-				LHpi.Log(string.format("Fetching data for %s would result in %s requests (%i total for today). Skipping url to prevent http 429 errors. ",url,(dataAge[url].requests or "unknown"),reqPrediction) ,0)
+				print(string.format("Skipped %s with %s requests (today's total: %i) to prevent HTTP/429.",url,(dataAge[url].requests or "unknown"),reqPrediction))
+				LHpi.Log(string.format("Fetching data for %s would result in %s requests (%i total for today). Skipping url to prevent http 429 errors.",url,(dataAge[url].requests or "unknown"),reqPrediction) ,0)
 			end--if requests < 5000
 		else
-			print(string.format("data for %s was fetched on %s and is still fresh.",url,os.date("%c",dataAge[url].timestamp)))
+			print(string.format("%s fetched on %s is still fresh.",url,os.date("%c",dataAge[url].timestamp)))
 			LHpi.Log(string.format("data for %s was fetched on %s and is still fresh.",url,os.date("%c",dataAge[url].timestamp)) ,0)
 		end
-		ma.PutFile(workdir.."\\lib\\LHpi.mkm.offlinedataage", Json.encode( dataAge,{ indent = true } ) ,0)
+		ma.PutFile(savepath.."LHpi.mkm.offlinedataage", Json.encode( dataAge,{ indent = true } ) ,0)
 	end--for url,details
 	OFFLINE=o
 	SAVEHTML=s
-	ma.PutFile(workdir.."\\lib\\LHpi.mkm.offlinedataage", Json.encode( dataAge,{ indent = true } ) ,0)
+	ma.PutFile(savepath.."LHpi.mkm.offlinedataage", Json.encode( dataAge,{ indent = true } ) ,0)
 	print( string.format("%i cards have been fetched, and %i pricesGuides were found.",totalcount.fetched,totalcount.found) )
 	LHpi.Log( string.format("%i cards have been fetched, and %i pricesGuides were found.",totalcount.fetched,totalcount.found) ,1)
-	local counter = ma.GetFile(workdir.."\\lib\\LHpi.mkm.requestcounter") or "zero"
+	local counter = ma.GetFile(LHpi.savepath.."LHpi.mkm.requestcounter") or "zero"
 	LHpi.Log("Persistent request counter now is at "..counter ,1)
 	print("Persistent request counter now is at "..counter)
 end--function GetSourceData
@@ -587,14 +584,14 @@ function helper.OAuthTest( params )
 	print("arguments=", LHpi.Tostring(arguments))
 	print("post_body=", LHpi.Tostring(post_body))
 
-	error("stopped before actually contacting the server")
-	print("PerformRequest:")
-	--local response_code, response_headers, response_status_line, response_body = client.PerformRequest( client, "GET", params.url, args )
-	local response_code, response_headers, response_status_line, response_body = client.PerformRequest( "GET", params.url, args )
-	print("code=" .. LHpi.Tostring(response_code))
-	print("headers=", LHpi.Tostring(response_headers))
-	print("status_line=", LHpi.Tostring(response_status_line))
-	print("body=", LHpi.Tostring(response_body))
+	print("stopped before actually contacting the server")
+--	print("PerformRequest:")
+--	--local response_code, response_headers, response_status_line, response_body = client.PerformRequest( client, "GET", params.url, args )
+--	local response_code, response_headers, response_status_line, response_body = client.PerformRequest( "GET", params.url, args )
+--	print("code=" .. LHpi.Tostring(response_code))
+--	print("headers=", LHpi.Tostring(response_headers))
+--	print("status_line=", LHpi.Tostring(response_status_line))
+--	print("body=", LHpi.Tostring(response_body))
 end--function OAuthTest
 
 -- read cmdline parameters

@@ -1,0 +1,93 @@
+test scripts
+* all - all - Y
+* ENG - standard - N
+
+cleanup
+* reset OPTIONS to defaults
+** minimize feedback
+<pre>
+--- more detailed log; default false
+-- @field [parent=#global] #boolean VERBOSE
+--VERBOSE = true
+--- also log dropped cards; default false
+-- @field [parent=#global] #boolean LOGDROPS
+--LOGDROPS = true
+--- also log namereplacements; default false
+-- @field [parent=#global] #boolean LOGNAMEREPLACE
+--LOGNAMEREPLACE = true
+--- also log foiltweaking; default false
+-- @field [parent=#global] #boolean LOGFOILTWEAK
+--LOGFOILTWEAK = true
+</pre>
+** other OPTIONS
+<pre>
+--- also complain if drop,namereplace or foiltweak count differs; default false
+-- @field [parent=#global] #boolean STRICTEXPECTED
+--STRICTEXPECTED = true
+
+--- if true, exit with error on object type mismatch, else use object type 0 (all);	default true
+-- @field [parent=#global] #boolean STRICTOBJTYPE
+--STRICTOBJTYPE = false
+
+--- log to seperate logfile instead of LHpi.log; default false
+-- @field [parent=#global] #boolean SAVELOG
+--SAVELOG = true
+
+---	read source data from #string savepath instead of site url; default false
+-- @field [parent=#global] #boolean OFFLINE
+--OFFLINE = true
+
+--- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
+-- @field [parent=#global] #boolean SAVEHTML
+--SAVEHTML = true
+
+--- save price table to file before importing to MA; default false
+-- @field [parent=#global] #boolean SAVETABLE
+--SAVETABLE = true
+
+---	log everything and exit on error; default false
+-- @field [parent=#global] #boolean DEBUG
+--DEBUG = true
+
+---	log raw html data found by regex; default false
+-- @field [parent=#global] #boolean DEBUGFOUND
+--DEBUGFOUND = true
+
+--- DEBUG (only but deeper) inside variant loops; default false
+-- @field [parent=#global] #boolean DEBUGVARIANTS
+--DEBUGVARIANTS = true
+
+---	log raw html data found by regex; default false
+-- @field [parent=#global] #boolean DEBUGFOUND
+--DEBUGFOUND = true
+
+--- DEBUG (only but deeper) inside variant loops; default false
+-- @field [parent=#global] #boolean DEBUGVARIANTS
+--DEBUGVARIANTS = true
+</pre>
+* remove leftover debug print() commands
+
+template and comments
+* copy common changes from newest sitescript to template
+* synchronize other sitescripts with template
+
+* changelog
+** compare Release Candidate with last Release 
+** update changelog in comment
+
+update wiki
+* infobox
+** filename version infix
+** version dependencies
+** update date
+* sanity check description in case of major changes
+* copy changelog from script to wiki
+
+upload files
+* post atachments in thread
+* also, update entry post title
+
+update download links
+* infobox
+** size
+* changelog

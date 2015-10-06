@@ -624,7 +624,7 @@ dummy.alllangs = {
  [6]  = "Portuguese";
  [7]  = "Spanish";
  [8]  = "Japanese";
- [9]  = "Simplified Chinese"; -- for mtgmintcards
+ [9]  = "Simplified Chinese"; -- for mtgmintcard
  [10] = "Traditional Chinese";
  [11] = "Korean";
  [12] = "Hebrew";
@@ -912,7 +912,7 @@ function main(mode)
 	
 	-- select a predefined script to be tested
 --	dummy.fakesitescript()
-	local selection = 8
+	local selection = 9
 	local script=scripts[selection]
 	if script.oldloadertrue then
 		dummy.loadscript(script.name,script.path,script.savepath)--deprecated
@@ -934,15 +934,12 @@ function main(mode)
 	--only run sitescript update helpers
 	if site.Initialize then
 		site.Initialize({update=true})
-	else
-		dummy.CompareDummySets(mapath,libver)
-		dummy.CompareDataSets(libver,dataver)
-		dummy.CompareSiteSets()	
 	end
 	
 	-- now try to break the script :-)
-	--LHpi.DoImport(importfoil, importlangs, importsets)
-	ImportPrice( importfoil, importlangs, importsets )
+	if script.name~="LHpi.mkm-helper.lua" then
+		ImportPrice( importfoil, importlangs, importsets )
+	end
 
 	-- demo LHpi helper functions:
 --	print(LHpi.Tostring( { ["this"]=1, is=2, [3]="a", ["table"]="string" } ))

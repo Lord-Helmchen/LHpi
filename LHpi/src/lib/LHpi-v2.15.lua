@@ -25,70 +25,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.14 (unreleased)
-cardcount.nontr renamed to cardcount.nontrad
-GetSourceData split into GetSourceData and ParseSourceData.
-* this change is completely transparent to existing sitescripts, but having GetSourceData seperated allows to use it from the sitescript for special cases.
-LHpi.GetSourceData( sourceurl,urldetails )
-* defer fetching to sitescript for oauth
-* now returns #string sourcedata
-* converts url to filename if OFFLINE
-* fixed savepath==nil handling (needed when called before DoImport has run)
-* Log https status if not ok
-LHpi.ParseSourceData( sourcedata,sourceurl,urldetails )
-* does the parsing previously done by GetSourceData and returns the #table sourceTable
-* shortcut return nil for sourcedata==nil
-* now strictly expect site.ParseHtmlData to return card.price as #number (and not #table, as was possible before)
-* do not sanitize nor check card.regprice or card.foilpriceBuildCardData
-* counts namereplace and foiltweak even if card is dropped
-BuildCardData
-* remove "(nontrad)","(replica)","(plane)","(scheme)","(conspiracy)" and
-"(oversized)" card.name infixes when no longer needed
-* set objecttype replica for 105,106,69
-* improved Token suffix handling
-* keeps "Replica" suffix for variants
-* removes "Insert" suffix
-* keep (oversized) in set [40]
-SetPrice
-* objtype infixe handling improved
-Logtable
-* no longer strictly requires #table arguments
-MainImportCycle
-* fixed CHECKEXPECTED handling for semi-available languages
-DoImport
-* changed site.expected.EXPECTTOKENS to site.expected.tokens
-* changed site.expected.EXPECTNONTRAD to site.expected.nontrad
-* changed site.expected.EXPECTREPL to site.expected.replica
-* all three can be #boolean (like before) or #table { [langid]=#boolean,... }
-* DoImport passes supImportfoil,supImportlangs,supImportsets to site.SetExpected
-* fixed expected defaults and checks
-removed some leftover commented-out code
-improved some comments and log msgs
-
-2.15
-Split Initialize() from DoImport(importfoil , importlangs , importsets)
-always run Initialize() before returning LHpi library table.
-scriptname,savepath,logfile change from global to local (in site and LHpi)
-Log now filters out VERBOSE and DEBUG lines by loglevel param to save "if DEBUG then Log() end" conditionals
-*those conditionals have been cut and loglevel has been set for all existing LHpi.Log calls
-DEBUGVARIANTS=true no longer sets DEBUG=false, instead remembers and restores previous DEBUG state
-new LHpi.OAuthEncode(s) moved here from mkm-helper
-workdir fixes
-no longer check for Data in deprecated location
-
+2.16
 merged back into mkm branch
-set scriptname via arg[0]
 ]]
 
 --TODO count averaging events with counter attached to prices. better: just build a seperate table to remember averaging happened.
 --TODO change #boolean VERBOSE to #number verbosity and adjust loglevels?
 --TODO savepath better in site namespace, not LHpi namespace?
---FIXME clean leftover unused code
 
 local LHpi = {}
 ---	LHpi library version
 -- @field [parent=#LHpi] #string version
-LHpi.version = "2.15"
+LHpi.version = "2.16"
 
 --[[- "main" function called by Magic Album; just display error and return.
  Called by Magic Album to import prices. Parameters are passed from MA.
@@ -188,8 +136,8 @@ function LHpi.Initialize()
 	end
 	if not site.scriptname then
 	-- should usually be similar to the sitescript filename, as it is used to determine default logfile and savepath.
-		--site.scriptname = "LHpi.SITESCRIPT_NAME_NOT_SET-v" .. LHpi.version .. ".lua"
-		site.scriptname = arg[0]
+		--site.scriptname = arg[0]
+		site.scriptname = "LHpi.SITESCRIPT_NAME_NOT_SET-v" .. LHpi.version .. ".lua"
 	end -- if
 	--- log file name. can be set explicitely via site.logfile or automatically.
 	-- defaults to LHpi.log unless SAVELOG is true.
@@ -262,7 +210,7 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 	local supImportfoil,supImportlangs, supImportsets = LHpi.ProcessUserParams( importfoil , importlangs , importsets )
 	-- set sensible defaults or throw error on missing sitescript fields or functions
 	if not site.BuildUrl then
-		function site.BuildUrl( setid,langid,frucid,offline )
+		function site.BuildUrl( setid,langid,frucid )
 			local errormsg = "sitescript " .. site.scriptname .. ": function site.BuildUrl not implemented!" 
 			ma.Log( "!!critical error: " .. errormsg )
 			error( errormsg )
@@ -275,18 +223,7 @@ function LHpi.DoImport (importfoil , importlangs , importsets)
 			error( errormsg )
 		end	-- function
 	end -- if
-	-- Don't need to define defaults here as long as BuildCardData checks for their existence before calling them.	
-	--	if not site.BCDpluginPre then
-	--		function site.BCDpluginPre ( card , setid )
-	--			return card,namereplaced,foiltweaked
-	--		end -- function
-	--	end -- if
-	--	if not site.BCDpluginPost then
-	--		function site.BCDpluginPost( card , setid )
-	--			card.pluginData = nil
-	--			return card,namereplaced,foiltweaked
-	--		end -- function
-	--	end -- if
+	-- Don't need to define defaults for site.BCDpluginPre and site.BCDpluginPost, as BuildCardData checks for their existence before calling them.	
 	if not site.encoding then site.encoding = "cp1252" end
 	if not site.currency then site.currency = "$" end
 	if not site.namereplace then site.namereplace={} end
@@ -787,8 +724,7 @@ function LHpi.ListSources ( importfoil , importlangs , importsets )
 				if cSet.lang[lid] then
 					for fid,fruc in pairs ( site.frucs ) do
 						if cSet.fruc[fid] then
---TODO remove deprecated @param OFFLINE on next version
-							for url,urldetails in next, site.BuildUrl( sid , lid , fid , OFFLINE ) do
+							for url,urldetails in next, site.BuildUrl( sid , lid , fid ) do
 								urldetails.setid=sid
 								urldetails.langid=lid
 								urldetails.frucid=fid
@@ -900,31 +836,7 @@ function LHpi.ParseSourceData( sourcedata,sourceurl,urldetails )
 				foundData.names[lid] = string.gsub( foundData.names[lid], "^%s*(.-)%s*$", "%1" )
 			end -- for lid,_cName
 			-- divide price by 100 again (see site.ParseHtmlData in sitescript for reason)
---			if "Table" == type(foundData.price) then
---				for lid,price in pairs(foundData.price) do
---					foundData.price[lid] = ( foundData.price[lid] or 0 ) / 100
---				end
---			else
 				foundData.price = ( foundData.price or 0 ) / 100
---			end-- if "Table"
---			if foundData.regprice then
---				if "Table" == type(foundData.regprice) then
---					for lid,lang in pairs(foundData.regprice) do
---						foundData.regprice[lid] = ( foundData.regprice[lid] or 0 ) / 100
---					end
---				else
---					foundData.regprice = ( foundData.regprice or 0 ) / 100
---				end-- if "Table"
---			end--if foundData.regprice
---			if foundData.foilprice then
---				if "Table" == type(foundData.foilprice) then
---					for lid,lang in pairs(foundData.foilprice) do
---						foundData.foilprice[lid] = ( foundData.foilprice[lid] or 0 ) / 100
---					end
---				else
---					foundData.foilprice = ( foundData.foilprice or 0 ) / 100
---				end-- if "Table"
---			end--if foundData.foilprice
 			if next( foundData.names ) then
 				table.insert( sourceTable , foundData ) -- actually keep ParseHtmlData-supplied information
 			else -- nothing was found
@@ -1013,8 +925,7 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 		card.drop = sourcerow.drop
 	end -- if
 	
-	--[[ do site-specific card data manipulation before processing 
-	]]
+	--do site-specific card data manipulation before processing 
 	if site.BCDpluginPre then
 		card = site.BCDpluginPre ( card , setid , importfoil, importlangs )
 	end
@@ -1032,7 +943,6 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 	card.name = string.gsub( card.name , " / " , "|" )
 	card.name = string.gsub (card.name , "([%aäÄöÖüÜ]+)/([%aäÄöÖüÜ]+)" , "%1|%2" )
 	card.name = string.gsub( card.name , "´" , "'" )
---	card.name = string.gsub( card.name , '"' , "“" )
 	card.name = string.gsub( card.name , "^Unhinged Shapeshifter$" , "_____" )
 	
 	-- unify collector number suffix. must come before variant checking
@@ -1041,7 +951,6 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 	card.name = string.gsub( card.name , " Nr%. -(%d+)" , " (%1)" )
 	card.name = string.gsub( card.name , " # ?(%d+)" , " (%1)" )
 	card.name = string.gsub( card.name , "[%[%(][vV]ersion (%d+)[%]%)]" , "(%1)" )
-	--card.name = string.gsub( card.name , "%([vV]ersion (%d)%)" , "(%1)" )
 	card.name = string.gsub( card.name , "%((%d+)/%d+%)" , "(%1)" )
 	card.name = string.gsub( card.name , "%(0+(%d+)%)" , "(%1)")
 
@@ -1149,8 +1058,8 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 		card.name = string.gsub(card.name,"%([Ii][Nn][Ss]%.?[Ee]?[Rr]?[Tt]?%)","")
 		objtype = 4
 	elseif string.find(card.name, "%([Rr][Ee][Pp][Ll]%.?[Ii]?[Cc]?[Aa]?%)") then
-		--card.name = string.gsub(card.name,"%([Rr][Ee][Pp][Ll]%.?[Ii]?[Cc]?[Aa]?%)","(Replica)")
 		-- keep suffix for variants
+		--card.name = string.gsub(card.name,"%([Rr][Ee][Pp][Ll]%.?[Ii]?[Cc]?[Aa]?%)","(Replica)")
 		objtype = 5
 	elseif string.find(card.name, "%([Pp]lane%)") then
 		card.name = string.gsub(card.name,"%([Pp]lane%)","")
@@ -1204,9 +1113,6 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 --			card.variant = { "" }
 		end -- if site.variants[setid]
 	end -- if sourcerow.variant
-	-- remove unparsed leftover variant numbers
---keep then, let's see what breaks :)
---	card.name = string.gsub( card.name , "%(%d+%)" , "" )
 	
 	-- Token infix removal, must come after variant checking
 	-- For object type detection, variant tables need to keep/set "Token" suffix.
@@ -1224,10 +1130,8 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 		card.name = string.gsub( card.name , "%(Multicolor%)" , "" )
 		card.name = string.gsub( card.name , "%([Sp][Pp][Tt]%)" , "" )
 		card.name = string.gsub( card.name , "%(%d+/?%d*%)" , "" )
---		card.name = string.gsub( card.name , "  +" , " " )
 		card.name = string.gsub( card.name , "%s+" , " " )
 		card.name = string.gsub( card.name , "%(%)%s*$" , "" )
---		card.name = string.gsub( card.name , "^%s*(.-)%s*$" , "%1" )
 	end
 	if string.find( card.name , "^Emblem" ) then -- Emblem prefix to suffix
 		if card.name == "Emblem of the Warmind" 
@@ -1253,8 +1157,6 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 		end
 	end
 	
-	--card.condition[lid] = "NONE"
-
 	card.name = string.gsub( card.name , "^%s*(.-)%s*$" , "%1" ) --remove any leftover spaces from start and end of string	
 	--set card.objtype
 	if card.variant then
@@ -1272,27 +1174,12 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 	
 	card.regprice={}
 	card.foilprice={}
-	-- I would prefer to skip as many loops as possible if we're to discard the results anyway...
-	-- Therefore, we'll nest some ifs to skip some fors
 	if sourcerow.regprice~=nil or sourcerow.foilprice~=nil then -- keep site.ParseHtmlData preset reg/foilprice		
---		-- keep #table, otherwise convert #number price to #table { #number (langid) = #number, ... }
 		if sourcerow.regprice then
---			if "Table" == type(sourcerow.regprice) then
 				card.regprice = sourcerow.regprice
---			else
---				for lid,_ in pairs(card.lang) do
---					card.regprice[lid]=sourcerow.regprice
---				end-- end for lid
---			end--if "Table"
 		end--if sourcerow.regprice
 		if sourcerow.foilprice then
---			if "Table" == type(sourcerow.foilprice) then
 				card.foilprice = sourcerow.foilprice
---			else
---				for lid,_ in pairs(card.lang) do
---					card.foilprice[lid]=sourcerow.foilprice
---				end-- end for lid
---			end--if "Table"
 		end--if sourcerow.foilprice
 	else -- define price according to card.foil and card.variant
 		if "Table" ~= type(sourcerow.price) then
@@ -1335,8 +1222,7 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 		end -- for lid,_lang
 	end--if sourcerow reg/foilprice
 	
-	--[[ do final site-specific card data manipulation
-	]]
+	--do final site-specific card data manipulation
 	if site.BCDpluginPost then
 		card = site.BCDpluginPost ( card , setid , importfoil, importlangs )
 	end
@@ -1419,8 +1305,6 @@ function LHpi.FillCardsetTable( card )
 			LHpi.Log ("oldCardrow.variant is:" .. LHpi.Tostring(oldCardrow.variant) ,1)
 			LHpi.Log ("newCardrow.variant is:" .. LHpi.Tostring(newCardrow.variant) ,1)
 			if DEBUG then
---				print("oldCardrow.variant is:" .. LHpi.Tostring(oldCardrow.variant))
---				print("newCardrow.variant is:" .. LHpi.Tostring(newCardrow.variant))
 				error( "FillCardsetTable conflict in " .. card.name .. " : " .. LHpi.Tostring(oldCardrow.variant) .. " vs " .. LHpi.Tostring(newCardrow.variant) .. " !" )
 			end
 			return -9,"variant state differs"
@@ -1428,7 +1312,6 @@ function LHpi.FillCardsetTable( card )
 				
 		-- variant table equal (or equally nil) in old and new, now merge data
 		local conflicts,mergedCardrow,conflictdesc = LHpi.MergeCardrows (card.name, mergedlang, oldCardrow, newCardrow, mergedvariant)
-		--LHpi.Log(string.format("%i conflicts merging %s: %s" , conflicts,card.name,LHpi.Tostring(conflictdesc) ) ,2)
 		if conflicts~=0 then
 			LHpi.Log( string.format( "%i conflicts merging %s: %s" , conflicts,card.name,LHpi.Tostring(conflictdesc) ) ,1)
 		end -- if
@@ -1502,8 +1385,6 @@ function LHpi.MergeCardrows ( name, langs,  oldRow , newRow , variants )
 				conflictdesc.foil[lid]=( conflictdesc.foil[lid] or "" ) .. "[" .. varnr .. "]" ..  varconflictdesc.foil[lid]
 			end -- for lid,_langs
 			mergedRow.objtype[varname] = mergedVarrow.objtype
---			conflictdesc.reg = ( conflictdesc.reg or "" ) .. "[" .. varnr .. "]" ..  varconflictdesc.reg
---			conflictdesc.foil = ( conflictdesc.foil or "" ) .. "[" .. varnr .. "]" ..  varconflictdesc.foil
 		end -- for varnr,varname 
 	else -- no variant (even variants will end up here eventually due to recursion)
 		if oldRow.regprice or newRow.regprice then
@@ -1538,7 +1419,6 @@ function LHpi.MergeCardrows ( name, langs,  oldRow , newRow , variants )
 					conflictdesc.reg[lid] = "ok:new"
 					mergedRow.regprice[lid] = newRow.regprice[lid]
 				else--no price at all
---					conflictcount=conflictcount+1
 					conflictdesc.reg[lid]="ok:none"
 					LHpi.Log( string.format("not merging nonexisting %s regprice[%s].", name, lid ) ,2)
 				end-- if oldRow
@@ -1558,7 +1438,6 @@ function LHpi.MergeCardrows ( name, langs,  oldRow , newRow , variants )
 						else--average
 							conflictcount=conflictcount+1
 							mergedRow.foilprice[lid] = (oldRow.foilprice[lid] + newRow.foilprice[lid]) * 0.5
---							mergedRow.mergecounter++				
 							conflictdesc.foil[lid] = "avg:" .. mergedRow.foilprice[lid]
 							LHpi.Log(string.format("averaging conflicting %s foilprice[%s] %g and %g to %g", name, LHpi.Data.languages[lid].abbr, oldRow.foilprice[lid], newRow.foilprice[lid], mergedRow.foilprice[lid] ) ,1)
 							LHpi.Log("!! conflicting foilprice in lang [" .. LHpi.Data.languages[lid].abbr .. "]" ,2)
@@ -1577,7 +1456,6 @@ function LHpi.MergeCardrows ( name, langs,  oldRow , newRow , variants )
 						conflictdesc.foil[lid] = "ok:new"
 					mergedRow.foilprice[lid] = newRow.foilprice[lid]
 				else--no price at all
---					conflictcount=conflictcount+1
 					conflictdesc.foil[lid]="ok:none"
 					LHpi.Log( string.format("not merging nonexisting %s foilprice[%s].", name, lid ) ,2)
 				end-- if oldRow
