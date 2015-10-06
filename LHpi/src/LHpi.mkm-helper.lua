@@ -186,9 +186,9 @@ function main( mode )
 	if not ma then
 	-- define ma namespace to recycle code from sitescripts and dummy.
 		if tonumber(libver)>2.14 and not (_VERSION == "Lua 5.1") then
-			print("Loading dummyMA.lua for ma namespace and functions...")
+			print("Loading LHpi.dummyMA.lua for ma namespace and functions...")
 			dummymode = "helper"
-			dofile(workdir.."lib\\dummyMA.lua")
+			dofile(workdir.."lib\\LHpi.dummyMA.lua")
 		else
 			error("need libver>2.14 and Lua version 5.2.")
 		end -- if libver

@@ -7,7 +7,7 @@ who generously granted permission to "do as I like" with their code;
 everything else Copyright (C) 2012-2015 by Christian Harms.
 If you want to contact me about the script, try its release thread in http://www.slightlymagic.net/forum/viewforum.php?f=32
 
-@module dummyMA
+@module LHpi.dummyMA
 @author Christian Harms
 @copyright 2012-2015 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
 @release This program is free software: you can redistribute it and/or modify
@@ -39,8 +39,8 @@ new 825,823,824,826
  @param #table importsets	{ #number (setid)= #string , ... }
 ]]
 function ImportPrice(importfoil, importlangs, importsets)
-	ma.Log( "Called dummyMa from MA. Raising error to inform user via dialog box." )
-	error ("dummyMA.lua is not an import script. Do not attempt to use it from within MA!")
+	ma.Log( "Called LHpi.dummyMA from MA. Raising error to inform user via dialog box." )
+	error ("LHpi.dummyMA.lua is not an import script. Do not attempt to use it from within MA!")
 end -- function ImportPrice
 
 --[[-
@@ -205,7 +205,7 @@ function ma.SetProgress(text, position)
 	print(string.format("ma.SetProgress:%3.2f%%\t: %q",position,text))
 end
 
---- table to hold dummyMA additional functions
+--- table to hold LHpi.dummyMA additional functions
 -- @type dummy
 dummy={}
 ---	dummy version
@@ -844,7 +844,7 @@ dummy.coresets = {
 ]]
 function main(mode)
 	if mode == "helper" then
-		return("dummyMA running as helper. ma namespace and dummy implementations are now available.")
+		return("LHpi.dummyMA running as helper. ma namespace and dummy implementations are now available.")
 	end
 	print("dummy says: Hello " .. _VERSION .. "!")
 	local t1 = os.clock()

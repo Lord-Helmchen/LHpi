@@ -292,7 +292,7 @@ function site.Initialize( mode )
 --	end
 	
 	if mode.update then
-		if not dummy then error("ListUnknownUrls needs to be run from dummyMA!") end
+		if not dummy then error("ListUnknownUrls needs to be run from LHpi.dummyMA!") end
 		dummy.CompareDummySets(mapath,site.libver)
 		dummy.CompareDataSets(site.libver,site.libver)
 		dummy.CompareSiteSets()

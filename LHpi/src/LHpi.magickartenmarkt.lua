@@ -371,7 +371,7 @@ function site.Initialize( mode )
 --		site.settweak = site.settweak or {}
 --	end
 	if mode.update then
-		if not dummy then error("Update mode needs to be called by dummyMA!") end
+		if not dummy then error("Update mode needs to be called by LHpi.dummyMA!") end
 		dummy.CompareDummySets(mapath,site.libver)
 		dummy.CompareDataSets(site.libver,site.libver)
 		dummy.CompareSiteSets()
