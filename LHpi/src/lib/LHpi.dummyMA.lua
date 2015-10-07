@@ -25,9 +25,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-can run as helper to simply define ma namespace and functions
-ma.GetFile and ma.PutFile only print if DEBUG
-new 825,823,824,826
+0.7
+renamed from dummyMA.lua to LHpi.dummyMA.lua
+changed workdir
+added LHpi.magickartenmarkt.lua and LHpi.mkm-helper.lua to script selection
 ]]
 
 --[[- "main" function called by Magic Album; just display error and return.
@@ -850,7 +851,6 @@ function main(mode)
 	local t1 = os.clock()
 	--- global working directory to allow operation outside of MA\Prices hierarchy
 	-- @field [parent=#global] workdir
-	--workdir="src\\"
 	workdir=".\\"
 	local libver=2.15
 	local dataver=7
