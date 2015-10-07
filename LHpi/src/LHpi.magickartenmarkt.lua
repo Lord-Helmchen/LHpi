@@ -49,6 +49,7 @@ LOGFOILTWEAK = true
 -- options that control the script's behaviour.
 
 --- compare prices set and failed with expected numbers; default true
+-- set to false if you prefer speed over sanity checks.
 -- @field [parent=#global] #boolean CHECKEXPECTED
 --CHECKEXPECTED = false
 
@@ -105,13 +106,13 @@ local sandbox = false
 -- @field [parent=#global] #boolean STRICTEXPECTED
 STRICTEXPECTED = true
 
---- if true, exit with error on object type mismatch, else use object type 0 (all)
+--- if true, exit with error on object type mismatch, else use object type 0 (all);	default true
 -- @field [parent=#global] #boolean STRICTOBJTYPE
 STRICTOBJTYPE = true
 
---- log to seperate logfile instead of Magic Album.log;	default true
+--- log to seperate logfile instead of LHpi.log; default false
 -- @field [parent=#global] #boolean SAVELOG
---SAVELOG = false
+--SAVELOG = true
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
@@ -121,7 +122,7 @@ OFFLINE = true
 -- @field [parent=#global] #boolean SAVEHTML
 --SAVEHTML = true
 
---- save price table to file before importing to MA;	default false
+--- save price table to file before importing to MA; default false
 -- @field [parent=#global] #boolean SAVETABLE
 --SAVETABLE = true
 
@@ -142,12 +143,12 @@ OFFLINE = true
 local libver = "2.15"
 --- revision of the LHpi library datafile to use
 -- @field #string dataver
-local dataver = "7"
+local dataver = "8"
 --- sitescript revision number
 -- @field  string scriptver
 local scriptver = "2"
 --- should be similar to the script's filename. Used for loging and savepath.
--- @field  #string scriptname
+-- @field #string scriptname
 local scriptname = "LHpi.magickartenmarkt-v".. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
 --- savepath for OFFLINE (read) and SAVEHTML (write). must point to an existing directory relative to MA's root.
 -- set by LHpi lib unless specified here.
@@ -238,7 +239,9 @@ function ImportPrice( importfoil , importlangs , importsets , scriptmode)
 	LHpi.Log( "LHpi lib is ready for use." ,0)
 	site.Initialize( scriptmode ) -- keep site-specific stuff out of ImportPrice
 	LHpi.DoImport (importfoil , importlangs , importsets)
-	ma.Log( "End of Lua script " .. scriptname )
+	LHpi.Log( "Lua script " .. scriptname .. " finished" ,0)
+	collectgarbage()--try prevent MA crashes on exit
+	ma.Log( "Lua script " .. scriptname .. " finished" )
 end -- function ImportPrice
 
 --[[- load LHpi library from external file
@@ -253,7 +256,7 @@ function site.LoadLib()
 	local LHpilib = ma.GetFile( libname )
 	if tonumber(libver) < 2.15 then
 		loglater = ""
-		local oldlibname = "Prices\\LHpi-v" .. libver .. ".lua"
+		local oldlibname = workdir .. "LHpi-v" .. libver .. ".lua"
 		local oldLHpilib = ma.GetFile ( oldlibname )
 		if oldLHpilib then
 			if DEBUG then
@@ -381,8 +384,8 @@ function site.Initialize( mode )
 		dummy.CompareSiteSets()
 	 	dummy.ListUnknownUrls(site.FetchExpansionList())
 		return
-	end
-end
+	end--mode.update
+end--function site.Initialize
 
 
 --[[- sets all oauth raleted options and prepares the oauth-client.
@@ -510,14 +513,16 @@ end
 
  foilonly and isfile fields can be nil and then are assumed to be false.
  while isfile is read and interpreted by the library, foilonly is not.
- Its only here as a convenient shortcut to set card.foil in your site.ParseHtmlData  
+ Its only here as a convenient shortcut to set card.foil in your site.ParseHtmlData
 
+Optionally, for setid=="list", you can return an url with a list of available sets.
+This will be used by site.FetchExpansionList().
+ 
  !ONLY IN LHpi.magickartenmarkt:
  !Only build the mkm api request and set oauth flag. This way, we keep the urls human-readable and non-random
  !so we can store the files and retrieve them later in OFFLINE mode.
  !LHpi.GetSourceData calls site.FetchSourceDataFromOAuth to construct, sign and send/receive OAuth requests, triggered by the flag.
  !"www." or "sandbox." is prefixed in site.FetchSourceDataFromOAuth.
- !if setid=="list", return the url to request a list of expansions. 
  !Alternatively, it can be called as site.BuildUrl(#table setid), 
  !where setid is not a numerical set id, but a Json.decod'ed mkm Expansion or Product Entity.
  !as Requests based on these Entities are unique, the return value for mkm modes is #string
@@ -568,6 +573,7 @@ end -- function site.BuildUrl
 --[[- fetch list of expansions from mkmapi to be used by update helper functions.
  The returned table shall contain at least the sets' name and LHpi-comnpatible urlsuffix,
  so it can be processed by dummy.ListUnknownUrls.
+ 
  @function [parent=#site] FetchExpansionList
  @return #table  @return #table { #number= #table { name= #string , urlsuffix= #string , ... }
 ]]
@@ -612,9 +618,9 @@ site.updateFormatString = '[%i]={id=%3i, lang={ "ENG",[2]="RUS",[3]="GER",[4]="F
  @return #string newCard.name		(optional) will pre-set the card's unique (for the cardsetTable) identifying name.
  @return #table newCard.lang		(optional) will override LHpi.buildCardData generated values.
  @return #boolean newCard.drop		(optional) will override LHpi.buildCardData generated values.
- @return #table newCard.variant		(optional) will override LHpi.buildCardData generated values.
- @return #number or #table newCard.regprice		(optional) will override LHpi.buildCardData generated values. #number or #table { [#number langid]= #number,...}
- @return #number or #table newCard.foilprice 	(optional) will override LHpi.buildCardData generated values. #number or #table { [#number langid]= #number,...}
+ @return #table newCard.variant		(discouraged) will override LHpi.buildCardData generated values.
+ @return #number or #table newCard.regprice		(discouraged) will override LHpi.buildCardData generated values. #number or #table { [#number langid]= #number,...}
+ @return #number or #table newCard.foilprice 	(discouraged) will override LHpi.buildCardData generated values. #number or #table { [#number langid]= #number,...}
  
  @function [parent=#site] ParseHtmlData
  @param #string foundstring		one occurence of siteregex from raw html data
@@ -670,8 +676,7 @@ end -- function site.ParseHtmlData
 --[[- special cases card data manipulation.
  Ties into LHpi.buildCardData to make changes that are specific to one site and thus don't belong into the library.
  This Plugin is called before most of LHpi's BuildCardData processing.
- It's probably safest to only make name modifications here.
- --TODO prevent LHpi.BuildCardData from overwriting fields that have been set here.
+ It's probably safest to only make name and language modifications here.
 
  @function [parent=#site] BCDpluginPre
  @param #table card			the card LHpi.BuildCardData is working on
@@ -1333,13 +1338,14 @@ site.langs = {
 	[9]  = { id= 9, url="" },--Simplified Chinese
 	[10] = { id=10, url="" },--Traditional Chinese
 	[11] = { id=11, url="" },--Korean
-	[12] = { id=12, url="" },--Hebrew		-- Only 1 card, in [22] Prerelease Promos
-	[13] = { id=13, url="" },--Arabic		-- Only 1 card, in [22] Prerelease Promos
-	[14] = { id=14, url="" },--Latin		-- Only 1 card, in [22] Prerelease Promos
-	[15] = { id=15, url="" },--Sanskrit		-- Only 1 card, in [22] Prerelease Promos
-	[16] = { id=16, url="" },--Ancient Greek-- Only 1 card, in [22] Prerelease Promos
-	[17] = { id=17, url="" },--Phyrexian	-- Only 1 card, in [25] Judge Gift Cards
+	[12] = { id=12, url="" },-- Only "Glory" in [22] Prerelease Promos
+	[13] = { id=13, url="" },-- Only "Stone-Tongue Basilisk" in [22] Prerelease Promos
+	[14] = { id=14, url="" },-- Only "Raging Kavu" in [22] Prerelease Promos
+	[15] = { id=15, url="" },-- Only "Fungal Shambler" in [22] Prerelease Promos
+	[16] = { id=16, url="" },-- Only "Questing Phelddagrif" in [22] Prerelease Promos
+	[17] = { id=17, url="" },-- Only "Elesh Norn, Grand Cenobite" in [25] Judge Gift Cards
 }
+
 --[[- table of available rarities.
  can contain url infixes for use in site.BuildUrl.
 
@@ -3447,6 +3453,7 @@ site.settweak = {
  tables of cards that need to set variant.
  For each setid, will be merged with sensible defaults from LHpi.Data.sets[setid].variants.
  When variants for the same card are set here and in LHpi.Data, sitescript's entry overwrites Data's.
+ If override is true, the variant table from LHpi.Data is ignored for this set.
  
  fields are for subtables indexed by #number setid.
  { #number (setid)= #table { override=#boolean , #string (name)= #table { #string, #table { #string or #boolean , ... } } , ... } , ...  }
@@ -3462,6 +3469,7 @@ site.variants = {
  tables of cards that need to set foilage.
  For each setid, will be merged with sensible defaults from LHpi.Data.sets[setid].variants.
  When variants for the same card are set here and in LHpi.Data, sitescript's entry overwrites Data's.
+ If override is true, the foiltweak table from LHpi.Data is ignored for this set.
 
   fields are for subtables indexed by #number setid.
  { #number (setid)= #table { override=#boolean , #string (name)= #table { foil= #boolean } , ... } , ... }
@@ -3656,5 +3664,5 @@ function site.SetExpected( importfoil , importlangs , importsets )
 		end
 	end--for sid,name
 end--function site.SetExpected()
-ma.Log(site.scriptname or arg[0] .. " loaded.")
+ma.Log(site.scriptname .. " loaded.")
 --EOF

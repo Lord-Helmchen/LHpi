@@ -104,11 +104,13 @@ local scriptver = "14"
 local scriptname = "LHpi.sitescriptTemplate-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
 --- savepath for OFFLINE (read) and SAVEHTML (write). must point to an existing directory relative to MA's root.
 -- set by LHpi lib unless specified here.
+-- Can also be set externally via global variable.
 -- @field  #string savepath
 --local savepath = "Prices\\" .. string.gsub( scriptname , "%-v%d+%.%d+%.lua$" , "" ) .. "\\"
 local savepath = savepath -- keep external global savepath
 --- log file name. must point to (nonexisting or writable) file in existing directory relative to MA's root.
 -- set by LHpi lib unless specified here. Defaults to LHpi.log unless SAVELOG is true.
+-- Can also be set externally via global variable.
 -- @field #string logfile
 --local logfile = "Prices\\" .. string.gsub( site.scriptname , "lua$" , "log" )
 local logfile = logfile -- keep external global logfile
@@ -153,6 +155,7 @@ site={ scriptname=scriptname, dataver=dataver, logfile=logfile or nil, savepath=
 --site.encoding="cp1252"
 
 --- support for global workdir, if used outside of Magic Album/Prices folder. do not change here.
+-- Can be set externally via global variable.
 -- @field [parent=#local] #string workdir
 -- @field [parent=#local] #string mapath
 local workdir = workdir or "Prices\\"
@@ -187,7 +190,7 @@ function ImportPrice( importfoil , importlangs , importsets , scriptmode)
 	if loglater then
 		LHpi.Log(loglater ,0)
 	end
-	LHpi.Log( "LHpi lib is ready for use." )
+	LHpi.Log( "LHpi lib is ready for use." ,0)
 	site.Initialize( scriptmode ) -- keep site-specific stuff out of ImportPrice
 	LHpi.DoImport (importfoil , importlangs , importsets)
 	LHpi.Log( "Lua script " .. scriptname .. " finished" ,0)
@@ -202,7 +205,7 @@ end -- function ImportPrice
 ]]
 function site.LoadLib()
 	local LHpi
-	local libname = workdir .. "lib\\LHpi-v" .. libver .. ".lua"
+	local libname = site.workdir .. "lib\\LHpi-v" .. libver .. ".lua"
 	local loglater
 	local LHpilib = ma.GetFile( libname )
 	if tonumber(libver) < 2.15 then
@@ -278,7 +281,7 @@ function site.Initialize( mode )
 --	end
 	
 	if mode.update then
-		if not dummy then error("ListUnknownUrls needs to be run from LHpi.dummyMA!") end
+		if not dummy then error("Update mode needs to be called by LHpi.dummyMA!") end
 		dummy.CompareDummySets(mapath,site.libver)
 		dummy.CompareDataSets(site.libver,site.libver)
 		dummy.CompareSiteSets()
@@ -302,8 +305,6 @@ This will be used by site.FetchExpansionList().
  @param #number setid		see site.sets
  @param #number langid		see site.langs
  @param #number frucid		see site.frucs
- @param #boolean offline	DEPRECATED, read global OFFLINE instead if you need really it.
- 							(can be nil) use local file instead of url
  @return #table { #string (url)= #table { isfile= #boolean, (optional) foilonly= #boolean, (optional) setid= #number, (optional) langid= #number, (optional) frucid= #number } , ... }
 ]]
 --function site.BuildUrl( setid,langid,frucid,offline )
@@ -350,6 +351,7 @@ This will be used by site.FetchExpansionList().
  The returned table shall contain at least the sets' name and LHpi-comnpatible urlsuffix,
  so it can be processed by dummy.ListUnknownUrls.
  Implementing this function is optional and may not be possible for some sites.
+
  @function [parent=#site] FetchExpansionList
  @return #table  @return #table { #number= #table { name= #string , urlsuffix= #string , ... }
 ]]
@@ -426,6 +428,7 @@ site.updateFormatString = "[%i]={id=%3i, lang = { [1]=true }, fruc = { true , tr
 --[[- special cases card data manipulation.
  Ties into LHpi.buildCardData to make changes that are specific to one site and thus don't belong into the library.
  This Plugin is called before most of LHpi's BuildCardData processing.
+ It's probably safest to only make name and language modifications here.
 
  @function [parent=#site] BCDpluginPre
  @param #table card			the card LHpi.BuildCardData is working on
@@ -778,9 +781,10 @@ site.namereplace = {
  tables of cards that need to set variant.
  For each setid, will be merged with sensible defaults from LHpi.Data.sets[setid].variants.
  When variants for the same card are set here and in LHpi.Data, sitescript's entry overwrites Data's.
+ If override is true, the variant table from LHpi.Data is ignored for this set.
  
  fields are for subtables indexed by #number setid.
- { #number (setid)= #table { #string (name)= #table { #string, #table { #string or #boolean , ... } } , ... } , ...  }
+ { #number (setid)= #table { override=#boolean , #string (name)= #table { #string, #table { #string or #boolean , ... } } , ... } , ...  }
 
  @type site.variants
  @field [parent=#site.variants] #boolean override	(optional) if true, defaults from LHpi.Data will not be used at all
@@ -801,9 +805,10 @@ site.variants = {
  tables of cards that need to set foilage.
  For each setid, will be merged with sensible defaults from LHpi.Data.sets[setid].variants.
  When variants for the same card are set here and in LHpi.Data, sitescript's entry overwrites Data's.
+ If override is true, the foiltweak table from LHpi.Data is ignored for this set.
 
   fields are for subtables indexed by #number setid.
- { #number (setid)= #table { #string (name)= #table { foil= #boolean } , ... } , ... }
+ { #number (setid)= #table { override=#boolean , #string (name)= #table { foil= #boolean } , ... } , ... }
  
  @type site.foiltweak
  @field [parent=#site.foiltweak] #boolean override	(optional) if true, defaults from LHpi.Data will not be used at all
