@@ -34,6 +34,8 @@ removed url to filename changes that are done by the library if OFFLINE
 2.15.6.14
 synchronized with template
 fixed/updated site.regex
+
+merged back into mkm branch
 ]]
 
 -- options unique to this site
@@ -263,7 +265,7 @@ function site.Initialize( mode )
 	LHpi.Log(site.scriptname.." started site.Initialize():",1)
 
 	if mode.update then
-		if not dummy then error("ListUnknownUrls needs to be run from dummyMA!") end
+		if not dummy then error("ListUnknownUrls needs to be run from LHpi.dummyMA!") end
 		dummy.CompareDummySets(mapath,site.libver)
 		dummy.CompareDataSets(site.libver,site.libver)
 		dummy.CompareSiteSets()
@@ -658,7 +660,7 @@ site.sets = {
 [814]={id = 814, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Commander%202014"},
 [807]={id = 807, lang = { true , [3]=false}, fruc = { false,true ,true ,true }, url = "Conspiracy"},
 [801]={id = 801, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Commander%202013"},
---TODO Promo Cards
+--TODO Promo Cards (when settweak is in lib)
 -- uncomment these while running helper.FindUnknownUrls
 --[999]={id = 0, lang = { true , [3]=true }, fruc = { false,true ,true ,true }, url = "Foils"},--miscelaneous Promos
 } -- end table site.sets

@@ -7,7 +7,7 @@ who generously granted permission to "do as I like" with their code;
 everything else Copyright (C) 2012-2015 by Christian Harms.
 If you want to contact me about the script, try its release thread in http://www.slightlymagic.net/forum/viewforum.php?f=32
 
-@module dummyMA
+@module LHpi.dummyMA
 @author Christian Harms
 @copyright 2012-2015 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
 @release This program is free software: you can redistribute it and/or modify
@@ -39,8 +39,8 @@ new 825,823,824,826
  @param #table importsets	{ #number (setid)= #string , ... }
 ]]
 function ImportPrice(importfoil, importlangs, importsets)
-	ma.Log( "Called dummyMa from MA. Raising error to inform user via dialog box." )
-	error ("dummyMA.lua is not an import script. Do not attempt to use it from within MA!")
+	ma.Log( "Called LHpi.dummyMA from MA. Raising error to inform user via dialog box." )
+	error ("LHpi.dummyMA.lua is not an import script. Do not attempt to use it from within MA!")
 end -- function ImportPrice
 
 --[[-
@@ -205,7 +205,7 @@ function ma.SetProgress(text, position)
 	print(string.format("ma.SetProgress:%3.2f%%\t: %q",position,text))
 end
 
---- table to hold dummyMA additional functions
+--- table to hold LHpi.dummyMA additional functions
 -- @type dummy
 dummy={}
 ---	dummy version
@@ -624,7 +624,7 @@ dummy.alllangs = {
  [6]  = "Portuguese";
  [7]  = "Spanish";
  [8]  = "Japanese";
- [9]  = "Simplified Chinese"; -- for mtgmintcards
+ [9]  = "Simplified Chinese"; -- for mtgmintcard
  [10] = "Traditional Chinese";
  [11] = "Korean";
  [12] = "Hebrew";
@@ -844,13 +844,14 @@ dummy.coresets = {
 ]]
 function main(mode)
 	if mode == "helper" then
-		return("dummyMA running as helper. ma namespace and dummy implementations are now available.")
+		return("LHpi.dummyMA running as helper. ma namespace and dummy implementations are now available.")
 	end
 	print("dummy says: Hello " .. _VERSION .. "!")
 	local t1 = os.clock()
 	--- global working directory to allow operation outside of MA\Prices hierarchy
 	-- @field [parent=#global] workdir
-	workdir="src\\"
+	--workdir="src\\"
+	workdir=".\\"
 	local libver=2.15
 	local dataver=7
 	
@@ -890,11 +891,11 @@ function main(mode)
 	 	}
 	local importsets = standard
 --	local importsets = { [0] = "fakeset"; }
---	local importsets = { [22]="some set" }
+--	local importsets = { [635]="some set" }
 --	local importsets = { [220]="foo";[800]="bar";[0]="baz"; }
 --	local importsets = dummy.coresets
 --	local importsets = dummy.expansionsets
-	local importsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
+--	local importsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 	
 	local scripts={
 		[0]={name="lib\\LHpi.sitescriptTemplate-v2.15.6.13.lua",savepath="."},
@@ -905,13 +906,13 @@ function main(mode)
 		[5]={name="LHpi.trader-onlineDE.lua",savepath=mapath.."Prices\\LHpi.trader-onlineDE\\"},
 		[6]={name="LHpi.tcgplayerPriceGuide.lua",savepath=mapath.."Prices\\LHpi.tcgplayerPriceGuide\\"},
 		[7]={name="LHpi.mtgprice.com.lua",savepath=mapath.."Prices\\LHpi.mtgprice.com\\"},
---		[8]={name="LHpi.magickartenmarkt.lua",savepath=mapath.."Prices\\LHpi.magickartenmarkt\\"},
---		[9]={name="LHpi.mkm-helper.lua",savepath=mapath.."Prices\\LHpi.magickartenmarkt\\"},
+		[8]={name="LHpi.magickartenmarkt.lua",savepath=mapath.."Prices\\LHpi.magickartenmarkt\\"},
+		[9]={name="LHpi.mkm-helper.lua",savepath=mapath.."Prices\\LHpi.magickartenmarkt\\"},
 	}
 	
 	-- select a predefined script to be tested
 --	dummy.fakesitescript()
-	local selection = 6
+	local selection = 9
 	local script=scripts[selection]
 	if script.oldloadertrue then
 		dummy.loadscript(script.name,script.path,script.savepath)--deprecated
@@ -933,15 +934,12 @@ function main(mode)
 	--only run sitescript update helpers
 	if site.Initialize then
 		site.Initialize({update=true})
-	else
-		dummy.CompareDummySets(mapath,libver)
-		dummy.CompareDataSets(libver,dataver)
-		dummy.CompareSiteSets()	
 	end
 	
 	-- now try to break the script :-)
-	--LHpi.DoImport(importfoil, importlangs, importsets)
-	ImportPrice( importfoil, importlangs, importsets )
+	if script.name~="LHpi.mkm-helper.lua" then
+		ImportPrice( importfoil, importlangs, importsets )
+	end
 
 	-- demo LHpi helper functions:
 --	print(LHpi.Tostring( { ["this"]=1, is=2, [3]="a", ["table"]="string" } ))

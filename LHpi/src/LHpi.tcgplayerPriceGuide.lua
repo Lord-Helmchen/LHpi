@@ -154,6 +154,7 @@ site.regex = '<TR height=20>(.-)</TR>'
 -- @field [parent=#local] #string mapath
 local workdir = workdir or "Prices\\"
 local mapath = mapath or ".\\"
+--TODO do we need mapath in sitescript??
 
 --[[- "main" function.
  called by Magic Album to import prices. Parameters are passed from MA.
@@ -259,7 +260,7 @@ function site.Initialize( mode )
 	LHpi.Log("Importing " .. site.himelo[himelo] .. " prices. Columns available are " .. LHpi.Tostring(site.himelo) , 1 )
 	
 	if mode.update then
-		if not dummy then error("ListUnknownUrls needs to be run from dummyMA!") end
+		if not dummy then error("ListUnknownUrls needs to be run from LHpi.dummyMA!") end
 		dummy.CompareDummySets(mapath,site.libver)
 		dummy.CompareDataSets(site.libver,site.libver)
 		dummy.CompareSiteSets()

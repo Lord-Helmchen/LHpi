@@ -25,19 +25,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.14.5.12
-removed url to filename changes that are done by the library if OFFLINE
-2.15.6.13
-script configuration variables local instead of global
-workdir support
-site.LoadLib split from ImportPrice
-site.Initialize loads LHpi lib if not yet available (needed if ImportPrice is not called)
-keep LHpi library table if already present
-no longer check for lib and Data in deprecated location
-removed site.CompareSiteSets
-optional site.BuildUrl("list") behaviour
-new optional function site.FetchExpansionList
-site.BuildUrl supports multiple urls per set
+2.16.8.14
+merged back into mkm branch
+fixed some comments
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -58,6 +48,7 @@ site.BuildUrl supports multiple urls per set
 -- options that control the script's behaviour.
 
 --- compare prices set and failed with expected numbers; default true
+-- set to false if you prefer speed over sanity checks.
 -- @field [parent=#global] #boolean CHECKEXPECTED
 --CHECKEXPECTED = false
 
@@ -71,9 +62,9 @@ site.BuildUrl supports multiple urls per set
 -- @field [parent=#global] #boolean STRICTOBJTYPE
 --STRICTOBJTYPE = false
 
---- log to seperate logfile instead of Magic Album.log;	default true
+--- log to seperate logfile instead of LHpi.log; default false
 -- @field [parent=#global] #boolean SAVELOG
---SAVELOG = false
+--SAVELOG = true
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
@@ -83,7 +74,7 @@ site.BuildUrl supports multiple urls per set
 -- @field [parent=#global] #boolean SAVEHTML
 --SAVEHTML = true
 
---- save price table to file before importing to MA;	default false
+--- save price table to file before importing to MA; default false
 -- @field [parent=#global] #boolean SAVETABLE
 --SAVETABLE = true
 
@@ -101,13 +92,13 @@ site.BuildUrl supports multiple urls per set
 
 --- revision of the LHpi library to use
 -- @field #string libver
-local libver = "2.15"
+local libver = "2.16"
 --- revision of the LHpi library datafile to use
 -- @field #string dataver
-local dataver = "6"
+local dataver = "8"
 --- sitescript revision number
 -- @field  string scriptver
-local scriptver = "13"
+local scriptver = "14"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field #string scriptname
 local scriptname = "LHpi.sitescriptTemplate-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -137,9 +128,8 @@ LHpi = LHpi or {}
  @field #string dataver
  @field #string logfile (optional)
  @field #string savepath (optional)
- @field #boolean sandbox 
 ]]
-site={ scriptname=scriptname, dataver=dataver, logfile=logfile or nil, savepath=savepath or nil , sandbox=sandbox}
+site={ scriptname=scriptname, dataver=dataver, logfile=logfile or nil, savepath=savepath or nil }
 
 --[[- regex matches shall include all info about a single card that one html-file has,
  i.e. "*CARDNAME*FOILSTATUS*PRICE*".
@@ -288,7 +278,7 @@ function site.Initialize( mode )
 --	end
 	
 	if mode.update then
-		if not dummy then error("ListUnknownUrls needs to be run from dummyMA!") end
+		if not dummy then error("ListUnknownUrls needs to be run from LHpi.dummyMA!") end
 		dummy.CompareDummySets(mapath,site.libver)
 		dummy.CompareDataSets(site.libver,site.libver)
 		dummy.CompareSiteSets()
