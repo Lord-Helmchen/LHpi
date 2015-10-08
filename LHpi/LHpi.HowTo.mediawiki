@@ -7,6 +7,7 @@ Any remarks or feedbacks are welcome.
 
 To keep this page in in a non-LordHelchen-perspective, he will usually keep his edits to [[How-To_sitescriptTemplate#updating sitescripts to new library/template version]]. Make sure you read the sections appropriate for the LHpi version you are developing for. You could also incorporate changes mentioned in those sections into the rest of this page and then remove what is no longer needed.
 
+==Writing a new sitescript==
 ===Properties===
 
 ====LHpi library version====
@@ -633,7 +634,77 @@ Parameters:
 ; Return <tt>card</tt>
 : modified card for further processing.
 
-===Hints for developing===
+==Updating sitescripts==
+====Updating sitescripts with new set information====
+If you want to update a sitescript to include all sets in a given version of LHpi.Data, you can try using the scripts in update helper mode.
+This requires 
+* library version >=2.15
+* the latest Data version (so it includes the set's data you want to add to the sitescript)
+* LHpi.dummyMA >= 0.6
+* a sitescript that responds properly to site.Initialize("update"), site.BuildUrl("list") and site.FetchExpansionList() and with site.updateFormatString matching the sitescript's site.sets table layout (As of 2015-10-08, this is true of all existing sitescripts).
+Then edit the dummyMY to load the sitescript and run site.Initialize("update"). You can find the results in LHpi.log (or the sitescript's log if you enabled SAVEOG).
+To check how well the new sets are imported, enable VERBOSE,LOGNAMEREPLACE,LOGDROPS,LOGFOILTWEAK,STRICTEXPECTED in the sitescript and run it via Magic Album. Then check the log again.
+
+====resolving failed cards====
+You will probably need multiple runs of the script to determine everything, so to save time and bandwidth, I suggest the following preparation (example for LHpi.tcgplayerPriceGuide.lua):
+# If you have not done yet, create a $PATH_TO_MA\Prices\LHpi.tcgplayerPriceGuide\ directory
+# edit LHpi.tcgplayerPriceGuide.lua to set SAVEHTML=true
+# run the script to download all source html files. With dummyMA >=0.6, you don't need MA for this step anymore.
+# edit LHpi.tcgplayerPriceGuide.lua to set OFFLINE=true (don't forget to change it back once you're done and want live data again)
+
+Now for the namereplacement
+* The target names can be found in lib\LHpi.Data-vX.lua (for cards that have variants) or in MA (Oracle name or localized name colummn).
+* To find the source names, set VERBOSE=true and LOGNAMEREPLACE=true (I'd set LOGDROPS,LOGFOILTWEAK,STRICTEXPECTED true as well), then run the script again and open the log.
+* find all lines that start with "! LHpi.SetPrice". Those tell you exactly which cards failed to be set, including the name LHpi sent to MA. For tokens, suffix the name with " Token" to enable LHpi to detect the object type.
+* If the site_name-to-LHpi_name mapping is not obvious, you can compare the card image on the site with the one in MA (prominent example: Basic Lands in sets without collector numbers).
+* Run the script again and observe the new "namereplaced X to Y" lines in the log, then hopefully see how the number of failed cards has decreased, while the number of namerepalced cards has increased.
+* repeat until either all cards from the source are identified or all cards in MA have received the correct price
+** If you have cards that refuse to be namereplaced and your suspect that special characters are to blame, you can try writing them as "\ddd" (where ddd is the byte value, padded with leading zeros to three digits). Lua is character encoding agnostic, every string is just a string of bytes internally.
+***set DEBUG=true
+***The log is now very wordy, but you can search for (part of) the card name.
+***At some point, there will be a byte-for-byte representation of the name in the log.
+***This is the state of the card name manipulation directly before LHpi looks for a namereplace entry (which, in turn, happens before foiltweak, variant and object type detecion.)
+** If you run into troubles, either try to figure it out by looking at the other sets' namereplacement and variant tables, or report back to me and I will fix the rest.
+* change site.expected to tell LHpi how many successfully set ("pset"), failed and namereplaced cards to expect.
+
+====updating sitescripts to new library/template version====
+Obviously, if you intend to actually run your sitescript, you need to download the corresponding library and data file versions.<br/>
+Unless otherwise noted, each library version (starting with 2.7) should be compatible with each data file version. You can for example change dataver upon release of a new card set by WotC, and keep libver at a library that you and your sitescript are comfortable with.<br/>
+It is usually a ''very good idea'' to use the '''ImportPrice''' fuction from the template version that matches the library version, and only incorporate changes you might have made to it into the the new function definition.<br/>
+If you want to be nice to others that might want to use your sitescript as example or as a starting point for their own sitescript, you could verify that the luadoc comments still match the ones in the template that uses the same library version.
+=====2.6 to 2.7=====
+* The new control option <tt>LOGFOILTWEAK</tt> should be added below <tt>LOGNAMEREPLACE</tt>.
+* The new configuration <tt>dataver</tt> should be added below <tt>libver</tt>.
+* the filename and <tt>scriptname</tt> configuration should include the data file version as infix between library version and sitescript revision number.
+* ImportPrice was changed to load the library from "Prices\lib" instead of "Prices". If you made no changes to this function, just copy the new version from the updated template to your sitescript. It was written in a way that still works, even if you decide to keep the library in "Prices", so you don't strictly ''need'' to create a "\lib" subfolder for the library and data file, though future documentation will assume you did.
+* due to a high amount of improved (luadoc) comments, it's probably best to either copy&paste all of your functions and tables into a copy of the new template file, or copy&paste all (luadoc) comments from the new template file into your sitescript.
+=====2.7 to 2.8=====
+* You need to rewrite site.frucs to match the new format. The examples at [[How-To_sitescriptTemplate#site.frucs]] should get you started.
+** If you used site.fruc in your functions, they will need to be adapted, of course.
+* site.BuildUrl luadoc and example was changed slightly, but no change is strictly required to your existing implementation.
+** note that url.foilonly is not queried by LHpi anymore.
+* site.BCDpluginPre and siteBCDpluginPost both are passed two additional parameters now. To be able to take advantage of the new parameters, you need to change the function definition. If you do, please update the luadoc as well. I ''think'' the way lua works makes this change not strictly necessarry if you don't need access to the new parameters' contents.
+* site.ParseHtmlData now can return multiple cards. This means that you need to wrap the returned card(s) in a container table.
+* new option STRICTEXPECTED should be added above DEBUG
+* site.langs can be shortened, static fields can be read from LHpi.Data.languages[langid]
+=====2.8 to 2.9=====
+*please reintroduce site.langs[langid].id fields, in case they are needed in the future.
+*boolean OPTIONS ("LHpi properties") have been reordered to better fit expected enuser needs, but this change is only cosmetically.
+*new SetPrice return value handling means you will need to check and adapt your site.expected.
+*new configuration scriptversion should be added above scriptname, and scriptname should probably include it.
+=====2.8 to 2.12=====
+* rename DEBUGSKIPFOUND -> DEBUGFOUND
+* rename STRICTCHECKEXPECTED -> STRICTEXPECTED 
+* site.variants subtables can have boolean field [code]override[/code]. If true, default variant table from LHpi.Data is ignored, otherwise both are merged.
+* table site.expected should be wrapped in function site.SetExpected(). see template for example.
+=====2.12 to 2.13=====
+* in addition to site.expected.EXPECTTOKENS, you can set the new options site.expected.EXPECTNONTRAD and site.expected.EXPECTREPL to match the default expectations to what kind of cards the site offers to reduce hardcoded numbers.
+* take note that Tokens, Replicas (Oversized Commanders), Nontraditionals (Conspiracies, Schemes,Planes), Inserts (Double-sided checklists) need object type to be set. In most cases this should already be done by the library, but you may need to use namereplacement or variant tables to set card type suffixes or variants.
+* If you had BuildCardDataPlugins remove "(oversized)" and similar suffixes, you should probably let the library handle those to find the right object type.
+* use Data version 5 or later, as previous variant tables did not include object type variants.
+* to debug object type merging, you can set the new option STRICTOBJTYPE.
+
+==Hints for developing==
 Moved here (from the main page) until they find a proper place in the howto. Feel free to reorder or move them.<br>
 ====just try to run it====
 The library will exit with an error if any non-optional sitescript properties or functions are undefined, to inform you what absolutely needs to be defined.<br/>
@@ -708,42 +779,6 @@ Reasons for and ways to make LHpi.BuildCardData drop cards:
 ** An example is in LHpi.magicuniverseDE.lua's site.BCDpluginPre. The advantage of changing the name above setting card.drop directly is that you can also add a reason for dropping to the name, which will be loggged if LOGDROPS=true.
 ====non-trivial tables====
 To prevent difficult-to-find syntax errors, you might want to end each table field with a <code>,</code> or <code>;</code>, even if it is not necessarry for the ''last'' entry.
-====updating sitescripts to new library/template version====
-Obviously, if you intend to actually run your sitescript, you need to download the corresponding library and data file versions.<br/>
-Unless otherwise noted, each library version (starting with 2.7) should be compatible with each data file version. You can for example change dataver upon release of a new card set by WotC, and keep libver at a library that you and your sitescript are comfortable with.<br/>
-It is usually a ''very good idea'' to use the '''ImportPrice''' fuction from the template version that matches the library version, and only incorporate changes you might have made to it into the the new function definition.<br/>
-If you want to be nice to others that might want to use your sitescript as example or as a starting point for their own sitescript, you could verify that the luadoc comments still match the ones in the template that uses the same library version.
-=====2.6 to 2.7=====
-* The new control option <tt>LOGFOILTWEAK</tt> should be added below <tt>LOGNAMEREPLACE</tt>.
-* The new configuration <tt>dataver</tt> should be added below <tt>libver</tt>.
-* the filename and <tt>scriptname</tt> configuration should include the data file version as infix between library version and sitescript revision number.
-* ImportPrice was changed to load the library from "Prices\lib" instead of "Prices". If you made no changes to this function, just copy the new version from the updated template to your sitescript. It was written in a way that still works, even if you decide to keep the library in "Prices", so you don't strictly ''need'' to create a "\lib" subfolder for the library and data file, though future documentation will assume you did.
-* due to a high amount of improved (luadoc) comments, it's probably best to either copy&paste all of your functions and tables into a copy of the new template file, or copy&paste all (luadoc) comments from the new template file into your sitescript.
-=====2.7 to 2.8=====
-* You need to rewrite site.frucs to match the new format. The examples at [[How-To_sitescriptTemplate#site.frucs]] should get you started.
-** If you used site.fruc in your functions, they will need to be adapted, of course.
-* site.BuildUrl luadoc and example was changed slightly, but no change is strictly required to your existing implementation.
-** note that url.foilonly is not queried by LHpi anymore.
-* site.BCDpluginPre and siteBCDpluginPost both are passed two additional parameters now. To be able to take advantage of the new parameters, you need to change the function definition. If you do, please update the luadoc as well. I ''think'' the way lua works makes this change not strictly necessarry if you don't need access to the new parameters' contents.
-* site.ParseHtmlData now can return multiple cards. This means that you need to wrap the returned card(s) in a container table.
-* new option STRICTEXPECTED should be added above DEBUG
-* site.langs can be shortened, static fields can be read from LHpi.Data.languages[langid]
-=====2.8 to 2.9=====
-*please reintroduce site.langs[langid].id fields, in case they are needed in the future.
-*boolean OPTIONS ("LHpi properties") have been reordered to better fit expected enuser needs, but this change is only cosmetically.
-*new SetPrice return value handling means you will need to check and adapt your site.expected.
-*new configuration scriptversion should be added above scriptname, and scriptname should probably include it.
-=====2.8 to 2.12=====
-* rename DEBUGSKIPFOUND -> DEBUGFOUND
-* rename STRICTCHECKEXPECTED -> STRICTEXPECTED 
-* site.variants subtables can have boolean field [code]override[/code]. If true, default variant table from LHpi.Data is ignored, otherwise both are merged.
-* table site.expected should be wrapped in function site.SetExpected(). see template for example.
-=====2.12 to 2.13=====
-* in addition to site.expected.EXPECTTOKENS, you can set the new options site.expected.EXPECTNONTRAD and site.expected.EXPECTREPL to match the default expectations to what kind of cards the site offers to reduce hardcoded numbers.
-* take note that Tokens, Replicas (Oversized Commanders), Nontraditionals (Conspiracies, Schemes,Planes), Inserts (Double-sided checklists) need object type to be set. In most cases this should already be done by the library, but you may need to use namereplacement or variant tables to set card type suffixes or variants.
-* If you had BuildCardDataPlugins remove "(oversized)" and similar suffixes, you should probably let the library handle those to find the right object type.
-* use Data version 5 or later, as previous variant tables did not include object type variants.
-* to debug object type merging, you can set the new option STRICTOBJTYPE.
 
 ====releasing your sitescript====
 

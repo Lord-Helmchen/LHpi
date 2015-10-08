@@ -26,8 +26,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 --[[ CHANGES
 2.16.8.14
-merged back into mkm branch
+merged mkm branch
 fixed some comments
+added 825,823,824,826
+defaults for site.expected[sid].namereplaced and site.expected[sid].foiltweaked
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -157,9 +159,7 @@ site={ scriptname=scriptname, dataver=dataver, logfile=logfile or nil, savepath=
 --- support for global workdir, if used outside of Magic Album/Prices folder. do not change here.
 -- Can be set externally via global variable.
 -- @field [parent=#local] #string workdir
--- @field [parent=#local] #string mapath
 local workdir = workdir or "Prices\\"
-local mapath = mapath or ".\\"
 
 --[[- "main" function.
  called by Magic Album to import prices. Parameters are passed from MA.
@@ -205,7 +205,7 @@ end -- function ImportPrice
 ]]
 function site.LoadLib()
 	local LHpi
-	local libname = site.workdir .. "lib\\LHpi-v" .. libver .. ".lua"
+	local libname = workdir .. "lib\\LHpi-v" .. libver .. ".lua"
 	local loglater
 	local LHpilib = ma.GetFile( libname )
 	if tonumber(libver) < 2.15 then
@@ -583,6 +583,7 @@ site.sets = {
 [100]={id=100, lang = { [1]=true }, fruc = { false, true }, url = "Beta"},--Beta
 [90] ={id= 90, lang = { [1]=true }, fruc = { false, true }, url = "Alpha"},--Alpha
 -- Expansions
+[825]={id=825, lang = { [1]=true }, fruc = { true , true }, url = "Battle%20for%20Zendikar"},--Battle for Zendikar
 [818]={id=818, lang = { [1]=true }, fruc = { true , true }, url = "Dragons%20of%20Tarkir"},--Dragons of Tarkir
 [816]={id=816, lang = { [1]=true }, fruc = { true , true }, url = "Fate%20Reforged"},--Fate Reforged
 [813]={id=813, lang = { [1]=true }, fruc = { true , true }, url = "Khans%20of%20Tarkir"},--Khans of Tarkir
@@ -652,6 +653,9 @@ site.sets = {
 [130]={id=130, lang = { [1]=true }, fruc = { false, true }, url = "Antiquities"},--Antiquities
 [120]={id=120, lang = { [1]=true }, fruc = { false, true }, url = "Arabian%20Nights"},--Arabian Nights
 -- special sets
+[826]={id=826, lang = { [1]=true }, fruc = { true , true }, url = "Zendikar%20Expeditions"},--Zendikar Expeditions
+[824]={id=824, lang = { [1]=true }, fruc = { true , true }, url = "Duel%20Decks:%20Zendikar%20vs.%20Eldrazi"},--Duel Decks: Zendikar vs. Eldrazi
+[823]={id=823, lang = { [1]=true }, fruc = { true , true }, url = "From%20the%20Vault:%20Angels"},--From the Vault: Angels
 [821]={id=821, lang = { [1]=true }, fruc = { false, true }, url = "Challenge%20Deck:%20Defeat%20a%20God"},--Challenge Deck: Defeat a God
 [820]={id=820, lang = { [1]=true }, fruc = { true , true }, url = "Duel%20Decks:%20Elspeth%20vs.%20Kiora"},--Duel Decks: Elspeth vs. Kiora
 [819]={id=819, lang = { [1]=true }, fruc = { true , true }, url = "Modern%20Masters%202015%20Edition"},--Modern Masters 2015 Edition
@@ -823,10 +827,11 @@ site.foiltweak = {
 }
 ]]
 } -- end table site.foiltweak
---ignore all foiltweak tables from LHpi.Data
+--[[ ignore all foiltweak tables from LHpi.Data
 --for sid,set in pairs(site.sets) do
 --	site.foiltweak[sid] = { override=true }
 --end
+]]
 
 --[[- wrapper function for expected table 
  Wraps table site.expected, so we can wait for LHpi.Data to be loaded before setting it.
@@ -895,12 +900,14 @@ function site.SetExpected( importfoil , importlangs , importsets )
 			site.expected[sid].failed.dup=nil
 			end-- if site.expected[sid].failed
 		end--if site.expected[sid]
-		if site.namereplace[sid] then
-			if site.expected[sid] then
-				site.expected[sid].namereplaced=2*LHpi.Length(site.namereplace[sid])
-			else
-				site.expected[sid]= { namereplaced=2*LHpi.Length(site.namereplace[sid]) }
-			end
+		if site.expected[sid]==nil then
+			site.expected[sid]={}
+		end
+		if site.namereplace[sid] and not site.expected[sid].namereplaced then
+			site.expected[sid].namereplaced= LHpi.Length(site.namereplace[sid])
+		end
+		if site.foiltweak[sid] and not site.expected[sid].foiltweaked then
+			site.expected[sid].foiltweaked= LHpi.Length(site.foiltweak[sid])
 		end
 	end--for sid,name
 end--function site.SetExpected()

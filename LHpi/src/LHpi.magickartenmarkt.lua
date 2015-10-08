@@ -27,24 +27,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
+2.16.8.2
 Initial release, no changelog yet
-
 ]]
 
 -- options that control the amount of feedback/logging done by the script
 
 --- more detailed log; default false
 -- @field [parent=#global] #boolean VERBOSE
-VERBOSE = true
+--VERBOSE = true
 --- also log dropped cards; default false
 -- @field [parent=#global] #boolean LOGDROPS
-LOGDROPS = true
+--LOGDROPS = true
 --- also log namereplacements; default false
 -- @field [parent=#global] #boolean LOGNAMEREPLACE
-LOGNAMEREPLACE = true
+--LOGNAMEREPLACE = true
 --- also log foiltweaking; default false
 -- @field [parent=#global] #boolean LOGFOILTWEAK
-LOGFOILTWEAK = true
+--LOGFOILTWEAK = true
 
 -- options that control the script's behaviour.
 
@@ -96,7 +96,9 @@ local RESETCOUNTER = false
 -- @field #string responseFormat	"json" or "xml"
 local responseFormat = "json"
 
----
+--- Probably only need appToken,appSecret and can do without accessToken,accessTokenSecret.
+-- Needs to be tested.
+-- --FIXME test and document
 local widgetonly = false
 --- use mkm sandbox instead of live server.
 -- @field #boolean sandbox
@@ -104,11 +106,11 @@ local sandbox = false
 
 --- also complain if drop,namereplace or foiltweak count differs; default false
 -- @field [parent=#global] #boolean STRICTEXPECTED
-STRICTEXPECTED = true
+--STRICTEXPECTED = true
 
 --- if true, exit with error on object type mismatch, else use object type 0 (all);	default true
 -- @field [parent=#global] #boolean STRICTOBJTYPE
-STRICTOBJTYPE = true
+--STRICTOBJTYPE = false
 
 --- log to seperate logfile instead of LHpi.log; default false
 -- @field [parent=#global] #boolean SAVELOG
@@ -116,7 +118,7 @@ STRICTOBJTYPE = true
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
-OFFLINE = true
+--OFFLINE = true
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
@@ -138,9 +140,17 @@ OFFLINE = true
 -- @field [parent=#global] #boolean DEBUGVARIANTS
 --DEBUGVARIANTS = true
 
+---	log raw html data found by regex; default false
+-- @field [parent=#global] #boolean DEBUGFOUND
+--DEBUGFOUND = true
+
+--- DEBUG (only but deeper) inside variant loops; default false
+-- @field [parent=#global] #boolean DEBUGVARIANTS
+--DEBUGVARIANTS = true
+
 --- revision of the LHpi library to use
 -- @field #string libver
-local libver = "2.15"
+local libver = "2.16"
 --- revision of the LHpi library datafile to use
 -- @field #string dataver
 local dataver = "8"
@@ -206,7 +216,8 @@ site.encoding="utf8"
 
 --- support for global workdir, if used outside of Magic Album/Prices folder. Do not change here!
 -- Can be set externally via global variable.
-site.workdir = workdir or "Prices\\"
+-- @field #string workdir
+local workdir = workdir or "Prices\\"
 
 --[[- "main" function.
  called by Magic Album to import prices. Parameters are passed from MA.
@@ -251,7 +262,7 @@ end -- function ImportPrice
 ]]
 function site.LoadLib()
 	local LHpi
-	local libname = site.workdir .. "lib\\LHpi-v" .. libver .. ".lua"
+	local libname = workdir .. "lib\\LHpi-v" .. libver .. ".lua"
 	local loglater
 	local LHpilib = ma.GetFile( libname )
 	if tonumber(libver) < 2.15 then
@@ -318,7 +329,7 @@ function site.Initialize( mode )
 	end--if sandbox
 	if OFFLINE~=true then
 		if not (mode.helper or mode.update) then
-			error("LHpi.magickartenmarkt only works in OFFLINE mode. Use LHpi.mkm-helper.lua to fetch source data.")
+			error("LHpi.magickartenmarkt only works in OFFLINE mode. Use LHpi.mkm-helper.lua to fetch source data!")
 		end
 	end
 	if mode.helper then
@@ -339,15 +350,15 @@ function site.Initialize( mode )
 	if not require then
 		LHpi.Log("trying to work around Magic Album lua sandbox limitations..." ,1)
 		--emulate require(modname) using dofile; only works for lua files, not dlls.
-		local packagePath = site.workdir..'lib\\ext\\'
+		local packagePath = workdir..'lib\\ext\\'
 		require = function (fname)
 			local donefile
 			donefile = dofile( packagePath .. fname .. ".lua" )
 			return donefile
 		end-- function require
 	else
-		package.path = site.workdir..'lib\\ext\\?.lua;' .. package.path
-		package.cpath= site.workdir..'lib\\bin\\?.dll;' .. package.cpath
+		package.path = workdir..'lib\\ext\\?.lua;' .. package.path
+		package.cpath= workdir..'lib\\bin\\?.dll;' .. package.cpath
 		--print(package.path.."\n"..package.cpath)
 	end
 	if mode.json then
@@ -396,7 +407,7 @@ ideally, tokens/secrets should be read from a file instead of being hardcoded.
  @return #table params	oauth parameters
 ]]
 function site.PrepareOAuth()
-	local tokens = site.workdir.."lib\\" .. mkmtokenfile
+	local tokens = workdir.."lib\\" .. mkmtokenfile
 	tokens = ma.GetFile(tokens)
 	if not tokens then error("magiccardmarket token file %q not found!") end
 	tokens = Json.decode(tokens)

@@ -1,0 +1,36 @@
+http://www.slightlymagic.net/forum/viewtopic.php?f=32&t=15942&view=viewpoll
+
+Based on the (few) votes and responses, I decided to cease updating most of the LHpi sitescripts. The last common update included sets up to Origins.
+Until further notice, only LHpi.tcgplayerPriceGuide and LHpi.magickartenmarkt will be updated.
+If you need an update to one of the other sitescripts or a new sitescript for another site, direct your questions to :arrow: [url=http://www.slightlymagic.net/forum/viewtopic.php?t=8174&start=45#p187099]LHpi's thread[/url].
+
+
+http://www.slightlymagic.net/forum/viewtopic.php?f=32&t=17250
+
+I have released LHpi.magickartenmarkt.
+See the [url=http://www.slightlymagic.net/wiki/LHpi]LHpi's wiki page[/url] for documentation and give feedback in :arrow: [url=http://www.slightlymagic.net/forum/viewtopic.php?t=8174&start=45#p187099]LHpi's thread[/url].
+
+http://www.slightlymagic.net/forum/viewtopic.php?f=32&t=8174&p=186497#p186497
+
+Update 2.16.8. As usual, all download links and documentation are at [url=http://www.slightlymagic.net/wiki/LHpi]LHpi's wiki page[/url].
+I also added the insgtructions from the previous posts to [url]http://www.slightlymagic.net/wiki/How-To_sitescriptTemplate#Updating_sitescripts[/url].
+If you're only here for LHpi.tcgplayerPriceGuide, you can ignore the next post :-) 
+LHpi.tcgplayerPriceGuide.lua
+version 2.16.8.16
+LHpi-v2.16.lua
+LHpi.Data-v8.lua
+finally all sets have variant tables
+
+LHpi.magickartenmarkt is finally ready to be tested by a wider audience.
+Due to the limitations imposed by Magic Album's embedded Lua interpreter and the MKM API, this is not as straight forward as the other sitescripts. I recommend you take the time to read the [url=http://www.slightlymagic.net/wiki/LHpi#additional_instructions_for_MKM]additional instructions for MKM[/url].
+
+LHpi.magickartenmarkt.lua
+version 2.16.8.2
+LHpi.mkm-helper.lua
+version 2.16.8.1
+LHpi.dummyMA.lua
+version 0.7
+LHpi.external_dependencies-v2
+needed for dummy and mkm
+
+

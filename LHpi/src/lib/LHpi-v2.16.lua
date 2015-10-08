@@ -26,10 +26,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 --[[ CHANGES
 2.16
-remove leftover unsued code
+removed leftover unused code
+removed deprecated parameter offline from site.BuildUrl calls
+site.resultregex findings (if any) logged in MainImportCycle instead of GetSourceData
+no longer check for Data in deprecated location
 ]]
 
---TODO count averaging events with counter attached to prices. better: just build a seperate table to remember averaging happened.
+--TODO count averaging events with counter attached to prices. better: just build a separate table to remember averaging happened.
 --TODO change #boolean VERBOSE to #number verbosity and adjust loglevels?
 
 local LHpi = {}

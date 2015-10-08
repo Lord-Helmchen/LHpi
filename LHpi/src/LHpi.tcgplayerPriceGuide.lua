@@ -24,25 +24,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.15.7.15
-added 825,823,824,826
-fixed namereplace 822,808,110,100,90,751,570,220,170,820,819,814,807,801,796,787,600,45,23,22
+2.16.8.16
+synced with template
+updated site.namereplace for 825,220,170,820,40
+updated site.expected
 ]]
 
 -- options that control the amount of feedback/logging done by the script
 
 --- more detailed log; default false
 -- @field [parent=#global] #boolean VERBOSE
-VERBOSE = true
+--VERBOSE = true
 --- also log dropped cards; default false
 -- @field [parent=#global] #boolean LOGDROPS
-LOGDROPS = true
+--LOGDROPS = true
 --- also log namereplacements; default false
 -- @field [parent=#global] #boolean LOGNAMEREPLACE
-LOGNAMEREPLACE = true
+--LOGNAMEREPLACE = true
 --- also log foiltweaking; default false
 -- @field [parent=#global] #boolean LOGFOILTWEAK
-LOGFOILTWEAK = true
+--LOGFOILTWEAK = true
 
 -- options unique to this sitescript
 
@@ -59,6 +60,7 @@ copyprice = nil
 -- options that control the script's behaviour.
 
 --- compare prices set and failed with expected numbers; default true
+-- set to false if you prefer speed over sanity checks.
 -- @field [parent=#global] #boolean CHECKEXPECTED
 --CHECKEXPECTED = false
 
@@ -72,19 +74,19 @@ copyprice = nil
 -- @field [parent=#global] #boolean STRICTOBJTYPE
 --STRICTOBJTYPE = false
 
---- log to seperate logfile instead of Magic Album.log;	default true
+--- log to seperate logfile instead of LHpi.log; default false
 -- @field [parent=#global] #boolean SAVELOG
---SAVELOG = false
+--SAVELOG = true
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
-OFFLINE = true--download from dummy, only change to false for release
+--OFFLINE = true--download from dummy, only change to false for release
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
 --SAVEHTML = true
 
---- save price table to file before importing to MA;	default false
+--- save price table to file before importing to MA; default false
 -- @field [parent=#global] #boolean SAVETABLE
 --SAVETABLE = true
 
@@ -100,25 +102,35 @@ OFFLINE = true--download from dummy, only change to false for release
 -- @field [parent=#global] #boolean DEBUGVARIANTS
 --DEBUGVARIANTS = true
 
+---	log raw html data found by regex; default false
+-- @field [parent=#global] #boolean DEBUGFOUND
+--DEBUGFOUND = true
+
+--- DEBUG (only but deeper) inside variant loops; default false
+-- @field [parent=#global] #boolean DEBUGVARIANTS
+--DEBUGVARIANTS = true
+
 --- revision of the LHpi library to use
 -- @field #string libver
-local libver = "2.15"
+local libver = "2.16"
 --- revision of the LHpi library datafile to use
 -- @field #string dataver
-local dataver = "7"
+local dataver = "8"
 --- sitescript revision number
 -- @field  string scriptver
-local scriptver = "15"
+local scriptver = "16"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field #string scriptname
 local scriptname = "LHpi.tcgplayerPriceGuide-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
 --- savepath for OFFLINE (read) and SAVEHTML (write). must point to an existing directory relative to MA's root.
 -- set by LHpi lib unless specified here.
+-- Can also be set externally via global variable.
 -- @field  #string savepath
 --local savepath = "Prices\\" .. string.gsub( scriptname , "%-v%d+%.%d+%.lua$" , "" ) .. "\\"
 local savepath = savepath -- keep external global savepath
 --- log file name. must point to (nonexisting or writable) file in existing directory relative to MA's root.
 -- set by LHpi lib unless specified here. Defaults to LHpi.log unless SAVELOG is true.
+-- Can also be set externally via global variable.
 -- @field #string logfile
 --local logfile = "Prices\\" .. string.gsub( site.scriptname , "lua$" , "log" )
 local logfile = logfile -- keep external global logfile
@@ -138,9 +150,8 @@ LHpi = LHpi or {}
  @field #string dataver
  @field #string logfile (optional)
  @field #string savepath (optional)
- @field #boolean sandbox 
 ]]
-site={ scriptname=scriptname, dataver=dataver, logfile=logfile or nil, savepath=savepath or nil , sandbox=sandbox}
+site={ scriptname=scriptname, dataver=dataver, logfile=logfile or nil, savepath=savepath or nil }
 
 --[[- regex matches shall include all info about a single card that one html-file has,
  i.e. "*CARDNAME*FOILSTATUS*PRICE*".
@@ -150,11 +161,9 @@ site.regex = '<TR height=20>(.-)</TR>'
 
 
 --- support for global workdir, if used outside of Magic Album/Prices folder. do not change here.
--- @field [parent=#local] #string workdir
--- @field [parent=#local] #string mapath
+-- Can be set externally via global variable.
+-- @field #string workdir
 local workdir = workdir or "Prices\\"
-local mapath = mapath or ".\\"
---TODO do we need mapath in sitescript??
 
 --[[- "main" function.
  called by Magic Album to import prices. Parameters are passed from MA.
@@ -185,7 +194,7 @@ function ImportPrice( importfoil , importlangs , importsets , scriptmode)
 	if loglater then
 		LHpi.Log(loglater ,0)
 	end
-	LHpi.Log( "LHpi lib is ready for use." )
+	LHpi.Log( "LHpi lib is ready for use." ,0)
 	site.Initialize( scriptmode ) -- keep site-specific stuff out of ImportPrice
 	LHpi.DoImport (importfoil , importlangs , importsets)
 	LHpi.Log( "Lua script " .. scriptname .. " finished" ,0)
@@ -260,7 +269,7 @@ function site.Initialize( mode )
 	LHpi.Log("Importing " .. site.himelo[himelo] .. " prices. Columns available are " .. LHpi.Tostring(site.himelo) , 1 )
 	
 	if mode.update then
-		if not dummy then error("ListUnknownUrls needs to be run from LHpi.dummyMA!") end
+		if not dummy then error("Update mode needs to be called by LHpi.dummyMA!") end
 		dummy.CompareDummySets(mapath,site.libver)
 		dummy.CompareDataSets(site.libver,site.libver)
 		dummy.CompareSiteSets()
@@ -284,8 +293,6 @@ This will be used by site.FetchExpansionList().
  @param #number setid		see site.sets
  @param #number langid		see site.langs
  @param #number frucid		see site.frucs
- @param #boolean offline	DEPRECATED, read global OFFLINE instead if you need really it.
- 							(can be nil) use local file instead of url
  @return #table { #string (url)= #table { isfile= #boolean, (optional) foilonly= #boolean, (optional) setid= #number, (optional) langid= #number, (optional) frucid= #number } , ... }
 ]]
 function site.BuildUrl( setid,langid,frucid )
@@ -325,6 +332,7 @@ end -- function site.BuildUrl
  The returned table shall contain at least the sets' name and LHpi-comnpatible urlsuffix,
  so it can be processed by dummy.ListUnknownUrls.
  Implementing this function is optional and may not be possible for some sites.
+
  @function [parent=#site] FetchExpansionList
  @return #table  @return #table { #number= #table { name= #string , urlsuffix= #string , ... }
 ]]
@@ -405,6 +413,7 @@ end -- function site.ParseHtmlData
 --[[- special cases card data manipulation.
  Ties into LHpi.buildCardData to make changes that are specific to one site and thus don't belong into the library.
  This Plugin is called before most of LHpi's BuildCardData processing.
+ It's probably safest to only make name and language modifications here.
 
  @function [parent=#site] BCDpluginPre
  @param #table card			the card LHpi.BuildCardData is working on
@@ -921,7 +930,7 @@ site.namereplace = {
 },
 --expansion sets
 [825] = { -- Battle for Zendikar
-["Akoum Stonewalker"]						= "Akoum Stonewaker",
+--["Akoum Stonewalker"]						= "Akoum Stonewaker",
 ["Plains (250 Full Art)"]					= "Plains (250F)",
 ["Plains (251 Full Art)"]					= "Plains (251F)",
 ["Plains (252 Full Art)"]					= "Plains (252F)",
@@ -950,8 +959,8 @@ site.namereplace = {
 ["Eldrazi Scion Token (Izzy)"]				= "Eldrazi Scion Token (2)",
 ["Eldrazi Scion Token (Nelson)"]			= "Eldrazi Scion Token (3)",
 ["Eldrazi Scion Token (Velinov)"]			= "Eldrazi Scion Token (4)",
-["Elemental Token (3)"]					= "Elemental Token (9)",
-["Elemental Token (5)"]					= "Elemental Token (11)",
+["Elemental Token (3)"]						= "Elemental Token (9)",
+["Elemental Token (5)"]						= "Elemental Token (11)",
 },
 [818] = { -- Dragons of Tarkir
 ["Obscuring Aether"]					= "Obscuring Æther",
@@ -1230,13 +1239,15 @@ site.namereplace = {
 ["Carrier Pigeons"]								= "Carrier Pigeons (1)",
 ["Carrier Pigeons (Hand)"]						= "Carrier Pigeons (2)",
 ["Casting of Bones (Hooded Figure)"]			= "Casting of Bones (1)",
-["Casting of Bones (Close-up)"]					= "Casting of Bones (2)",
+["Casting of Bones"]							= "Casting of Bones (2)",
+--["Casting of Bones (Close-up)"]					= "Casting of Bones (2)",
 ["Deadly Insect (Bird)"]						= "Deadly Insect (1)",
 ["Deadly Insect (Red Robe)"]					= "Deadly Insect (2)",
 ["Elvish Ranger (Male)"]						= "Elvish Ranger (1)",
 ["Elvish Ranger (Female)"]						= "Elvish Ranger (2)",
 ["Enslaved Scout (Horses)"]						= "Enslaved Scout (1)",
-["Enslaved Scout (Solitary Goblin)"]			= "Enslaved Scout (2)",
+["Enslaved Scout"]								= "Enslaved Scout (2)",
+--["Enslaved Scout (Solitary Goblin)"]			= "Enslaved Scout (2)",
 ["Errand of Duty"]								= "Errand of Duty (1)",
 ["Errand of Duty (Page Holding Sword)"]			= "Errand of Duty (2)",
 ["False Demise (Underwater)"]					= "False Demise (1)",
@@ -1265,7 +1276,8 @@ site.namereplace = {
 --["Insidious Bookworms (Horde of Worms)"]		= "Insidious Bookworms (1)",
 ["Insidious Bookworms (Single)"]				= "Insidious Bookworms (2)",
 ["Kjeldoran Escort (Green Blanketed Dog)"]		= "Kjeldoran Escort (2)",
-["Kjeldoran Escort (Green Dog)"]				= "Kjeldoran Escort (1)",
+["Kjeldoran Escort"]							= "Kjeldoran Escort (1)",
+--["Kjeldoran Escort (Green Dog)"]				= "Kjeldoran Escort (1)",
 ["Kjeldoran Pride (Bear)"]						= "Kjeldoran Pride (2)",
 ["Kjeldoran Pride (Eagle)"]						= "Kjeldoran Pride (1)",
 ["Lat-Nam's Legacy (Scroll)"]					= "Lat-Nam's Legacy (1)",
@@ -1289,7 +1301,8 @@ site.namereplace = {
 ["Royal Herbalist"]								= "Royal Herbalist (1)",
 ["Royal Herbalist (Man)"]						= "Royal Herbalist (2)",
 ["Soldevi Heretic (Blue Robe)"]					= "Soldevi Heretic (1)",
-["Soldevi Heretic (Scolding Old Men)"]			= "Soldevi Heretic (2)",
+["Soldevi Heretic"]								= "Soldevi Heretic (2)",
+--["Soldevi Heretic (Scolding Old Men)"]			= "Soldevi Heretic (2)",
 ["Soldevi Adnate"]	 							= "Soldevi Adnate (1)",
 ["Soldevi Adnate (Woman)"]	 					= "Soldevi Adnate (2)",
 ["Soldevi Sage (Old Woman)"]					= "Soldevi Sage (1)",
@@ -1317,9 +1330,11 @@ site.namereplace = {
 ["Viscerid Armor"]								= "Viscerid Armor (2)",
 ["Viscerid Armor (Crashing Wave)"]				= "Viscerid Armor (1)",
 ["Whip Vine (Ensnared Bird)"]					= "Whip Vine (2)",
-["Whip Vine (Only Plants)"]						= "Whip Vine (1)",
+["Whip Vine"]									= "Whip Vine (1)",
+--["Whip Vine (Only Plants)"]						= "Whip Vine (1)",
 ["Wild Aesthir (Blue Mountains)"] 				= "Wild Aesthir (1)",
-["Wild Aesthir (Lightning Strike)"] 			= "Wild Aesthir (2)",
+["Wild Aesthir"]					 			= "Wild Aesthir (2)",
+--["Wild Aesthir (Lightning Strike)"] 			= "Wild Aesthir (2)",
 ["Yavimaya Ancients"]							= "Yavimaya Ancients (2)",
 ["Yavimaya Ancients (Rearing Horse)"]			= "Yavimaya Ancients (1)",
 },
@@ -1420,7 +1435,8 @@ site.namereplace = {
 --["High Tide (Wave)"] 					= "High Tide (1)",
 ["High Tide (Merfolk)"] 				= "High Tide (2)",
 ["High Tide (Coral)"] 					= "High Tide (3)",
-["Homarid (Hoover)"]					= "Homarid (1)",
+--["Homarid (Hoover)"]					= "Homarid (1)",
+["Homarid"]								= "Homarid (1)",
 ["Homarid (Hudson)"]					= "Homarid (2)",
 ["Homarid (Tedin)"]						= "Homarid (3)",
 ["Homarid (Wackwitz)"]					= "Homarid (4)",
@@ -1543,11 +1559,12 @@ site.namereplace = {
 },
 -- special sets
 [824] = { -- Duel Decks: Zendikar vs. Eldrazi
-["Eldrazi Spawn Token (Briclot)"]			= "Eldrazi Spawn Token (76)",
-["Eldrazi Spawn Token (Mark Tedin)"]		= "Eldrazi Spawn Token (78)",
-["Eldrazi Spawn Token (Meignaud)"]			= "Eldrazi Spawn Token (77)",
+["Eldrazi Spawn Token (Briclot)"]		= "Eldrazi Spawn Token (76)",
+["Eldrazi Spawn Token (Mark Tedin)"]	= "Eldrazi Spawn Token (78)",
+["Eldrazi Spawn Token (Meignaud)"]		= "Eldrazi Spawn Token (77)",
 },
 [820] = { -- Duel Decks: Elspeth vs. Kiora
+["Elspeth, Sun's Champion"]				= "Elspeth, Sun’s Champion",
 ["Aetherize"]							= "Ætherize",
 },
 [819] = { -- Modern Masters 2015 Edition
@@ -1787,6 +1804,7 @@ site.namereplace = {
 ["Anaconda"]							= "Anaconda (ST)",
 ["Blaze (Flavor Text)"]					= "Blaze",
 ["Blaze"]								= "Blaze (ST)",
+--["Déjà  Vu"]							= "Déjà Vu",
 ["Elite Cat Warrior (Flavor Text)"]		= "Elite Cat Warrior",
 ["Elite Cat Warrior"]					= "Elite Cat Warrior (ST)",
 --["Hand of Death"]						= "Hand of Death",
@@ -1904,7 +1922,7 @@ site.namereplace = {
 },
 [40] = { -- Arena/Colosseo Leagues Promos
 --TODO [40] settweak
-["Ashnod\145s Coupon"]					= "Ashnod’s Coupon",
+--["Ashnod\145s Coupon"]					= "Ashnod’s Coupon",
 ["Island (2001)"]						= "Island (2001a)",
 ["Island (2002)"]						= "Island (2001b)",
 ["Man-o'-War"]							= "Man-o’-War",
@@ -2043,9 +2061,10 @@ site.namereplace = {
  tables of cards that need to set variant.
  For each setid, will be merged with sensible defaults from LHpi.Data.sets[setid].variants.
  When variants for the same card are set here and in LHpi.Data, sitescript's entry overwrites Data's.
+ If override is true, the variant table from LHpi.Data is ignored for this set.
  
  fields are for subtables indexed by #number setid.
- { #number (setid)= #table { #string (name)= #table { #string, #table { #string or #boolean , ... } } , ... } , ...  }
+ { #number (setid)= #table { override=#boolean , #string (name)= #table { #string, #table { #string or #boolean , ... } } , ... } , ...  }
 
  @type site.variants
  @field [parent=#site.variants] #boolean override	(optional) if true, defaults from LHpi.Data will not be used at all
@@ -2176,19 +2195,19 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [360] = { namereplaced=1 },
 [250] = { namereplaced=21 },
 [180] = { namereplaced=15 },
-[140] = { namereplaced=15, dropped=2 },
+[140] = { dropped=2 },
 [110] = { namereplaced=15},
 [100] = { namereplaced=15},
 [90]  = { dropped=1, namereplaced=10},-- 1 SOON
 -- Expansions
-[825] = { namereplaced=31 },--Elemental Token unexpected fail, bug#754
+[825] = { },--Elemental Token unexpected fail, bug#754
 [818] = { namereplaced=1 },
 [813] = { namereplaced=2 },
 [802] = { namereplaced=2, dropped=1},--SOON, "(clone)"
 [800] = { namereplaced=3 },
 [795] = { namereplaced=1, failed={ 1 } },
 [793] = { namereplaced=1 },
-[791] = { pset={ LHpi.Data.sets[791].cardcount.both-1 }, failed={ 2 } },-- Holiday Gift Box missing, fail Knight(League)
+[791] = { failed={ 1 } },-- fail Knight(League)
 [786] = { failed={ 1 }, namereplaced=5, dropped=1 },-- Angel|Demon Token is Promo, 1 SOON
 [784] = { pset={161+1}, namereplaced=15 },-- +1 Checklist
 [782] = { pset={276+1}, namereplaced=26 },-- +1 Checklist
@@ -2236,7 +2255,6 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [120] = { namereplaced=18 },
 [130] = { namereplaced=17, dropped=1 },
 -- special sets
-[820] = { namereplaced=1, foiltweaked=2 },
 [819] = { pset={ LHpi.Data.sets[819].cardcount.both }, namereplaced=4 },
 [817] = { pset={ LHpi.Data.sets[817].cardcount.all-7 }, failed={ 7 }, namereplaced=48, foiltweaked=8, dropped=14 },--13 SOON,6 Forests and bat token missing
 [814] = { pset={ LHpi.Data.sets[814].cardcount.all-LHpi.Data.sets[814].cardcount.tok }, failed={ 24 }, foiltweaked=5, namereplaced=4, dropped=2 },--2 SOON
@@ -2249,13 +2267,12 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [798] = { pset={20}, dropped=1 }, 
 [796] = { namereplaced=3 },
 [794] = { foiltweaked=2 },
---[792] = { pset={ LHpi.Data.sets[792].cardcount.reg }, dropped=LHpi.Data.sets[792].cardcount.repl-1  },
 [790] = { foiltweaked=2 },
-[787] = { dropped=1 , namereplaced=2 },--1 SOON
+[787] = { dropped=1 },--1 SOON
 [785] = { namereplaced=1, foiltweaked=2 },
 [781] = { foiltweaked=2 },
 [777] = { foiltweaked=2 },
-[778] = { pset={ LHpi.Data.sets[778].cardcount.reg }, failed={ LHpi.Data.sets[778].cardcount.repl }, namereplaced=3 },
+[778] = { pset={ LHpi.Data.sets[778].cardcount.reg }, failed={ LHpi.Data.sets[778].cardcount.repl }, namereplaced=3, foiltweaked=0 },
 [772] = { namereplaced=1, foiltweaked=2 },
 [771] = { namereplaced=1 },
 [769] = { pset={ LHpi.Data.sets[769].cardcount.reg+LHpi.Data.sets[769].cardcount.nontrad }, namereplaced=1, dropped=1 },
@@ -2280,20 +2297,31 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [105] = { namereplaced=15 },
 -- promos
 [45]  = { pset={ [8]=LHpi.Data.sets[45].cardcount.reg-1 }, namereplaced=50, dropped=20 },--20 SOON, Jaya Ballard, Task Mage missing
-[40]  = { pset={ LHpi.Data.sets[40].cardcount.reg }, failed={ 2 }, namereplaced=10, dropped=3 },--3 are not ARE
+[40]  = { pset={ LHpi.Data.sets[40].cardcount.reg }, failed={ 2 }, dropped=3 },--3 are not ARE
 [32]  = { failed={ 1 }, namereplaced=3, dropped=1 },-- "Liliana of the Veil" (PTQ) not in MA
 [31]  = { failed= { 1 } },--Griselbrand 2015 not in MA
-[30]  = { pset={ LHpi.Data.sets[30].cardcount.all }, failed={ 1 }, namereplaced=1, foiltweaked=1, dropped=2 },--1 SOON,1 is ARE [40], "Orator of Ojutai" not in MA
+[30]  = { pset={ LHpi.Data.sets[30].cardcount.all }, failed={ 2 }, namereplaced=1, foiltweaked=1, dropped=1 },--1 SOON,1 is ARE [40], "Orator of Ojutai" and "Ultimate Price" not in MA
 [27]  = { namereplaced=35 },
 [26]  = { pset={ LHpi.Data.sets[26].cardcount.reg-4 }, foiltweaked=18, dropped=2 },--2 SOON
 [25]  = { pset={ LHpi.Data.sets[25].cardcount.all-2, [17]=1 }, failed={ 5+5 }, dropped=1+3, namereplaced=8, foiltweaked=3-1 },--5 Full Art lands not in MA, 1 not [25],3 SOON, 2 wolf tokens missing, TODO 5 unknown
 [24]  = { foiltweaked=5 },
-[23]  = { pset={ LHpi.Data.sets[23].cardcount.reg }, dropped=7+1, namereplaced=14 },--8 not GTW
-[22]  = { pset={ LHpi.Data.sets[22].cardcount.both+2,[12]=1,[13]=1,[14]=1,[15]=1,[16]=1 }, failed={ 10+3 }, namereplaced=9, foiltweaked=119, dropped=5 },--5 SOON, 10 Guild logo inserts not in MA, TODO 3 unknown
+[23]  = { pset={ LHpi.Data.sets[23].cardcount.reg }, dropped=7+1, foiltweaked=0 },--8 not GTW
+[22]  = { pset={ LHpi.Data.sets[22].cardcount.both+2,[12]=1,[13]=1,[14]=1,[15]=1,[16]=1 }, failed={ 10+68+2 }, foiltweaked=119, dropped=2 },--2 SOON, 10 Guild logo inserts not in MA, TODO 2 unknown, 68 BFZ rare/mythic
 [21]  = { pset={ LHpi.Data.sets[21].cardcount.all-LHpi.Data.sets[21].cardcount.repl-3-1 }, namereplaced=6, foiltweaked=2, dropped=2 },--1 SOON, 1 is ARE [40], missing 3 Theros Hero Cards, Tazeem (Plane) and oversized
 [20]  = { pset={ 77 }, namereplaced=23, foiltweaked=8 },
 [10]  = { pset={ LHpi.Data.sets[10].cardcount.reg-3}, dropped=2 },-- 2 SOON
 	}--end table site.expected
+	for sid,name in pairs(importsets) do
+		if site.expected[sid]==nil then
+			site.expected[sid]={}
+		end
+		if site.namereplace[sid] and not site.expected[sid].namereplaced then
+			site.expected[sid].namereplaced= LHpi.Length(site.namereplace[sid])
+		end
+		if site.foiltweak[sid] and not site.expected[sid].foiltweaked then
+			site.expected[sid].foiltweaked= LHpi.Length(site.foiltweak[sid])
+		end
+	end--for sid,name
 end--function site.SetExpected()
 ma.Log(site.scriptname .. " loaded.")
 --EOF

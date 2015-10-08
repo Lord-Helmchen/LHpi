@@ -4,7 +4,7 @@ LHpi is a collection of lua scripts to be used by Magic Album, but is '''''not''
 
 Discuss, ask for help and leave feedback at the [http://www.slightlymagic.net/forum/viewtopic.php?f=32&t=8174 corresponding Forum Thread].
 ==Sitescripts==
-The sitescripts are the actual price import scripts, written in lua. They use the [[Magic Album Lua API]] and [[#The LHpi Library| the LHpi library]] to query and parse a website and import the price information into Magic Album. Most of the program logic is contained in the library, so the sitescript needs to hold only site-specific information and a few functions that are not easily generalizable.
+The sitescripts are the actual price import scripts, written in lua. They use the [[Magic Album Lua API]] and [[#the LHpi Library]] to query and parse a website and import the price information into Magic Album. Most of the program logic is contained in the library, so the sitescript needs to hold only site-specific information and a few functions that are not easily generalizable.
 
 In theory, you should not be dependent on a new version once a new set is available: just add new entries to site.sets table in the sitescript. Being easy to update yourself was one of the design goals.
 
@@ -22,28 +22,30 @@ Sitescripts will need to provide
 
 
 ===magickartenmarkt===
-{|NOTYET LHpi.magickartenmarkt.lua.zip]
+{|
+|[http://www.slightlymagic.net/forum/download/file.php?id=23330 LHpi.magickartenmarkt.lua.zip]
 |-
 |Sitescript version||2.16.8.2
 |-
-|updated last on||not released yet
+|updated last on||2015-10-08
 |-
-|size|| KiB
+|size||41.78 KiB
 |}
 [https://www.magickartenmarkt.de/ MagicKartenMarkt] (or [https://www.magiccardmarket.eu/ magiccardmarket] is "Europe's largest online marketplace for Magic the Gathering cards!". It has become the de facto standard way to acquire singles, at least in my local MtG circles.
 
 <s>They are the only price source that I personally am interested in anymore, but the script is not in a releasable state yet. See the forum thread, starting at [http://www.slightlymagic.net/forum/viewtopic.php?f=32&t=8174&start=45#p182474 state of things] for details on how far along development is.</s> Due to the limitations imposed by Magic Album's embedded Lua interpreter and the MKM API, you cannot fetch live data with the sitescript. You can use LHpi.mkm-helper.lua to download price data.
 
-Additional preparation steps are needed for LHpi.magickartenmarkt. Please refer to the [[additional instructions for MKM]] below.
+Additional preparation steps are needed for LHpi.magickartenmarkt. Please refer to the [[#additional instructions for MKM]] below.
 
 ====mkm-helper.lua====
-{|NOTYET LHpi.mkm-helper.zip]
+{|
+|[http://www.slightlymagic.net/forum/download/file.php?id=23331 LHpi.mkm-helper.zip]
 |-
-|Sitescript version||2.16.8.2
+|Sitescript version||2.16.8.1
 |-
-|updated last on||not released yet
+|updated last on||2015-10-08
 |-
-|size|| KiB
+|size||8.23 KiB
 |}
 Helper script to download price data from MKM. The data can then be imported to MA with magickartenmarkt.lua.
 
@@ -52,13 +54,13 @@ Also included is a batch file (LHpi.mkm-helper.bat) for ease of use. Edit it to 
 
 ===magic.tcgplayer.com PriceGuide===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=23252 LHpi.tcgplayerPriceGuide.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=23327 LHpi.tcgplayerPriceGuide.lua.zip]
 |-
-|Sitescript version||2.15.7.15
+|Sitescript version||2.16.8.16
 |-
-|updated last on||2015-09-28
+|updated last on||2015-10-08
 |-
-|size|| 28 08
+|size||28.24 KiB
 |}
 [http://magic.tcgplayer.com/magic_price_guides.asp Tcgplayer Price Guide] claims to accumulate prices from 75 online vendors. They are priced in $.
 As requested by Golob [http://www.slightlymagic.net/forum/viewtopic.php?f=32&t=2324&start=300#p108605 here].<br />
@@ -75,7 +77,7 @@ Note that cards with multiple versions are averaged in some sets and set to "var
 |-
 |updated last on||2015-07-21
 |-
-|size|| 15.57 KiB
+|size||15.57 KiB
 |}
 [http://www.magicuniverse.de/html/einzelkarten.php?menue Magic Universe] is a German site with German and English cards, priced in €.
 
@@ -100,9 +102,9 @@ I do not need any prices besides from MKM, and will not update this (unless spec
 |-
 |updated last on||2015-07-21
 |-
-|size|| 14.02 KiB
+|size||14.02 KiB
 |}
-Functionally the same as [[#Other scripts|"MTG Mint Card.lua"]] by Goblin Hero and Stromglad1.
+Functionally the same as [[#Other scripts|#"MTG Mint Card.lua"]] by Goblin Hero and Stromglad1.
 
 When I wanted to generalize my script for easy adaption to other sites, this provided me with a good baseline, since I could search MA for cards that my script missed but should have set. Also, the site is easy to query and parse. They do have a currency chooser, so I started by trying to make a mtgmintcard-Euro script. I failed, but salvaged the wreck for default $ prices.
 
@@ -125,7 +127,7 @@ I do not need any prices besides from MKM, and will not update this (unless spec
 |-
 |updated last on||2015-07-21
 |-
-|size|| 16.57 KiB
+|size||16.57 KiB
 |}
 [http://www.trader-online.de/Magic_Online-Shop.php Trader Online] is a German site with German and English cards, priced in €.
 
@@ -150,7 +152,7 @@ I do not need any prices besides from MKM, and will not update this (unless spec
 |-
 |updated last on||2015-07-21
 |-
-|size|| 14.34 KiB
+|size||14.34 KiB
 |}
 I did not plan to include it in the sitescript collection, but now that the cat is out of the bag and it has been downloaded a dual-digit number of times, I can at least upload the newer version to make it compatible with the latest lib and data...
 Contains a variable to select between "Fair Trade" and "best Buy" price column.
@@ -167,17 +169,28 @@ I do not need any prices besides from MKM, and will not update this anymore (unl
  count differs in 56 sets: { [5]="Book Inserts";[6]="Comic Inserts";[7]="Magazine Inserts";[9]="Video Game Promos";[10]="Junior Series Promos";[21]="Release & Launch Parties Promos";[22]="Prerelease Promos";[23]="Gateway & WPN Promos";[25]="Judge Gift Cards";[26]="Magic Game Day";[27]="Alternate Art Lands";[30]="Friday Night Magic Promos";[40]="Arena/Colosseo Leagues Promos";[42]="Summer of Magic Promos";[120]="Arabian Nights";[160]="The Dark";[190]="Ice Age";[200]="Chronicles";[201]="Renaissance";[225]="Introductory Two-Player Set";[260]="Portal";[270]="Weatherlight";[320]="Unglued";[380]="Portal Three Kingdoms";[390]="Starter 1999";[415]="Starter 2000";[450]="Planeshift";[490]="Deckmasters";[550]="8th Edition";[600]="Unhinged";[630]="9th Edition";[670]="Coldsnap";[680]="Time Spiral";[690]="Time Spiral Timeshifted";[756]="Conflux";[769]="Archenemy";[776]="New Phyrexia";[782]="Innistrad";[784]="Dark Ascension";[787]="Planechase 2012 Edition";[791]="Return to Ravnica";[793]="Gatecrash";[794]="Duel Decks: Sorin vs. Tibalt";[799]="Duel Decks: Heroes vs. Monsters";[800]="Theros";[801]="Commander 2013 Edition";[805]="Duel Decks: Jace vs. Vraska";[807]="Conspiracy";[809]="From the Vault: Annihilation";[812]="Duel Decks: Speed vs. Cunning";[813]="Khans of Tarkir";[814]="Commander 2014 Edition";[816]="Fate Reforged";[818]="Dragons of Tarkir";[820]="Duel Decks: Elspeth vs. Kiora";[822]="Magic Origins";}
 </tt>
 
-==The LHpi Library==
+==the LHpi Library==
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=22737 LHpi-v2.16.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=23328 LHpi-v2.16.lua.zip]
 |-
 |Tested with Ma version||1.6.4.348
 |-
-|recommended Data version|| >=8
+|recommended Data version||>=8
+|-
+|updated last on||2015-10-08
+|-
+|size||19.53 KiB
+|}
+{|
+|[http://www.slightlymagic.net/forum/download/file.php?id=22737 LHpi-v2.15.lua.zip]
+|-
+|Tested with Ma version||1.6.4.348
+|-
+|recommended Data version|| >=6
 |-
 |updated last on||2015-07-18
 |-
-|size|| 21 KiB
+|size||21 KiB
 |}
 It is not expected to be fast, but as reliable as possible:<br />
 It first compares the user requested sets and languages with what the sitescript has available and builds a table of urls to querry, seperated by set.<br />
@@ -191,6 +204,15 @@ Logging to a seperate file is now disabled by default again (but still configura
 
 ===LHpi.Data===
 {|
+|[http://www.slightlymagic.net/forum/download/file.php?id=23329 LHpi.Data-v8.lua.zip]
+|-
+|Library version||>=2.15
+|-
+|updated last on||2015-10-08
+|-
+|size||55.82 KiB
+|}
+{|
 |[http://www.slightlymagic.net/forum/download/file.php?id=23253 LHpi.Data-v7.lua.zip]
 |-
 |Library version||>=2.15
@@ -202,25 +224,28 @@ Logging to a seperate file is now disabled by default again (but still configura
 Since library version 2.7, site-independent set data (number of cards,foilage, default variant and foiltweak tables) were moved into a seperate data file that gets loaded by the library on initialization. This will allow to distinguish between code updates (to the library) and set data updates (which are usually needed when a new set is released). Version numbering of the sitescripts will reflect both library and data versions used.
 
 ==Installation and usage==
-# Download at least one sitescript and both the LHpi [[The LHpi Library|libray]] and [[LHpi.Data|data]] file in the version the sitescript uses.
-#* note the change to version numbers and file names in 2.9.2 , see [[#version_history]] for details. 
+# Download at least one sitescript and both [[#the LHpi Library]] and [[#LHpi.Data|data]] file in the version the sitescript uses.
+#* note the change to version numbers and file names in 2.9.2 , see [[#version history]] for details. 
 # Unzip into the "Prices" subdirectory of your Magic Album installation.
-# (recommended, but not yet strictly necessary) Create a subfolder called "lib" under "Prices" and move both library and data file into the subfolder.
+# (<s>recommended, but not yet strictly necessary</s>) Create a subfolder called "lib" under "Prices" and move both library and data file into the subfolder.
 # (optional) If you want to use the SAVEHTML or SAVETABLE feature, you need to create an empty subdirectory, named like the sitescript without file extension (for example "Prices\LHpi.magicuniverseDE").
 # (re)start Magic Album and use the sitescript ('''not''' the library nor the data file. Step 3 makes this warning obsolete.) from Magic Album's Price Manager dialog.
 
 ===additional instructions for MKM===
-# Step 3 from the basic instructions is not optional. Library components need to be in the Prices\lib\ directory.
-# Download the LHpi.magickartenmarkt [[magickartenmarkt|sitescript]] and [[mkm-helper.lua|helper]] and unzip into Prices\.
-# Download [[dummyMA.lua]] and [[additional dependencies]] and unzip into Prices\lib. Take care to keep the subdirectory structure of the dependencies intact.
+# Please update [[#the LHpi Library]] to version =>2.16 and [[#LHpi.Data|data]] to >=8, if you have not done so yet.
+# Step 3 from the basic instructions is not optional anymore. Library components need to be in the Prices\lib\ directory.
+# Download the LHpi.magickartenmarkt [[#magickartenmarkt|#sitescript]] and [[#mkm-helper.lua|#helper]] and unzip into Prices\.
+# Download [[#dummyMA.lua]] and [[#additional dependencies]] and unzip into Prices\lib. Take care to keep the subdirectory structure of the dependencies intact.
 # Obviously, we do need a place to store the downloaded price data, so as in step 4 above, create a subdirectory in Prices\. Unless you manually changed the scripts, it needs to be called "LHpi.magickartenmarkt"
-# go to [https://www.magickartenmarkt.de/?mainPage=showMyAccount your MKM account page] and create a set of app security tokens. Then create a copy of lib\LHpi.mkm.tokens.example and edit it with your personal mkm tokens. ''Do not share this information with anyone!''
+# go to [https://www.magickartenmarkt.de/?mainPage=showMyAccount your MKM account page] and create a set of app security tokens. Then create a copy of lib\LHpi.mkm.tokens.example and edit it with your personal MKM tokens. '''Do not share this information with anyone!'''
 #* LHpi only posts information retrieval requests through the MKM API, but I cannot accept any liability for anything that happens to your account.
 #* If you don't trust me, please read LHpi's sourcecode before making a decision. :-)
-#* Also, do note that the tokens are stored in a plaintext file on your computer (the one you create in this step) and, while LHpi.magickartenmarkt.lua or LHpi.mkm-helper are running, in the memory.
+#* Also, do note that the tokens are stored in a plaintext file on your computer (the one you create in this step) and, while LHpi.magickartenmarkt.lua or LHpi.mkm-helper are running, in memory.
+#* For slightly more security, you can try setting <code>local widgetonly = false</code> in LHpi.magickartenmarkt.lua and only save appToken,appSecret in the token file. I have not testet this yet, though.
 # edit LHpi.magickartenmarkt.lua to change necessary settings:
 #* change <code>local mkmtokenfile = "LHpi.mkm.tokens.example"</code> to the token file you created in step 5.
 #* MKM provides multiple price types. Choose two and map them to MA's regulart and foil price columns by editing <code> local useAsRegprice=5</code> and <code>local useAsFoilprice=6</code>.
+#* change <code>--OFFLINE = true</code> to <code>OFFLINE = true</code>. I left it in so LHpi.magickartenmarkt can display an error and mention LHpi.mkm-helper, in case you did not read this instructions ;-)
 # (optional) edit LHpi.mkm-helper to set which sets should be downloaded by default (<code>MODE = { download=true, sets="standard" }</code>) and how long the data is valid (<code>local DATASTALEAGE = 60*60*24*7 -- one week</code>)
 # edit LHpi.mkm-helper.bat
 #* change <code>cd /D D:\Magic - The Gathering\Magic Album\Prices</code> to point to your MA location.
@@ -239,49 +264,68 @@ I'll try to answer any questions you might have. If the script misbehaves please
 ===How-to write your sitescript file===
 
 Detailed instructions on the properties and functions to define in your sitescript file can be found at [[How-To sitescriptTemplate]].
+====Hints for developers====
+Some information that might be useful if you want to write/improve sitescripts. Please add questions related to developing here, so I know what needs to be documented.
 
-===sitescriptTemplate===
+moved to [[How-To_sitescriptTemplate#Hints_for_developing]]
+
+====sitescriptTemplate====
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=22735 LHpi.sitescriptTemplate-v2.15.6.13.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=23334 LHpi.sitescriptTemplate-v2.16.8.14.lua.zip]
 |-
-|Sitescript version||2.15.6.13
+|Sitescript version||2.16.8.14
 |-
-|updated last on||2015-07-18
+|updated last on||2015-10-08
 |-
-|size|| 13.08 KiB
+|size||13.67 KiB
 |}
 This is just an empty, commented template to help write new sitescripts.
 
-===dummyMA.lua===
+====dummyMA.lua====
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=22734 LHpi.dummyMA.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=23332 LHpi.dummyMA.zip]
 |-
 |version||0.7
 |-
-|updated last on||2015-07-18
+|updated last on||2015-10-08
 |-
-|size|| 11.03 KiB
+|size||11.04 KiB
 |}
 Magic Album API dummy to test and debug LHpi within an IDE (such as eclipse) and without needing Magic Album.
 LHpi.mkm-helper needs this for ma.GetFile, ma.PutFile, dummy.mergetables and a few tables (corests,expansionsets,specialsets,promosets).
 
-===additional dependencies===
+====additional dependencies====
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=22770 LHpi.external_dependencies-v2.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=23333 LHpi.external_dependencies-v2.zip]
 |-
 |version||2
 |-
+|updated last on||2015-10-08
+|-
+|size||939.35 KiB
+|}
+{|
+|[http://www.slightlymagic.net/forum/download/file.php?id=22770 external dependencies.zip]
+|-
+|version||1
+|-
 |updated last on||2015-07-21
 |-
-|size|| 203.32 KiB
+|size||203.32 KiB
 |}
 This archive contains additional libraries that are needed by LHpi.mkm-helper.lua and LHpi.dummyMA. 
 
 Since 0.6, the dummy uses LuaSockets to implement ma.GetUrl. If you need them, here are the additional files. Included are LuaSockets files for http connections and the Lua interpreter that the LuaSockets dlls were built against. Extract the <code>ext</code> and <code>bin</code> folders into the <code>lib</code> folder of your LHpi setup (usually in <code>Magic Album\Prices</code>).
 
-LHpi.mkm-helper uses multiple third party libraries, all taken from open source projects. Refer to [[Licenses:additional dependencies]] for details. Note that the archive made available here contains only the files needed by LHpi, not the whole projects.
+LHpi.mkm-helper uses multiple third party libraries to add support for OAuth,SSL,JSON, all taken from open source projects. Refer to [[#third party libraries]] for details. Note that the archive made available here contains only the files needed by LHpi, not the whole projects.
+===How-To update sitescripts===
+====Update with new set information====
+[[How-To sitescriptTemplate#Updating sitescripts with new set information]]
+====How-To resolve failed cards====
+[[How-To sitescriptTemplate#resolving failed cards]]
 
-===Planned features===
+===developer's notes===
+====Planned features====
 in no particular order
 * <s>Promo and special sets for <s>magicuniverseDE</s>,mtgmintcards, tcgplayerPriceguide</s>
 ** <s>add all <s>special and</s> promo sets (cardcount,variants,foiltweak) to LHpi.Data</s>
@@ -289,7 +333,7 @@ in no particular order
 *<code>(((a+b)/2)+c)/2 != (a+b+c)/3 = (((a+b)/2*2)+c)/3</code><br/> For mathematically correct averaging, need to attach a counter to averaged prices, then on next averaging, do <code>if counter then newaverage=(oldaverage*(counter+1) + newprice) / (counter+2)</code>
 * generalize settweak from tcgplayerPriceGuide to library
 
-===Possible features===
+====Possible features====
 in no particular order
 * passing importsets to BuildCardData could sort out the mess that is magicuniverse's promo page, at the cost of lots looping through sets. Should thus be done in site.BCDPlugins
 * ideally, most information in LHpi.Data.sets could be read from MA via API getter functions.
@@ -303,15 +347,11 @@ in no particular order
 * add another sitescript (and adapt library if needed)
 add feature requests here, please.
 
-===Problems===
+====Problems====
 * number of cards in set must be hardcoded into library. An [url=http://www.slightlymagic.net/forum/tracker.php?p=2&t=303 ma.GetCardsInSet( setid,langid,regular|tokens )] would help, but the numbers are easy to hardcode anyways.
 * cannot use mtgmintcard to get € prices. see [http://www.slightlymagic.net/forum/viewtopic.php?f=32&t=2324&start=285#p100271|here] for details.
 * cannot automatically determine the currently running script's name. Neither <code>arg[0]</code> nor <code>debug.getinfo(function,'S')</code> are available in the embedded Lua.
 
-===Hints for developers===
-Some information that might be useful if you want to write/improve sitescripts. Please add questions related to developing here, so I know what needs to be documented.
-
-moved to [[How-To_sitescriptTemplate#Hints_for_developing]]
 
 ===version history===
 I decided to start all versions at 2.0, since it's the continuation of magicuniverseDEv1.6.lua, but with enough changes to warrant the next major version number. <s>Do not expect revision numbers to stay synched.</s> <s>Starting with 2.2.1, sitescript minor version will conform to used library version, and the sitecripts will have their version suffixed.</s>Starting with 2.7 sitescript versioning will be libversion.dataversion.sitescriptrevision. This should make it more clear which versions to keep and what can be deleted after updating. The sitescripts will know which library and data version they need and attempt to load the right one or exit gracefully.<br/>
@@ -320,7 +360,7 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 
 <br />In case you need an old version or just want to see how the scripts have evolved: The version numbers below are also download links.
 
-====pre-2.0====
+=====pre-2.0=====
 ;1.2 (Downloaded 22 times)
 :first public release
 ;1.3 (Downloaded 20 times)
@@ -506,9 +546,13 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :DEBUGVARIANTS=true no longer sets DEBUG=false, instead remembers and restores previous DEBUG state
 :new LHpi.OAuthEncode(s) moved here from mkm-helper
 :workdir fixes
+;[http://www.slightlymagic.net/forum/download/file.php?id=23328 2.16]
+:removed leftover unused code
+:removed deprecated parameter offline from site.BuildUrl calls
+:site.resultregex findings (if any) logged in MainImportCycle instead of GetSourceData
 :no longer check for Data in deprecated location
 
-====LHpi.Data====
+=====LHpi.Data=====
 ;[http://www.slightlymagic.net/forum/download/file.php?id=15850 1]
 :initial release, split from LHpi library 2.6
 :added all Special Sets
@@ -548,6 +592,11 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :new 825,823,824,826
 :fixed variants for 822,819,25
 :updated cardcount for 822,22
+;[http://www.slightlymagic.net/forum/download/file.php?id=23329 8]
+:variant table for 635 (Salvat Magic Encyclopedia; I'm glad that's finally done)
+:add tla (three letter abbreviations) to all sets
+:updated/fixed variants for 52,25,10
+:updated/fixed cardcount for 791,53,52,50,21,10
 
 =====LHpi.dummyMA=====
 ;0
@@ -576,22 +625,31 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :new dummy.ListUnknownUrls(expansions,missing,file) (moved from LHpi.mkm-helper.lua)
 :error handling in ma.GetFile and ma.Putfile
 :for libver > 2.14 and Lua 5.2, use dofile instead of homemade loader
-:CompareDataSets compares with dummy's set tales instead of Database/Sets.txt
+:CompareDataSets compares with dummy's set tables instead of Database/Sets.txt
 :use global workdir as introduced in 2.15
 :added 52,53,55,814,815,816,817,818,819,820,821
 :fixed dummy.forceEnv
 :fixed savepath handling
 :deprecated dummy.loadlibonly and dummy.loadscript
 :dummy.mergetables no longer changes param #table teins
-:update helper functions ouput to log instead od stdout 
+:update helper functions ouput to log instead of stdout 
 :ma.GetUrl now uses luasockets instead of returning nil
+;[http://www.slightlymagic.net/forum/download/file.php?id=23332 0.7]
+:can run in helper mode, doing nothing but providing ma.* namespace
+:renamed from dummyMA.lua to LHpi.dummyMA.lua
+:added LHpi.magickartenmarkt.lua and LHpi.mkm-helper.lua to script selection
+:ma.PutFile and ma.GetFile only print params if DEBUG
+:added 825,826,824,823
 
 =====external dependencies=====
 ;[http://www.slightlymagic.net/forum/download/file.php?id=22770 1]
 :initial release for dummyMA-v0.6
 :LuaSockets to implement ma.GetUrl
+;[http://www.slightlymagic.net/forum/download/file.php?id=23333 2]
+:release for LHpi.magickartenmarkt-v2.16.8.2
+:add support for OAuth,SSL,JSON
 
-====LHpi.sitescriptTemplate====
+=====LHpi.sitescriptTemplate=====
 ;2.0
 :initial release as part of LHpi-v2.0.zip
 ;[http://www.slightlymagic.net/forum/download/file.php?id=10170 2.1]
@@ -647,12 +705,20 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :optional site.BuildUrl("list") behaviour
 :new optional function site.FetchExpansionList
 :site.BuildUrl supports multiple urls per set
+;[http://www.slightlymagic.net/forum/download/file.php?id=23334 2.16.8.14]
+:merged mkm branch
+:fixed some comments
+:added 825,823,824,826
+:defaults for site.expected[sid].namereplaced and site.expected[sid].foiltweaked
 
 ====LHpi.magickartenmarkt====
-;[ 2.16.8.2]
+;2.16.8.1
+:unreleased
+;[http://www.slightlymagic.net/forum/download/file.php?id=23330 2.16.8.2]
 :initial release
+:split mkm-helper
 =====LHpi.mkm-helper=====
-;[ 2.16.8.2]
+;[http://www.slightlymagic.net/forum/download/file.php?id=23331 2.16.8.1]
 :initial release
 
 ====LHpi.tcgplayerPriceGuide====
@@ -726,6 +792,10 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 ;[http://www.slightlymagic.net/forum/download/file.php?id=23252 2.15.7.15]
 :added 825,823,824,826
 :fixed namereplace 822,808,110,100,90,751,570,220,170,820,819,814,807,801,796,787,600,45,23,22
+;[http://www.slightlymagic.net/forum/download/file.php?id=23327 2.16.8.16]
+:synced with template
+:updated site.namereplace for 825,220,170,820,40
+:updated site.expected
 
 ====LHpi.magicuniverseDE====
 ;[http://www.slightlymagic.net/forum/download/file.php?id=9264 2.0]
@@ -830,7 +900,7 @@ fixed/updated site.regex
 :added 814
 ;2.14.5.14
 :removed url to filename changes that are done by the library if OFFLINE
-;[http://www.slightlymagic.net/forum/download/file.php?id=22773 2.15.6.14
+;[http://www.slightlymagic.net/forum/download/file.php?id=22773 2.15.6.14]
 :synchronized with template
 
 ====LHpi.trader-onlineDE====

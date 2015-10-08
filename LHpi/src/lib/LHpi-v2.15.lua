@@ -77,9 +77,9 @@ workdir fixes
 no longer check for Data in deprecated location
 ]]
 
---TODO count averaging events with counter attached to prices. better: just build a seperate table to remember averaging happened.
---TODO change #boolean VERBOSE to #number verbosity and adjust loglevels?
---TODO savepath better in site namespace, not LHpi namespace?
+--TODO count averaging events with counter attached to prices
+--todo nil unneeded Data.sets[sid] to save memory?
+--todo change #boolean VERBOSE to #number verbosity and adjust loglevels?
 --FIXME clean leftover unused code
 
 local LHpi = {}
@@ -456,10 +456,6 @@ function LHpi.MainImportCycle( sourcelist , totalhtmlnum , importfoil , importla
 					if pagenr then pagenr=tonumber(pagenr) end
 				end
 				local sourcedata = LHpi.GetSourceData( sourceurl,urldetails )
-				if VERBOSE and sourcedata~=nil and site.resultregex~=nil then
-					local _s,_e,results = string.find( sourcedata, site.resultregex )
-					LHpi.Log( "html source data claims to contain " .. tostring(results) .. " cards." ,0)
-				end
 				local sourceTable = LHpi.ParseSourceData( sourcedata,sourceurl,urldetails )
 				-- process found data and fill cardsetTable
 				if sourceTable then
@@ -866,6 +862,11 @@ function LHpi.GetSourceData( url , details ) --
 		LHpi.Log( "Saving source html to file: \"" .. (LHpi.savepath or "") .. url .. "\"" ,0)
 		ma.PutFile( (LHpi.savepath or "") .. url , sourcedata , 0 )
 	end -- if SAVEHTML
+	
+	if VERBOSE and site.resultregex then
+		local _s,_e,results = string.find( sourcedata, site.resultregex )
+		LHpi.Log( "html source data claims to contain " .. tostring(results) .. " cards." ,0)
+	end
 	return sourcedata
 end -- function LHpi.GetSourceData
 
@@ -1031,9 +1032,9 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 	
 	card.name = string.gsub( card.name , " ?// ?" , "|" )
 	card.name = string.gsub( card.name , " / " , "|" )
-	card.name = string.gsub (card.name , "([%aÃ¤Ã„Ã¶Ã–Ã¼Ãœ]+)/([%aÃ¤Ã„Ã¶Ã–Ã¼Ãœ]+)" , "%1|%2" )
-	card.name = string.gsub( card.name , "Â´" , "'" )
---	card.name = string.gsub( card.name , '"' , "â€œ" )
+	card.name = string.gsub (card.name , "([%aäÄöÖüÜ]+)/([%aäÄöÖüÜ]+)" , "%1|%2" )
+	card.name = string.gsub( card.name , "´" , "'" )
+--	card.name = string.gsub( card.name , '"' , "“" )
 	card.name = string.gsub( card.name , "^Unhinged Shapeshifter$" , "_____" )
 	
 	-- unify collector number suffix. must come before variant checking
@@ -1116,16 +1117,16 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 			card.name = string.gsub ( card.name , "^Wald$" , "Forest" )
 		end
 		if sourcerow.names[9] then --Simplified Chinese Basic Lands
-			card.name = string.gsub ( card.name , "^å¹³åŽŸ (%(%d+%))" , "Plains %1" )
-			card.name = string.gsub ( card.name , "^æµ·å²› (%(%d+%))" , "Island %1" )
-			card.name = string.gsub ( card.name , "^æ²¼æ³½ (%(%d+%))" , "Swamp %1" )
-			card.name = string.gsub ( card.name , "^å±±è„‰ (%(%d+%))" , "Mountain %1" )
-			card.name = string.gsub ( card.name , "^æ ‘æž— (%(%d+%))" , "Forest %1" )
-			card.name = string.gsub ( card.name , "^å¹³åŽŸ$" , "Plains" )
-			card.name = string.gsub ( card.name , "^æµ·å²›$" , "Island" )
-			card.name = string.gsub ( card.name , "^æ²¼æ³½$" , "Swamp" )
-			card.name = string.gsub ( card.name , "^å±±è„‰$" , "Mountain" )
-			card.name = string.gsub ( card.name , "^æ ‘æž—$" , "Forest" )	
+			card.name = string.gsub ( card.name , "^平原 (%(%d+%))" , "Plains %1" )
+			card.name = string.gsub ( card.name , "^海岛 (%(%d+%))" , "Island %1" )
+			card.name = string.gsub ( card.name , "^沼泽 (%(%d+%))" , "Swamp %1" )
+			card.name = string.gsub ( card.name , "^山脉 (%(%d+%))" , "Mountain %1" )
+			card.name = string.gsub ( card.name , "^树林 (%(%d+%))" , "Forest %1" )
+			card.name = string.gsub ( card.name , "^平原$" , "Plains" )
+			card.name = string.gsub ( card.name , "^海岛$" , "Island" )
+			card.name = string.gsub ( card.name , "^沼泽$" , "Swamp" )
+			card.name = string.gsub ( card.name , "^山脉$" , "Mountain" )
+			card.name = string.gsub ( card.name , "^树林$" , "Forest" )	
 		end--if sourcerow.names
 		-- TODO basic land names could probably need replacements for all languages
 	end
@@ -1235,7 +1236,7 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 		or card.name == "Emblem des Kriegerhirns"
 		or card.name == "Emblema del Guerrafondaio"
 		or card.name == "Emblema da Mente Belicosa"
-		or card.name == "Emblema de la Mente bÃ©lica"
+		or card.name == "Emblema de la Mente bélica"
 		or card.name == "Emblema receloso"
 		or card.name == "Emblema Nefasto"
 		then
@@ -1799,25 +1800,25 @@ function LHpi.Toutf8( str , enc )
 			return str -- exit asap
 		elseif encoding == "cp1252" or encoding == "ansi" then
 			str = string.gsub( str , "\133" , "..." )
-			str = string.gsub( str , "\146" , "Â´" )
+			str = string.gsub( str , "\146" , "´" )
 			str = string.gsub( str , "\147" , '"' )
 			str = string.gsub( str , "\148" , '"' )
-			str = string.gsub( str , "\174" , 'Â®' )
-			str = string.gsub( str , "\196" , "Ã„" )
-			str = string.gsub( str , "\198" , "Ã†" )
-			str = string.gsub( str , "\214" , "Ã–" )
-			str = string.gsub( str , "\220" , "Ãœ" )
-			str = string.gsub( str , "\223" , "ÃŸ" )
-			str = string.gsub( str , "\224" , "Ã " )
-			str = string.gsub( str , "\225" , "Ã¡" )
-			str = string.gsub( str , "\226" , "Ã¢" )
-			str = string.gsub( str , "\228" , "Ã¤" )
-			str = string.gsub( str , "\233" , "Ã©" )
-			str = string.gsub( str , "\237" , "Ã­" )
-			str = string.gsub( str , "\246" , "Ã¶" )
-			str = string.gsub( str , "\250" , "Ãº" )
-			str = string.gsub( str , "\251" , "Ã»" )
-			str = string.gsub( str , "\252" , "Ã¼" )
+			str = string.gsub( str , "\174" , '®' )
+			str = string.gsub( str , "\196" , "Ä" )
+			str = string.gsub( str , "\198" , "Æ" )
+			str = string.gsub( str , "\214" , "Ö" )
+			str = string.gsub( str , "\220" , "Ü" )
+			str = string.gsub( str , "\223" , "ß" )
+			str = string.gsub( str , "\224" , "à" )
+			str = string.gsub( str , "\225" , "á" )
+			str = string.gsub( str , "\226" , "â" )
+			str = string.gsub( str , "\228" , "ä" )
+			str = string.gsub( str , "\233" , "é" )
+			str = string.gsub( str , "\237" , "í" )
+			str = string.gsub( str , "\246" , "ö" )
+			str = string.gsub( str , "\250" , "ú" )
+			str = string.gsub( str , "\251" , "û" )
+			str = string.gsub( str , "\252" , "ü" )
 		else
 			if DEBUG then
 				error("Conversion from " .. encoding .. " not implemented.")
@@ -1836,7 +1837,8 @@ end -- function LHpi.Toutf8
  loglevels:
   -1 to use ma.Log instead
    1 for VERBOSE
-   2 for DEBUG   
+   2 for DEBUG
+--TODO 1,warning,info,debug   
    else log.
  add other levels as needed
 
@@ -1976,4 +1978,5 @@ LHpi.Initialize()
 LHpi.Log( "LHpi library " .. LHpi.version .. " loaded and executed successfully." , 0 , nil ,0)
 ma.Log("LHpi library " .. LHpi.version .. " loaded")
 return LHpi
+--FIXME savepath must be site, not LHpi namespace!
 --EOF

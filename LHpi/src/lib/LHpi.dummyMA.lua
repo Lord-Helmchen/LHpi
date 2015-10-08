@@ -26,9 +26,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 --[[ CHANGES
 0.7
+can run in helper mode, doing nothing but providing ma.* namespace
 renamed from dummyMA.lua to LHpi.dummyMA.lua
 changed workdir
 added LHpi.magickartenmarkt.lua and LHpi.mkm-helper.lua to script selection
+ma.PutFile and ma.GetFile only print params if DEBUG
+added 825,826,824,823
 ]]
 
 --[[- "main" function called by Magic Album; just display error and return.
@@ -852,8 +855,8 @@ function main(mode)
 	--- global working directory to allow operation outside of MA\Prices hierarchy
 	-- @field [parent=#global] workdir
 	workdir=".\\"
-	local libver=2.15
-	local dataver=7
+	local libver=2.16
+	local dataver=8
 	
 	--don't keep a seperate dev savepath, though
 	mapath = "..\\..\\..\\Magic Album\\"
@@ -872,7 +875,7 @@ function main(mode)
 --		DEBUGFOUND = true,--default false
 --		DEBUGVARIANTS = true,--default false
 --		SAVETABLE=true,--default false
---		DEBUG = true,--default false
+		DEBUG = true,--default false
 		OFFLINE = true,--default false
 --		OFFLINE = false,--scripts should be set to true unless preparing for release
 	}
@@ -889,16 +892,16 @@ function main(mode)
 		[822] = "Magic Origins"; 
 		[825] = "Battle for Zendikar";
 	 	}
-	local importsets = standard
+--	local importsets = standard
 --	local importsets = { [0] = "fakeset"; }
---	local importsets = { [635]="some set" }
+	local importsets = { [220]="some set" }
 --	local importsets = { [220]="foo";[800]="bar";[0]="baz"; }
 --	local importsets = dummy.coresets
 --	local importsets = dummy.expansionsets
 --	local importsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 	
 	local scripts={
-		[0]={name="lib\\LHpi.sitescriptTemplate-v2.15.6.13.lua",savepath="."},
+		[0]={name="lib\\LHpi.sitescriptTemplate-v2.16.8.14.lua",savepath="."},
 		[1]={name="\\MTG Mint Card.lua",path=savepath,mapath=mapath,oldloader=true},
 		[2]={name="\\Import Prices.lua",path=mapath,savepath=mapath,oldloader=true},
 		[3]={name="LHpi.mtgmintcard.lua",savepath=mapath.."Prices\\LHpi.mtgmintcard\\"},
@@ -912,7 +915,7 @@ function main(mode)
 	
 	-- select a predefined script to be tested
 --	dummy.fakesitescript()
-	local selection = 9
+	local selection = 0
 	local script=scripts[selection]
 	if script.oldloadertrue then
 		dummy.loadscript(script.name,script.path,script.savepath)--deprecated
@@ -934,11 +937,15 @@ function main(mode)
 	--only run sitescript update helpers
 	if site.Initialize then
 		site.Initialize({update=true})
+	--else
+	--	dummy.CompareDummySets(mapath,libver)
+	--	dummy.CompareDataSets(libver,dataver)
+	--	dummy.CompareSiteSets()	
 	end
 	
 	-- now try to break the script :-)
 	if script.name~="LHpi.mkm-helper.lua" then
-		ImportPrice( importfoil, importlangs, importsets )
+--		ImportPrice( importfoil, importlangs, importsets )
 	end
 
 	-- demo LHpi helper functions:

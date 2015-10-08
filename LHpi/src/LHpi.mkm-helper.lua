@@ -53,7 +53,6 @@ Initial release, no changelog yet
 -- 
 -- @field [parent=#global] #table MODE
 --MODE = { download=true, sets="standard" }
-MODE={ test=true, }
 
 --- how long before stored price info is considered too old.
 -- To help with MKM's daily request limit, and because MKM and MA sets do not map one-to-one,
@@ -63,7 +62,6 @@ MODE={ test=true, }
 -- @field #boolean DATASTALEAGE
 --local DATASTALEAGE = 60*60*24 -- one day
 local DATASTALEAGE = 60*60*24*7 -- one week
---local DATASTALEAGE = 60
 
 --  Don't change anything below this line unless you know what you're doing :-) --
 
@@ -84,7 +82,7 @@ local DATASTALEAGE = 60*60*24*7 -- one week
 
 --- when running helper.ExpectedBoosterValue, also give the EV of a full Booster Box.
 -- @field #boolean BOXEV
-local BOXEV = false
+--local BOXEV = true
 
 --- global working directory to allow operation outside of MA\Prices hierarchy
 -- @field [parent=#global] workdir
@@ -92,10 +90,10 @@ workdir=".\\"
 
 --- revision of the LHpi library to use
 -- @field #string libver
-local libver = "2.15"
+local libver = "2.16"
 --- revision of the LHpi library datafile to use
 -- @field #string dataver
-local dataver = "7"
+local dataver = "8"
 --- sitescript revision number
 -- @field string scriptver
 local scriptver = "1"
@@ -212,7 +210,7 @@ function main( mode )
 			}
 		elseif setString=="core" then
 			return dummy.coresets
-		elseif setString=="expansion" or setString=="expansionsets" then
+		elseif setString=="expansion" or setString=="expansions" then
 			return dummy.expansionsets
 		elseif setString=="special" then
 			return dummy.specialsets
