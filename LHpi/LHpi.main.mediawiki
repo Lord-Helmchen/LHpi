@@ -52,7 +52,7 @@ Helper script to download price data from MKM. The data can then be imported to 
 The MKM API imposes a limit of 5000 request per day. With over 30000 English cards known to Magic Album, mkm-helper tries to help space out the download over several days and keeps a record of when a set was last downloaded.<br />
 Also included is a batch file (LHpi.mkm-helper.bat) for ease of use. Edit it to point to your MA\Prices directory and provide a list of sets you want downloaded.
 
-===magic.tcgplayer.com PriceGuide===
+===tcgplayer.com PriceGuide===
 {|
 |[http://www.slightlymagic.net/forum/download/file.php?id=23327 LHpi.tcgplayerPriceGuide.lua.zip]
 |-
@@ -232,16 +232,15 @@ Since library version 2.7, site-independent set data (number of cards,foilage, d
 # (re)start Magic Album and use the sitescript ('''not''' the library nor the data file. Step 3 makes this warning obsolete.) from Magic Album's Price Manager dialog.
 
 ===additional instructions for MKM===
-# Please update [[#the LHpi Library]] to version =>2.16 and [[#LHpi.Data|data]] to >=8, if you have not done so yet.
+# Please update [[#the LHpi Library]] to version >=2.16 and [[#LHpi.Data|data]] to >=8, if you have not done so yet.
 # Step 3 from the basic instructions is not optional anymore. Library components need to be in the Prices\lib\ directory.
 # Download the LHpi.magickartenmarkt [[#magickartenmarkt|#sitescript]] and [[#mkm-helper.lua|#helper]] and unzip into Prices\.
-# Download [[#dummyMA.lua]] and [[#additional dependencies]] and unzip into Prices\lib. Take care to keep the subdirectory structure of the dependencies intact.
+# Download [[#dummyMA]] (>=0.7) and [[#additional dependencies]] (>=2) and unzip into Prices\lib. Take care to keep the subdirectory structure of the dependencies intact.
 # Obviously, we do need a place to store the downloaded price data, so as in step 4 above, create a subdirectory in Prices\. Unless you manually changed the scripts, it needs to be called "LHpi.magickartenmarkt"
 # go to [https://www.magickartenmarkt.de/?mainPage=showMyAccount your MKM account page] and create a set of app security tokens. Then create a copy of lib\LHpi.mkm.tokens.example and edit it with your personal MKM tokens. '''Do not share this information with anyone!'''
 #* LHpi only posts information retrieval requests through the MKM API, but I cannot accept any liability for anything that happens to your account.
 #* If you don't trust me, please read LHpi's sourcecode before making a decision. :-)
 #* Also, do note that the tokens are stored in a plaintext file on your computer (the one you create in this step) and, while LHpi.magickartenmarkt.lua or LHpi.mkm-helper are running, in memory.
-#* For slightly more security, you can try setting <code>local widgetonly = false</code> in LHpi.magickartenmarkt.lua and only save appToken,appSecret in the token file. I have not testet this yet, though.
 # edit LHpi.magickartenmarkt.lua to change necessary settings:
 #* change <code>local mkmtokenfile = "LHpi.mkm.tokens.example"</code> to the token file you created in step 5.
 #* MKM provides multiple price types. Choose two and map them to MA's regulart and foil price columns by editing <code> local useAsRegprice=5</code> and <code>local useAsFoilprice=6</code>.
@@ -252,6 +251,7 @@ Since library version 2.7, site-independent set data (number of cards,foilage, d
 #* In addition or alternative to MODE in LHpi.mkm-helper.lua, you can set download mode and sets to be downloaded as arguments in LHpi.mkm-helper.bat; if you prefer commandline operation, you can also pass arguments to the batch file (keep the <code>%*</code> arguments intact when making changes).
 #* MODE allows for one set definition, either a single string or a table. In the batch or as comand line argument, you can pass multiple set definitions. Valid strings are "core","expansion","special","promo", Magic Album set ids, set names or three letter codes.
 # At first, you will probably encounter HTTP 429 errors (too many requests). After each sucessfull download, the date and number of requests needed for the set will be recorded, and the errors will hopefully happen less frequent.
+# To reset the request counter, pass "resetcounter" argument to the script.
 
 ===Troubleshooting===
 If something does not happen as expected
@@ -281,7 +281,7 @@ moved to [[How-To_sitescriptTemplate#Hints_for_developing]]
 |}
 This is just an empty, commented template to help write new sitescripts.
 
-====dummyMA.lua====
+====dummyMA====
 {|
 |[http://www.slightlymagic.net/forum/download/file.php?id=23332 LHpi.dummyMA.zip]
 |-
@@ -348,10 +348,9 @@ in no particular order
 add feature requests here, please.
 
 ====Problems====
-* number of cards in set must be hardcoded into library. An [url=http://www.slightlymagic.net/forum/tracker.php?p=2&t=303 ma.GetCardsInSet( setid,langid,regular|tokens )] would help, but the numbers are easy to hardcode anyways.
+* number of cards in set must be hardcoded into library. An <code>ma.GetCardsInSet( setid,langid,regular|tokens )</code>[http://www.slightlymagic.net/forum/tracker.php?p=2&t=303] would help, but the numbers are easy to hardcode anyways.
 * cannot use mtgmintcard to get € prices. see [http://www.slightlymagic.net/forum/viewtopic.php?f=32&t=2324&start=285#p100271|here] for details.
 * cannot automatically determine the currently running script's name. Neither <code>arg[0]</code> nor <code>debug.getinfo(function,'S')</code> are available in the embedded Lua.
-
 
 ===version history===
 I decided to start all versions at 2.0, since it's the continuation of magicuniverseDEv1.6.lua, but with enough changes to warrant the next major version number. <s>Do not expect revision numbers to stay synched.</s> <s>Starting with 2.2.1, sitescript minor version will conform to used library version, and the sitecripts will have their version suffixed.</s>Starting with 2.7 sitescript versioning will be libversion.dataversion.sitescriptrevision. This should make it more clear which versions to keep and what can be deleted after updating. The sitescripts will know which library and data version they need and attempt to load the right one or exit gracefully.<br/>

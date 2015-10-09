@@ -28,11 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-v8
-variant table for 635 (Salvat Magic Encyclopedia; I'm glad that's finally done)
-add tla (three letter abbreviations) to all sets
-updated/fixed variants for 52,25,10
-updated/fixed cardcount for 791,53,52,50,21,10
+v9
+updated/fixed cardcount for 26
 ]]
 
 local Data={}
@@ -5699,7 +5696,7 @@ Promos = nil,
 [26] = { name="Magic Game Day",
 	tla="MGD",
 	foil="y",--some no, some only, no yes
-	cardcount={ reg=53, tok=0, nontrad=3, repl=0 },
+	cardcount={ reg=55, tok=0, nontrad=3, repl=0 },
 	variants= {
 ["The Champion"]		= { "The Champion"		, { "Nontrad" } },
 ["The Slayer"]			= { "The Slayer"		, { "Nontrad" } },

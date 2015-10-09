@@ -1,11 +1,11 @@
 == Introduction ==
 
-This wiki page gives information about properties and functions you can find in LHpi sitescriptTemplate file.
+This wiki page gives information about properties and functions you can find in [[LHpi#sitescriptTemplate|LHpi sitescriptTemplate]] file.
 It helps you to understand what you must/can define and how-to define it.
 
 Any remarks or feedbacks are welcome.
 
-To keep this page in in a non-LordHelchen-perspective, he will usually keep his edits to [[How-To_sitescriptTemplate#updating sitescripts to new library/template version]]. Make sure you read the sections appropriate for the LHpi version you are developing for. You could also incorporate changes mentioned in those sections into the rest of this page and then remove what is no longer needed.
+To keep this page in in a non-[[User:LordHelmchen|LordHelmchen]]-perspective, he will usually keep his edits to [[How-To_sitescriptTemplate#updating sitescripts to new library/template version]]. Make sure you read the sections appropriate for the LHpi version you are developing for. You could also incorporate changes mentioned in those sections into the rest of this page and then remove what is no longer needed.
 
 ==Writing a new sitescript==
 ===Properties===

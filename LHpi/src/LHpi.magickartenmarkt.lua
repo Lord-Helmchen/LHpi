@@ -27,24 +27,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.16.8.2
-Initial release, no changelog yet
+2.16.8.3
+updated expected 30
 ]]
 
 -- options that control the amount of feedback/logging done by the script
 
 --- more detailed log; default false
 -- @field [parent=#global] #boolean VERBOSE
---VERBOSE = true
+VERBOSE = true
 --- also log dropped cards; default false
 -- @field [parent=#global] #boolean LOGDROPS
---LOGDROPS = true
+LOGDROPS = true
 --- also log namereplacements; default false
 -- @field [parent=#global] #boolean LOGNAMEREPLACE
---LOGNAMEREPLACE = true
+LOGNAMEREPLACE = true
 --- also log foiltweaking; default false
 -- @field [parent=#global] #boolean LOGFOILTWEAK
---LOGFOILTWEAK = true
+LOGFOILTWEAK = true
 
 -- options that control the script's behaviour.
 
@@ -99,14 +99,14 @@ local responseFormat = "json"
 --- Probably only need appToken,appSecret and can do without accessToken,accessTokenSecret.
 -- Needs to be tested.
 -- --FIXME test and document
-local widgetonly = false
+local widgetonly = true
 --- use mkm sandbox instead of live server.
 -- @field #boolean sandbox
 local sandbox = false
 
 --- also complain if drop,namereplace or foiltweak count differs; default false
 -- @field [parent=#global] #boolean STRICTEXPECTED
---STRICTEXPECTED = true
+STRICTEXPECTED = true
 
 --- if true, exit with error on object type mismatch, else use object type 0 (all);	default true
 -- @field [parent=#global] #boolean STRICTOBJTYPE
@@ -114,11 +114,11 @@ local sandbox = false
 
 --- log to seperate logfile instead of LHpi.log; default false
 -- @field [parent=#global] #boolean SAVELOG
---SAVELOG = true
+SAVELOG = true
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
---OFFLINE = true
+OFFLINE = true
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
@@ -3627,7 +3627,7 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [33]  = { pset={ 3 }, dropped=64 },-- all but 3 cards are one-of-a-kind
 [32]  = { pset={ LHpi.Data.sets[32].cardcount.reg,[8]=1 }, failed={ [8]=LHpi.Data.sets[32].cardcount.reg-1 }, dropped=24 },
 [31]  = { dropped=26 },
-[30]  = { pset={ [2]=13,[3]=35,[5]=1,[7]=6 }, failed={ 1,[2]=172,[3]=150,[5]=184,[7]=179 } },
+[30]  = { pset={ [2]=13,[3]=35,[5]=1,[7]=6 }, failed={ 4,[2]=175,[3]=153,[5]=187,[7]=182 } },
 --[27]  = { failed={ dup=1 }, dupfail= { "ENG" }, dropped=48 },-- "Magic Guru" not in MA
 [26]  = { pset={ [2]=9,[3]=24,[7]=4 }, failed={ [2]=56-9,[3]=56-24,[7]=56-4 }, dropped=1578 },
 [25]  = { pset={ LHpi.Data.sets[25].cardcount.all,[3]=2,[17]=1 }, failed={ 11,[3]=98 } },-- cant distinguish "Wolf│Open New Worlds"/"Wolf│Make a Positive Mark"; not in MA:5 FullArt foil Basic lands, "Damnation","Dualcaster Mage","Feldon of the Third Path","Ravages of War","Wasteland (2015)"

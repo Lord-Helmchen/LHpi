@@ -53,6 +53,7 @@ Initial release, no changelog yet
 -- 
 -- @field [parent=#global] #table MODE
 --MODE = { download=true, sets="standard" }
+MODE={ test=true }
 
 --- how long before stored price info is considered too old.
 -- To help with MKM's daily request limit, and because MKM and MA sets do not map one-to-one,
