@@ -28,8 +28,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-Initial release, no changelog yet
-* separated price data retrieval from LHpi.magickartenmarkt.lua
+2:
+GetSourceData gracefully skips set on http errors
+#table dataStaleAge { "default"=#number, #number setid=number, ... } instead of #number DATASTALEAGE=#number
+new mode.forcerefresh
+new mode.checkstock (experimental)
+check dummy.version
+function names CamelCased
 ]]
 
 -- options unique to this script
@@ -41,10 +46,12 @@ Initial release, no changelog yet
 -- mode.testoauth		test the OAuth implementation
 -- mode.download		fetch data for mode.sets from MKM
 -- mode.boostervalue	estimate the Expected Value of booster from mode.sets
+-- mode.checkstock		load exported MA csv, fetch stock from mkm and compare
 -- additional, nonexclusive modes:
 -- mode.resetcounter 	resets LHpi.magickartenmarkt.lua's persistent MKM request counter.
 -- 						MKM's server will respond with http 429 errors after 5.000 requests.
 --	 					It resets the request count at at 0:00 CE(S)T, so we would want to be able to start counting at 0 again. 
+-- mode.forcerefresh 	force download (temporarily set dataStaleAge to one hour for all sets)
 -- mode.sets			can be a table { #number setid = #string ,... }, a set id, TLA or name, or one of the predefined strings
 -- 						"standard", "core", "expansion", "special", "promo"
 -- 
@@ -53,16 +60,33 @@ Initial release, no changelog yet
 -- 
 -- @field [parent=#global] #table MODE
 --MODE = { download=true, sets="standard" }
-MODE={ test=true }
+MODE={ test=true, checkstock=true }
 
 --- how long before stored price info is considered too old.
 -- To help with MKM's daily request limit, and because MKM and MA sets do not map one-to-one,
 -- helper.GetSourceData keeps a persistent list of urls and when the url was last fetched from MKM.
--- If the Data age is less than DATASTALEAGE seconds, the url will be skipped.
+-- If the Data age is less than dataStaleAge[setid] seconds, the url will be skipped.
 -- See also #boolean COUNTREQUESTS and #boolean COUNTREQUESTS in LHpi.magickartenmarkt.lua
--- @field #boolean DATASTALEAGE
---local DATASTALEAGE = 60*60*24 -- one day
-local DATASTALEAGE = 60*60*24*7 -- one week
+-- @field #table dataStaleAge
+--- @field #table dataStaleAge
+local dataStaleAge = {
+	--["default"]	= 60*60*24, -- one day
+	["default"]	= 60*60*24*7, -- one week
+	[825] = 3600*24,--"Battle for Zendikar";
+	[822] = 3600*24,--"Magic Origins",
+	[818] = 3600*24,--"Dragons of Tarkir",
+	[816] =	3600*24,--"Fate Reforged",
+	[813] = 3600*24,--"Khans of Tarkir",
+	[826] = 3600*24,--"Zendikar Expeditions";
+	[819] = 3600*24*3,--"Modern Masters 2015 Edition";
+	 [22] = 3600*24*3,--"Prerelease Promos";
+	 [21] = 3600*24*3,--"Release & Launch Parties Promos";
+	 [26] = 3600*24*3,--"Magic Game Day";
+	 [30] = 3600*24*3,--"Friday Night Magic Promos";
+	 [53] = 3600*24*3,--"Holiday Gift Box Promos";
+	 [52] = 3600*24*3,--"Intro Pack Promos";
+	 [50] = 3600*24*3,--"Full Box Promotion";
+}
 
 --  Don't change anything below this line unless you know what you're doing :-) --
 
@@ -97,7 +121,7 @@ local libver = "2.16"
 local dataver = "8"
 --- sitescript revision number
 -- @field string scriptver
-local scriptver = "1"
+local scriptver = "2"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field #string scriptname
 local scriptname = "LHpi.mkm-helper-v".. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -137,6 +161,8 @@ local knownModes = {
 	["download"]=true,
 	["boostervalue"]=true,
 	["resetcounter"]=true,
+	["forcerefresh"]=true,
+	["checksales"]=true,
 	}
 
 --[[- "main" function.
@@ -179,8 +205,11 @@ function main( mode )
 			print("Loading LHpi.dummyMA.lua for ma namespace and functions...")
 			dummymode = "helper"
 			dofile(workdir.."lib\\LHpi.dummyMA.lua")
+			if tonumber(dummy.version)<0.8 then
+				error("need dummyMA version > 0.7")
+			end
 		else
-			error("need libver>2.14 and Lua version 5.2.")
+			error("need LHpi version >2.14 and Lua version 5.2.")
 		end -- if libver
 	end -- if not ma
 	--load library now, instead of letting the sitescript configure it.
@@ -220,7 +249,6 @@ function main( mode )
 		-- add more set strings here
 		--elseif ( setString=="mod" ) or ( setString=="modern" ) then
 		else
-			--TODO scan for TLA
 			for sid,set in pairs(LHpi.Data.sets) do
 				if setString == string.lower(set.tla) then
 					print(string.format("recognized TLA %q for set %q",set.tla,set.name))
@@ -244,14 +272,14 @@ function main( mode )
 	if "table"==type(mode.sets) then
 		sets = mode.sets
 	elseif "string"==type(mode.sets) or "number"==type(mode.sets) then
-		sets = dummy.mergetables( sets, setStringToTable(mode.sets) )
+		sets = dummy.MergeTables( sets, setStringToTable(mode.sets) )
 	end
 	for i,p in pairs(params) do
 		--print(i..":"..p)
 		if knownModes[p] then
 			LHpi.Log( "skip mode string" ,2)
 		else
-			sets = dummy.mergetables( sets, setStringToTable(p) )
+			sets = dummy.MergeTables( sets, setStringToTable(p) )
 		end
 		arg[i]=nil
 	end--for
@@ -266,11 +294,15 @@ function main( mode )
 		print("arg: "..LHpi.Tostring(arg))
 		print("mode="..LHpi.Tostring(mode))
 		print("sets="..LHpi.Tostring(sets))
+		print("OFFLINE="..tostring(OFFLINE))
 	end--mode.test
 
 	if mode.resetcounter then
 		LHpi.Log("0",0,LHpi.savepath.."LHpi.mkm.requestcounter",0)
 	end--mode.resetcounter
+	if mode.forcerefresh then
+		dataStaleAge = { ["default"] = 3600, } -- one hour 
+	end--mode.forcerefresh
 	if mode.helper then
 		return ("mkm-helper running in helper mode (passive)")
 	end--mode.helper
@@ -289,6 +321,13 @@ function main( mode )
 		helper.ExpectedBoosterValue(sets)
 		return("boostervalue done")
 	end--mode.boostervalue
+	if mode.checkstock then
+		local csvfile = "..\\MAexport-mkmStock.csv"
+		local maStock = helper.LoadCSV( csvfile)
+		local mkmStock = helper.GetStock()
+		helper.CheckStockPrices(maStock, mkmStock)
+		return ("checkstock done")
+	end--mode.checkstock
 	
 	return("mkm-helper.main() finished")
 end--function main
@@ -341,7 +380,11 @@ function helper.GetSourceData(sets)
 		if not dataAge[url] then
 			dataAge[url]={timestamp=0}
 		end
-		if os.time()-dataAge[url].timestamp>DATASTALEAGE then
+		local maxAge = dataStaleAge["default"]
+		if dataStaleAge[sid] then
+			maxAge = dataStaleAge[sid]
+		end
+		if os.time()-dataAge[url].timestamp>maxAge then
 			print(string.format("stale data for %s was fetched on %s, refreshing...",url,os.date("%c",dataAge[url].timestamp)))
 			LHpi.Log(string.format("refreshing stale data for %s, last fetched on %s",url,os.date("%c",dataAge[url].timestamp)) ,0)
 			local reqCountPre=ma.GetFile(LHpi.savepath.."LHpi.mkm.requestcounter")
@@ -356,6 +399,7 @@ function helper.GetSourceData(sets)
 					LHpi.Log("integrating priceGuide entries into " .. fileurl ,1)
 					print("integrating priceGuide entries into " .. fileurl)
 					setdata = Json.decode(setdata)
+					local httpStatus
 					for cid,card in pairs(setdata.card) do
 						local cardurl = site.BuildUrl(card)
 						print("fetching single card from " .. cardurl)
@@ -369,17 +413,24 @@ function helper.GetSourceData(sets)
 						if proddata then
 							count.fetched=count.fetched+1
 							proddata = Json.decode(proddata).product
+							if proddata.priceGuide~=nil then
+								count.found=count.found+1
+								setdata.card[cid].priceGuide=proddata.priceGuide
+							end--if proddata.priceGuide
+						else
+							httpStatus = status
+							break
 						end--if proddata
-						if proddata.priceGuide~=nil then
-							count.found=count.found+1
-							setdata.card[cid].priceGuide=proddata.priceGuide
-						end
 					end--for cid,card
-					setdata = Json.encode(setdata)
-					LHpi.Log( "Saving rebuilt source to file: \"" .. (LHpi.savepath or "") .. fileurl .. "\"" ,1)
-					LHpi.Log( string.format("%i cards have been fetched, and %i pricesGuides were found. LHpi.Data claims %i cards in set %q.",count.fetched,count.found,LHpi.Data.sets[details.setid].cardcount.all,LHpi.Data.sets[details.setid].name ) ,1)
-					print( "Saving rebuilt source to file: \"" .. (LHpi.savepath or "") .. fileurl .. "\"")
-					ma.PutFile( (LHpi.savepath or "") .. fileurl , setdata , 0 )
+					if not httpStatus then
+						setdata = Json.encode(setdata)
+						LHpi.Log( "Saving rebuilt source to file: \"" .. (LHpi.savepath or "") .. fileurl .. "\"" ,1)
+						LHpi.Log( string.format("%i cards have been fetched, and %i pricesGuides were found. LHpi.Data claims %i cards in set %q.",count.fetched,count.found,LHpi.Data.sets[details.setid].cardcount.all,LHpi.Data.sets[details.setid].name ) ,1)
+						print( "Saving rebuilt source to file: \"" .. (LHpi.savepath or "") .. fileurl .. "\"")
+						ma.PutFile( (LHpi.savepath or "") .. fileurl , setdata , 0 )
+					else
+						local skippedString = string.format("%s encountered, abort and skip %q.",httpStatus,LHpi.Data.sets[details.setid].name)
+					end--if not httpStatus
 					totalcount.fetched=totalcount.fetched+count.fetched
 					totalcount.found=totalcount.found+count.found
 				else
@@ -516,6 +567,174 @@ function helper.ExpectedBoosterValue(sets)
 		end--for sid
 	end--if BOXEV	
 end--function ExpectedBoosterValue
+
+--[[- compare my offers with mkm priceGuide prices
+ @function [parent=#helper] CheckStockPrices
+ @param none
+]]
+function helper.CheckStockPrices(maStock, mkmStock)
+	for _,article in ipairs(mkmStock) do
+		local foilstring = ""
+		if article.isFoil then foilstring = "foil " end
+		if maStock[article.set] and maStock[article.set][article.name] then
+			local maCard=maStock[article.set][article.name]
+			local stockedString=string.format("Stocked %ix %s%q (%s) from %q in %s for €%3.2f",article.count,foilstring,maCard.oracleName,article.condition,LHpi.Data.sets[article.set].name,LHpi.Data.languages[article.lang].abbr,article.price)
+			if article.isPlayset then
+				stockedString=string.gsub(stockedString,"Stocked (%d+)x","Stocked %1x Playset")
+			end--if article.isPlayset
+			local priceString=string.format(" latest imported card value is %s=€%3.2f, %s=€%3.2f",site.priceTypes[site.useAsRegprice].type,maCard.priceR or 0,site.priceTypes[site.useAsFoilprice].type,maCard.priceF or 0	)
+			local inventoryString=string.format(" Inventorized %i regular and %i foils for €%3.2f (bought %i for €%3.2f, already sold %i)",maCard.qtyR or 0,maCard.qtyF or 0,maCard.sellPrice or 0,maCard.buyQty or 0,maCard.buyPrice or 0,maCard.sellQty or 0)
+			print(stockedString)
+			print(priceString)
+			print(inventoryString)
+			LHpi.Log(stockedString, 1)
+			LHpi.Log(priceString, 1)
+			LHpi.Log(inventoryString, 1)
+			local qty
+			if article.isFoil then
+				qty=maCard.qtyF
+			else
+				qty=maCard.qtyR
+			end--if article.isFoil
+				if article.isPlayset then
+					qty=qty/4
+				end--if article.isPlayset
+			if article.count ~= qty then
+				local warnString=string.format("! %i stocked but %i inventorized!",article.count,qty)
+				if article.isPlayset then
+					warnString=string.gsub(warnString,"(%d+) stocked but (%d+)","%1 Playset stocked but "..qty*4)
+				end--if article.isPlayset
+				print(warnString)
+				LHpi.Log(warnString, 1)
+			end--article.count ~= qty
+		else
+			if not article.isFoil then foilstring = "nonfoil " end
+			local string=string.format("Stocked (MKM) item not inventorized (MA): %ix %s%q (%s,%s) from %q, ",article.count,foilstring,article.name,LHpi.Data.languages[article.lang].abbr,article.condition,LHpi.Data.sets[article.set].name )
+			if article.isPlayset then
+				string=string.gsub(string,"%(MA%): (%d+)x","(MA): %1x Playset")
+			end--if article.isPlayset
+			print(string)
+			LHpi.Log(string, 1)
+		end--if maStock
+	end--for article
+end--function CheckStockPrices
+
+--[[- fetch my stock from mkm
+ @function [parent=#helper] GetStock
+ @param none
+ @return #table
+]]
+function helper.GetStock()
+	local url = "mkmapi.eu/ws/v1.1/output.json/stock"
+	local o=OFFLINE
+	--OFFLINE=false
+	local stock = LHpi.GetSourceData( url , { oauth=true } )
+	if not OFFLINE then
+		helper.IndentJson(LHpi.savepath.."mkmapi.eu_ws_v1.1_output.json_stock")
+	end
+	OFFLINE=o
+	if stock then
+		stock = Json.decode(stock)
+	else
+		error("MKM stock not found")
+	end
+	stock = stock.article
+	local mkmStock = {}
+	for i,article in ipairs(stock) do
+		for sid,set in pairs(LHpi.Data.sets) do 
+			article.product.expansion = string.gsub(article.product.expansion,"^Fifth","5th")
+			article.product.expansion = string.gsub(article.product.expansion,"^Release Promos","Release & Launch Parties Promos")
+			article.product.expansion = string.gsub(article.product.expansion,"^Buy a Box Promos","Full Box Promotion")
+			article.product.expansion = string.gsub(article.product.expansion,"^Gildensturm","Gatecrash")
+			article.product.expansion = string.gsub(article.product.expansion,"^Labyrinth des Drachen","Dragon's Maze")
+			article.product.expansion = string.gsub(article.product.expansion,"^Reise nach Nyx","Journey into Nyx")
+			article.product.expansion = string.gsub(article.product.expansion,"'","’")
+			if set.name == article.product.expansion then
+				article.set=sid
+			end
+		end--for sid,set
+		if "number" ~= type(article.set) then
+			error("set not found: "..article.product.expansion)
+		end--if "number"
+		for lid,lang in pairs(LHpi.Data.languages) do 
+			if lang.full == article.language.languageName then
+				article.lang=lid
+			end
+		end--for lid,lang
+		if "number" ~= type(article.lang) then
+			error("lang not found: "..article.language.languageName)
+		end--if "number"
+		local card = { set=article.set, name=article.product.name, condition=article.condition, isFoil=article.isFoil, lang=article.lang, count=article.count, price=article.price, isPlayset=article.isPlayset }
+		table.insert(mkmStock,card)
+	end
+	return mkmStock
+end--function GetStock
+
+--[[- import MA export csv
+ @function [parent=#helper] LoadCSV
+ @param #string filename
+ @return #table
+]]
+function helper.LoadCSV( filename )
+	if not string.find(filename,".csv$") then
+		filename = filename .. ".csv"
+	end--if
+	local csvdata = ma.GetFile(filename)
+	if not csvdata then
+		error("Could not open "..filename)
+	end
+	if csvdata:find("^\255\254") then
+		error(filename.." is UCS-2/UFT-16 Little Endian. Convert to UTF-8!")
+	end--if
+	csvdata= csvdata:gsub( "^\239\187\191" , "" ) -- remove UTF-8 BOM if it's there
+	local maData = {}
+	for csvline in string.gmatch( csvdata, "(.-)\n") do
+		local csvregex = "([^\t]-)\t([^\t]-)\t([^\t]-)\t([^\t]-)\t([^\t]-)\t([^\t]-)\t([^\t]-)\t([^\t]-)\t([^\t]-)\t([^\t]-)\t([^\t]-)\t([^\t]-)\t([^\t]-)\t([^\t]-)\t([^\t]-)\t([^\t]-)\t([^\t]-)\t([^\t]-)\t([^\t]-)\t([^\t]-)\t([^\t]-)\t([^\t]-)\t([^\t]-)\t([^\t]-)"
+		local _,_,set,oracleName,name,version,language,qtyR,qtyF,notes,rarity,colNumber,color,cost,powTgh,artist,border,buyQty,buyPrice,sellQty,sellPrice,gradeR,gradeF,priceR,priceF = string.find( csvline , csvregex)
+		local card = { set=set, oracleName=oracleName, name=name,lang=language,variant=version,qtyR=tonumber(qtyR) or 0,qtyF=tonumber(qtyF) or 0,priceR=tonumber(priceR) or 0,priceF=tonumber(priceF) or 0,buyQty=tonumber(buyQty) or 0,buyPrice=tonumber(buyPrice) or 0,sellQty=tonumber(sellQty) or 0,sellPrice=tonumber(sellPrice) or 0}
+		card.set = string.gsub(card.set,"^5E$","5ED")
+		if card.oracleName ~= "Name (Oracle)" then
+			table.insert(maData,card)
+		end--if
+	end--for line
+	local maStock = {}
+	for i,card in ipairs(maData) do
+		for sid,set in pairs(LHpi.Data.sets) do 
+			if set.tla == card.set then
+				card.set=sid
+			end
+		end--for sid,set
+		if "number" ~= type(card.set) then
+			error("set not found: "..card.set)
+		end--if "number"
+		for lid,lang in pairs(LHpi.Data.languages) do 
+			if lang.abbr == card.lang then
+				card.lang=lid
+			end
+		end--for lid,lang
+		if "number" ~= type(card.lang) then
+			error("lang not found: "..card.lang)
+		end--if "number"
+		if maStock[card.set]==nil then maStock[card.set]={} end
+		maStock[card.set][card.name] = { oracleName=card.oracleName,variant=card.version,lang=card.lang,qtyR=card.qtyR,qtyF=card.qtyF,priceR=card.priceR,priceF=card.priceF}
+	end--for card
+	return maStock
+end--function LoadCSV
+
+--[[- recode json file with indention
+ @function [parent=#helper] IndentJson
+ @param #table filepath
+]]
+function helper.IndentJson( file )
+	local tmp = ma.GetFile(file)
+	if tmp then
+		tmp = Json.decode(tmp)
+		tmp = Json.encode (tmp, { indent = true })
+		ma.PutFile(file,tmp,0)
+	else
+		error("source file not found!")
+	end
+end--function IndentJson
 
 --[[- test OAuth implementation
  @function [parent=#helper] OAuthTest

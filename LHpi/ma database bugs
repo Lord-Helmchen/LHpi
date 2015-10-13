@@ -1,0 +1,15 @@
+set	636	name:"Huracán" 						oracleName:"Hurloon Wrangler"	oracleName should be "Hurricane"
+		name:"Fin de la desgracia visual"	oracleName:"Changeling Hero"	oracleName should be "Eyeblight’s Ending"
+set 310	why does ma.SetPrice(310,5,"Ogre Berserker","",0.14,0,1) return 2 ?!
+set 21	name "Plots that Span Centuries" should be "Plots That Span Centuries", as printed. I'm not sure about oracle name capitalization. 
+set 30	"Orator of Ojutai" and "Ultimate Price" not in MA
+set 25	5 Full Art lands not in MA
+set 22	10 Guild logo inserts not in MA, 68 BFZ rare/mythic not in MA (yet)
+set 814	tokens are (24) doublesided in MKM, (36) single sided in MA
+set 635	35 FRA Version strings differ from those in ITA,SPA:
+set 52	"Drowner of Hopes (BFZ)" not in MA
+set 41	"Mishra's Toy Workshop" not in MA
+set 40	6 of 11 League Tokens not in MA
+set 27	"Magic Guru" not in MA (I guess if anywhere, he would belong to the Guru Lands)
+
+	

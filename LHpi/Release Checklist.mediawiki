@@ -65,11 +65,26 @@ cleanup
 -- @field [parent=#global] #boolean DEBUGVARIANTS
 --DEBUGVARIANTS = true
 </pre>
+* mkmtokenfile in magickartenmarkt.
+* MODE in mkm-helper
 * remove leftover debug print() commands
 
 template and comments
 * copy common changes from newest sitescript to template
 * synchronize other sitescripts with template
+
+update version numbers
+* lib
+** LHpi.version
+** site.dataver default in Initialize
+* data
+** Data.version
+* dummy
+** dummy.version
+** libver and dataver in main
+*sitescripts
+** scriptver, libver and dataver
+* filenames (for lib,data and template
 
 * changelog
 ** compare Release Candidate with last Release 

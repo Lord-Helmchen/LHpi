@@ -25,11 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.16.8.14
-merged mkm branch
-fixed some comments
-added 825,823,824,826
-defaults for site.expected[sid].namereplaced and site.expected[sid].foiltweaked
+2.16.8.15
+dummy.mergetables -> dummy.MergeTables
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -100,7 +97,7 @@ local libver = "2.16"
 local dataver = "8"
 --- sitescript revision number
 -- @field  string scriptver
-local scriptver = "14"
+local scriptver = "15"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field #string scriptname
 local scriptname = "LHpi.sitescriptTemplate-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -369,7 +366,7 @@ function site.FetchExpansionList()
 	
 	-- This implementation is only to help updating the template.
 	-- You should probably delete it and implement it for the site if you want to use the update helper mode.
-	local expansionSource = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
+	local expansionSource = dummy.MergeTables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 	local expansions = {}
 	for sid,name in pairs(expansionSource) do
 		expansions[sid]={name=name, urlsuffix = LHpi.OAuthEncode(name)}

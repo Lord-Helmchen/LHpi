@@ -28,7 +28,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 --[[ CHANGES
 2.16.8.3
-updated expected 30
+updated expected for 30,26
+site.priceTypes format changed, descriptions added
+on HTTP errors, site.FetchSourceDataFromOAuth prints/logs errormsg and returns nil,status
+mkm price type choice in site.* namespace
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -99,7 +102,7 @@ local responseFormat = "json"
 --- Probably only need appToken,appSecret and can do without accessToken,accessTokenSecret.
 -- Needs to be tested.
 -- --FIXME test and document
-local widgetonly = true
+local widgetonly = false
 --- use mkm sandbox instead of live server.
 -- @field #boolean sandbox
 local sandbox = false
@@ -156,7 +159,7 @@ local libver = "2.16"
 local dataver = "8"
 --- sitescript revision number
 -- @field  string scriptver
-local scriptver = "2"
+local scriptver = "3"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field #string scriptname
 local scriptname = "LHpi.magickartenmarkt-v".. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -191,6 +194,10 @@ LHpi = LHpi or {}
  @field #boolean sandbox 
 ]]
 site={ scriptname=scriptname, dataver=dataver, logfile=logfile or nil, savepath=savepath or nil }
+
+-- add to site namespace for use in mkm-helper
+site.useAsRegprice=useAsRegprice
+site.useAsFoilprice=useAsFoilprice
 
 --[[- regex matches shall include all info about a single card that one html-file has,
  i.e. "*CARDNAME*FOILSTATUS*PRICE*".
@@ -345,8 +352,8 @@ function site.Initialize( mode )
 	end
 	useAsRegprice = useAsRegprice or 3
 	useAsFoilprice = useAsFoilprice or 5	
-	LHpi.Log(string.format("Importing %q prices into MA regular price column",site.priceTypes[useAsRegprice]) ,1)
-	LHpi.Log(string.format("Importing %q prices into MA foil price column",site.priceTypes[useAsFoilprice]) ,1)
+	LHpi.Log(string.format("Importing %q prices into MA regular price column",site.priceTypes[useAsRegprice].type) ,1)
+	LHpi.Log(string.format("Importing %q prices into MA foil price column",site.priceTypes[useAsFoilprice].type) ,1)
 	if not require then
 		LHpi.Log("trying to work around Magic Album lua sandbox limitations..." ,1)
 		--emulate require(modname) using dofile; only works for lua files, not dlls.
@@ -483,32 +490,36 @@ function site.FetchSourceDataFromOAuth( url )
 	end
 	
 	local code, headers, status, body = site.oauth.client:PerformRequest( "GET", url )
+	local errorstring = nil
 	if code == 200 or code == 204 then
 		LHpi.Log("status=".. LHpi.Tostring(status) ,2)
 		return body, status
-	else
-		LHpi.Log("status=".. LHpi.Tostring(status) ,1)
-		print("status=", LHpi.Tostring(status))
-	end
-	if code == 206 then
-		error("206 Partial Content - not implemented yet")
+	elseif code == 206 or code == 204 then -- Partial Content or No Content
+		errorstring = status .. " - not implemented yet!"
 		--TODO for 206 (Partial Content) modify Content-Range and recursively call LHpi.GetSourceData(url , details)
-	elseif code==401 then
-		--if DEBUG then
-		error("401 Unauthorized - check url and OAuth!")
-		--end
-	elseif code == 429 then
-		LHpi.Log("429 Too many requests :limited to 5000 requests per day, resets at 0:00 CE(S)T." ,1)
-		print("reply="..LHpi.Tostring(body))
-		error("429 Too many requests - limited to 5000 requests per day, resets at 0:00 CE(S)T.")
-	elseif code == 400 then
-		print("reply="..LHpi.Tostring(body))
-		LHpi.Log("reply="..LHpi.Tostring(body) ,2)
+	elseif code == 400 then -- Bad Request
+		errorstring = status .. " - " .. LHpi.Tostring(body)
+	elseif code == 401 then -- Unauthorized
+		errorstring = status .. " - check token file, url and OAuth!"
+	elseif code == 403 then -- Forbidden
+		errorstring = status .. " - resource valid, check dedicated vs. widget app!"
+	elseif code == 405 then -- Not Allowed
+		errorstring = status .. " - check HTTP method!"
+	elseif code == 412 then -- Precondition Failed
+		errorstring = status .. " - invalid state change on one of your orders!"
+	elseif code == 417 then -- Expectation Failed
+		errorstring = status .. " - check token file, url and OAuth!"
+	elseif code == 429 then -- Too Many Requests
+		errorstring = status .. " :limited to 5000 requests per day, resets at 0:00 CE(S)T. Pass \"resetcounter\" to mkm-helper to reset the persistant request counter." 
 	else
-		LHpi.Log(("headers=".. LHpi.Tostring(headers)) ,2)
-		--error (LHpi.Tostring(statusline))
+		errorstring = status .. " - " .. LHpi.Tostring(headers)
 	end
-		return nil, status
+	LHpi.Log(errorstring ,1)
+	print(errorstring)
+	if DEBUG then
+		error(errorstring)
+	end
+	return nil, status
 end--function site.FetchSourceDataFromOAuth
 
 -- Like URL-encoding, but following MKM and OAuth's specific semantics
@@ -639,8 +650,8 @@ site.updateFormatString = '[%i]={id=%3i, lang={ "ENG",[2]="RUS",[3]="GER",[4]="F
  @return #table { #number= #table { names= #table { #number (langid)= #string , ... }, price= #number , foil= #boolean , ... } , ... } 
 ]]
 function site.ParseHtmlData( foundstring , urldetails )
-	local regpriceType = site.priceTypes[useAsRegprice]
-	local foilpriceType = site.priceTypes[useAsFoilprice]
+	local regpriceType = site.priceTypes[useAsRegprice].type
+	local foilpriceType = site.priceTypes[useAsFoilprice].type
 	local product
 	if responseFormat == "json" then
 		product = Json.decode(foundstring)
@@ -1304,15 +1315,15 @@ end -- function site.BCDpluginPost
 -------------------------------------------------------------------------------------------------------------
 
 --[[- Define the six price entries. This table is unique to this sitescript.
- @field [parent=#site] #table priceTypes	{ #number priceId = #string priceName, ... }
+ @field [parent=#site] #table priceTypes	{ #number id= { type=#string, definition=#string } , ... }
 ]]
 site.priceTypes = {	--Price guide entity
-	[1] = "SELL",	--Average price of articles ever sold of this product
-	[2] = "LOW",	--Current lowest non-foil price (all conditions)
-	[3] = "LOWEX",	--Current lowest non-foil price (condition EX and better)
-	[4] = "LOWFOIL",--Current lowest foil price
-	[5] = "AVG",	--Current average non-foil price of all available articles of this product
-	[6] = "TREND",	--Trend of AVG 
+	[1] = { type="SELL", description="Average price of articles ever sold" },--Average price of articles ever sold of this product
+	[2] = { type="LOW", description="lowest non-foil price" },--Current lowest non-foil price (all conditions)
+	[3] = { type="LOWEX", description="lowest non-foil EX+ price" },--Current lowest non-foil price (condition EX and better)
+	[4] = { type="LOWFOIL", description="lowest foil price" },--Current lowest foil price
+	[5] = { type="AVG", description="Average of all available non-foil articles" },--Current average non-foil price of all available articles of this product
+	[6] = { type="TREND", description="Trend of average available" },--Trend of AVG 
 }
 
 --[[- Map MKM langs to MA langs
@@ -3554,7 +3565,6 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [825] = { pset={ dup=LHpi.Data.sets[825].cardcount.reg }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, failed={ dup=LHpi.Data.sets[825].cardcount.tok }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
 [818] = { pset={ dup=LHpi.Data.sets[818].cardcount.reg }, failed={ dup=LHpi.Data.sets[818].cardcount.tok }, duppset={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, namereplaced=2 },
 [816] = { pset={ dup=LHpi.Data.sets[816].cardcount.reg }, failed={ dup=LHpi.Data.sets[816].cardcount.tok }, duppset={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
-[814] = { pset={ LHpi.Data.sets[814].cardcount.reg+LHpi.Data.sets[814].cardcount.repl}, failed={ dup=24 }, dupfail={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN",[9]="SZH" } },-- tokens are (24) doublesided in MKM, (36) single sided in MA
 [813] = { pset={ dup=LHpi.Data.sets[813].cardcount.reg }, failed={ dup=LHpi.Data.sets[813].cardcount.tok }, duppset={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
 [806] = { pset={ dup=LHpi.Data.sets[806].cardcount.reg }, failed={ dup=LHpi.Data.sets[806].cardcount.tok }, duppset={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=44 },
 [802] = { pset={ dup=LHpi.Data.sets[802].cardcount.reg }, failed={ dup=LHpi.Data.sets[802].cardcount.tok }, duppset={ [4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=2*22 },
@@ -3590,7 +3600,7 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [820] = { pset={ [8]=LHpi.Data.sets[820].cardcount.both } },
 [819] = { failed={ dup=LHpi.Data.sets[819].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" } },
 [815] = { failed={ 12 } },-- url contains CP1,CP2,CP3
-[814] = { pset={ dup=LHpi.Data.sets[814].cardcount.reg+LHpi.Data.sets[814].cardcount.repl }, duppset={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN",[9]="SZH" }, failed={ dup=24 }, dupfail={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN",[9]="SZH" } },-- MA has 36 tokens, MKM 24 double-sided tokens
+[814] = { pset={ dup=LHpi.Data.sets[814].cardcount.reg+LHpi.Data.sets[814].cardcount.repl }, duppset={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN",[9]="SZH" }, failed={ dup=24 }, dupfail={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN",[9]="SZH" } },-- tokens are (24) doublesided in MKM, (36) single sided in MA
 [812] = { pset={ [8]=LHpi.Data.sets[812].cardcount.both } },
 [811] = { failed={ 12 } },-- url contains CP1,CP2,CP3
 [807] = { pset={ dup=LHpi.Data.sets[807].cardcount.reg+LHpi.Data.sets[807].cardcount.nontrad }, failed={ dup=LHpi.Data.sets[807].cardcount.tok }, duppset={ [8]="JPN",[9]="SZH" }, dupfail={ [8]="JPN",[9]="SZH" } },
@@ -3629,7 +3639,7 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [31]  = { dropped=26 },
 [30]  = { pset={ [2]=13,[3]=35,[5]=1,[7]=6 }, failed={ 4,[2]=175,[3]=153,[5]=187,[7]=182 } },
 --[27]  = { failed={ dup=1 }, dupfail= { "ENG" }, dropped=48 },-- "Magic Guru" not in MA
-[26]  = { pset={ [2]=9,[3]=24,[7]=4 }, failed={ [2]=56-9,[3]=56-24,[7]=56-4 }, dropped=1578 },
+[26]  = { pset={ [2]=9,[3]=24,[7]=4 }, failed={ [2]=LHpi.Data.sets[26].cardcount.all-9,[3]=LHpi.Data.sets[26].cardcount.all-24,[7]=LHpi.Data.sets[26].cardcount.all-4 }, dropped=1578 },
 [25]  = { pset={ LHpi.Data.sets[25].cardcount.all,[3]=2,[17]=1 }, failed={ 11,[3]=98 } },-- cant distinguish "Wolf│Open New Worlds"/"Wolf│Make a Positive Mark"; not in MA:5 FullArt foil Basic lands, "Damnation","Dualcaster Mage","Feldon of the Third Path","Ravages of War","Wasteland (2015)"
 [23]  = { pset={ [3]=39-2,[4]=12,[5]=11,[7]=11,[8]=4 }, failed={ [3]=27,[4]=52,[5]=53,[7]=53,[8]=60 }, dropped=6 },-- "Fling (50 DCI)","Sylvan Ranger (51 DCI)" are version "1" in ENG, but "" in GER
 [22]  = { pset={ [2]=53,[3]=50,[7]=14,[12]=1,[13]=1,[14]=1,[15]=1,[16]=1 }, failed={ 69+1,[2]=276,[3]=279,[7]=315 }, dropped=1590 },-- 69 BFZ not yet in MA, Laquatus's Champion only RUS, RUS Dragonfury lack variant names

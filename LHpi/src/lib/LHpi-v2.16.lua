@@ -25,11 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.16
-removed leftover unused code
-removed deprecated parameter offline from site.BuildUrl calls
-site.resultregex findings (if any) logged in MainImportCycle instead of GetSourceData
-no longer check for Data in deprecated location
+2.17
+dataver default 6 -> 8
 ]]
 
 --TODO count averaging events with counter attached to prices. better: just build a separate table to remember averaging happened.
@@ -183,7 +180,7 @@ function LHpi.Initialize()
 		if DEBUG then
 			error("undefined dataver!")
 		else
-			site.dataver = "6"
+			site.dataver = "8"
 		end
 	end
 	---	LHpi static set data

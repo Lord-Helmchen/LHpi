@@ -25,13 +25,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-0.7
-can run in helper mode, doing nothing but providing ma.* namespace
-renamed from dummyMA.lua to LHpi.dummyMA.lua
-changed workdir
-added LHpi.magickartenmarkt.lua and LHpi.mkm-helper.lua to script selection
-ma.PutFile and ma.GetFile only print params if DEBUG
-added 825,826,824,823
+0.8
+improved LE BOM handling
+function names CamelCased
 ]]
 
 --[[- "main" function called by Magic Album; just display error and return.
@@ -214,20 +210,20 @@ end
 dummy={}
 ---	dummy version
 -- @field [parent=#dummy] #string version
-dummy.version = "0.6"
+dummy.version = "0.8"
 
 --[[- loads LHpi library for testing.
-@function [parent=#dummy] loadlibonly
+@function [parent=#dummy] LoadLib
 @param #string libver			library version to be loaded
 @param #string path		(optional)
 @param #string savepath	(optional)
 @return #table LHpi library object
 ]]
-function dummy.loadlibonly(libver,path,savepath)
+function dummy.LoadLib(libver,path,savepath)
 	local path = path or ""
 	local savepath = savepath or ""
 	if libver>2.14 and not (_VERSION == "Lua 5.1") then
-		ma.Log("loadlibonly is only for legacy libver < 2.14 without global workdir support!")
+		ma.Log("LoadLib is only for legacy libver < 2.14 without global workdir support!")
 		ma.Log('you can simply do \'LHpi = dofile(workdir.."lib\\\\LHpi-v"..libver..".lua")\'')
 		return dofile(path.."lib\\LHpi-v"..libver..".lua")
 	end
@@ -272,17 +268,17 @@ function dummy.loadlibonly(libver,path,savepath)
 	collectgarbage() -- we now have LHpi table with all its functions inside, let's clear LHpilib and execlib() from memory
 	print( "LHpi lib is ready for use." )
 	return LHpi
-end -- function dummy.loadlibonly
+end -- function dummy.LoadLib
 
 --[[- load and execute sitescript.
 You can then call the sitescript's ImportPrice, as ma would do.
-@function [parent=#dummy] loadscript
+@function [parent=#dummy] LoadScript
 @param #string scriptname
 @param #string path		(optional)
 @param #string savepath	(optional)
 @return nil, but script is loaded and executed
 ]]
-function dummy.loadscript(scriptname,path,savepath)
+function dummy.LoadScript(scriptname,path,savepath)
 	local path = path or ""
 	local savepath = savepath or ""
 	do
@@ -292,7 +288,7 @@ function dummy.loadscript(scriptname,path,savepath)
 		else
 			local _,_,libver = string.find(scriptfile,'libver = "([%d%.]+)"')
 			if tonumber(libver)>2.14 and not (_VERSION == "Lua 5.1") then
-				ma.Log("loadscript is only for legacy libver < 2.14 without global workdir support!")
+				ma.Log("LoadScript is only for legacy libver < 2.14 without global workdir support!")
 				ma.Log("you can simply do \'dofile(workdir..\""..scriptname.."\")\'")
 			--	dofile(path..scriptname)
 			--	return
@@ -337,21 +333,21 @@ function dummy.loadscript(scriptname,path,savepath)
 		end--if scriptfile	
 	end--do
 	collectgarbage()
-end--function dummy.loadscript
+end--function dummy.LoadScript
 
 --[[- fake a minimal, nonfunctional sitescript.
 You can then run library functions to test them.
 
-@function [parent=#dummy] fakesitescript
+@function [parent=#dummy] FakeSitescript
 @return nil, but site fields an functions are set.
 ]]
-function dummy.fakesitescript()
+function dummy.FakeSitescript()
 	site={}
 	site.langs={ {id=1,url="foo"} }
 	site.sets= { [0]={id=0,lang={true},fruc={true},url="bar"} }
 	site.frucs={ {id=1,name="fruc",isfoil=true,isnonfoil=true,url="baz"} }
 	site.regex="none"
-	dataver=6
+	--dataver=8
 	scriptname="LHpi.fakescript.lua"
 	site.variants= { [0]= {
 		["site"]			= { "inSiteOnly"		, { "one", "two" } },
@@ -363,18 +359,18 @@ function dummy.fakesitescript()
 	} }
 	
 	function site.BuildUrl() return { ["fakeURL"] ={} } end
-end--function dummy.fakesitescript
+end--function dummy.FakeSitescript
 
 --[[- merge up to four tables.
-@function [parent=#dummy] mergetables
+@function [parent=#dummy] MergeTables
 @param #table teins
 @param #table tzwei
 @param #table tdrei	(optional)
 @param #table tvier (optional)
 @return #table
 ]]
---TODO move mergetables from dummy to LHpi.helpers once library loads by require
-function dummy.mergetables (teins,tzwei,tdrei,tvier)
+--TODO move MergeTables from dummy to LHpi.helpers once library loads by require
+function dummy.MergeTables (teins,tzwei,tdrei,tvier)
 	local tmerged= {}
 	for k,v in pairs(teins) do 
 		tmerged[k] = v
@@ -393,13 +389,13 @@ function dummy.mergetables (teins,tzwei,tdrei,tvier)
 		end
 	end	 
 	return tmerged
-end-- function dummy.mergetables
+end-- function dummy.MergeTables
 
 --[[- force debug enviroment
-@function [parent=#dummy] forceEnv
+@function [parent=#dummy] ForceEnv
 @param #table env (optional)
 ]]
-function dummy.forceEnv(env)
+function dummy.ForceEnv(env)
 	env = env or dummy.env
 	VERBOSE = env.VERBOSE
 	LOGDROPS = env.LOGDROPS
@@ -417,7 +413,7 @@ function dummy.forceEnv(env)
 	--legacy
 	STRICTCHECKEXPECTED = nil
 	DEBUGSKIPFOUND = nil
-end--function dummy.forceEnv
+end--function dummy.ForceEnv
 
 --[[- run and time sitescript multiple times.
 @function [parent=#dummy] TestPerformance
@@ -432,8 +428,8 @@ function dummy.TestPerformance(repeats,script,impF,impL,impS,timefile)
 	timefile = timefile or "time.log"
 	for run=1, repeats do
 		local t1 = os.clock()
-		dummy.loadscript(script.name,script.path,script.savepath)
-		dummy.forceEnv()
+		dummy.LoadScript(script.name,script.path,script.savepath)
+		dummy.ForceEnv()
 		ImportPrice( impF, impL, impS )
 		local dt = os.clock() - t1
 		ma.PutFile(timefile,string.format("\nrun %2i: %3.3g seconds",run,dt),1)
@@ -449,7 +445,7 @@ Before using this function, you need to convert Sets.txt from UCS-2 to UTF-8.
 function dummy.CompareDummySets(mapath,libver)
 	if not LHpi or not LHpi.version then
 		if libver < 2.15 then
-			dummy.loadlibonly(libver,workdir,savepath)
+			dummy.LoadLib(libver,workdir,savepath)
 		else
 			LHpi = dofile(workdir.."lib\\LHpi-v"..libver..".lua")
 			LHpi.Log( "LHpi lib is ready for use." ,1)
@@ -460,12 +456,13 @@ function dummy.CompareDummySets(mapath,libver)
 	local setsTxt = ma.GetFile(workdir..mapath.."Database\\Sets.txt")
 	--local s,e,firstline = string.find(setsTxt,"([^\n]+)")
 	--print(LHpi.ByteRep(firstline))
-	if setsTxt:find("^\255\254\56") then
+	if setsTxt:find("^\255\254") then
+	--TODO encountered \255\254\83 and \255\254\56 ... What's the third byte?
 		LHpi.Log(workdir..mapath.."Database\\Sets.txt is UCS-2 Little Endian.\nIf you updated Magic Album recently, you probably need to convert it to UTF-8 again.")
 		error(workdir..mapath.."Database\\Sets.txt is UCS-2 Little Endian.")
 	end
-	setsTxt= setsTxt:gsub( "^\239\187\191" , "" )
-	local dummySets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
+	setsTxt= setsTxt:gsub( "^\239\187\191" , "" ) -- remove UTF-8 BOM if it's there
+	local dummySets = dummy.MergeTables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 	local revDummySets = {}
 	for sid,name in pairs(dummySets) do
 		revDummySets[name] = sid
@@ -495,7 +492,7 @@ end--function CompareDummySets
 function dummy.CompareDataSets(libver,dataver)
 	if not LHpi or not LHpi.version then
 		if libver < 2.15 then
-			LHpi = dummy.loadlibonly(libver,workdir,savepath)
+			LHpi = dummy.LoadLib(libver,workdir,savepath)
 		else
 			LHpi = dofile(workdir.."lib\\LHpi-v"..libver..".lua")
 			LHpi.Log( "LHpi lib is ready for use." ,1)
@@ -509,7 +506,7 @@ function dummy.CompareDataSets(libver,dataver)
 	else
 		print("LHpi.Data v"..LHpi.Data.version.." already loaded as "..tostring(LHpi.Data))
 	end
-	local dummySets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
+	local dummySets = dummy.MergeTables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 	local revDataSets = {}
 	for sid,set in pairs(LHpi.Data.sets) do
 		revDataSets[LHpi.Data.sets[sid].name] = sid
@@ -535,7 +532,7 @@ finds sets from dummy's lists that are not in site.sets.
  @function [parent=#dummy] CompareSiteSets
 ]]
 function dummy.CompareSiteSets()
-	local dummySets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
+	local dummySets = dummy.MergeTables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 	local missing = {}
 	if not site.sets then
 		print ("site.sets is "..tostring(site.sets))
@@ -879,7 +876,7 @@ function main(mode)
 		OFFLINE = true,--default false
 --		OFFLINE = false,--scripts should be set to true unless preparing for release
 	}
-	dummy.forceEnv()
+	dummy.ForceEnv()
 
 	local importfoil = "y"
 	local importlangs = dummy.alllangs
@@ -898,7 +895,7 @@ function main(mode)
 --	local importsets = { [220]="foo";[800]="bar";[0]="baz"; }
 --	local importsets = dummy.coresets
 --	local importsets = dummy.expansionsets
---	local importsets = dummy.mergetables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
+--	local importsets = dummy.MergeTables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 	
 	local scripts={
 		[0]={name="lib\\LHpi.sitescriptTemplate-v2.16.8.14.lua",savepath="."},
@@ -914,11 +911,11 @@ function main(mode)
 	}
 	
 	-- select a predefined script to be tested
---	dummy.fakesitescript()
-	local selection = 0
+--	dummy.FakeSitescript()
+	local selection = 9
 	local script=scripts[selection]
 	if script.oldloadertrue then
-		dummy.loadscript(script.name,script.path,script.savepath)--deprecated
+		dummy.LoadScript(script.name,script.path,script.savepath)--deprecated
 	else
 		--new loader
 		savepath=script.savepath
@@ -926,21 +923,23 @@ function main(mode)
 	end
 		
 	-- only load library (and Data)
-	--LHpi = dummy.loadlibonly(libver,workdir,script.savepath)--deprecated
+	--LHpi = dummy.LoadLib(libver,workdir,script.savepath)--deprecated
 --	LHpi = dofile(workdir.."lib\\LHpi-v"..libver..".lua")
 
 	-- force debug enviroment options
-	dummy.forceEnv(dummy.env)
+	dummy.ForceEnv(dummy.env)
 	print("dummy says: script loaded.")
 	
 	-- utility functions from dummy:
 	--only run sitescript update helpers
-	if site.Initialize then
-		site.Initialize({update=true})
-	--else
-	--	dummy.CompareDummySets(mapath,libver)
-	--	dummy.CompareDataSets(libver,dataver)
-	--	dummy.CompareSiteSets()	
+	if selection ~= 9 then
+		if site.Initialize then
+			site.Initialize({update=true})
+		--else
+		--	dummy.CompareDummySets(mapath,libver)
+		--	dummy.CompareDataSets(libver,dataver)
+		--	dummy.CompareSiteSets()	
+		end
 	end
 	
 	-- now try to break the script :-)
