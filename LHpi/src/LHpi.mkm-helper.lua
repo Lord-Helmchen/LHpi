@@ -30,7 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --[[ CHANGES
 2:
 GetSourceData gracefully skips set on http errors
-#table dataStaleAge { "default"=#number, #number setid=number, ... } instead of #number DATASTALEAGE=#number
+#table dataStaleAge { "default"=#number, #number setid=number, ... } instead of #number DATASTALEAGE
 new mode.forcerefresh
 new mode.checkstock (experimental)
 check dummy.version
@@ -59,8 +59,8 @@ function names CamelCased
 -- Both may interfere with the MODE you set here.
 -- 
 -- @field [parent=#global] #table MODE
---MODE = { download=true, sets="standard" }
-MODE={ test=true, checkstock=true }
+MODE = { download=true, sets="standard" }
+--MODE={ test=true, checkstock=true }
 
 --- how long before stored price info is considered too old.
 -- To help with MKM's daily request limit, and because MKM and MA sets do not map one-to-one,
@@ -72,20 +72,20 @@ MODE={ test=true, checkstock=true }
 local dataStaleAge = {
 	--["default"]	= 60*60*24, -- one day
 	["default"]	= 60*60*24*7, -- one week
-	[825] = 3600*24,--"Battle for Zendikar";
-	[822] = 3600*24,--"Magic Origins",
-	[818] = 3600*24,--"Dragons of Tarkir",
-	[816] =	3600*24,--"Fate Reforged",
-	[813] = 3600*24,--"Khans of Tarkir",
-	[826] = 3600*24,--"Zendikar Expeditions";
-	[819] = 3600*24*3,--"Modern Masters 2015 Edition";
-	 [22] = 3600*24*3,--"Prerelease Promos";
-	 [21] = 3600*24*3,--"Release & Launch Parties Promos";
-	 [26] = 3600*24*3,--"Magic Game Day";
-	 [30] = 3600*24*3,--"Friday Night Magic Promos";
-	 [53] = 3600*24*3,--"Holiday Gift Box Promos";
-	 [52] = 3600*24*3,--"Intro Pack Promos";
-	 [50] = 3600*24*3,--"Full Box Promotion";
+--	[825] = 3600*24,--"Battle for Zendikar";
+--	[822] = 3600*24,--"Magic Origins",
+--	[818] = 3600*24,--"Dragons of Tarkir",
+--	[816] =	3600*24,--"Fate Reforged",
+--	[813] = 3600*24,--"Khans of Tarkir",
+--	[826] = 3600*24,--"Zendikar Expeditions";
+--	[819] = 3600*24*3,--"Modern Masters 2015 Edition";
+--	 [22] = 3600*24*3,--"Prerelease Promos";
+--	 [21] = 3600*24*3,--"Release & Launch Parties Promos";
+--	 [26] = 3600*24*3,--"Magic Game Day";
+--	 [30] = 3600*24*3,--"Friday Night Magic Promos";
+--	 [53] = 3600*24*3,--"Holiday Gift Box Promos";
+--	 [52] = 3600*24*3,--"Intro Pack Promos";
+--	 [50] = 3600*24*3,--"Full Box Promotion";
 }
 
 --  Don't change anything below this line unless you know what you're doing :-) --

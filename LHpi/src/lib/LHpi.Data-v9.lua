@@ -35,7 +35,7 @@ updated/fixed cardcount for 26
 local Data={}
 ---	data file version
 -- @field [parent=#Data] #string version
-Data.version = "8"
+Data.version = "9"
 
 --[[- "main" function called by Magic Album; just display error and return.
  Called by Magic Album to import prices. Parameters are passed from MA.

@@ -67,6 +67,7 @@ cleanup
 </pre>
 * mkmtokenfile in magickartenmarkt.
 * MODE in mkm-helper
+* dataStaleAge in mkm-helper
 * remove leftover debug print() commands
 
 template and comments
@@ -84,7 +85,7 @@ update version numbers
 ** libver and dataver in main
 *sitescripts
 ** scriptver, libver and dataver
-* filenames (for lib,data and template
+* filenames (for lib,data and template)
 
 * changelog
 ** compare Release Candidate with last Release 

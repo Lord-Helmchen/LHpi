@@ -23,13 +23,13 @@ Sitescripts will need to provide
 
 ===magickartenmarkt===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=23330 LHpi.magickartenmarkt.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=23392 LHpi.magickartenmarkt.lua.zip]
 |-
-|Sitescript version||2.16.8.2
+|Sitescript version||2.16.9.3
 |-
-|updated last on||2015-10-08
+|updated last on||2015-10-14
 |-
-|size||41.78 KiB
+|size||42.03 KiB
 |}
 [https://www.magickartenmarkt.de/ MagicKartenMarkt] (or [https://www.magiccardmarket.eu/ magiccardmarket] is "Europe's largest online marketplace for Magic the Gathering cards!". It has become the de facto standard way to acquire singles, at least in my local MtG circles.
 
@@ -39,13 +39,15 @@ Additional preparation steps are needed for LHpi.magickartenmarkt. Please refer 
 
 ====mkm-helper.lua====
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=23331 LHpi.mkm-helper.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=23391 LHpi.mkm-helper.zip]
 |-
-|Sitescript version||2.16.8.1
+|Sitescript version||2.16.9.2
 |-
-|updated last on||2015-10-08
+|recommended dummyMA version||>=0.8
 |-
-|size||8.23 KiB
+|updated last on||2015-10-14
+|-
+|size||10.63 KiB
 |}
 Helper script to download price data from MKM. The data can then be imported to MA with magickartenmarkt.lua.
 
@@ -204,13 +206,13 @@ Logging to a seperate file is now disabled by default again (but still configura
 
 ===LHpi.Data===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=23329 LHpi.Data-v8.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=23389 LHpi.Data-v9.lua.zip]
 |-
 |Library version||>=2.15
 |-
-|updated last on||2015-10-08
+|updated last on||2015-10-15
 |-
-|size||55.82 KiB
+|size||55.71 KiB
 |}
 {|
 |[http://www.slightlymagic.net/forum/download/file.php?id=23253 LHpi.Data-v7.lua.zip]
@@ -235,17 +237,17 @@ Since library version 2.7, site-independent set data (number of cards,foilage, d
 # Please update [[#the LHpi Library]] to version >=2.16 and [[#LHpi.Data|data]] to >=8, if you have not done so yet.
 # Step 3 from the basic instructions is not optional anymore. Library components need to be in the Prices\lib\ directory.
 # Download the LHpi.magickartenmarkt [[#magickartenmarkt|#sitescript]] and [[#mkm-helper.lua|#helper]] and unzip into Prices\.
-# Download [[#dummyMA]] (>=0.7) and [[#additional dependencies]] (>=2) and unzip into Prices\lib. Take care to keep the subdirectory structure of the dependencies intact.
+# Download [[#dummyMA]] (>=0.8) and [[#additional dependencies]] (>=2) and unzip into Prices\lib. Take care to keep the subdirectory structure of the dependencies intact.
 # Obviously, we do need a place to store the downloaded price data, so as in step 4 above, create a subdirectory in Prices\. Unless you manually changed the scripts, it needs to be called "LHpi.magickartenmarkt"
 # go to [https://www.magickartenmarkt.de/?mainPage=showMyAccount your MKM account page] and create a set of app security tokens. Then create a copy of lib\LHpi.mkm.tokens.example and edit it with your personal MKM tokens. '''Do not share this information with anyone!'''
 #* LHpi only posts information retrieval requests through the MKM API, but I cannot accept any liability for anything that happens to your account.
-#* If you don't trust me, please read LHpi's sourcecode before making a decision. :-)
+#* If you're unsure whether to trust my scripts, please read LHpi's sourcecode before making a decision. :-)
 #* Also, do note that the tokens are stored in a plaintext file on your computer (the one you create in this step) and, while LHpi.magickartenmarkt.lua or LHpi.mkm-helper are running, in memory.
 # edit LHpi.magickartenmarkt.lua to change necessary settings:
 #* change <code>local mkmtokenfile = "LHpi.mkm.tokens.example"</code> to the token file you created in step 5.
-#* MKM provides multiple price types. Choose two and map them to MA's regulart and foil price columns by editing <code> local useAsRegprice=5</code> and <code>local useAsFoilprice=6</code>.
+#* MKM provides multiple price types. Choose two and map them to MA's regular and foil price columns by editing <code> local useAsRegprice=5</code> and <code>local useAsFoilprice=6</code> (see details in the script's comments).
 #* change <code>--OFFLINE = true</code> to <code>OFFLINE = true</code>. I left it in so LHpi.magickartenmarkt can display an error and mention LHpi.mkm-helper, in case you did not read this instructions ;-)
-# (optional) edit LHpi.mkm-helper to set which sets should be downloaded by default (<code>MODE = { download=true, sets="standard" }</code>) and how long the data is valid (<code>local DATASTALEAGE = 60*60*24*7 -- one week</code>)
+# (optional) edit LHpi.mkm-helper to set which sets should be downloaded by default (<code>MODE = { download=true, sets="standard" }</code>) and how long the data is valid (<code>local dataStaleAge = {	["default"]	= 60*60*24*7, -- one week, ... }</code>)
 # edit LHpi.mkm-helper.bat
 #* change <code>cd /D D:\Magic - The Gathering\Magic Album\Prices</code> to point to your MA location.
 #* In addition or alternative to MODE in LHpi.mkm-helper.lua, you can set download mode and sets to be downloaded as arguments in LHpi.mkm-helper.bat; if you prefer commandline operation, you can also pass arguments to the batch file (keep the <code>%*</code> arguments intact when making changes).
@@ -283,13 +285,13 @@ This is just an empty, commented template to help write new sitescripts.
 
 ====dummyMA====
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=23332 LHpi.dummyMA.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=23390 LHpi.dummyMA.zip]
 |-
-|version||0.7
+|version||0.8
 |-
-|updated last on||2015-10-08
+|updated last on||2015-10-14
 |-
-|size||11.04 KiB
+|size||11.02 KiB
 |}
 Magic Album API dummy to test and debug LHpi within an IDE (such as eclipse) and without needing Magic Album.
 LHpi.mkm-helper needs this for ma.GetFile, ma.PutFile, dummy.mergetables and a few tables (corests,expansionsets,specialsets,promosets).
@@ -318,6 +320,7 @@ This archive contains additional libraries that are needed by LHpi.mkm-helper.lu
 Since 0.6, the dummy uses LuaSockets to implement ma.GetUrl. If you need them, here are the additional files. Included are LuaSockets files for http connections and the Lua interpreter that the LuaSockets dlls were built against. Extract the <code>ext</code> and <code>bin</code> folders into the <code>lib</code> folder of your LHpi setup (usually in <code>Magic Album\Prices</code>).
 
 LHpi.mkm-helper uses multiple third party libraries to add support for OAuth,SSL,JSON, all taken from open source projects. Refer to [[#third party libraries]] for details. Note that the archive made available here contains only the files needed by LHpi, not the whole projects.
+
 ===How-To update sitescripts===
 ====Update with new set information====
 [[How-To sitescriptTemplate#Updating sitescripts with new set information]]
@@ -596,6 +599,8 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :add tla (three letter abbreviations) to all sets
 :updated/fixed variants for 52,25,10
 :updated/fixed cardcount for 791,53,52,50,21,10
+;[http://www.slightlymagic.net/forum/download/file.php?id=23389 9]
+:vupdated/fixed cardcount for 26
 
 =====LHpi.dummyMA=====
 ;0
@@ -639,6 +644,9 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :added LHpi.magickartenmarkt.lua and LHpi.mkm-helper.lua to script selection
 :ma.PutFile and ma.GetFile only print params if DEBUG
 :added 825,826,824,823
+;[http://www.slightlymagic.net/forum/download/file.php?id=23390 0.8]
+:improved LE BOM handling
+:function names CamelCased
 
 =====external dependencies=====
 ;[http://www.slightlymagic.net/forum/download/file.php?id=22770 1]
@@ -716,9 +724,24 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 ;[http://www.slightlymagic.net/forum/download/file.php?id=23330 2.16.8.2]
 :initial release
 :split mkm-helper
+;[http://www.slightlymagic.net/forum/download/file.php?id=23392 2.16.9.3]
+:updated expected for 30,26
+:site.priceTypes format changed, descriptions added
+:on HTTP errors, site.FetchSourceDataFromOAuth prints/logs errormsg and returns nil,status
+:mkm price type choice in site.* namespace
 =====LHpi.mkm-helper=====
 ;[http://www.slightlymagic.net/forum/download/file.php?id=23331 2.16.8.1]
 :initial release
+;[http://www.slightlymagic.net/forum/download/file.php?id=23391 2.16.9.2]
+:GetSourceData gracefully skips set on http errors
+:#table dataStaleAge { "default"=#number, #number setid=number, ... } instead of #number DATASTALEAGE
+:new mode.forcerefresh
+:new mode.checkstock (experimental, unpolished and largely undocumented)
+:* new helper.CheckStockPrices(maStock, mkmStock)
+:* new helper.GetStock()
+:* new helper.LoadCSV( filename )
+:check dummy.version
+:function names CamelCased
 
 ====LHpi.tcgplayerPriceGuide====
 ;[http://www.slightlymagic.net/forum/download/file.php?id=9267 2.0]

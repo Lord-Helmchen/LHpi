@@ -853,7 +853,7 @@ function main(mode)
 	-- @field [parent=#global] workdir
 	workdir=".\\"
 	local libver=2.16
-	local dataver=8
+	local dataver=9
 	
 	--don't keep a seperate dev savepath, though
 	mapath = "..\\..\\..\\Magic Album\\"

@@ -38,16 +38,16 @@ mkm price type choice in site.* namespace
 
 --- more detailed log; default false
 -- @field [parent=#global] #boolean VERBOSE
-VERBOSE = true
+--VERBOSE = true
 --- also log dropped cards; default false
 -- @field [parent=#global] #boolean LOGDROPS
-LOGDROPS = true
+--LOGDROPS = true
 --- also log namereplacements; default false
 -- @field [parent=#global] #boolean LOGNAMEREPLACE
-LOGNAMEREPLACE = true
+--LOGNAMEREPLACE = true
 --- also log foiltweaking; default false
 -- @field [parent=#global] #boolean LOGFOILTWEAK
-LOGFOILTWEAK = true
+--LOGFOILTWEAK = true
 
 -- options that control the script's behaviour.
 
@@ -70,9 +70,8 @@ LOGFOILTWEAK = true
 local useAsRegprice=5
 local useAsFoilprice=6
 
---local mkmtokenfile = "LHpi.mkm.tokens.example"
---local mkmtokenfile = "LHpi.mkm.tokens.sandbox"
-local mkmtokenfile = "LHpi.mkm.tokens.DarkHelmet"
+local mkmtokenfile = "LHpi.mkm.tokens.example"
+--local mkmtokenfile = "LHpi.mkm.tokens.DarkHelmet"
 
 --- use a persistent counter of all OAuth requests sent to the server.
 -- this could be helpful, as MKM's server will respond with http 429 errors
@@ -100,8 +99,7 @@ local RESETCOUNTER = false
 local responseFormat = "json"
 
 --- Probably only need appToken,appSecret and can do without accessToken,accessTokenSecret.
--- Needs to be tested.
--- --FIXME test and document
+-- Would need a token set of an MKM-approved widget app.
 local widgetonly = false
 --- use mkm sandbox instead of live server.
 -- @field #boolean sandbox
@@ -109,7 +107,7 @@ local sandbox = false
 
 --- also complain if drop,namereplace or foiltweak count differs; default false
 -- @field [parent=#global] #boolean STRICTEXPECTED
-STRICTEXPECTED = true
+--STRICTEXPECTED = true
 
 --- if true, exit with error on object type mismatch, else use object type 0 (all);	default true
 -- @field [parent=#global] #boolean STRICTOBJTYPE
@@ -117,11 +115,11 @@ STRICTEXPECTED = true
 
 --- log to seperate logfile instead of LHpi.log; default false
 -- @field [parent=#global] #boolean SAVELOG
-SAVELOG = true
+--SAVELOG = true
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
-OFFLINE = true
+--OFFLINE = true--download from dummy, only change to false for release
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
@@ -156,7 +154,7 @@ OFFLINE = true
 local libver = "2.16"
 --- revision of the LHpi library datafile to use
 -- @field #string dataver
-local dataver = "8"
+local dataver = "9"
 --- sitescript revision number
 -- @field  string scriptver
 local scriptver = "3"
