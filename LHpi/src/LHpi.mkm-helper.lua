@@ -28,13 +28,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2:
-GetSourceData gracefully skips set on http errors
-#table dataStaleAge { "default"=#number, #number setid=number, ... } instead of #number DATASTALEAGE
-new mode.forcerefresh
-new mode.checkstock (experimental)
-check dummy.version
-function names CamelCased
+3:
+don't update dataAge if set was aborted (i.e. 429)
+changed mode.checksales to mode.checkstock (now matching the documentation)
+Properly initialise timestamp file if none exist (thanks to Danatar for reporting and testing)
 ]]
 
 -- options unique to this script
@@ -90,6 +87,11 @@ local dataStaleAge = {
 
 --  Don't change anything below this line unless you know what you're doing :-) --
 
+--TODO actually, the library currently defaults to true. Will change on next lib version...
+--- log to seperate logfile instead of LHpi.log; default false
+-- @field [parent=#global] #boolean SAVELOG
+SAVELOG = false
+
 ---	read source data from #string savepath instead of site url; default false
 --	helper.GetSourceData normally overrides OFFLINE switch from LHpi.magickartenmarkt.lua.
 --	This forces the script to stay in OFFLINE mode.
@@ -118,10 +120,10 @@ workdir=".\\"
 local libver = "2.16"
 --- revision of the LHpi library datafile to use
 -- @field #string dataver
-local dataver = "8"
+local dataver = "9"
 --- sitescript revision number
 -- @field string scriptver
-local scriptver = "2"
+local scriptver = "3"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field #string scriptname
 local scriptname = "LHpi.mkm-helper-v".. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -162,7 +164,7 @@ local knownModes = {
 	["boostervalue"]=true,
 	["resetcounter"]=true,
 	["forcerefresh"]=true,
-	["checksales"]=true,
+	["checkstock"]=true,
 	}
 
 --[[- "main" function.
@@ -223,8 +225,9 @@ function main( mode )
 		setString = string.lower(setString)
 		local setNum = tonumber(setString)
 		if setNum and LHpi.Data.sets[setNum] then
-			print(string.format("recognized setid %i for %s",setNum,LHpi.Data.sets[setNum].name))
-			LHpi.Log(string.format("recognized setid %i for %s",setNum,LHpi.Data.sets[setNum].name) ,2)
+			local recognizedString = string.format("recognized setid %i for %s",setNum,LHpi.Data.sets[setNum].name)
+			print(recognizedString)
+			LHpi.Log(recognizedString ,2)
 			local s = {}
 			s[setNum] = LHpi.Data.sets[setNum].name
 			return s
@@ -251,22 +254,25 @@ function main( mode )
 		else
 			for sid,set in pairs(LHpi.Data.sets) do
 				if setString == string.lower(set.tla) then
-					print(string.format("recognized TLA %q for set %q",set.tla,set.name))
-					LHpi.Log(string.format("recognized TLA %q for set %q",set.tla,set.name) ,2)
+					local recognizedString = string.format("recognized TLA %q for set %q",set.tla,set.name)
+					print(recognizedString)
+					LHpi.Log(recognizedString ,2)
 					local s = {}
 					s[sid] = set.name
 					return s
 				elseif setString == string.lower(set.name) then
-					print(string.format("recognized setname %q",set.name))
-					LHpi.Log(string.format("recognized setname %q",set.name) ,2)
+					local recognizedString = string.format("recognized setname %q",set.name)
+					print(recognizedString)
+					LHpi.Log(recognizedString ,2)
 					local s = {}
 					s[sid] = set.name
 					return s
 				end--if
 			end--for
 		end--if setString
-		print(string.format("set definition not recognized: %s",setString))
-		LHpi.Log(string.format("! set definition not recognized: %s",setString) ,1)
+		local recognizedString = string.format("set definition not recognized: %s",setString)
+		print(recognizedString)
+		LHpi.Log(recognizedString ,1)
 		return {}
 	end--local function addSets
 	if "table"==type(mode.sets) then
@@ -323,6 +329,7 @@ function main( mode )
 	end--mode.boostervalue
 	if mode.checkstock then
 		local csvfile = "..\\MAexport-mkmStock.csv"
+		--local csvfile = "..\\..\\..\\Magic Album\\Prices\\MAexport-mkmStock.csv"
 		local maStock = helper.LoadCSV( csvfile)
 		local mkmStock = helper.GetStock()
 		helper.CheckStockPrices(maStock, mkmStock)
@@ -345,7 +352,15 @@ function helper.GetSourceData(sets)
 	if not folderwritable then
 		error( "failed to write file to savepath " .. LHpi.savepath .. "!" )
 	end -- if not folderwritable
-	local dataAge = Json.decode( ma.GetFile(savepath.."LHpi.mkm.offlinedataage") )
+	local dataAge = ma.GetFile(savepath.."LHpi.mkm.offlinedataage")
+	if dataAge then
+		dataAge = Json.decode( dataAge )
+	else
+		local noDataAgeString = "A new file will be created. If this is the first time the script is run, this is normal."
+		print (noDataAgeString)
+		LHpi.Log(noDataAgeString, 1)
+		dataAge={}
+	end
 	-- ["#string url"] = { timestamp = #number, requests = #number }
 	local s = SAVEHTML
 	local o = OFFLINE
@@ -375,7 +390,7 @@ function helper.GetSourceData(sets)
 		end--for _,exp
 	end--if sets
 
-	local totalcount={fetched=0, found=0 }
+	local totalcount={ fetched=0, found=0 }
 	for url,details in pairs(seturls) do
 		if not dataAge[url] then
 			dataAge[url]={timestamp=0}
@@ -387,7 +402,7 @@ function helper.GetSourceData(sets)
 		if os.time()-dataAge[url].timestamp>maxAge then
 			print(string.format("stale data for %s was fetched on %s, refreshing...",url,os.date("%c",dataAge[url].timestamp)))
 			LHpi.Log(string.format("refreshing stale data for %s, last fetched on %s",url,os.date("%c",dataAge[url].timestamp)) ,0)
-			local reqCountPre=ma.GetFile(LHpi.savepath.."LHpi.mkm.requestcounter")
+			local reqCountPre=ma.GetFile(LHpi.savepath.."LHpi.mkm.requestcounter") or 0
 			local reqPrediction = reqCountPre+(dataAge[url].requests or 1)
 			if reqPrediction < 5000 then
 				local setdata = LHpi.GetSourceData( url , details )
@@ -428,6 +443,7 @@ function helper.GetSourceData(sets)
 						LHpi.Log( string.format("%i cards have been fetched, and %i pricesGuides were found. LHpi.Data claims %i cards in set %q.",count.fetched,count.found,LHpi.Data.sets[details.setid].cardcount.all,LHpi.Data.sets[details.setid].name ) ,1)
 						print( "Saving rebuilt source to file: \"" .. (LHpi.savepath or "") .. fileurl .. "\"")
 						ma.PutFile( (LHpi.savepath or "") .. fileurl , setdata , 0 )
+						dataAge[url].timestamp=os.time()
 					else
 						local skippedString = string.format("%s encountered, abort and skip %q.",httpStatus,LHpi.Data.sets[details.setid].name)
 					end--if not httpStatus
@@ -439,7 +455,6 @@ function helper.GetSourceData(sets)
 				end--if setdata
 				local reqCountPost=ma.GetFile(LHpi.savepath.."LHpi.mkm.requestcounter")
 				dataAge[url].requests=reqCountPost-reqCountPre
-				dataAge[url].timestamp=os.time()
 			else-- reqPredition > 5000
 				print(string.format("Skipped %s with %s requests (today's total: %i) to prevent HTTP/429.",url,(dataAge[url].requests or "unknown"),reqPrediction))
 				LHpi.Log(string.format("Fetching data for %s would result in %s requests (%i total for today). Skipping url to prevent http 429 errors.",url,(dataAge[url].requests or "unknown"),reqPrediction) ,0)

@@ -27,11 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.16.8.3
-updated expected for 30,26
-site.priceTypes format changed, descriptions added
-on HTTP errors, site.FetchSourceDataFromOAuth prints/logs errormsg and returns nil,status
-mkm price type choice in site.* namespace
+2.16.9.4
+Properly initialise requestCounter file if none exist (thanks to Danatar for reporting and testing)
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -113,9 +110,10 @@ local sandbox = false
 -- @field [parent=#global] #boolean STRICTOBJTYPE
 --STRICTOBJTYPE = false
 
+--TODO actually, the library currently defaults to true. Will change on next lib version...
 --- log to seperate logfile instead of LHpi.log; default false
 -- @field [parent=#global] #boolean SAVELOG
---SAVELOG = true
+SAVELOG = false
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
@@ -345,7 +343,7 @@ function site.Initialize( mode )
 		end
 		LHpi.Log(site.scriptname .. " running as helper. ImportPrice() deleted." ,1)
 	end
-	if RESETCOUNTER then
+	if RESETCOUNTER  or ( not ma.GetFile (LHpi.savepath.."LHpi.mkm.requestcounter") )then
 		LHpi.Log("0",0,LHpi.savepath.."LHpi.mkm.requestcounter",0)
 	end
 	useAsRegprice = useAsRegprice or 3

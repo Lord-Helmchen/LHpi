@@ -23,13 +23,13 @@ Sitescripts will need to provide
 
 ===magickartenmarkt===
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=23392 LHpi.magickartenmarkt.lua.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=23445 LHpi.magickartenmarkt.lua.zip]
 |-
-|Sitescript version||2.16.9.3
+|Sitescript version||2.16.9.4
 |-
-|updated last on||2015-10-14
+|updated last on||2015-10-19
 |-
-|size||42.03 KiB
+|size||42.04 KiB
 |}
 [https://www.magickartenmarkt.de/ MagicKartenMarkt] (or [https://www.magiccardmarket.eu/ magiccardmarket] is "Europe's largest online marketplace for Magic the Gathering cards!". It has become the de facto standard way to acquire singles, at least in my local MtG circles.
 
@@ -39,15 +39,15 @@ Additional preparation steps are needed for LHpi.magickartenmarkt. Please refer 
 
 ====mkm-helper.lua====
 {|
-|[http://www.slightlymagic.net/forum/download/file.php?id=23391 LHpi.mkm-helper.zip]
+|[http://www.slightlymagic.net/forum/download/file.php?id=23444 LHpi.mkm-helper.zip]
 |-
-|Sitescript version||2.16.9.2
+|Sitescript version||2.16.9.3
 |-
 |recommended dummyMA version||>=0.8
 |-
-|updated last on||2015-10-14
+|updated last on||2015-10-19
 |-
-|size||10.63 KiB
+|size||10.78 KiB
 |}
 Helper script to download price data from MKM. The data can then be imported to MA with magickartenmarkt.lua.
 
@@ -250,15 +250,18 @@ Since library version 2.7, site-independent set data (number of cards,foilage, d
 # (optional) edit LHpi.mkm-helper to set which sets should be downloaded by default (<code>MODE = { download=true, sets="standard" }</code>) and how long the data is valid (<code>local dataStaleAge = {	["default"]	= 60*60*24*7, -- one week, ... }</code>)
 # edit LHpi.mkm-helper.bat
 #* change <code>cd /D D:\Magic - The Gathering\Magic Album\Prices</code> to point to your MA location.
-#* In addition or alternative to MODE in LHpi.mkm-helper.lua, you can set download mode and sets to be downloaded as arguments in LHpi.mkm-helper.bat; if you prefer commandline operation, you can also pass arguments to the batch file (keep the <code>%*</code> arguments intact when making changes).
+#* In addition or alternative to MODE in LHpi.mkm-helper.lua, you can set download mode and sets to be downloaded as arguments in LHpi.mkm-helper.bat; you might want to change the preconfigured example set definitions to your personal need.
+#* if you prefer commandline operation, you can also pass arguments to the batch file (as long as you keep the <code>%*</code> arguments intact when making changes).
 #* MODE allows for one set definition, either a single string or a table. In the batch or as comand line argument, you can pass multiple set definitions. Valid strings are "core","expansion","special","promo", Magic Album set ids, set names or three letter codes.
+#* If you want, you can create multiple copies of the batch file for easy access to different modes of operation. Due to the included <code>cd</code> instruction, those can be stored anywhere on your computer.
+# Run LHpi.mkm-helper.bat to download pricing information. Then you can use LHpi.magickartenmarkt via Magic Album's Price Manager to import the downloaded data.
 # At first, you will probably encounter HTTP 429 errors (too many requests). After each sucessfull download, the date and number of requests needed for the set will be recorded, and the errors will hopefully happen less frequent.
-# To reset the request counter, pass "resetcounter" argument to the script.
+#* To reset the request counter, pass "resetcounter" argument to the script (via commandline or by editing the batch file).
 
 ===Troubleshooting===
 If something does not happen as expected
 * make sure the script is saved utf-8 encoded. It's customary for lua scripts to be saved ANSI encoded, but as MA expects utf input, this is what I considered the most wysiwyg approach to set cards with special characters in their names.
-* open the lua file in a text editor and change "--VERBOSE = true" to "VERBOSE = true", likewise enable "LOGDROPS","LOGNAMEREPLACE","LOGFOILTWEAK","STRICTCHECKEXPECTED" and "SAVELOG". This will make the script provide more feedback to help track down any problems (or just to see what it was doing) and also enable additional checks. The logfile will be called "[MA Folder]\Prices\[scriptname].log" by unless manually configured otherwise.
+* open the lua file in a text editor and change "--VERBOSE = true" to "VERBOSE = true", likewise enable "LOGDROPS","LOGNAMEREPLACE","LOGFOILTWEAK","STRICTEXPECTED" and "SAVELOG". This will make the script provide more feedback to help track down any problems (or just to see what it was doing) and also enable additional checks. The logfile will be called "[MA Folder]\Prices\[scriptname].log" by unless manually configured otherwise.
 I'll try to answer any questions you might have. If the script misbehaves please follow the two steps above and attach a copy of the .log to your post.
 
 ==Development==
@@ -729,6 +732,9 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :site.priceTypes format changed, descriptions added
 :on HTTP errors, site.FetchSourceDataFromOAuth prints/logs errormsg and returns nil,status
 :mkm price type choice in site.* namespace
+;[http://www.slightlymagic.net/forum/download/file.php?id=23445 2.16.9.4]
+:Properly initialise requestCounter file if none exist (thanks to Danatar for reporting and testing)
+
 =====LHpi.mkm-helper=====
 ;[http://www.slightlymagic.net/forum/download/file.php?id=23331 2.16.8.1]
 :initial release
@@ -742,6 +748,10 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 :* new helper.LoadCSV( filename )
 :check dummy.version
 :function names CamelCased
+;[http://www.slightlymagic.net/forum/download/file.php?id=23444 2.16.9.3]
+:don't update dataAge if set was aborted (i.e. 429)
+:changed mode.checksales to mode.checkstock (now matching the documentation)
+:Properly initialise timestamp file if none exist (thanks to Danatar for reporting and testing)
 
 ====LHpi.tcgplayerPriceGuide====
 ;[http://www.slightlymagic.net/forum/download/file.php?id=9267 2.0]

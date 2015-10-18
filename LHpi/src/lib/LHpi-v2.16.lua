@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --[[ CHANGES
 2.17
 dataver default 6 -> 8
+SAVELOG defaults to false, as was documented
 ]]
 
 --TODO count averaging events with counter attached to prices. better: just build a separate table to remember averaging happened.
@@ -127,8 +128,9 @@ function LHpi.Initialize()
 	end
 	if SAVELOG==nil then
 		---@field [parent=#global] SAVELOG
-		SAVELOG = true
+		SAVELOG = false
 	end
+	--TODO actually, the library currently defaults to true. Will change on next lib version...
 	if SAVETABLE==nil then
 		---@field [parent=#global] SAVETABLE
 		SAVETABLE = false
