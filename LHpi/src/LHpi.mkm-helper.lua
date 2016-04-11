@@ -7,12 +7,12 @@ uses and needs LHpi library
 
 Inspired by and loosely based on "MTG Mint Card.lua" by Goblin Hero, Stromglad1 and "Import Prices.lua" by woogerboy21;
 who generously granted permission to "do as I like" with their code;
-everything else Copyright (C) 2012-2015 by Christian Harms.
+everything else Copyright (C) 2012-2016 by Christian Harms.
 If you want to contact me about the script, try its release thread in http://www.slightlymagic.net/forum/viewforum.php?f=32
 
 @module LHpi.helper
 @author Christian Harms
-@copyright 2014-2015 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
+@copyright 2014-2016 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
 @release This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -28,10 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-3:
-don't update dataAge if set was aborted (i.e. 429)
-changed mode.checksales to mode.checkstock (now matching the documentation)
-Properly initialise timestamp file if none exist (thanks to Danatar for reporting and testing)
+2.17.10.4:
 ]]
 
 -- options unique to this script
@@ -87,10 +84,9 @@ local dataStaleAge = {
 
 --  Don't change anything below this line unless you know what you're doing :-) --
 
---TODO actually, the library currently defaults to true. Will change on next lib version...
 --- log to seperate logfile instead of LHpi.log; default false
 -- @field [parent=#global] #boolean SAVELOG
-SAVELOG = false
+SAVELOG = true
 
 ---	read source data from #string savepath instead of site url; default false
 --	helper.GetSourceData normally overrides OFFLINE switch from LHpi.magickartenmarkt.lua.
@@ -117,13 +113,13 @@ workdir=".\\"
 
 --- revision of the LHpi library to use
 -- @field #string libver
-local libver = "2.16"
+local libver = "2.17"
 --- revision of the LHpi library datafile to use
 -- @field #string dataver
-local dataver = "9"
+local dataver = "10"
 --- sitescript revision number
 -- @field string scriptver
-local scriptver = "3"
+local scriptver = "4"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field #string scriptname
 local scriptname = "LHpi.mkm-helper-v".. libver .. "." .. dataver .. "." .. scriptver .. ".lua"

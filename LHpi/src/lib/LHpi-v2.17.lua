@@ -4,12 +4,12 @@
 
 Inspired by and loosely based on "MTG Mint Card.lua" by Goblin Hero, Stromglad1 and "Import Prices.lua" by woogerboy21;
 who generously granted permission to "do as I like" with their code;
-everything else Copyright (C) 2012-2015 by Christian Harms.
+everything else Copyright (C) 2012-2016 by Christian Harms.
 If you want to contact me about the script, try its release thread in http://www.slightlymagic.net/forum/viewforum.php?f=32
 
 @module LHpi
 @author Christian Harms
-@copyright 2012-2015 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
+@copyright 2012-2016 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
 @release This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -26,9 +26,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 --[[ CHANGES
 2.17
-dataver default 6 -> 8
+dataver default 6 -> 10
 SAVELOG defaults to false, as was documented
 ]]
+
+--FIXME change filename to 2.17 and update all sitescripts
+--FIXME update (c) to 2016 in all files
 
 --TODO count averaging events with counter attached to prices. better: just build a separate table to remember averaging happened.
 --TODO change #boolean VERBOSE to #number verbosity and adjust loglevels?
@@ -36,7 +39,7 @@ SAVELOG defaults to false, as was documented
 local LHpi = {}
 ---	LHpi library version
 -- @field [parent=#LHpi] #string version
-LHpi.version = "2.16"
+LHpi.version = "2.17"
 
 --[[- "main" function called by Magic Album; just display error and return.
  Called by Magic Album to import prices. Parameters are passed from MA.
@@ -182,7 +185,7 @@ function LHpi.Initialize()
 		if DEBUG then
 			error("undefined dataver!")
 		else
-			site.dataver = "8"
+			site.dataver = "10"
 		end
 	end
 	---	LHpi static set data

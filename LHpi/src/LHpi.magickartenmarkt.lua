@@ -6,12 +6,12 @@ to import card pricing from www.magiccardmarket.eu.
 
 Inspired by and loosely based on "MTG Mint Card.lua" by Goblin Hero, Stromglad1 and "Import Prices.lua" by woogerboy21;
 who generously granted permission to "do as I like" with their code;
-everything else Copyright (C) 2012-2015 by Christian Harms.
+everything else Copyright (C) 2012-2016 by Christian Harms.
 If you want to contact me about the script, try its release thread in http://www.slightlymagic.net/forum/viewforum.php?f=32
 
 @module LHpi.site
 @author Christian Harms
-@copyright 2012-2015 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
+@copyright 2012-2016 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
 @release This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -27,31 +27,32 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.16.9.4
-Properly initialise requestCounter file if none exist (thanks to Danatar for reporting and testing)
+2.17.10.5
+start SOI branch
+set options to dev prefs again
 ]]
 
 -- options that control the amount of feedback/logging done by the script
 
 --- more detailed log; default false
 -- @field [parent=#global] #boolean VERBOSE
---VERBOSE = true
+VERBOSE = true
 --- also log dropped cards; default false
 -- @field [parent=#global] #boolean LOGDROPS
---LOGDROPS = true
+LOGDROPS = true
 --- also log namereplacements; default false
 -- @field [parent=#global] #boolean LOGNAMEREPLACE
---LOGNAMEREPLACE = true
+LOGNAMEREPLACE = true
 --- also log foiltweaking; default false
 -- @field [parent=#global] #boolean LOGFOILTWEAK
---LOGFOILTWEAK = true
+LOGFOILTWEAK = true
 
 -- options that control the script's behaviour.
 
 --- compare prices set and failed with expected numbers; default true
 -- set to false if you prefer speed over sanity checks.
 -- @field [parent=#global] #boolean CHECKEXPECTED
---CHECKEXPECTED = false
+CHECKEXPECTED = false
 
 --[[- choose between available price types; defaults to 5 ("AVG" prices).
  	[1] = "SELL",	--Average price of articles ever sold of this product
@@ -67,8 +68,8 @@ Properly initialise requestCounter file if none exist (thanks to Danatar for rep
 local useAsRegprice=5
 local useAsFoilprice=6
 
-local mkmtokenfile = "LHpi.mkm.tokens.example"
---local mkmtokenfile = "LHpi.mkm.tokens.DarkHelmet"
+--local mkmtokenfile = "LHpi.mkm.tokens.example"
+local mkmtokenfile = "LHpi.mkm.tokens.DarkHelmet"
 
 --- use a persistent counter of all OAuth requests sent to the server.
 -- this could be helpful, as MKM's server will respond with http 429 errors
@@ -104,11 +105,11 @@ local sandbox = false
 
 --- also complain if drop,namereplace or foiltweak count differs; default false
 -- @field [parent=#global] #boolean STRICTEXPECTED
---STRICTEXPECTED = true
+STRICTEXPECTED = true
 
 --- if true, exit with error on object type mismatch, else use object type 0 (all);	default true
 -- @field [parent=#global] #boolean STRICTOBJTYPE
---STRICTOBJTYPE = false
+STRICTOBJTYPE = false
 
 --TODO actually, the library currently defaults to true. Will change on next lib version...
 --- log to seperate logfile instead of LHpi.log; default false
@@ -117,11 +118,11 @@ SAVELOG = false
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
---OFFLINE = true--download from dummy, only change to false for release
+OFFLINE = true--download from dummy, only change to false for release
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
---SAVEHTML = true
+SAVEHTML = true
 
 --- save price table to file before importing to MA; default false
 -- @field [parent=#global] #boolean SAVETABLE
@@ -139,23 +140,15 @@ SAVELOG = false
 -- @field [parent=#global] #boolean DEBUGVARIANTS
 --DEBUGVARIANTS = true
 
----	log raw html data found by regex; default false
--- @field [parent=#global] #boolean DEBUGFOUND
---DEBUGFOUND = true
-
---- DEBUG (only but deeper) inside variant loops; default false
--- @field [parent=#global] #boolean DEBUGVARIANTS
---DEBUGVARIANTS = true
-
 --- revision of the LHpi library to use
 -- @field #string libver
-local libver = "2.16"
+local libver = "2.17"
 --- revision of the LHpi library datafile to use
 -- @field #string dataver
-local dataver = "9"
+local dataver = "10"
 --- sitescript revision number
 -- @field  string scriptver
-local scriptver = "3"
+local scriptver = "5"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field #string scriptname
 local scriptname = "LHpi.magickartenmarkt-v".. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -341,7 +334,7 @@ function site.Initialize( mode )
 		function ImportPrice()
 			error("ImportPrice disabled by helper mode!")
 		end
-		LHpi.Log(site.scriptname .. " running as helper. ImportPrice() deleted." ,1)
+		LHpi.Log(site.scriptname .. " running as helper. Function ImportPrice() removed." ,1)
 	end
 	if RESETCOUNTER  or ( not ma.GetFile (LHpi.savepath.."LHpi.mkm.requestcounter") )then
 		LHpi.Log("0",0,LHpi.savepath.."LHpi.mkm.requestcounter",0)

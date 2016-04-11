@@ -4,12 +4,12 @@ Template to write new sitescripts for LHpi library
 
 Inspired by and loosely based on "MTG Mint Card.lua" by Goblin Hero, Stromglad1 and "Import Prices.lua" by woogerboy21;
 who generously granted permission to "do as I like" with their code;
-everything else Copyright (C) 2012-2015 by Christian Harms.
+everything else Copyright (C) 2012-2016 by Christian Harms.
 If you want to contact me about the script, try its release thread in http://www.slightlymagic.net/forum/viewforum.php?f=32
 
 @module LHpi.site
 @author Christian Harms
-@copyright 2012-2015 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
+@copyright 2012-2016 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
 @release This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.16.8.15
+2.17.8.15
 dummy.mergetables -> dummy.MergeTables
 ]]
 
@@ -67,7 +67,7 @@ dummy.mergetables -> dummy.MergeTables
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
---OFFLINE = true
+--OFFLINE = true--download from dummy, only change to false for release
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
@@ -91,10 +91,10 @@ dummy.mergetables -> dummy.MergeTables
 
 --- revision of the LHpi library to use
 -- @field #string libver
-local libver = "2.16"
+local libver = "2.17"
 --- revision of the LHpi library datafile to use
 -- @field #string dataver
-local dataver = "8"
+local dataver = "10"
 --- sitescript revision number
 -- @field  string scriptver
 local scriptver = "15"

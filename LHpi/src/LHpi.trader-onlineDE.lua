@@ -6,12 +6,12 @@ to import card pricing from www.trader-online.de.
 
 Inspired by and loosely based on "MTG Mint Card.lua" by Goblin Hero, Stromglad1 and "Import Prices.lua" by woogerboy21;
 who generously granted permission to "do as I like" with their code;
-everything else Copyright (C) 2012-2015 by Christian Harms.
+everything else Copyright (C) 2012-2016 by Christian Harms.
 If you want to contact me about the script, try its release thread in http://www.slightlymagic.net/forum/viewforum.php?f=32
 
 @module LHpi.site
 @author Christian Harms
-@copyright 2012-2015 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
+@copyright 2012-2016 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
 @release This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -27,34 +27,33 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.13.6.13
-added 814
-2.14.5.13
-removed url to filename changes that are done by the library if OFFLINE 
-2.15.6.14
-synchronized with template
+2.16.9.15
+synched with template
 
-merged back into mkm branch
+2.17.10.15
+start SOI branch
+set options to dev prefs again
 ]]
 
 -- options that control the amount of feedback/logging done by the script
 
 --- more detailed log; default false
 -- @field [parent=#global] #boolean VERBOSE
---VERBOSE = true
+VERBOSE = true
 --- also log dropped cards; default false
 -- @field [parent=#global] #boolean LOGDROPS
---LOGDROPS = true
+LOGDROPS = true
 --- also log namereplacements; default false
 -- @field [parent=#global] #boolean LOGNAMEREPLACE
---LOGNAMEREPLACE = true
+LOGNAMEREPLACE = true
 --- also log foiltweaking; default false
 -- @field [parent=#global] #boolean LOGFOILTWEAK
---LOGFOILTWEAK = true
+LOGFOILTWEAK = true
 
 -- options that control the script's behaviour.
 
 --- compare prices set and failed with expected numbers; default true
+-- set to false if you prefer speed over sanity checks.
 -- @field [parent=#global] #boolean CHECKEXPECTED
 --CHECKEXPECTED = false
 
@@ -62,25 +61,25 @@ merged back into mkm branch
 
 --- also complain if drop,namereplace or foiltweak count differs; default false
 -- @field [parent=#global] #boolean STRICTEXPECTED
---STRICTEXPECTED = true
+STRICTEXPECTED = true
 
 --- if true, exit with error on object type mismatch, else use object type 0 (all);	default true
 -- @field [parent=#global] #boolean STRICTOBJTYPE
---STRICTOBJTYPE = false
+STRICTOBJTYPE = false
 
---- log to seperate logfile instead of Magic Album.log;	default true
+--- log to seperate logfile instead of LHpi.log; default false
 -- @field [parent=#global] #boolean SAVELOG
---SAVELOG = false
+SAVELOG = true
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
---OFFLINE = true--download from dummy, only change to false for release
+OFFLINE = true--download from dummy, only change to false for release
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
---SAVEHTML = true
+SAVEHTML = true
 
---- save price table to file before importing to MA;	default false
+--- save price table to file before importing to MA; default false
 -- @field [parent=#global] #boolean SAVETABLE
 --SAVETABLE = true
 
@@ -98,13 +97,13 @@ merged back into mkm branch
 
 --- revision of the LHpi library to use
 -- @field #string libver
-local libver = "2.15"
+local libver = "2.17"
 --- revision of the LHpi library datafile to use
 -- @field #string dataver
-local dataver = "6"
+local dataver = "10"
 --- sitescript revision number
 -- @field  string scriptver
-local scriptver = "14"
+local scriptver = "15"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field #string scriptname
 local scriptname = "LHpi.trader-onlineDE-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -115,6 +114,7 @@ local scriptname = "LHpi.trader-onlineDE-v" .. libver .. "." .. dataver .. "." .
 local savepath = savepath -- keep external global savepath
 --- log file name. must point to (nonexisting or writable) file in existing directory relative to MA's root.
 -- set by LHpi lib unless specified here. Defaults to LHpi.log unless SAVELOG is true.
+-- Can also be set externally via global variable.
 -- @field #string logfile
 --local logfile = "Prices\\" .. string.gsub( site.scriptname , "lua$" , "log" )
 local logfile = logfile -- keep external global logfile
@@ -134,9 +134,8 @@ LHpi = LHpi or {}
  @field #string dataver
  @field #string logfile (optional)
  @field #string savepath (optional)
- @field #boolean sandbox 
 ]]
-site={ scriptname=scriptname, dataver=dataver, logfile=logfile or nil, savepath=savepath or nil , sandbox=sandbox}
+site={ scriptname=scriptname, dataver=dataver, logfile=logfile or nil, savepath=savepath or nil }
 
 --[[- regex matches shall include all info about a single card that one html-file has,
  i.e. "*CARDNAME*FOILSTATUS*PRICE*".
@@ -154,10 +153,9 @@ site.currency = "€"
 site.encoding="cp1252"
 
 --- support for global workdir, if used outside of Magic Album/Prices folder. do not change here.
+-- Can be set externally via global variable.
 -- @field [parent=#local] #string workdir
--- @field [parent=#local] #string mapath
 local workdir = workdir or "Prices\\"
-local mapath = mapath or ".\\"
 
 --[[- "main" function.
  called by Magic Album to import prices. Parameters are passed from MA.
@@ -188,7 +186,7 @@ function ImportPrice( importfoil , importlangs , importsets , scriptmode)
 	if loglater then
 		LHpi.Log(loglater ,0)
 	end
-	LHpi.Log( "LHpi lib is ready for use." )
+	LHpi.Log( "LHpi lib is ready for use." ,0)
 	site.Initialize( scriptmode ) -- keep site-specific stuff out of ImportPrice
 	LHpi.DoImport (importfoil , importlangs , importsets)
 	LHpi.Log( "Lua script " .. scriptname .. " finished" ,0)
@@ -262,11 +260,11 @@ function site.Initialize( mode )
 	LHpi.Log(site.scriptname.." started site.Initialize():",1)
 	
 	if mode.update then
-		if not dummy then error("ListUnknownUrls needs to be run from LHpi.dummyMA!") end
+		if not dummy then error("Update mode needs to be called by LHpi.dummyMA!") end
 		dummy.CompareDummySets(mapath,site.libver)
 		dummy.CompareDataSets(site.libver,site.libver)
 		dummy.CompareSiteSets()
-		dummy.ListUnknownUrls(site.FetchExpansionList())
+	 	dummy.ListUnknownUrls(site.FetchExpansionList())
 		return
 	end
 end--function site.Initialize
@@ -286,8 +284,6 @@ This will be used by site.FetchExpansionList().
  @param #number setid		see site.sets
  @param #number langid		see site.langs
  @param #number frucid		see site.frucs
- @param #boolean offline	DEPRECATED, read global OFFLINE instead if you need really it.
- 							(can be nil) use local file instead of url
  @return #table { #string (url)= #table { isfile= #boolean, (optional) foilonly= #boolean, (optional) setid= #number, (optional) langid= #number, (optional) frucid= #number } , ... }
 ]]
 function site.BuildUrl( setid,langid,frucid )
@@ -352,13 +348,7 @@ end -- function site.BuildUrl
  The returned table shall contain at least the sets' name and LHpi-comnpatible urlsuffix,
  so it can be processed by dummy.ListUnknownUrls.
  Implementing this function is optional and may not be possible for some sites.
- @function [parent=#site] FetchExpansionList
- @return #table  @return #table { #number= #table { name= #string , urlsuffix= #string , ... }
-]]
---[[- fetch list of expansions to be used by update helper functions.
- The returned table shall contain at least the sets' name and LHpi-comnpatible urlsuffix,
- so it can be processed by dummy.ListUnknownUrls.
- Implementing this function is optional and may not be possible for some sites.
+
  @function [parent=#site] FetchExpansionList
  @return #table  @return #table { #number= #table { name= #string , urlsuffix= #string , ... }
 ]]
@@ -448,6 +438,7 @@ end -- function site.ParseHtmlData
 --[[- special cases card data manipulation.
  Ties into LHpi.buildCardData to make changes that are specific to one site and thus don't belong into the library.
  This Plugin is called before most of LHpi's BuildCardData processing.
+ It's probably safest to only make name and language modifications here.
 
  @function [parent=#site] BCDpluginPre
  @param #table card			the card LHpi.BuildCardData is working on
@@ -598,6 +589,7 @@ site.sets = {
 [110]={id = 110, lang = { true , [3]=false}, fruc = { false,true }, url = "UN"},  
 [100]={id = 100, lang = { true , [3]=false}, fruc = { false,true }, url = "B%20"},
  -- Expansions
+[825]={id = 825, lang = { true , [3]=true }, fruc = { true ,true }, url = "BFZ"},--Battle for Zendikar
 [818]={id = 818, lang = { true , [3]=true }, fruc = { true ,true }, url = "DTK"},--Dragons of Tarkir
 [816]={id = 816, lang = { true , [3]=true }, fruc = { true ,true }, url = "FRF"},--Fate Reforged
 [813]={id = 813, lang = { true , [3]=true }, fruc = { true ,true }, url = "KTK"},--Khans of Tarkir
@@ -667,6 +659,7 @@ site.sets = {
 [130]={id = 130, lang = { true , [3]=false }, fruc = { false,true }, url = "AQ"},
 [120]={id = 120, lang = { true , [3]=false }, fruc = { false,true }, url = "AN"},
 -- special sets
+[824]={id = 824, lang = { true , [3]=true }, fruc = { true ,true }, url = "ZVE"},--Duel Decks: Zendikar vs. Eldrazi
 [820]={id = 820, lang = { true , [3]=true }, fruc = { true ,true }, url = "EVK"},--Duel Decks: Elspeth vs. Kiora
 [819]={id = 819, lang = { true , [3]=true }, fruc = { true ,true }, url = "MM2"},--Modern Masters 2015
 [814]={id = 814, lang = { true , [3]=true }, fruc = { true ,true }, url = "C14"},--Commander 2014
@@ -1118,9 +1111,10 @@ site.namereplace = {
  tables of cards that need to set variant.
  For each setid, will be merged with sensible defaults from LHpi.Data.sets[setid].variants.
  When variants for the same card are set here and in LHpi.Data, sitescript's entry overwrites Data's.
+ If override is true, the variant table from LHpi.Data is ignored for this set.
  
  fields are for subtables indexed by #number setid.
- { #number (setid)= #table { #string (name)= #table { #string, #table { #string or #boolean , ... } } , ... } , ...  }
+ { #number (setid)= #table { override=#boolean , #string (name)= #table { #string, #table { #string or #boolean , ... } } , ... } , ...  }
 
  @type site.variants
  @field [parent=#site.variants] #boolean override	(optional) if true, defaults from LHpi.Data will not be used at all
@@ -1150,20 +1144,21 @@ site.variants = {
  tables of cards that need to set foilage.
  For each setid, will be merged with sensible defaults from LHpi.Data.sets[setid].variants.
  When variants for the same card are set here and in LHpi.Data, sitescript's entry overwrites Data's.
+ If override is true, the foiltweak table from LHpi.Data is ignored for this set.
 
   fields are for subtables indexed by #number setid.
- { #number (setid)= #table { #string (name)= #table { foil= #boolean } , ... } , ... }
+ { #number (setid)= #table { override=#boolean , #string (name)= #table { foil= #boolean } , ... } , ... }
  
  @type site.foiltweak
  @field [parent=#site.foiltweak] #boolean override	(optional) if true, defaults from LHpi.Data will not be used at all
  @field [parent=#site.foiltweak] #table foilstatus
 ]]
 site.foiltweak = {
---[772]={
---not needed, cards have "(Foil)" suffix
---["Elspeth, fahrende Ritterin"]	= { foil = true},
---["Tezzeret der Sucher "]		= { foil = true},
---	},
+[772]={
+	override=true,
+	["Elspeth, fahrende Ritterin"]	= { foil = true},
+	["Tezzeret der Sucher "]		= { foil = true},
+},
 } -- end table site.foiltweak
 
 --[[- wrapper function for expected table 
@@ -1207,90 +1202,101 @@ function site.SetExpected( importfoil , importlangs , importsets )
 -- @field [parent=#site.expected] #boolean replica
 	replica = true,
 -- Core sets
-[808] = {pset={ LHpi.Data.sets[808].cardcount.both-15, [3]=LHpi.Data.sets[808].cardcount.reg-15 }, failed={[3]=LHpi.Data.sets[808].cardcount.tok}, namereplaced=10 },-- -15 extra cards (nr. 270 - 284)
-[797] = { namereplaced=4 },
-[779] = { namereplaced=2 },
-[770] = { namereplaced=8 },
-[720] = { pset={ LHpi.Data.sets[720].cardcount.both-1,[3]=LHpi.Data.sets[720].cardcount.both-2 }, failed={ 1,[3]=1 }, namereplaced=3 },
-[630] = { pset={ 359-9, [3]=352-2 }, namereplaced=2 },-- missing #s "S1" to "S9"
-[550] = { pset={ 357-7, [3]=355-5 }, namereplaced=7 },
+[808] = {pset={ LHpi.Data.sets[808].cardcount.both-15, [3]=LHpi.Data.sets[808].cardcount.reg-15 }, failed={[3]=LHpi.Data.sets[808].cardcount.tok} },-- -15 extra cards (nr. 270 - 284)
+--[797] = { namereplaced=4 },
+--[779] = { namereplaced=2 },
+--[770] = { namereplaced=8 },
+[720] = { pset={ LHpi.Data.sets[720].cardcount.both-1,[3]=LHpi.Data.sets[720].cardcount.both-2 }, failed={ 1,[3]=1 } },
+[630] = { pset={ 359-9, [3]=352-2 } },-- missing #s "S1" to "S9"
+[550] = { pset={ 357-7, [3]=355-5 } },
 [460] = { namereplaced=7 },
-[360] = { namereplaced=5 },
+--[360] = { namereplaced=5 },
 [250] = { namereplaced=4 },
-[180] = { namereplaced=5 },
-[140] = { pset={ [3]=306-2 }, failed= { [3]=2 }, namereplaced=5 },--fail 2 Fehldruck
-[139] = { namereplaced=2 },
-[110] = { pset={ 302-7-9 }, namereplaced=1 }, -- 7 empty cards on page, 9 missing entirely
+--[180] = { namereplaced=5 },
+[140] = { pset={ [3]=306-2 }, failed= { [3]=2 } },--fail 2 Fehldruck
+--[139] = { namereplaced=2 },
+[110] = { pset={ 277 }, namereplaced=1 },
 [100] = { pset={ 241 } },
 -- Expansions
-[813] = { pset={ LHpi.Data.sets[813].cardcount.both-5, [3]=LHpi.Data.sets[813].cardcount.reg-5 }, failed={ 5, [3]=LHpi.Data.sets[813].cardcount.tok+5 }, namereplaced=10 },-- -5 Intro Deck variants
+[813] = { pset={ LHpi.Data.sets[813].cardcount.both-5, [3]=LHpi.Data.sets[813].cardcount.reg-5 }, failed={ 5, [3]=LHpi.Data.sets[813].cardcount.tok+5 } },-- -5 Intro Deck variants
 [806] = { pset={ [3]=171-6 }, failed= { [3]=6 } }, -- -6 is tokens
-[802] = { namereplaced=6 },
-[800] = { pset={ LHpi.Data.sets[800].cardcount.both-1,[3]=LHpi.Data.sets[800].cardcount.both-1}, failed={ 1 }, namereplaced=8 },
+--[802] = { namereplaced=6 },
+[800] = { pset={ LHpi.Data.sets[800].cardcount.both-1,[3]=LHpi.Data.sets[800].cardcount.both-1}, failed={ 1 } },
 [795] = { pset={ [3]=157-1 }, failed= { [3]=1 }, namereplaced=1 }, -- -1 is token
-[793] = { namereplaced=1 },
+--[793] = { namereplaced=1 },
 [791] = { pset={ LHpi.Data.sets[791].cardcount.both-1,[3]=LHpi.Data.sets[791].cardcount.both-1}, failed={ 1 } },
-[786] = { namereplaced=8 },
-[784] = { pset={ 161+1 }, failed={ [3]=1 }, namereplaced=8 }, --+1 is Checklist
-[782] = { pset={ 276+1 }, failed={ [3]=1 }, namereplaced=9 }, -- +1/fail is Checklist
-[776] = { namereplaced=2 },
-[773] = { failed={ 1, [3]=1 }, namereplaced=6 }, -- fail is Poison Counter
-[767] = { namereplaced=3 },
-[765] = { namereplaced=2 },
-[762] = { namereplaced=1 },
-[756] = { namereplaced=2 },
-[754] = { namereplaced=3 },
-[751] = { namereplaced=12 },
-[730] = { namereplaced=6 },
-[710] = { namereplaced=4 },
-[700] = { namereplaced=4 },
-[690] = { dropped=954, namereplaced=5 },
-[680] = { dropped=378, namereplaced=5 },
-[670] = { namereplaced=4 },
-[660] = { namereplaced=4 },
-[650] = { namereplaced=4 },
-[654] = { namereplaced=3 },
+--[786] = { namereplaced=8 },
+[784] = { pset={ 161+1 }, failed={ [3]=1 } }, --+1 is Checklist
+[782] = { pset={ 276+1 }, failed={ [3]=1 } }, -- +1/fail is Checklist
+--[776] = { namereplaced=2 },
+[773] = { failed={ 1, [3]=1 } }, -- fail is Poison Counter
+--[767] = { namereplaced=3 },
+--[765] = { namereplaced=2 },
+--[762] = { namereplaced=1 },
+--[756] = { namereplaced=2 },
+--[754] = { namereplaced=3 },
+--[751] = { namereplaced=12 },
+--[730] = { namereplaced=6 },
+--[710] = { namereplaced=4 },
+--[700] = { namereplaced=4 },
+[690] = { dropped=954 },
+[680] = { dropped=378 },
+--[670] = { namereplaced=4 },
+--[660] = { namereplaced=4 },
+--[650] = { namereplaced=4 },
+--[654] = { namereplaced=3 },
 [650] = { namereplaced=3 },
-[620] = { namereplaced=16 },
+--[620] = { namereplaced=16 },
 [610] = { namereplaced=19 },
 [590] = { namereplaced=33 },
-[580] = { namereplaced=6 },
+--[580] = { namereplaced=6 },
 [570] = { namereplaced=3 },
 [560] = { namereplaced=3 },
-[530] = { namereplaced=2 },
-[520] = { namereplaced=1 },
-[480] = { namereplaced=2 },
-[470] = { namereplaced=1 },
+--[530] = { namereplaced=2 },
+--[520] = { namereplaced=1 },
+--[480] = { namereplaced=2 },
+--[470] = { namereplaced=1 },
 [450] = { pset={ LHpi.Data.sets[450].cardcount.reg-3, [3]=LHpi.Data.sets[450].cardcount.reg-3 }, failed={ 3 } },-- 3 alt art versions missing
-[430] = { namereplaced=1 },
-[410] = { failed= { [3]=1 }, namereplaced = 5 },
-[370] = { namereplaced=2 },
-[330] = { namereplaced=1 },
-[300] = { namereplaced=1 },
-[270] = { namereplaced=3 },
-[220] = { namereplaced=6 },
-[210] = { namereplaced=1 },
-[190] = { namereplaced=4 },
-[160] = { namereplaced=1 }, -- in ita
-[150] = { namereplaced=2 },
-[120] = { namereplaced=3 },
+--[430] = { namereplaced=1 },
+[410] = { failed= { [3]=1 }, namereplaced=5 },
+--[370] = { namereplaced=2 },
+--[330] = { namereplaced=1 },
+--[300] = { namereplaced=1 },
+--[270] = { namereplaced=3 },
+--[220] = { namereplaced=6 },
+--[210] = { namereplaced=1 },
+--[190] = { namereplaced=4 },
+--[160] = { namereplaced=1 }, -- in ita
+--[150] = { namereplaced=2 },
+--[120] = { namereplaced=3 },
 -- special sets
 [812] = { foiltweaked=2 },
 [807] = { pset={ LHpi.Data.sets[807].cardcount.all }, namereplaced=3 },
-[805] = { namereplaced=2 },
-[801] = { pset={ LHpi.Data.sets[801].cardcount.reg }, failed={ LHpi.Data.sets[801].cardcount.repl }, namereplaced=4 },
+--[805] = { namereplaced=2 },
+[801] = { pset={ LHpi.Data.sets[801].cardcount.reg }, failed={ LHpi.Data.sets[801].cardcount.repl }, foiltweaked=0 },
 [796] = { namereplaced=5 },
-[794] = { foiltweaked=2 },
-[790] = { foiltweaked=2 },
-[785] = { namereplaced=3, foiltweaked=2 },
-[772] = { namereplaced=1, foiltweaked=0 },
-[757] = { foiltweaked=2 },
-[600] = { namereplaced=9, foiltweaked=1 },
-[320] = { namereplaced=6 },
-[310] = { namereplaced=2 },
+--[794] = { foiltweaked=2 },
+--[790] = { foiltweaked=2 },
+--[785] = { namereplaced=3, foiltweaked=2 },
+--[772] = { namereplaced=1, foiltweaked=0 },
+--[757] = { foiltweaked=2 },
+[600] = { namereplaced=9 },
+--[320] = { namereplaced=6 },
+--[310] = { namereplaced=2 },
 [260] = { pset={ 228-6-7,[3]=228-6-7 }, failed={ 6+7, [3]=7 }, namereplaced=4 },-- no(6) DG, no(7) ST variants (also ma:no GER "DG")
 [200] = { namereplaced=2 },
 	}--end table site.expected
+	for sid,name in pairs(importsets) do
+		if site.expected[sid]==nil then
+			site.expected[sid]={}
+		end
+		if site.namereplace[sid] and not site.expected[sid].namereplaced then
+			site.expected[sid].namereplaced= 2*LHpi.Length(site.namereplace[sid])
+		end
+		if site.foiltweak[sid] and not site.expected[sid].foiltweaked then
+			site.expected[sid].foiltweaked= LHpi.Length(site.foiltweak[sid])
+		end
+	end--for sid,name
 end--function site.SetExpected
 ma.Log(site.scriptname .. " loaded.")
 --EOF

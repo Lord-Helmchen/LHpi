@@ -3,12 +3,12 @@
 
 Inspired by and loosely based on "MTG Mint Card.lua" by Goblin Hero, Stromglad1 and "Import Prices.lua" by woogerboy21;
 who generously granted permission to "do as I like" with their code;
-everything else Copyright (C) 2012-2015 by Christian Harms.
+everything else Copyright (C) 2012-2016 by Christian Harms.
 If you want to contact me about the script, try its release thread in http://www.slightlymagic.net/forum/viewforum.php?f=32
 
 @module LHpi.site
 @author Christian Harms
-@copyright 2012-2015 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
+@copyright 2012-2016 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
 @release This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -24,10 +24,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.16.8.16
-synced with template
-updated site.namereplace for 825,220,170,820,40
-updated site.expected
+2.17.10.17
+start SOI branch
+set options to dev prefs again
+
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -72,7 +72,7 @@ STRICTEXPECTED = true
 
 --- if true, exit with error on object type mismatch, else use object type 0 (all);	default true
 -- @field [parent=#global] #boolean STRICTOBJTYPE
-STRICTOBJTYPE = false
+--STRICTOBJTYPE = false
 
 --- log to seperate logfile instead of LHpi.log; default false
 -- @field [parent=#global] #boolean SAVELOG
@@ -80,7 +80,7 @@ SAVELOG = true
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
---OFFLINE = true--download from dummy, only change to false for release
+OFFLINE = true--download from dummy, only change to false for release
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
@@ -102,23 +102,19 @@ SAVEHTML = true
 -- @field [parent=#global] #boolean DEBUGVARIANTS
 --DEBUGVARIANTS = true
 
----	log raw html data found by regex; default false
--- @field [parent=#global] #boolean DEBUGFOUND
---DEBUGFOUND = true
-
 --- DEBUG (only but deeper) inside variant loops; default false
 -- @field [parent=#global] #boolean DEBUGVARIANTS
 --DEBUGVARIANTS = true
 
 --- revision of the LHpi library to use
 -- @field #string libver
-local libver = "2.16"
+local libver = "2.17"
 --- revision of the LHpi library datafile to use
 -- @field #string dataver
-local dataver = "8"
+local dataver = "10"
 --- sitescript revision number
 -- @field  string scriptver
-local scriptver = "16"
+local scriptver = "17"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field #string scriptname
 local scriptname = "LHpi.tcgplayerPriceGuide-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"

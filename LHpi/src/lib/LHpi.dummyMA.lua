@@ -4,12 +4,12 @@ to test LHpi within an IDE and without needing Magic Album
 
 Inspired by and loosely based on "MTG Mint Card.lua" by Goblin Hero, Stromglad1 and "Import Prices.lua" by woogerboy21;
 who generously granted permission to "do as I like" with their code;
-everything else Copyright (C) 2012-2015 by Christian Harms.
+everything else Copyright (C) 2012-2016 by Christian Harms.
 If you want to contact me about the script, try its release thread in http://www.slightlymagic.net/forum/viewforum.php?f=32
 
 @module LHpi.dummyMA
 @author Christian Harms
-@copyright 2012-2015 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
+@copyright 2012-2016 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
 @release This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -25,9 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-0.8
-improved LE BOM handling
-function names CamelCased
+0.9
+(c) 2016
 ]]
 
 --[[- "main" function called by Magic Album; just display error and return.
@@ -852,8 +851,8 @@ function main(mode)
 	--- global working directory to allow operation outside of MA\Prices hierarchy
 	-- @field [parent=#global] workdir
 	workdir=".\\"
-	local libver=2.16
-	local dataver=9
+	local libver=2.17
+	local dataver=10
 	
 	--don't keep a seperate dev savepath, though
 	mapath = "..\\..\\..\\Magic Album\\"
@@ -872,7 +871,7 @@ function main(mode)
 --		DEBUGFOUND = true,--default false
 --		DEBUGVARIANTS = true,--default false
 --		SAVETABLE=true,--default false
-		DEBUG = true,--default false
+--		DEBUG = true,--default false
 		OFFLINE = true,--default false
 --		OFFLINE = false,--scripts should be set to true unless preparing for release
 	}
@@ -895,11 +894,11 @@ function main(mode)
 --	local importsets = { [220]="foo";[800]="bar";[0]="baz"; }
 --	local importsets = dummy.coresets
 --	local importsets = dummy.expansionsets
---	local importsets = dummy.MergeTables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
+	local importsets = dummy.MergeTables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 	
 	local scripts={
-		[0]={name="lib\\LHpi.sitescriptTemplate-v2.16.8.14.lua",savepath="."},
-		[1]={name="\\MTG Mint Card.lua",path=savepath,mapath=mapath,oldloader=true},
+		[0]={name="lib\\LHpi.sitescriptTemplate-v2.17.10.15.lua",savepath="."},
+		[1]={name="\\MTG Mint Card.lua",path=savepath,savepath=mapath,oldloader=true},
 		[2]={name="\\Import Prices.lua",path=mapath,savepath=mapath,oldloader=true},
 		[3]={name="LHpi.mtgmintcard.lua",savepath=mapath.."Prices\\LHpi.mtgmintcard\\"},
 		[4]={name="LHpi.magicuniverseDE.lua",savepath=mapath.."Prices\\LHpi.magicuniverseDE\\"},
@@ -912,9 +911,9 @@ function main(mode)
 	
 	-- select a predefined script to be tested
 --	dummy.FakeSitescript()
-	local selection = 9
+	local selection = 8
 	local script=scripts[selection]
-	if script.oldloadertrue then
+	if script.oldloadert then
 		dummy.LoadScript(script.name,script.path,script.savepath)--deprecated
 	else
 		--new loader
@@ -943,8 +942,8 @@ function main(mode)
 	end
 	
 	-- now try to break the script :-)
-	if script.name~="LHpi.mkm-helper.lua" then
---		ImportPrice( importfoil, importlangs, importsets )
+	if selection ~= 9 then
+		ImportPrice( importfoil, importlangs, importsets )
 	end
 
 	-- demo LHpi helper functions:

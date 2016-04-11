@@ -6,12 +6,12 @@ to import card pricing from www.mtgprice.com.
 
 Inspired by and loosely based on "MTG Mint Card.lua" by Goblin Hero, Stromglad1 and "Import Prices.lua" by woogerboy21;
 who generously granted permission to "do as I like" with their code;
-everything else Copyright (C) 2012-2015 by Christian Harms.
+everything else Copyright (C) 2012-2016 by Christian Harms.
 If you want to contact me about the script, try its release thread in http://www.slightlymagic.net/forum/viewforum.php?f=32
 
 @module LHpi.site
 @author Christian Harms
-@copyright 2012-2015 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
+@copyright 2012-2016 Christian Harms except parts by Goblin Hero, Stromglad1 or woogerboy21
 @release This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -27,30 +27,25 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.13.6.5
-added 814
-2.14.5.5
-removed url to filename changes that are done by the library if OFFLINE
-2.15.6.5
-synchronized with template
-
-merged back into mkm branch
+2.17.10.6
+start SOI branch
+set options to dev prefs again
 ]]
 
 -- options that control the amount of feedback/logging done by the script
 
 --- more detailed log; default false
 -- @field [parent=#global] #boolean VERBOSE
---VERBOSE = true
+VERBOSE = true
 --- also log dropped cards; default false
 -- @field [parent=#global] #boolean LOGDROPS
---LOGDROPS = true
+LOGDROPS = true
 --- also log namereplacements; default false
 -- @field [parent=#global] #boolean LOGNAMEREPLACE
---LOGNAMEREPLACE = true
+LOGNAMEREPLACE = true
 --- also log foiltweaking; default false
 -- @field [parent=#global] #boolean LOGFOILTWEAK
---LOGFOILTWEAK = true
+LOGFOILTWEAK = true
 
 -- options unique to this sitescript
 
@@ -64,29 +59,29 @@ fairOrBest = "fair"
 
 --- compare prices set and failed with expected numbers; default true
 -- @field [parent=#global] #boolean CHECKEXPECTED
---CHECKEXPECTED = false
+CHECKEXPECTED = false
 
 --  Don't change anything below this line unless you know what you're doing :-) --
 
 --- also complain if drop,namereplace or foiltweak count differs; default false
 -- @field [parent=#global] #boolean STRICTEXPECTED
---STRICTEXPECTED = true
+STRICTEXPECTED = true
 
 --- if true, exit with error on object type mismatch, else use object type 0 (all);	default true
 -- @field [parent=#global] #boolean STRICTOBJTYPE
---STRICTOBJTYPE = false
+STRICTOBJTYPE = false
 
 --- log to seperate logfile instead of Magic Album.log;	default true
 -- @field [parent=#global] #boolean SAVELOG
---SAVELOG = false
+SAVELOG = false
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
---OFFLINE = true--download from dummy, only change to false for release
+OFFLINE = true--download from dummy, only change to false for release
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
---SAVEHTML = true
+SAVEHTML = true
 
 --- save price table to file before importing to MA;	default false
 -- @field [parent=#global] #boolean SAVETABLE
@@ -106,13 +101,13 @@ fairOrBest = "fair"
 
 --- revision of the LHpi library to use
 -- @field #string libver
-local libver = "2.15"
+local libver = "2.17"
 --- revision of the LHpi library datafile to use
 -- @field #string dataver
-local dataver = "6"
+local dataver = "10"
 --- sitescript revision number
 -- @field  string scriptver
-local scriptver = "5"
+local scriptver = "6"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field #string scriptname
 local scriptname = "LHpi.mtgprice.com-v" .. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
