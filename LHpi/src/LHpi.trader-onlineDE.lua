@@ -65,7 +65,7 @@ STRICTEXPECTED = true
 
 --- if true, exit with error on object type mismatch, else use object type 0 (all);	default true
 -- @field [parent=#global] #boolean STRICTOBJTYPE
-STRICTOBJTYPE = false
+--STRICTOBJTYPE = false
 
 --- log to seperate logfile instead of LHpi.log; default false
 -- @field [parent=#global] #boolean SAVELOG

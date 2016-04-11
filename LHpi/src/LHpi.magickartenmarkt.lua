@@ -53,7 +53,7 @@ LOGFOILTWEAK = true
 --- compare prices set and failed with expected numbers; default true
 -- set to false if you prefer speed over sanity checks.
 -- @field [parent=#global] #boolean CHECKEXPECTED
-CHECKEXPECTED = false
+--CHECKEXPECTED = false
 
 --[[- choose between available price types; defaults to 5 ("AVG" prices).
  	[1] = "SELL",	--Average price of articles ever sold of this product
@@ -110,7 +110,7 @@ STRICTEXPECTED = true
 
 --- if true, exit with error on object type mismatch, else use object type 0 (all);	default true
 -- @field [parent=#global] #boolean STRICTOBJTYPE
-STRICTOBJTYPE = false
+--STRICTOBJTYPE = false
 
 --- log to seperate logfile instead of LHpi.log; default false
 -- @field [parent=#global] #boolean SAVELOG

@@ -55,6 +55,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -- @field [parent=#global] #table MODE
 MODE = { download=true, sets="standard" }
 --MODE={ test=true, checkstock=true }
+--MODE = { download=true, sets={
+-- [831] = "Shadows over Innistrad";
+-- [829] = "Oath of the Gatewatch";
+-- [825] = "Battle for Zendikar";
+-- [822] = "Magic Origins";
+-- [818] = "Dragons of Tarkir";
+-- [830] = "Duel Decks: Blessed vs. Cursed";
+-- [828] = "Commander 2015 Edition";
+-- [827] = "Magic Origins Clash Pack";
+-- [826] = "Zendikar Expeditions";
+-- [22] = "Prerelease Promos";
+-- [21] = "Release & Launch Parties Promos";
+-- [26] = "Magic Game Day";
+-- [30] = "Friday Night Magic Promos";
+-- [34] = "World Magic Cup Qualifiers Promos";
+--} }
 
 --- how long before stored price info is considered too old.
 -- To help with MKM's daily request limit, and because MKM and MA sets do not map one-to-one,

@@ -903,6 +903,22 @@ function main(mode)
 --	local importsets = dummy.coresets
 --	local importsets = dummy.expansionsets
 --	local importsets = dummy.MergeTables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
+	local importsets = { 
+ [831] = "Shadows over Innistrad";
+ [829] = "Oath of the Gatewatch";
+ [825] = "Battle for Zendikar";
+ [822] = "Magic Origins";
+ [818] = "Dragons of Tarkir";
+ [830] = "Duel Decks: Blessed vs. Cursed";
+ [828] = "Commander 2015 Edition";
+ [827] = "Magic Origins Clash Pack";
+ [826] = "Zendikar Expeditions";
+ [22] = "Prerelease Promos";
+ [21] = "Release & Launch Parties Promos";
+ [26] = "Magic Game Day";
+ [30] = "Friday Night Magic Promos";
+ [34] = "World Magic Cup Qualifiers Promos";
+}
 	
 	local scripts={
 		[0]={name="lib\\LHpi.sitescriptTemplate-v2.17.10.15.lua",savepath="."},
@@ -951,7 +967,7 @@ function main(mode)
 	
 	-- now try to break the script :-)
 	if selection ~= 9 then
---		ImportPrice( importfoil, importlangs, importsets )
+		ImportPrice( importfoil, importlangs, importsets )
 	end
 
 	-- demo LHpi helper functions:

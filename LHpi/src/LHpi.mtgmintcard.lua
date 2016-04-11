@@ -51,7 +51,7 @@ LOGFOILTWEAK = true
 
 --- compare prices set and failed with expected numbers; default true
 -- @field [parent=#global] #boolean CHECKEXPECTED
-CHECKEXPECTED = false
+--CHECKEXPECTED = false
 
 --  Don't change anything below this line unless you know what you're doing :-) --
 
@@ -61,7 +61,7 @@ STRICTEXPECTED = true
 
 --- if true, exit with error on object type mismatch, else use object type 0 (all);	default true
 -- @field [parent=#global] #boolean STRICTOBJTYPE
-STRICTOBJTYPE = false
+--STRICTOBJTYPE = false
 
 --- log to seperate logfile instead of Magic Album.log;	default true
 -- @field [parent=#global] #boolean SAVELOG
