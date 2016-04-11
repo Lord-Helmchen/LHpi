@@ -230,13 +230,7 @@ function main( mode )
 		elseif setString=="all" then
 			return site.sets
 		elseif ( setString=="std" ) or ( setString=="standard" ) then
-			return { -- standard as of September 2015
-				[825] = "Battle for Zendikar";
-				[822] = "Magic Origins",
-				[818] = "Dragons of Tarkir",
-				[816] =	"Fate Reforged",
-				[813] = "Khans of Tarkir",
-			}
+			return dummy.standardsets
 		elseif setString=="core" then
 			return dummy.coresets
 		elseif setString=="expansion" or setString=="expansions" then

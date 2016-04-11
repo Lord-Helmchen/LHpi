@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 2.17.10.5
 start SOI branch
 set options to dev prefs again
+added 831,830,829,828,827,34
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -111,10 +112,9 @@ STRICTEXPECTED = true
 -- @field [parent=#global] #boolean STRICTOBJTYPE
 STRICTOBJTYPE = false
 
---TODO actually, the library currently defaults to true. Will change on next lib version...
 --- log to seperate logfile instead of LHpi.log; default false
 -- @field [parent=#global] #boolean SAVELOG
-SAVELOG = false
+SAVELOG = true
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
@@ -1416,6 +1416,8 @@ site.sets = {
 [100]={id=100, lang={ "ENG" }, fruc={ true }, url="Beta"},--Beta
 [90] ={id= 90, lang={ "ENG" }, fruc={ true }, url="Alpha"},--Alpha
 -- expansionsets
+[831]={id=831, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Shadows%20over%20Innistrad"},--Shadows over Innistrad
+[829]={id=829, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Oath%20of%20the%20Gatewatch"},--Oath of the Gatewatch
 [825]={id=825, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Battle%20for%20Zendikar"},--Battle for Zendikar
 [818]={id=818, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Dragons%20of%20Tarkir"},--Dragons of Tarkir
 [816]={id=816, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Fate%20Reforged"},--Fate Reforged
@@ -1486,7 +1488,9 @@ site.sets = {
 [130]={id=130, lang={ "ENG" }, fruc={ true }, url="Antiquities"},--Antiquities
 [120]={id=120, lang={ "ENG" }, fruc={ true }, url="Arabian%20Nights"},--Arabian Nights
 -- specialsets
-[901]={id=901, lang={ "ENG" }, fruc={ true }, url={ -- Origins Clash Pack
+[830]={id=830, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Duel%20Decks:%20Blessed%20vs.%20Cursed"},--Duel Decks: Blessed vs. Cursed
+[828]={id=828, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Commander%202015"},--Commander 2015
+[827]={id=827, lang={ "ENG" }, fruc={ true }, url={ -- Origins Clash Pack
 											"Clash%20Pack%20Promos",--Clash Pack Promos
 											} },
 [826]={id=826, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Zendikar%20Expeditions"},--Zendikar Expeditions
@@ -1581,6 +1585,8 @@ site.sets = {
 											"Battle%20for%20Zendikar:%20Promos",-- "Scythe Leopard"
 											} },
 [52] ={id= 52, lang={ "ENG" }, fruc={ true }, url={ --Intro Pack Promos
+											"Oath%20of%20the%20Gatewatch:%20Promos",--Oath of the Gatewatch: Promos
+											"Shadows%20over%20Innistrad:%20Promos",--Shadows over Innistrad: Promos
 											"Dragons%20Of%20Tarkir:%20Promos",--Dragons Of Tarkir: Promos
 											"Fate%20Reforged:%20Promos",--Fate Reforged: Promos
 											"Khans%20of%20Tarkir:%20Promos",--Khans of Tarkir: Promos
@@ -1601,9 +1607,13 @@ site.sets = {
 											"Oversized%206x9%20Promos",--Oversized 6x9 Promos
 --											"Gateway%20Promos",--Gateway Promos
 											} },
-[33] ={id= 33, lang={ "ENG" }, fruc={ true }, url={ -- Championships Prizes
+[34] ={id= 34, lang={ "ENG" }, fruc={ true }, url={ -- World Magic Cup Qualifiers Promos
 											"DCI%20Promos",--DCI Promos
 											"Promos", -- "Geist of Saint Traft"
+											} },
+[33] ={id= 33, lang={ "ENG" }, fruc={ true }, url={ -- Championships Prizes
+											"DCI%20Promos",--DCI Promos
+--											"Promos", -- "Geist of Saint Traft"-- now in WMCQ
 											} },
 [32] ={id= 32, lang={ "ENG",[8]="JPN" }, fruc={ true } , url={ --Pro Tour Promos
 											"DCI%20Promos", -- Pro Tour Promos in DCI Promos
@@ -1636,6 +1646,8 @@ site.sets = {
 [23] ={id= 23, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Gateway%20Promos"},--Gateway Promos
 [22] ={id= 22, lang={ "ENG",[2]="RUS",[3]="GER",[7]="SPA",[12]="HEB",[13]="ARA",[14]="LAT",[15]="SAN",[16]="GRC" }, fruc={ true }, url={ --Prerelease Promos
 											"Prerelease%20Promos", -- Prerelease Promos
+											"Oath%20of%20the%20Gatewatch:%20Promos",--Oath of the Gatewatch: Promos
+											"Shadows%20over%20Innistrad:%20Promos",--Shadows over Innistrad: Promos
 											"Battle%20for%20Zendikar:%20Promos",-- Battle for Zendikar Promos
 											"Magic%20Origins:%20Promos",--Magic Origins: Promos
 											"Dragons%20Of%20Tarkir:%20Promos",--Dragons Of Tarkir: Promos
@@ -1792,6 +1804,8 @@ site.sets = {
 										"Starcity%20Games:%20Justin%20Treadway%20Tokens",--Starcity Games: Justin Treadway Tokens
 										"Starcity%20Games:%20Kristen%20Plescow%20Tokens",--Starcity Games: Kristen Plescow Tokens
 										"Starcity%20Games:%20Token%20Series%20One",--Starcity Games: Token Series One
+										"Javi%20Alterations%20Tokens",--Javi Alterations Tokens
+										"GnD%20Cards",--GnD Cards
 										} },
 	}
 --end table site.sets

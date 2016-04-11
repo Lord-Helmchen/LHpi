@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 --[[ CHANGES
 0.9
-(c) 2016
+added 831,830,829,828,827,34
 ]]
 
 --[[- "main" function called by Magic Album; just display error and return.
@@ -645,6 +645,7 @@ dummy.promosets = {
  [43] = "Two-Headed Giant Promos";
  [41] = "Happy Holidays Promos";
  [40] = "Arena/Colosseo Leagues Promos";
+ [34] = "World Magic Cup Qualifiers Promos";
  [33] = "Championships Prizes";
  [32] = "Pro Tour Promos";
  [31] = "Grand Prix Promos";
@@ -672,6 +673,9 @@ dummy.promosets = {
 
 --- @field [parent=#dummy] #table specialsets
 dummy.specialsets = {
+ [830] = "Duel Decks: Blessed vs. Cursed";
+ [828] = "Commander 2015 Edition";
+ [827] = "Magic Origins Clash Pack";
  [826] = "Zendikar Expeditions";
  [824] = "Duel Decks: Zendikar vs. Eldrazi";
  [823] = "From the Vault: Angels";
@@ -743,6 +747,8 @@ dummy.specialsets = {
 }
 --- @field [parent=#dummy] #table expansionsets
 dummy.expansionsets = {
+ [831] = "Shadows over Innistrad";
+ [829] = "Oath of the Gatewatch";
  [825] = "Battle for Zendikar";
  [818] = "Dragons of Tarkir";
  [816] = "Fate Reforged";
@@ -838,6 +844,16 @@ dummy.coresets = {
  [90]  = "Alpha";
 }
 
+--- @field [parent=#dummy] #table standardsets
+dummy.standardsets = {
+-- standard as of April 2016
+		[831] = "Shadows over Innistrad";
+		[829] = "Oath of the Gatewatch";
+		[825] = "Battle for Zendikar";
+		[818] = "Dragons of Tarkir";
+		[822] = "Magic Origins"; 
+}
+
 --[[- run as lua application  from your ide.
 
 @function [parent=#global] main
@@ -866,7 +882,7 @@ function main(mode)
 --		CHECKEXPECTED = false,--default true
 		STRICTEXPECTED = true,--default false
 --		STRICTOBJTYPE = false,--default true
---		SAVELOG = false,--default true
+		SAVELOG = true,--default false
 		SAVEHTML = true,--default false
 --		DEBUGFOUND = true,--default false
 --		DEBUGVARIANTS = true,--default false
@@ -880,21 +896,13 @@ function main(mode)
 	local importfoil = "y"
 	local importlangs = dummy.alllangs
 --	local importlangs = { [1] = "eng" }
-	local standard = {
-		[818] = "Dragons of Tarkir";
-		[816] = "Fate Reforged";
-		[813] = "Khans of Tarkir";
-		[819] = "Modern Masters 2015",
-		[822] = "Magic Origins"; 
-		[825] = "Battle for Zendikar";
-	 	}
---	local importsets = standard
+	local importsets = dummy.standardsets
 --	local importsets = { [0] = "fakeset"; }
 	local importsets = { [220]="some set" }
 --	local importsets = { [220]="foo";[800]="bar";[0]="baz"; }
 --	local importsets = dummy.coresets
 --	local importsets = dummy.expansionsets
-	local importsets = dummy.MergeTables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
+--	local importsets = dummy.MergeTables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 	
 	local scripts={
 		[0]={name="lib\\LHpi.sitescriptTemplate-v2.17.10.15.lua",savepath="."},
@@ -943,7 +951,7 @@ function main(mode)
 	
 	-- now try to break the script :-)
 	if selection ~= 9 then
-		ImportPrice( importfoil, importlangs, importsets )
+--		ImportPrice( importfoil, importlangs, importsets )
 	end
 
 	-- demo LHpi helper functions:
