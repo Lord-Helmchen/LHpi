@@ -72,29 +72,12 @@ To change the column to import from, open the script in a text editor, find <cod
 Note that cards with multiple versions are averaged in some sets and set to "variant 1"'s price in others, as the source list does not clearly identify the version. Even when it does, it is unclear if the entry without version suffix is meant to be all unspecified or version 1 only. In most cases, "CARD" price is set for all versions and averaged with "CARD (version)" price for given versions now. Lately, their version handling has somewhat improved, but there's still a lot of guesswork involved...
 
 ===magicuniverse.de===
-{|
-|[http://www.slightlymagic.net/forum/download/file.php?id=22775 LHpi.magicuniverseDE.lua.zip]
-|-
-|Sitescript version||2.15.6.14
-|-
-|updated last on||2015-07-21
-|-
-|size||15.57 KiB
-|}
 [http://www.magicuniverse.de/html/einzelkarten.php?menue Magic Universe] is a German site with German and English cards, priced in €.
 
 This site started it all, since I wanted prices in local currency, and my FLG apparently used them as price reference.
 
-MAINTAINER WANTED!
-I do not need any prices besides from MKM, and will not update this (unless specifically requested) anymore. The last test results were:
-<tt>
- :-( persetcount for Magic Origins (id 822) differs from expected.
- :-( counted : 267 set &   5 failed  English cards ; 267 set &   5 failed   German cards ;   0 dropped,   0 namereplaced and   0 foiltweaked.
- :-( expected: 286 set &   0 failed  English cards ; 286 set &   0 failed   German cards ;   0 dropped,   0 namereplaced and   0 foiltweaked.
- Total counted : 19607 set, 457 failed English cards	17544 set, 492 failed German cards	1 set, 0 failed French cards	19 set, 0 failed Italian cards	; 1102 dropped, 190 namereplaced and 19 foiltweaked.
- Total expected: 19630 set, 442 failed English cards	17926 set, 480 failed German cards	1 set, 0 failed French cards	19 set, 0 failed Italian cards	; 1132 dropped, 191 namereplaced and 15 foiltweaked.
- count differs in 27 sets: { [139]="Revised Edition (FBB)";[150]="Legends";[160]="The Dark";[180]="4th Edition";[190]="Ice Age";[220]="Alliances";[230]="Mirage";[280]="Tempest";[300]="Exodus";[330]="Urzaâ€™s Saga";[400]="Mercadian Masques";[410]="Nemesis";[420]="Prophecy";[430]="Invasion";[460]="7th Edition";[470]="Apocalypse";[480]="Odyssey";[520]="Onslaught";[560]="Mirrodin";[590]="Champions of Kamigawa";[670]="Coldsnap";[800]="Theros";[813]="Khans of Tarkir";[814]="Commander 2014 Edition";[816]="Fate Reforged";[818]="Dragons of Tarkir";[822]="Magic Origins";}
-</tt>
+DISCONTINUED!
+Site has changed too much since last update.
 
 ===mtgmintcard.com===
 {|
@@ -877,8 +860,11 @@ Staring with 2.9, the versioning was changed yet again: libversion.dataversion.s
 ;2.14.5.14
 :removed url to filename changes that are done by the library if OFFLINE 
 ;[http://www.slightlymagic.net/forum/download/file.php?id=22775 2.15.6.14]
-synchronized with template
-fixed/updated site.regex
+:synchronized with template
+:fixed/updated site.regex
+;DISCONTINUED as of library v2.17
+:Site has changed too much since last update.
+
 
 ====LHpi.mtgmintcard====
 ;[http://www.slightlymagic.net/forum/download/file.php?id=9265 2.0]
