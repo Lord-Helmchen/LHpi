@@ -77,10 +77,10 @@ workdir fixes
 no longer check for Data in deprecated location
 ]]
 
---TODO count averaging events with counter attached to prices
+--todo count averaging events with counter attached to prices
 --todo nil unneeded Data.sets[sid] to save memory?
 --todo change #boolean VERBOSE to #number verbosity and adjust loglevels?
---FIXME clean leftover unused code
+--fixme clean leftover unused code
 
 local LHpi = {}
 ---	LHpi library version
@@ -784,7 +784,7 @@ function LHpi.ListSources ( importfoil , importlangs , importsets )
 				if cSet.lang[lid] then
 					for fid,fruc in pairs ( site.frucs ) do
 						if cSet.fruc[fid] then
---TODO remove deprecated @param OFFLINE on next version
+--todo remove deprecated @param OFFLINE on next version
 							for url,urldetails in next, site.BuildUrl( sid , lid , fid , OFFLINE ) do
 								urldetails.setid=sid
 								urldetails.langid=lid
@@ -1128,7 +1128,7 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 			card.name = string.gsub ( card.name , "^山脉$" , "Mountain" )
 			card.name = string.gsub ( card.name , "^树林$" , "Forest" )	
 		end--if sourcerow.names
-		-- TODO basic land names could probably need replacements for all languages
+		-- todo basic land names could probably need replacements for all languages
 	end
 
 	-- ma database object type, after namereplacement and before variant, but removal of token and other objtype pre-/suffix after variant
@@ -1462,7 +1462,7 @@ end -- function LHpi.FillCardsetTable()
  @return #table		{ reg= #table { #number (langid)= #string , ... } , foil= { #number (langid)= #string , ... } } conflict description
 ]]
 function LHpi.MergeCardrows ( name, langs,  oldRow , newRow , variants )
---TODO (((a+b)/2)+c)/2 != (a+b+c)/3 = (((a+b)/2*2)+c)/3 is 
+--todo (((a+b)/2)+c)/2 != (a+b+c)/3 = (((a+b)/2*2)+c)/3 is 
 --for mathematically correct averaging, need to attach a counter to averaged prices
 --then on next averaging, do 
 --if counter then newaverage=(oldaverage*(counter+1) + newprice) / (counter+2)
@@ -1838,7 +1838,7 @@ end -- function LHpi.Toutf8
   -1 to use ma.Log instead
    1 for VERBOSE
    2 for DEBUG
---TODO 1,warning,info,debug   
+--todo 1,warning,info,debug   
    else log.
  add other levels as needed
 
@@ -1978,5 +1978,5 @@ LHpi.Initialize()
 LHpi.Log( "LHpi library " .. LHpi.version .. " loaded and executed successfully." , 0 , nil ,0)
 ma.Log("LHpi library " .. LHpi.version .. " loaded")
 return LHpi
---FIXME savepath must be site, not LHpi namespace!
+--fixme savepath must be site, not LHpi namespace!
 --EOF

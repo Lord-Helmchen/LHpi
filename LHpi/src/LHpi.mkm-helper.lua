@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 --[[ CHANGES
 2.17.10.4:
-]]
+GetSourceData - guesstimate number of requests with Data.cardcount.all on first fetch]]
 
 -- options unique to this script
 
@@ -71,6 +71,7 @@ MODE = { download=true, sets="standard" }
 -- [30] = "Friday Night Magic Promos";
 -- [34] = "World Magic Cup Qualifiers Promos";
 --} }
+MODE = { download=true, sets="all" }
 
 --- how long before stored price info is considered too old.
 -- To help with MKM's daily request limit, and because MKM and MA sets do not map one-to-one,
@@ -244,7 +245,7 @@ function main( mode )
 			s[setNum] = LHpi.Data.sets[setNum].name
 			return s
 		elseif setString=="all" then
-			return site.sets
+			return dummy.MergeTables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 		elseif ( setString=="std" ) or ( setString=="standard" ) then
 			return dummy.standardsets
 		elseif setString=="core" then
@@ -409,7 +410,9 @@ function helper.GetSourceData(sets)
 			print(string.format("stale data for %s was fetched on %s, refreshing...",url,os.date("%c",dataAge[url].timestamp)))
 			LHpi.Log(string.format("refreshing stale data for %s, last fetched on %s",url,os.date("%c",dataAge[url].timestamp)) ,0)
 			local reqCountPre=ma.GetFile(LHpi.savepath.."LHpi.mkm.requestcounter") or 0
-			local reqPrediction = reqCountPre+(dataAge[url].requests or 1)
+			local reqForSet = dataAge[url].requests or LHpi.Data.sets[details.setid].cardcount.all or 1
+			print(string.format(" predicted number of requests is %i",reqForSet))			
+			local reqPrediction = reqCountPre+reqForSet
 			if reqPrediction < 5000 then
 				local setdata = LHpi.GetSourceData( url , details )
 				if setdata then
