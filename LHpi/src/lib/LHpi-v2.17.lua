@@ -28,9 +28,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 2.17
 dataver default 6 -> 10
 SAVELOG defaults to false, as was documented
+
+2.18
+site.GetSourceData doesn't care for oauth anymore, instead defers to site.GetSourceData if it exists
+
 ]]
 
---FIXME change filename to 2.17 and update all sitescripts
+--FIXME change filename to 2.18 and update all sitescripts
 --FIXME update (c) to 2016 in all files
 
 --TODO count averaging events with counter attached to prices. better: just build a separate table to remember averaging happened.
@@ -738,7 +742,7 @@ function LHpi.ListSources ( importfoil , importlangs , importsets )
 	return urls, urlcount
 end -- function LHpi.ListSources
 
---[[- construct url/filename fetch the contents
+--[[- fetch the contents from one url/filename
  fetch a page/file and return a string with the fetched content.
  Initial Parsing and calls to site.ParseHtmlData are then done by LHpi.ParseSourceData.
 
@@ -762,19 +766,19 @@ function LHpi.GetSourceData( url , details ) --
 			LHpi.Log( "!! GetFile failed for " .. (LHpi.savepath or "") .. url ,0)
 			return nil
 		end
-	elseif details.oauth then -- we need to build a AOuth request and probably send it via https
-		LHpi.Log("calling sitescript to fetch OAuth protected ressources from " .. url ,2)
-		local status
-		if site.FetchSourceDataFromOAuth then
-			sourcedata, status = site.FetchSourceDataFromOAuth( url )
-		else
-			error("site.FetchSourceDataFromOAuth not implemented !")
+	elseif site.GetSourceData then
+		-- defer fetching to sitescript if a funtion exists there
+		-- long-term this may make all urldetails obsolete
+		sourcedata = site.GetSourceData( url, details )
+		if not sourcedata then
+			LHpi.Log( "!! site.GetSourceData failed for " .. url .. " = " .. LHpi.Tostring(details) ,0)
+			return nil
 		end
-		if not sourcedata or sourcedata == "" then
-			LHpi.Log( "!! site.FetchSourceDataFromOAuth failed for " .. url ,0)
-			LHpi.Log("server response " .. tostring(status) ,1)
-			return nil,status
-		end		
+	elseif details.oauth then -- we need to build a OAuth request and probably send it via https
+		--deprecated
+		LHpi.Log("checking oauth flag and calling site.FetchSourceDataFromOauth is deprecated!" ,0)
+		LHpi.Log("Non-standard methods of fetching the source data shall be implemented in site.GetSourceData(url,details)" ,0)
+		error("checking oauth flag and calling site.FetchSourceDataFromOauth is deprecated!")
 	else -- get htmldata from online source
 		LHpi.Log( "Fetching http://" .. url ,0)
 		sourcedata = ma.GetUrl( "http://" .. url )
