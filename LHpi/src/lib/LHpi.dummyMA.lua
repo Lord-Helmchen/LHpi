@@ -882,14 +882,14 @@ function main(mode)
 --		CHECKEXPECTED = false,--default true
 		STRICTEXPECTED = true,--default false
 --		STRICTOBJTYPE = false,--default true
-		SAVELOG = true,--default false
+--		SAVELOG = true,--default false
 		SAVEHTML = true,--default false
 --		DEBUGFOUND = true,--default false
 --		DEBUGVARIANTS = true,--default false
 --		SAVETABLE=true,--default false
 --		DEBUG = true,--default false
 		OFFLINE = true,--default false
---		OFFLINE = false,--scripts should be set to true unless preparing for release
+		OFFLINE = false,--scripts should be set to true unless preparing for release
 	}
 	dummy.ForceEnv()
 
@@ -898,7 +898,7 @@ function main(mode)
 --	local importlangs = { [1] = "eng" }
 	local importsets = dummy.standardsets
 --	local importsets = { [0] = "fakeset"; }
-	local importsets = { [220]="some set" }
+--	local importsets = { [220]="some set" }
 --	local importsets = { [220]="foo";[800]="bar";[0]="baz"; }
 --	local importsets = dummy.coresets
 --	local importsets = dummy.expansionsets
@@ -909,7 +909,7 @@ function main(mode)
 		[1]={name="\\MTG Mint Card.lua",path=savepath,savepath=mapath,oldloader=true},
 		[2]={name="\\Import Prices.lua",path=mapath,savepath=mapath,oldloader=true},
 		[3]={name="LHpi.mtgmintcard.lua",savepath=mapath.."Prices\\LHpi.mtgmintcard\\"},
-		[4]={name="LHpi.magicuniverseDE.lua",savepath=mapath.."Prices\\LHpi.magicuniverseDE\\"},
+		--[4]={name="LHpi.magicuniverseDE.lua",savepath=mapath.."Prices\\LHpi.magicuniverseDE\\"},
 		[5]={name="LHpi.trader-onlineDE.lua",savepath=mapath.."Prices\\LHpi.trader-onlineDE\\"},
 		[6]={name="LHpi.tcgplayerPriceGuide.lua",savepath=mapath.."Prices\\LHpi.tcgplayerPriceGuide\\"},
 		[7]={name="LHpi.mtgprice.com.lua",savepath=mapath.."Prices\\LHpi.mtgprice.com\\"},
@@ -919,7 +919,7 @@ function main(mode)
 	
 	-- select a predefined script to be tested
 --	dummy.FakeSitescript()
-	local selection = 9
+	local selection = 7
 	local script=scripts[selection]
 	if script.oldloadert then
 		dummy.LoadScript(script.name,script.path,script.savepath)--deprecated
@@ -951,7 +951,7 @@ function main(mode)
 	
 	-- now try to break the script :-)
 	if selection ~= 9 then
-		ImportPrice( importfoil, importlangs, importsets )
+--		ImportPrice( importfoil, importlangs, importsets )
 	end
 
 	-- demo LHpi helper functions:

@@ -523,8 +523,11 @@ site.sets = {
 [100]={id = 100, lang = { true , [9]=false}, fruc = { false,true }, pages=10, url = "leb"}, -- Beta
 [90] ={id =  90, lang = { true , [9]=false}, fruc = { false,true }, pages=10, url = "lea"}, -- Alpha 
  -- Expansions
+[831]={id = 831, lang = { true , [9]=true }, fruc = { true ,true }, pages=20, url = "soi"},--Shadows over Innistrad
+[829]={id = 829, lang = { true , [9]=true }, fruc = { true ,true }, pages=20, url = "ogw"},--Oath of the Gatewatch
+[825]={id = 825, lang = { true , [9]=true }, fruc = { true ,true }, pages=20, url = "bfz"},--Battle for Zendikar
 [818]={id = 818, lang = { true , [9]=true }, fruc = { true ,true }, pages=10, url = "dtk"},--Dragons of Tarkir
-[816]={id = 816, lang = { true , [9]=true }, fruc = { true ,true }, pages=7, url = "frf"},--Fate Reforged
+[816]={id = 816, lang = { true , [9]=true }, fruc = { true ,true }, pages= 7, url = "frf"},--Fate Reforged
 [813]={id = 813, lang = { true , [9]=true }, fruc = { true ,true }, pages=10, url = "ktk"},
 [806]={id = 806, lang = { true , [9]=true }, fruc = { true ,true }, pages= 6, url = "jou"},
 [802]={id = 802, lang = { true , [9]=true }, fruc = { true ,true }, pages= 6, url = "bng"},
@@ -592,54 +595,58 @@ site.sets = {
 [130]={id = 130, lang = { true , [9]=false}, fruc = { false,true }, pages= 4, url = "atq"},
 [120]={id = 120, lang = { true , [9]=false}, fruc = { false,true }, pages= 3, url = "arn"},
 -- special sets
-[820]={id = 820, lang = { true , [9]=true }, fruc = { true , true }, pages=2, url = "ddo"},--Elspeth vs. Kiora
-[819]={id = 819, lang = { true , [9]=true }, fruc = { true , true }, pages=9, url = "mmb"},--Modern Masters 2015
-[814]={id = 814, lang = { true , [9]=false}, fruc = { true , true }, pages=12, url = "c14"},--Commander 2014 Edition
-[812]={id = 812, lang = { true , [9]=false}, fruc = { true , true }, pages= 3, url = "ddn"},--Duel Decks: Speed vs. Cunning
-[810]={id = 810, lang = { true , [9]=false}, fruc = { false, true }, pages= 1, url = "mde"},--Modern Event Deck 2014
-[809]={id = 809, lang = { true , [9]=false}, fruc = { true , false}, pages= 1, url = "v14"},--From the Vault: Annihilation
-[807]={id = 807, lang = { true , [9]=false}, fruc = { true , true }, pages= 8, url = "cns"},--Conspiracy
-[805]={id = 805, lang = { true , [9]=false}, fruc = { true , true }, pages= 3, url = "ddm"},--Duel Decks: Jace vs. Vraska
-[801]={id = 801, lang = { true , [9]=false}, fruc = { true , true }, pages=12, url = "c13"},--Commander 2013 Edition
-[799]={id = 799, lang = { true , [9]=false}, fruc = { true , true }, pages= 3, url = "hvm"},--Duel Decks: Heroes vs. Monsters
-[798]={id = 798, lang = { true , [9]=false}, fruc = { true , false}, pages= 1, url = "ftv"},--From the Vault: Twenty
-[796]={id = 796, lang = { true , [9]=false}, fruc = { true , true }, pages= 9, url = "mm"},--Modern Masters
-[794]={id = 794, lang = { true , [9]=false}, fruc = { true , true }, pages= 3, url = "ddk"},--Duel Decks: Sorin vs. Tibalt
-[790]={id = 790, lang = { true , [9]=false}, fruc = { true , true }, pages= 3, url = "ddj"},--Duel Decks: Izzet vs. Golgari
-[789]={id = 789, lang = { true , [9]=false}, fruc = { true , false}, pages= 1, url = "fvr"},--From the Vault: Realms
-[787]={id = 787, lang = { true , [9]=false}, fruc = { true , true }, pages= 7, url = "p12"},--Planechase 2012
-[785]={id = 785, lang = { true , [9]=false}, fruc = { true , true }, pages= 3, url = "ddi"},--Duel Decks: Venser vs. Koth
-[783]={id = 783, lang = { true , [9]=false}, fruc = { true , false}, pages= 1, url = "pd3"},--Premium Deck Series: Graveborn
-[781]={id = 781, lang = { true , [9]=false}, fruc = { false, true }, pages= 3, url = "avn"},--Duel Decks: Ajani vs. Nicol Bolas
-[780]={id = 780, lang = { true , [9]=false}, fruc = { true , false}, pages= 1, url = "v11"},--From the Vault: Legends
-[778]={id = 778, lang = { true , [9]=false}, fruc = { true , true }, pages=11, url = "com"},--Commander
-[777]={id = 777, lang = { true , [9]=false}, fruc = { true , true }, pages= 3, url = "ddg"},--Duel Decks: Knights vs. Dragons
-[774]={id = 774, lang = { true , [9]=false}, fruc = { true , false}, pages= 2, url = "h10"},--Premium Deck Series: Fire and Lightning
-[772]={id = 772, lang = { true , [9]=false}, fruc = { true , true }, pages= 3, url = "evt"},--Duel Decks: Elspeth vs. Tezzeret
-[769]={id = 769, lang = { true , [9]=false}, fruc = { false, true }, pages= 7, url = "arc"},--Archenemy   
-[768]={id = 768, lang = { true , [9]=false}, fruc = { true , true }, pages= 4, url = "dpa"},--Duels of the Planeswalkers
-[766]={id = 766, lang = { true , [9]=false}, fruc = { false, true }, pages= 3, url = "pvc"},--Duel Decks: Phyrexia vs. The Coalition
-[764]={id = 764, lang = { true , [9]=false}, fruc = { true , false}, pages= 2, url = "h09"},--Premium Deck Series: Slivers
-[763]={id = 763, lang = { true , [9]=false}, fruc = { true , true }, pages= 2, url = "gvl"},--Duel Decks: Garruk vs. Liliana
-[760]={id = 760, lang = { true , [9]=false}, fruc = { true , false}, pages= 1, url = "v09"},--From the Vault: Exiled
-[757]={id = 757, lang = { true , [9]=false}, fruc = { true , true }, pages= 2, url = "dvd"},--Duel Decks: Divine vs. Demonic
-[755]={id = 755, lang = { true , [9]=false}, fruc = { true , true }, pages= 2, url = "jvc"},--Duel Decks: Jace vs. Chandra
-[753]={id = 753, lang = { true , [9]=false}, fruc = { false, true }, pages= 1, url = "drb"},--From the Vault: Dragons
-[740]={id = 740, lang = { true , [9]=true }, fruc = { true , true }, pages= 3, url = "evg"},--Elves vs. Goblins
-[600]={id = 600, lang = { true , [9]=false}, fruc = { false, true }, pages= 5, url = "unh"},--Unhinged
-[490]={id = 490, lang = { true , [9]=false}, fruc = { false, true }, pages= 2, url = "dkm"},--Deckmaster
-[440]={id = 440, lang = { true , [9]=false}, fruc = { false, true }, pages= 3, url = "btd"},--Beatdown Box Set
-[405]={id = 405, lang = { true , [9]=false}, fruc = { false, true }, pages= 4, url = "brb"},--Battle Royale Box Set
-[390]={id = 390, lang = { true , [9]=true }, fruc = { true , true }, pages= 1, url = "s99"},--Starter 1999
-[340]={id = 340, lang = { true , [9]=false}, fruc = { false, true }, pages= 1, url = "ath"},--Anthologies
-[320]={id = 320, lang = { true , [9]=false}, fruc = { false, true }, pages= 4, url = "ugl"},--Unglued
-[260]={id = 260, lang = { true , [9]=false}, fruc = { false, true }, pages= 8, url = "por"},--Portal
-[200]={id = 200, lang = { true , [9]=false}, fruc = { false, true }, pages= 4, url = "chr"},--Chronicles
-[70] ={id =  70, lang = { true , [9]=false}, fruc = { false, true }, pages= 2, url = "vanguard"},--Vanguard
+[830]={id = 830, lang = { true , [9]=true }, fruc = { true ,true }, pages=20, url = "ddq"},--Blessed vs. Cursed
+[828]={id = 828, lang = { true , [9]=true }, fruc = { true ,true }, pages=20, url = "c15"},--Commander 2015
+[824]={id = 824, lang = { true , [9]=true }, fruc = { true ,true }, pages=20, url = "ddp"},--Zendikar vs. Eldrazi
+[823]={id = 823, lang = { true , [9]=true }, fruc = { true ,true }, pages=20, url = "v15"},--From the Vault: Angels
+[820]={id = 820, lang = { true , [9]=true }, fruc = { true ,true }, pages=2, url = "ddo"},--Elspeth vs. Kiora
+[819]={id = 819, lang = { true , [9]=true }, fruc = { true ,true }, pages=9, url = "mmb"},--Modern Masters 2015
+[814]={id = 814, lang = { true , [9]=false}, fruc = { true ,true }, pages=12, url = "c14"},--Commander 2014 Edition
+[812]={id = 812, lang = { true , [9]=false}, fruc = { true ,true }, pages= 3, url = "ddn"},--Duel Decks: Speed vs. Cunning
+[810]={id = 810, lang = { true , [9]=false}, fruc = { false,true }, pages= 1, url = "mde"},--Modern Event Deck 2014
+[809]={id = 809, lang = { true , [9]=false}, fruc = { true ,false}, pages= 1, url = "v14"},--From the Vault: Annihilation
+[807]={id = 807, lang = { true , [9]=false}, fruc = { true ,true }, pages= 8, url = "cns"},--Conspiracy
+[805]={id = 805, lang = { true , [9]=false}, fruc = { true ,true }, pages= 3, url = "ddm"},--Duel Decks: Jace vs. Vraska
+[801]={id = 801, lang = { true , [9]=false}, fruc = { true ,true }, pages=12, url = "c13"},--Commander 2013 Edition
+[799]={id = 799, lang = { true , [9]=false}, fruc = { true ,true }, pages= 3, url = "hvm"},--Duel Decks: Heroes vs. Monsters
+[798]={id = 798, lang = { true , [9]=false}, fruc = { true ,false}, pages= 1, url = "ftv"},--From the Vault: Twenty
+[796]={id = 796, lang = { true , [9]=false}, fruc = { true ,true }, pages= 9, url = "mm"},--Modern Masters
+[794]={id = 794, lang = { true , [9]=false}, fruc = { true ,true }, pages= 3, url = "ddk"},--Duel Decks: Sorin vs. Tibalt
+[790]={id = 790, lang = { true , [9]=false}, fruc = { true ,true }, pages= 3, url = "ddj"},--Duel Decks: Izzet vs. Golgari
+[789]={id = 789, lang = { true , [9]=false}, fruc = { true ,false}, pages= 1, url = "fvr"},--From the Vault: Realms
+[787]={id = 787, lang = { true , [9]=false}, fruc = { true ,true }, pages= 7, url = "p12"},--Planechase 2012
+[785]={id = 785, lang = { true , [9]=false}, fruc = { true ,true }, pages= 3, url = "ddi"},--Duel Decks: Venser vs. Koth
+[783]={id = 783, lang = { true , [9]=false}, fruc = { true ,false}, pages= 1, url = "pd3"},--Premium Deck Series: Graveborn
+[781]={id = 781, lang = { true , [9]=false}, fruc = { false,true }, pages= 3, url = "avn"},--Duel Decks: Ajani vs. Nicol Bolas
+[780]={id = 780, lang = { true , [9]=false}, fruc = { true ,false}, pages= 1, url = "v11"},--From the Vault: Legends
+[778]={id = 778, lang = { true , [9]=false}, fruc = { true ,true }, pages=11, url = "com"},--Commander
+[777]={id = 777, lang = { true , [9]=false}, fruc = { true ,true }, pages= 3, url = "ddg"},--Duel Decks: Knights vs. Dragons
+[774]={id = 774, lang = { true , [9]=false}, fruc = { true ,false}, pages= 2, url = "h10"},--Premium Deck Series: Fire and Lightning
+[772]={id = 772, lang = { true , [9]=false}, fruc = { true ,true }, pages= 3, url = "evt"},--Duel Decks: Elspeth vs. Tezzeret
+[769]={id = 769, lang = { true , [9]=false}, fruc = { false,true }, pages= 7, url = "arc"},--Archenemy   
+[768]={id = 768, lang = { true , [9]=false}, fruc = { true ,true }, pages= 4, url = "dpa"},--Duels of the Planeswalkers
+[766]={id = 766, lang = { true , [9]=false}, fruc = { false,true }, pages= 3, url = "pvc"},--Duel Decks: Phyrexia vs. The Coalition
+[764]={id = 764, lang = { true , [9]=false}, fruc = { true ,false}, pages= 2, url = "h09"},--Premium Deck Series: Slivers
+[763]={id = 763, lang = { true , [9]=false}, fruc = { true ,true }, pages= 2, url = "gvl"},--Duel Decks: Garruk vs. Liliana
+[760]={id = 760, lang = { true , [9]=false}, fruc = { true ,false}, pages= 1, url = "v09"},--From the Vault: Exiled
+[757]={id = 757, lang = { true , [9]=false}, fruc = { true ,true }, pages= 2, url = "dvd"},--Duel Decks: Divine vs. Demonic
+[755]={id = 755, lang = { true , [9]=false}, fruc = { true ,true }, pages= 2, url = "jvc"},--Duel Decks: Jace vs. Chandra
+[753]={id = 753, lang = { true , [9]=false}, fruc = { false,true }, pages= 1, url = "drb"},--From the Vault: Dragons
+[740]={id = 740, lang = { true , [9]=true }, fruc = { true ,true }, pages= 3, url = "evg"},--Elves vs. Goblins
+[600]={id = 600, lang = { true , [9]=false}, fruc = { false,true }, pages= 5, url = "unh"},--Unhinged
+[490]={id = 490, lang = { true , [9]=false}, fruc = { false,true }, pages= 2, url = "dkm"},--Deckmaster
+[440]={id = 440, lang = { true , [9]=false}, fruc = { false,true }, pages= 3, url = "btd"},--Beatdown Box Set
+[405]={id = 405, lang = { true , [9]=false}, fruc = { false,true }, pages= 4, url = "brb"},--Battle Royale Box Set
+[390]={id = 390, lang = { true , [9]=true }, fruc = { true ,true }, pages= 1, url = "s99"},--Starter 1999
+[340]={id = 340, lang = { true , [9]=false}, fruc = { false,true }, pages= 1, url = "ath"},--Anthologies
+[320]={id = 320, lang = { true , [9]=false}, fruc = { false,true }, pages= 4, url = "ugl"},--Unglued
+[260]={id = 260, lang = { true , [9]=false}, fruc = { false,true }, pages= 8, url = "por"},--Portal
+[200]={id = 200, lang = { true , [9]=false}, fruc = { false,true }, pages= 4, url = "chr"},--Chronicles
+[70] ={id =  70, lang = { true , [9]=false}, fruc = { false,true }, pages= 2, url = "vanguard"},--Vanguard
 --TODO Promo Cards
 -- uncomment these while running helper.FindUnknownUrls
-[9990]={id =   0, lang = { true , [9]=true }, fruc = { true , true }, pages=20, url = "wcs"},--World Championships
-[9991]={id =   0, lang = { true , [9]=true }, fruc = { true , true }, pages=20, url = "ppr"},--Promo Cards
+[9990]={id =  0, lang = { true , [9]=true }, fruc = { true ,true }, pages=20, url = "wcs"},--World Championships
+[9991]={id =  0, lang = { true , [9]=true }, fruc = { true ,true }, pages=20, url = "ppr"},--Promo Cards
 } -- end table site.sets
 
 --[[- card name replacement tables.

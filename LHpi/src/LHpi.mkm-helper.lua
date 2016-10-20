@@ -99,6 +99,12 @@ local dataStaleAge = {
 --	 [50] = 3600*24*3,--"Full Box Promotion";
 }
 
+--- stay below mkms daily request limit
+-- mkm limits api requests to 5000 per day.
+-- can be set lower to be exceptionally nice to mkm's server,
+-- or much higher if we have to scrape html data intead of using the api. 
+local dailyRequestLimit = 5000
+
 --  Don't change anything below this line unless you know what you're doing :-) --
 
 --- log to seperate logfile instead of LHpi.log; default false
@@ -413,7 +419,7 @@ function helper.GetSourceData(sets)
 			local reqForSet = dataAge[url].requests or LHpi.Data.sets[details.setid].cardcount.all or 1
 			print(string.format(" predicted number of requests is %i",reqForSet))			
 			local reqPrediction = reqCountPre+reqForSet
-			if reqPrediction < 5000 then
+			if reqPrediction < dailyRequestLimit then
 				local setdata = LHpi.GetSourceData( url , details )
 				if setdata then
 					local count= { fetched=0, found=0 }

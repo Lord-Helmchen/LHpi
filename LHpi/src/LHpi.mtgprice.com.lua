@@ -557,6 +557,9 @@ site.sets = {
 [100]={id = 100, lang = { [1]=true }, fruc = { false, true }, url = "Beta"},
 [90] ={id =  90, lang = { [1]=true }, fruc = { false, true }, url = "Alpha"},
 -- Expansions
+[831]={id = 831, lang = { [1]=true }, fruc = { true , true }, url = "Shadows_over_Innistrad"},--Shadows over Innistrad
+[829]={id = 829, lang = { [1]=true }, fruc = { true , true }, url = "Oath_of_the_Gatewatch"},--Oath of the Gatewatch
+[825]={id = 825, lang = { [1]=true }, fruc = { true , true }, url = "Battle_for_Zendikar"},--Battle for Zendikar
 [818]={id = 818, lang = { [1]=true }, fruc = { true , true }, url = "Dragons_of_Tarkir"},--Dragons of Tarkir
 [816]={id = 816, lang = { [1]=true }, fruc = { true , true }, url = "Fate_Reforged"},--Fate Reforged
 [813]={id = 813, lang = { [1]=true }, fruc = { true , true }, url = "Khans_of_Tarkir"},--Khans of Tarkir
@@ -626,12 +629,22 @@ site.sets = {
 [130]={id = 130, lang = { [1]=true }, fruc = { false, true }, url = "Antiquities"},
 [120]={id = 120, lang = { [1]=true }, fruc = { false, true }, url = "Arabian_Nights"},
 -- special sets
+[0]={id =   0, lang = { [1]=true }, fruc = { true , true }, url = "Clash_Packs"},--Clash Packs
+[0]={id =   0, lang = { [1]=true }, fruc = { true , true }, url = "Duel_Decks_Anthology_Divine_vs_Demonic"},--Duel Decks Anthology Divine vs Demonic
+[0]={id =   0, lang = { [1]=true }, fruc = { true , true }, url = "Duel_Decks_Anthology_Elves_vs_Goblins"},--Duel Decks Anthology Elves vs Goblins
+[0]={id =   0, lang = { [1]=true }, fruc = { true , true }, url = "Duel_Decks_Anthology_Garruk_vs_Liliana"},--Duel Decks Anthology Garruk vs Liliana
+[0]={id =   0, lang = { [1]=true }, fruc = { true , true }, url = "Duel_Decks_Anthology_Jace_vs_Chandra"},--Duel Decks Anthology Jace vs Chandra
+
+[830]={id = 830, lang = { [1]=true }, fruc = { true , true }, url = "Duel_Decks_Blessed_vs_Cursed"},--Duel Decks Blessed vs Cursed
+[828]={id = 828, lang = { [1]=true }, fruc = { true , true }, url = "Commander_2015"},--Commander 2015
+[824]={id = 824, lang = { [1]=true }, fruc = { true , true }, url = "Duel_Decks_Zendikar_vs_Eldrazi"},--Duel Decks Zendikar vs Eldrazi
+[823]={id = 823, lang = { [1]=true }, fruc = { true , true }, url = "From_the_Vault_Angels"},--From the Vault Angels
 [820]={id = 820, lang = { [1]=true }, fruc = { true , true }, url = "Duel_Decks_Elspeth_vs_Kiora"},--Duel Decks Elspeth vs Kiora
 [819]={id = 819, lang = { [1]=true }, fruc = { true , true }, url = "Modern_Masters_2015"},--Modern Masters 2015
 [814]={id = 814, lang = { [1]=true }, fruc = { true , true }, url = "Commander_2014"},--Commander 2014
 --TODO FtV are foilonly. check all frucs!
 [812]={id = 812, lang = { [1]=true }, fruc = { true , true }, url = "Duel_Decks_Speed_vs_Cunning"},--Duel Decks Speed vs Cunning
-[809]={id = 798, lang = { [1]=true }, fruc = { true, true }, url = "From_the_Vault_Annihilation"},--From the Vault: Annihilation
+[809]={id = 798, lang = { [1]=true }, fruc = { true , true }, url = "From_the_Vault_Annihilation"},--From the Vault: Annihilation
 [807]={id = 807, lang = { [1]=true }, fruc = { true , true }, url = {"Conspiracy","Conspiracy_Schemes"} },--Conspiracy
 [805]={id = 805, lang = { [1]=true }, fruc = { true , true }, url = "Duel_Decks_Jace_vs_Vraska"},--Duel Decks: Jace vs. Vraska
 [801]={id = 801, lang = { [1]=true }, fruc = { true , true }, url = "Commander_2013"},--Commander 2013
@@ -679,10 +692,12 @@ site.sets = {
 [201]={id = 201, lang = { [1]=true }, fruc = { true , true }, url = ""},--Renaissance
 [200]={id = 200, lang = { [1]=true }, fruc = { true , true }, url = "Chronicles"},
 -- Promo Cards
+[55] ={id =  55, lang = { [1]=true }, fruc = { true , true }, url = "Ugins_Fate"},--Ugins Fate
 [43] ={id =  43, lang = { [1]=true }, fruc = { true , true }, url = "Two-Headed_Giant"},
 [42] ={id =  42, lang = { [1]=true }, fruc = { true , true }, url = "Summer of Magic"},
 [41] ={id =  41, lang = { [1]=true }, fruc = { true , true }, url = "Happy_Holidays"},
 [40] ={id =  40, lang = { [1]=true }, fruc = { true , true }, url = "Arena_League"},
+[34] ={id =  34, lang = { [1]=true }, fruc = { true , true }, url = "World_Magic_Cup_Qualifier"},--World Magic Cup Qualifier
 [32] ={id =  32, lang = { [1]=true }, fruc = { true , true }, url = "Pro_Tour"},
 [31] ={id =  31, lang = { [1]=true }, fruc = { true , true }, url = "Grand_Prix"},
 [30] ={id =  30, lang = { [1]=true }, fruc = { true , true }, url = "Friday_Night_Magic"},
@@ -704,8 +719,8 @@ site.sets = {
 -- uncomment these while running helper.FindUnknownUrls
 [9990]={id =   0, lang = { [1]=true }, fruc = { true , true }, url = "15th_Anniversary"},--15th_Anniversary
 [9991]={id =   0, lang = { [1]=true }, fruc = { true , true }, url = "Summer_of_Magic"},--Summer of Magic
-[9992]={id =   0, lang = { [1]=true }, fruc = { true , true }, url = "World_Magic_Cup_Qualifier"},--World Magic Cup Qualifier
-[9993]={id =   0, lang = { [1]=true }, fruc = { true , true }, url = "Worlds"},--Worlds} -- end table site.sets
+[9993]={id =   0, lang = { [1]=true }, fruc = { true , true }, url = "Worlds"},--Worlds
+[9994]={id =   0, lang = { [1]=true }, fruc = { true , true }, url = "SDCC_2013"},--SDCC 2013
 } -- end table site.sets
 
 --[[- card name replacement tables.

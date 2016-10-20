@@ -589,6 +589,8 @@ site.sets = {
 [110]={id = 110, lang = { true , [3]=false}, fruc = { false,true }, url = "UN"},  
 [100]={id = 100, lang = { true , [3]=false}, fruc = { false,true }, url = "B%20"},
  -- Expansions
+[831]={id = 831, lang = { true , [3]=true }, fruc = { true ,true }, url = "SOI"},--Shadows over Innistrad
+[829]={id = 829, lang = { true , [3]=true }, fruc = { true ,true }, url = "OGW"},--Oath of the Gatewatch
 [825]={id = 825, lang = { true , [3]=true }, fruc = { true ,true }, url = "BFZ"},--Battle for Zendikar
 [818]={id = 818, lang = { true , [3]=true }, fruc = { true ,true }, url = "DTK"},--Dragons of Tarkir
 [816]={id = 816, lang = { true , [3]=true }, fruc = { true ,true }, url = "FRF"},--Fate Reforged
@@ -659,6 +661,7 @@ site.sets = {
 [130]={id = 130, lang = { true , [3]=false }, fruc = { false,true }, url = "AQ"},
 [120]={id = 120, lang = { true , [3]=false }, fruc = { false,true }, url = "AN"},
 -- special sets
+[830]={id = 830, lang = { true , [3]=true }, fruc = { true ,true }, url = "DDQ"},--Duel Decks: Blessed vs. Cursed
 [824]={id = 824, lang = { true , [3]=true }, fruc = { true ,true }, url = "ZVE"},--Duel Decks: Zendikar vs. Eldrazi
 [820]={id = 820, lang = { true , [3]=true }, fruc = { true ,true }, url = "EVK"},--Duel Decks: Elspeth vs. Kiora
 [819]={id = 819, lang = { true , [3]=true }, fruc = { true ,true }, url = "MM2"},--Modern Masters 2015

@@ -28,6 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 start SOI branch
 set options to dev prefs again
 
+FetchExpansionList changed to new url scheme
+
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -292,15 +294,15 @@ This will be used by site.FetchExpansionList().
  @return #table { #string (url)= #table { isfile= #boolean, (optional) foilonly= #boolean, (optional) setid= #number, (optional) langid= #number, (optional) frucid= #number } , ... }
 ]]
 function site.BuildUrl( setid,langid,frucid )
+--http://shop.tcgplayer.com/price-guide/magic/oath-of-the-gatewatch
 	site.domain = "magic.tcgplayer.com/"
-	site.file = "db/price_guide.asp"
-	site.setprefix = "?setname="
-	
+	--site.setprefix = "db/price_guide.asp?setname="
+	site.setprefix = "db/search_result.asp?Set_Name="	
 	if setid=="list" then --request price guide expansion list 
 		return site.domain .. "magic_price_guides.asp"
 	end
 	local container = {}
-	local url = site.domain .. site.file .. site.setprefix
+	local url = site.domain .. site.setprefix
 	if  type(site.sets[setid].url) == "table" then
 		urls = site.sets[setid].url
 	else
@@ -343,8 +345,9 @@ function site.FetchExpansionList()
 	local i=0
 	for url,name in string.gmatch( expansionSource , setregex) do
 		i=i+1
-		_,_,url=string.find(url,"setName=([^&]-)&")
-		url=string.gsub(url,"%-"," ")
+		--_,_,url=string.find(url,"setName=([^&]-)&")
+		--url=string.gsub(url,"%-"," ")
+		_,_,url=string.find(url,"/([^/]+)$")
 		table.insert(expansions, { name=name, urlsuffix=LHpi.OAuthEncode(url)})
 	end
 	return expansions
