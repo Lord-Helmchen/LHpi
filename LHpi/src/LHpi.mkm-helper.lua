@@ -458,6 +458,7 @@ function helper.GetSourceData(sets)
 						local cardurl
 						local urls = site.BuildUrl(card)
 						for u,d in pairs(urls) do
+							-- this is only safe because site.Buildurl( #mkm-Entity ) always returns a single url in the container
 							cardurl = u
 						end
 						print("fetching single card from " .. cardurl)

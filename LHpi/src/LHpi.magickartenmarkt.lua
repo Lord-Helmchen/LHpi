@@ -32,6 +32,15 @@ start SOI branch
 set options to dev prefs again
 added 831,830,829,828,827,34
 updated 818,53,52,34,31,30,25,22,21
+
+2.18.10.6
+start work on html (instead of api) mode
+new function site.GetSourceData
+renamed FetchSourceDataFromOAuth to GetSourceDataFromOAuth
+new function GetSourceDataFromHTML
+response format preset to json (for api) or html (for html), removed dynamic responseFormat via mode
+removed legacy location handling from site.LoadLib()
+
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -70,12 +79,16 @@ LOGFOILTWEAK = true
 local useAsRegprice=5
 local useAsFoilprice=6
 
+--TODO determine how to set MKM data source and document
+--MKMDATASOURCE = { api=true, html=false}
+MKMDATASOURCE = { html=true, api=false}
+
 --local mkmtokenfile = "LHpi.mkm.tokens.example"
 local mkmtokenfile = "LHpi.mkm.tokens.DarkHelmet"
 
 --- use a persistent counter of all OAuth requests sent to the server.
 -- this could be helpful, as MKM's server will respond with http 429 errors
--- after 5.000 requests.
+-- after 5.000 requests via api.
 -- @field #boolean COUNTREQUESTS
 local COUNTREQUESTS = true
 
@@ -89,14 +102,15 @@ local COUNTREQUESTS = true
 -- running outside of MA.
 -- For now, the prefered method to reset the counter is from LHpi.mkm-helper.lua.
 -- 
--- @field #boolean COUNTREQUESTS
+-- @field #boolean RESETCOUNTER
 local RESETCOUNTER = false
 
 --- choose how the site sends the requested data.
 -- mkm api offers json and xml format. Only json parsing is implemented yet,
 -- and we need json anyways to read the mkm token file :)
--- @field #string responseFormat	"json" or "xml"
+-- @field #string responseFormat	"json" or "xml" or "html"
 local responseFormat = "json"
+if MKMDATASOURCE.html then responseFormat="html" end
 
 --- Probably only need appToken,appSecret and can do without accessToken,accessTokenSecret.
 -- Would need a token set of an MKM-approved widget app.
@@ -196,6 +210,7 @@ site.useAsFoilprice=useAsFoilprice
 ]]
 --site.regex = '{"idProduct".-"countFoils":%d+}'
 site.regex = '.(%b{})'
+--FIXME site.regex for html mode
 
 --- resultregex can be used to display in the Log how many card the source file claims to contain
 -- @field #string resultregex
@@ -260,23 +275,7 @@ end -- function ImportPrice
 function site.LoadLib()
 	local LHpi
 	local libname = workdir .. "lib\\LHpi-v" .. libver .. ".lua"
-	local loglater
 	local LHpilib = ma.GetFile( libname )
-	if tonumber(libver) < 2.15 then
-		loglater = ""
-		local oldlibname = workdir .. "LHpi-v" .. libver .. ".lua"
-		local oldLHpilib = ma.GetFile ( oldlibname )
-		if oldLHpilib then
-			if DEBUG then
-				error("LHpi library found in deprecated location. Please move it to Prices\\lib subdirectory!")
-			end
-			loglater = loglater .. "LHpi library found in deprecated location.\n"
-			if not LHpilib then
-				loglater = loglater .. "Using file in old location as fallback."
-				LHpilib = oldLHpilib
-			end
-		end
-	end
 	if not LHpilib then
 		error( "LHpi library " .. libname .. " not found." )
 	else -- execute LHpilib to make LHpi.* available
@@ -290,7 +289,7 @@ function site.LoadLib()
 		end
 		LHpi = execlib()
 	end	-- if not LHpilib else
-	return LHpi, loglater
+	return LHpi,nil
 end--function site.LoadLib
 
 --[[- prepare script
@@ -302,7 +301,6 @@ end--function site.LoadLib
 @param #table mode { #boolean helper, ... }
 	-- nil 			if called by Magic Album
 	-- helper		true if called as library by LHpi.mkm-helper
-	-- mode.json or mode.xml	to select mkm response format (default json, xml not implemented)
 	-- mode.update	true to run update helper functions
  @function [parent=#site] Initialize
 ]]
@@ -325,8 +323,8 @@ function site.Initialize( mode )
 		LHpi.savepath = string.gsub(LHpi.savepath,"\\+$",".sandbox\\")
 	end--if sandbox
 	if OFFLINE~=true then
-		if not (mode.helper or mode.update) then
-			error("LHpi.magickartenmarkt only works in OFFLINE mode. Use LHpi.mkm-helper.lua to fetch source data!")
+		if not (MKMDATASOURCE.html or mode.helper or mode.update) then
+			error("LHpi.magickartenmarkt api calls only work in OFFLINE mode. Use LHpi.mkm-helper.lua to fetch source data or switch to html!")
 		end
 	end
 	if mode.helper then
@@ -358,26 +356,20 @@ function site.Initialize( mode )
 		package.cpath= workdir..'lib\\bin\\?.dll;' .. package.cpath
 		--print(package.path.."\n"..package.cpath)
 	end
-	if mode.json then
-		responseFormat = "json"
-	elseif mode.xml then
-		responseFormat = "xml"
-	end 
-	if not responseFormat then responseFormat = "json" end
 	if responseFormat == "json" then
 		Json = require ("dkjson")
 	elseif responseFormat == "xml" then
 		error("xml parsing not implemented yet")
 		--Xml = require "luaxml"
 	end
-	if OFFLINE and (not mode.helper) then
-		--skip OAuth preparation
-		--when launched from ma, dll loading is not possible.
-	else 
+	if MKMDATASOURCE.api and not OFFLINE then 
 		OAuth = require "OAuth"
 		---@field [parent=#site] #table oauth
 		site.oauth = {}
 		site.oauth.client, site.oauth.params = site.PrepareOAuth()
+	--else
+		--skip OAuth preparation
+		--when launched from ma, dll loading is not possible.
 	end
 --	if not mode.helper then
 --		--create an empty file to hold missorted cards
@@ -395,6 +387,35 @@ function site.Initialize( mode )
 	end--mode.update
 end--function site.Initialize
 
+--[[- site-specific GetSourceData
+ called by LHpi.GetSourceData and needs to be implememted if simple http GET is not sufficient
+ ( url, details )
+ @function [parent=#site] GetSourceData
+ @param #string url				see LHpi.GetSourceData for info
+ @param #table details			see LHpi.GetSourceData for info
+ @return #string sourcedata		see LHpi.GetSourceData for info
+]]
+function site.GetSourceData(url,details)
+	local sourcedata
+	local status
+	if details.oauth then -- we need to build a OAuth request and probably send it via https
+		sourcedata, status = site.GetSourceDataFromOAuth( url )
+		if not sourcedata or sourcedata == "" then
+			LHpi.Log( "!! site.GetSourceDataFromOAuth failed for " .. url ,0)
+			LHpi.Log("server response " .. tostring(status) ,1)
+			return nil
+		end
+	else
+		LHpi.Log( "Fetching http://" .. url ,0)
+		sourcedata = ma.GetUrl( "http://" .. url )
+		LHpi.Log("fetched remote file." ,2)
+		if not sourcedata then
+			LHpi.Log( "!! GetUrl failed for " .. url ,0)
+			return nil
+		end
+	
+	end--if details
+end--function site.GetSourceData
 
 --[[- sets all oauth raleted options and prepares the oauth-client.
 ideally, tokens/secrets should be read from a file instead of being hardcoded.
@@ -450,19 +471,19 @@ end--function PrepareOAuth
  which calls this function when url.oauth==true and not OFFLINE.
  An OAuth-client has to be present in site.oauth.client (and should have been prepard by site.PrepareOAuth).
 
- @function [parent=#site] FetchSourceDataFromOAuth
+ @function [parent=#site] GetSourceDataFromOAuth
  @param #string url
  @return #string body		source data in xml or json format
  @return #string status		http(s) status code and response
 ]]
-function site.FetchSourceDataFromOAuth( url )
+function site.GetSourceDataFromOAuth( url )
 	if sandbox then
 		url = "sandbox." .. url
 	else
 		url = "www." .. url
 	end--if sandbox
 	url = "https://" .. url
-	LHpi.Log("site.FetchSourceDataFromOAuth started for url " .. url ,2)
+	LHpi.Log("site.GetSourceDataFromOAuth started for url " .. url ,2)
 --	if DEBUG then
 --		print("BuildRequest:")
 --		local headers, arguments, post_body = site.oauth.client:BuildRequest( "GET", url )
@@ -510,14 +531,7 @@ function site.FetchSourceDataFromOAuth( url )
 		error(errorstring)
 	end
 	return nil, status
-end--function site.FetchSourceDataFromOAuth
-
--- Like URL-encoding, but following MKM and OAuth's specific semantics
-local function OauthEncode(val)
-	return val:gsub('[^-._~a-zA-Z0-9:&]', function(letter)
-		return string.format("%%%02x", letter:byte()):upper()
-	end)
-end
+end--function site.GetSourceDataFromOAuth
 
 --[[-  build source url/filename.
  Has to be done in sitescript since url structure is site specific.
@@ -530,14 +544,14 @@ end
 Optionally, for setid=="list", you can return an url with a list of available sets.
 This will be used by site.FetchExpansionList().
  
- !ONLY IN LHpi.magickartenmarkt:
+ !ONLY IN LHpi.magickartenmarkt :
  !Only build the mkm api request and set oauth flag. This way, we keep the urls human-readable and non-random
  !so we can store the files and retrieve them later in OFFLINE mode.
- !LHpi.GetSourceData calls site.FetchSourceDataFromOAuth to construct, sign and send/receive OAuth requests, triggered by the flag.
- !"www." or "sandbox." is prefixed in site.FetchSourceDataFromOAuth.
+ !LHpi.GetSourceData calls site.GetSourceDataFromOAuth to construct, sign and send/receive OAuth requests, triggered by the flag.
+ !"www." or "sandbox." is prefixed in site.GetSourceDataFromOAuth.
  !Alternatively, it can be called as site.BuildUrl(#table setid), 
  !where setid is not a numerical set id, but a Json.decod'ed mkm Expansion or Product Entity.
- !ulr is still rewturned as table, so we need to remember to convert the table key to a string in the calling function.
+ !ulr is still returned as table, so we need to remember to convert the table key to a string in the calling function.
  
  @function [parent=#site] BuildUrl
  @param #number setid		see site.sets
@@ -546,41 +560,48 @@ This will be used by site.FetchExpansionList().
  @return #table { #string (url)= #table { isfile= #boolean, (optional) foilonly= #boolean, (optional) setid= #number, (optional) langid= #number, (optional) frucid= #number } , ... }
 ]]
 function site.BuildUrl( setid,langid,frucid )
-	local url = "mkmapi.eu/ws/v1.1/output." .. responseFormat
+	local url
 	local container = {}
 	local urls
-	if type(setid)=="table" then-- mkm mode
-		if setid.idExpansion then
-			url = url .. "/expansion/1/"
-			local name = OauthEncode(setid.name)
-			--local name = setid.name
-			container[url .. name] = { oauth=true, setid=setid }
-			return container
-		elseif setid.idProduct then
-			url = url .. "/product/"
-			container[url .. setid.idProduct] = { oauth=true, setid=setid }
-			return container
-		else
-			error(LHpi.Tostring(setid))
-		end
---	elseif setid=="skip" then
---		return { }
-	elseif setid=="list" then --request Expansion entities for all expansions
-		return url .. "/expansion/1"
-	else -- usual LHpi behaviour
-		url = url .. "/expansion/1"
-		if site.sets[setid]==nil then
-			return {}
-		elseif  type(site.sets[setid].url) == "table" then
-			urls = site.sets[setid].url
-		else
-			urls = { site.sets[setid].url }
-		end--if type(site.sets[setid].url)
-	for _i,seturl in pairs(urls) do
-		container[url .. "/" .. seturl] = { oauth=true, setid=setid }
-	end--for _i,seturl
-	return container
-	end--if type(setid)
+	if MKMDATASOURCE.html then
+	--https://www.magickartenmarkt.de/Products/Singles/Duel+Decks%3A+Blessed+vs.+Cursed
+	--                                                 Duel%20Decks:%20Blessed%20vs.%20Cursed
+		error("BuildUrl html mode not implemented yet")	
+	elseif MKMDATASOURCE.api then
+		url = "mkmapi.eu/ws/v1.1/output." .. responseFormat
+		if type(setid)=="table" then-- mkm Expansion or Product Entity1
+			if setid.idExpansion then
+				url = url .. "/expansion/1/"
+				local name = LHpi.OauthEncode(setid.name)
+				--local name = setid.name
+				container[url .. name] = { oauth=true, setid=setid }
+				return container
+			elseif setid.idProduct then
+				url = url .. "/product/"
+				container[url .. setid.idProduct] = { oauth=true, setid=setid }
+				return container
+			else
+				error(LHpi.Tostring(setid))
+			end
+	--	elseif setid=="skip" then
+	--		return { }
+		elseif setid=="list" then --request Expansion entities for all expansions
+			return url .. "/expansion/1"
+		else -- usual LHpi behaviour
+			url = url .. "/expansion/1"
+			if site.sets[setid]==nil then
+				return {}
+			elseif  type(site.sets[setid].url) == "table" then
+				urls = site.sets[setid].url
+			else
+				urls = { site.sets[setid].url }
+			end--if type(site.sets[setid].url)
+		for _i,seturl in pairs(urls) do
+			container[url .. "/" .. seturl] = { oauth=true, setid=setid }
+		end--for _i,seturl
+		return container
+		end--if type(setid)
+	end--if MKMDATASOURCE
 	error("reached unreachable state")	
 end -- function site.BuildUrl
 
@@ -597,12 +618,18 @@ function site.FetchExpansionList()
 	end
 	local expansions
 	local url = site.BuildUrl( "list" )
-	local urldetails={ oauth=true }
+	if MKMDATASOURCE.api then
+		local urldetails={ oauth=true }
+	end
 	expansions = LHpi.GetSourceData ( url , urldetails )
 	if not expansions then
 		error(string.format("Expansion list not found at %s (OFFLINE=%s)",LHpi.Tostring(url),tostring(OFFLINE)) )
 	end
-	expansions = Json.decode(expansions).expansion
+	if MKMDATASOURCE.html then
+		error("FetchExpansionList html mode not implemented yet")	
+	elseif MKMDATASOURCE.api then
+		expansions = Json.decode(expansions).expansion
+	else error() end
 	for i,expansion in pairs(expansions) do
 		expansions[i].urlsuffix = LHpi.OAuthEncode(expansion.name)
 	end
@@ -645,6 +672,10 @@ function site.ParseHtmlData( foundstring , urldetails )
 	local regpriceType = site.priceTypes[useAsRegprice].type
 	local foilpriceType = site.priceTypes[useAsFoilprice].type
 	local product
+	if MKMDATASOURCE.html then
+		error("html mode for ParseHtmlData not implemented yet")
+-- in any case, this is the last time we ca have the MKMDATASOURCE modes behave differently
+	end
 	if responseFormat == "json" then
 		product = Json.decode(foundstring)
 	else
