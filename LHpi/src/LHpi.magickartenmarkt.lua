@@ -249,9 +249,6 @@ local workdir = workdir or "Prices\\"
 	-- will be passed to site.Initialize to trigger nonstandard modes of operation	
 ]]
 function ImportPrice( importfoil , importlangs , importsets , scriptmode)
-	if SAVELOG~=false then
-		ma.Log( "Check " .. scriptname .. ".log for detailed information" )
-	end
 	ma.SetProgress( "Loading LHpi library", 0 )
 	local loglater
 	LHpi, loglater = site.LoadLib()

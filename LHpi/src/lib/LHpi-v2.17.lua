@@ -165,6 +165,8 @@ function LHpi.Initialize()
 			LHpi.logfile = LHpi.workdir .. site.logfile
 		end
 	end
+	LHpi.Log("Logfile ".. LHpi.logfile .." initialized",0,nil,0)--create new empty logfile
+	ma.Log( "Check " .. LHpi.logfile  .. " for detailed information" )
 	--- savepath for OFFLINE (read) and SAVEHTML,SAVETABLE (write). must point to an existing directory relative to MA's root.
 	-- @field [parent=#LHpi] #string savepath
 	if site.savepath then
@@ -1843,7 +1845,7 @@ end--function LHpi.OAuthEncode
 
 LHpi.Initialize()
 --LHpi.Log( "\239\187\191LHpi library loaded and executed successfully" , 0 , nil , 0 ) -- add unicode BOM to beginning of logfile
-LHpi.Log( "LHpi library " .. LHpi.version .. " loaded and executed successfully." , 0 , nil ,0)
+LHpi.Log( "LHpi library " .. LHpi.version .. " loaded and executed successfully." , 0 , nil ,1)
 ma.Log("LHpi library " .. LHpi.version .. " loaded")
 return LHpi
 --EOF
