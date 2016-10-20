@@ -537,7 +537,7 @@ This will be used by site.FetchExpansionList().
  !"www." or "sandbox." is prefixed in site.FetchSourceDataFromOAuth.
  !Alternatively, it can be called as site.BuildUrl(#table setid), 
  !where setid is not a numerical set id, but a Json.decod'ed mkm Expansion or Product Entity.
- !as Requests based on these Entities are unique, the return value for mkm modes is #string
+ !ulr is still rewturned as table, so we need to remember to convert the table key to a string in the calling function.
  
  @function [parent=#site] BuildUrl
  @param #number setid		see site.sets
@@ -554,10 +554,12 @@ function site.BuildUrl( setid,langid,frucid )
 			url = url .. "/expansion/1/"
 			local name = OauthEncode(setid.name)
 			--local name = setid.name
-			return url .. name
+			container[url .. name] = { oauth=true, setid=setid }
+			return container
 		elseif setid.idProduct then
 			url = url .. "/product/"
-			return url .. setid.idProduct
+			container[url .. setid.idProduct] = { oauth=true, setid=setid }
+			return container
 		else
 			error(LHpi.Tostring(setid))
 		end

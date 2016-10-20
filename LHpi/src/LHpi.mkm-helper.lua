@@ -28,14 +28,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
 --[[ CHANGES
-2.17.10.4:
-GetSourceData - guesstimate number of requests with Data.cardcount.all on first fetch]]
+2.17.10.5:
+start work on html fetch mode
+]]
 
 -- options unique to this script
 
 --- select a mode of operation (and a set of sets to operate on)
 -- Modes are selected by setting a #boolean true.
 -- these modes are exclusive, and checked in the listed order:
+-- mode.html			force html scraping as data source
+-- mode.api				force mkm-api/oauth as data source
 -- mode.helper			only initialize mkm-helper without it doing anything
 -- mode.testoauth		test the OAuth implementation
 -- mode.download		fetch data for mode.sets from MKM
@@ -53,7 +56,7 @@ GetSourceData - guesstimate number of requests with Data.cardcount.all on first 
 -- Both may interfere with the MODE you set here.
 -- 
 -- @field [parent=#global] #table MODE
-MODE = { download=true, sets="standard" }
+MODE = { download=true, sets="standard", html=true}
 --MODE={ test=true, checkstock=true }
 --MODE = { download=true, sets={
 -- [831] = "Shadows over Innistrad";
@@ -71,7 +74,6 @@ MODE = { download=true, sets="standard" }
 -- [30] = "Friday Night Magic Promos";
 -- [34] = "World Magic Cup Qualifiers Promos";
 --} }
-MODE = { download=true, sets="all" }
 
 --- how long before stored price info is considered too old.
 -- To help with MKM's daily request limit, and because MKM and MA sets do not map one-to-one,
@@ -103,7 +105,16 @@ local dataStaleAge = {
 -- mkm limits api requests to 5000 per day.
 -- can be set lower to be exceptionally nice to mkm's server,
 -- or much higher if we have to scrape html data intead of using the api. 
-local dailyRequestLimit = 5000
+--local dailyRequestLimit = 5000
+local dailyRequestLimit = 100000
+
+--- set data source
+-- select either 
+-- mkm-api and oauth (requires mkm api tokens and their cooperation)
+-- or
+-- html page scraping, because mkm is kinda dickish about it :-P
+--local dataSource = { api=true, html=false }
+local dataSource = { html=true, api=false }
 
 --  Don't change anything below this line unless you know what you're doing :-) --
 
@@ -142,7 +153,7 @@ local libver = "2.17"
 local dataver = "10"
 --- sitescript revision number
 -- @field string scriptver
-local scriptver = "4"
+local scriptver = "5"
 --- should be similar to the script's filename. Used for loging and savepath.
 -- @field #string scriptname
 local scriptname = "LHpi.mkm-helper-v".. libver .. "." .. dataver .. "." .. scriptver .. ".lua"
@@ -177,6 +188,8 @@ helper={ scriptname=scriptname }
 local params
 --- @field #table knownModes
 local knownModes = {
+	["html"]=true,
+	["api"]=true,
 	["helper"]=true,
 	["testoauth"]=true,
 	["download"]=true,
@@ -316,6 +329,12 @@ function main( mode )
 		print("OFFLINE="..tostring(OFFLINE))
 	end--mode.test
 
+	
+	if mode.html then
+		dataSource = { html=true, api=false }
+	elseif mode.api then
+		dataSource = { api=true, html=false }
+	end--mode.html/mode.api
 	if mode.resetcounter then
 		LHpi.Log("0",0,LHpi.savepath.."LHpi.mkm.requestcounter",0)
 	end--mode.resetcounter
@@ -394,11 +413,15 @@ function helper.GetSourceData(sets)
 		sets = site.FetchExpansionList()
 		sets = Json.decode(sets).expansion
 		for _,exp in pairs(sets) do
-			local request = site.BuildUrl( exp )
+			--local request = site.BuildUrl( exp )
+			local urls = site.BuildUrl( exp )
 			if string.find(exp.name,"Janosch") or string.find(exp.name,"Jakub") or string.find(exp.name,"Peer") then
 				LHpi.Log(exp.name .. " encoding Problem results in 401 Unauthorized. Set skipped." ,2)
 			else--this is what should happen
-				seturls[request]={oauth=true}
+				--seturls[request]={oauth=true}
+				for u,d in pairs(urls) do
+					table.insert(seturls,u,d)
+				end--for
 			end--401 exceptions
 		end--for _,exp
 	end--if sets
@@ -431,7 +454,12 @@ function helper.GetSourceData(sets)
 					setdata = Json.decode(setdata)
 					local httpStatus
 					for cid,card in pairs(setdata.card) do
-						local cardurl = site.BuildUrl(card)
+						--local cardurl = site.BuildUrl(card)
+						local cardurl
+						local urls = site.BuildUrl(card)
+						for u,d in pairs(urls) do
+							cardurl = u
+						end
 						print("fetching single card from " .. cardurl)
 						local s2=SAVEHTML
 						if SAVECARDDATA~=true then
