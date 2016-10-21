@@ -408,7 +408,7 @@ function site.GetSourceData(url,details)
 		counter = counter + 1
 		LHpi.Log(counter,0,LHpi.savepath.."LHpi.mkm.requestcounter",0)
 	end
-	if MKMDATASOURCE.hmtl then
+	if MKMDATASOURCE.html then
 		url = "https://www." .. url
 		--TODO https instead of http probably means this will not work from within ma either...
 		body,code,headers,status = https.request( url )
@@ -618,7 +618,7 @@ function site.FetchExpansionList()
 	end
 	local urls = site.BuildUrl( "list" )
 	local url,details
-	for k,v in urls do
+	for k,v in pairs(urls) do
 		--unwrap from container table
 		url=k
 		details=v
@@ -629,11 +629,14 @@ function site.FetchExpansionList()
 	end
 	local expansions
 	if MKMDATASOURCE.html then
-		--TODO need to parse html and build exansions table
 		expansions = {}
-		error("FetchExpansionList html parsing not implemented yet")
+		expansiondata= string.match(expansiondata,"<tbody>(.+)</tbody>")
+		for row in string.gmatch(expansiondata,"<tr(.-)</tr>") do
+			row = string.match(row,"([^<>]+)</a>")
+			table.insert(expansions,{ name=row, urlsuffix=LHpi.OAuthEncode(row) } )
+		end
 	elseif MKMDATASOURCE.api then
-		expansions = Json.decode(expansions).expansion
+		expansions = Json.decode(expansiondata).expansion
 		for i,expansion in pairs(expansions) do
 			expansions[i].urlsuffix = LHpi.OAuthEncode(expansion.name)
 		end
