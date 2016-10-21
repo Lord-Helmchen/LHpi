@@ -36,8 +36,7 @@ updated 818,53,52,34,31,30,25,22,21
 2.18.10.6
 start work on html (instead of api) mode
 new function site.GetSourceData
-renamed FetchSourceDataFromOAuth to GetSourceDataFromOAuth
-new function GetSourceDataFromHTML
+removed function site.FetchSourceDataFromOAuth
 response format preset to json (for api) or html (for html), removed dynamic responseFormat via mode
 removed legacy location handling from site.LoadLib()
 
@@ -320,8 +319,8 @@ function site.Initialize( mode )
 		LHpi.savepath = string.gsub(LHpi.savepath,"\\+$",".sandbox\\")
 	end--if sandbox
 	if OFFLINE~=true then
-		if not (MKMDATASOURCE.html or mode.helper or mode.update) then
-			error("LHpi.magickartenmarkt api calls only work in OFFLINE mode. Use LHpi.mkm-helper.lua to fetch source data or switch to html!")
+		if not (mode.helper or mode.update) then
+			error("LHpi.magickartenmarkt https and api calls only work in OFFLINE mode. Use LHpi.mkm-helper.lua to fetch source data!")
 		end
 	end
 	if mode.helper then
@@ -359,14 +358,16 @@ function site.Initialize( mode )
 		error("xml parsing not implemented yet")
 		--Xml = require "luaxml"
 	end
-	if MKMDATASOURCE.api and not OFFLINE then 
+	if OFFLINE then
+		--skip OAuth and https preparation
+		--when launched from ma, dll loading is not possible.
+	elseif MKMDATASOURCE.html then
+		https = require "ssl.https" 
+	elseif MKMDATASOURCE.api then 
 		OAuth = require "OAuth"
 		---@field [parent=#site] #table oauth
 		site.oauth = {}
 		site.oauth.client, site.oauth.params = site.PrepareOAuth()
-	--else
-		--skip OAuth preparation
-		--when launched from ma, dll loading is not possible.
 	end
 --	if not mode.helper then
 --		--create an empty file to hold missorted cards
@@ -385,33 +386,82 @@ function site.Initialize( mode )
 end--function site.Initialize
 
 --[[- site-specific GetSourceData
- called by LHpi.GetSourceData and needs to be implememted if simple http GET is not sufficient
- ( url, details )
+ called by LHpi.GetSourceData and needs to be implemented if simple http GET is not sufficient.
+ Done in sitescript to keep library dependencies low, as this is currently the only sitescript that uses https and/or OAuth.
+ Library should not need to know about OAuth, so only url is passed from LHpi.GetSourceData,
+ which calls this function when not OFFLINE.
+ An OAuth-client or a https socket has to be present in site.oauth.client
+ (and should have been prepard by site.Initialize (and site.PrepareOAuth).
+
  @function [parent=#site] GetSourceData
  @param #string url				see LHpi.GetSourceData for info
  @param #table details			see LHpi.GetSourceData for info
  @return #string sourcedata		see LHpi.GetSourceData for info
+ @return #string status			http(s) status code and response
 ]]
 function site.GetSourceData(url,details)
-	local sourcedata
-	local status
-	if details.oauth then -- we need to build a OAuth request and probably send it via https
-		sourcedata, status = site.GetSourceDataFromOAuth( url )
-		if not sourcedata or sourcedata == "" then
-			LHpi.Log( "!! site.GetSourceDataFromOAuth failed for " .. url ,0)
-			LHpi.Log("server response " .. tostring(status) ,1)
-			return nil
-		end
+	LHpi.Log("site.GetSourceData started for url " .. url ,2)
+	local body,status,code,headers
+	if COUNTREQUESTS then
+		local counter = ma.GetFile(LHpi.savepath.."LHpi.mkm.requestcounter")
+		counter = tonumber(counter)
+		counter = counter + 1
+		LHpi.Log(counter,0,LHpi.savepath.."LHpi.mkm.requestcounter",0)
+	end
+	if MKMDATASOURCE.hmtl then
+		url = "https://www." .. url
+		--TODO https instead of http probably means this will not work from within ma either...
+		body,code,headers,status = https.request( url )
+	elseif MKMDATASOURCE.api then
+		if sandbox then
+			url = "sandbox." .. url
+		else
+			url = "www." .. url
+		end--if sandbox
+		url = "https://" .. url
+--		if DEBUG then
+--			print("BuildRequest:")
+--			local headers, arguments, post_body = site.oauth.client:BuildRequest( "GET", url )
+--			print("headers=", LHpi.Tostring(headers))
+--			print("arguments=", LHpi.Tostring(arguments))
+--			print("post_body=", LHpi.Tostring(post_body))
+--			--error("stopped before actually contacting the server")
+--			print("PerformRequest:")
+--		end
+		code, headers, status, body = site.oauth.client:PerformRequest( "GET", url )
 	else
-		LHpi.Log( "Fetching http://" .. url ,0)
-		sourcedata = ma.GetUrl( "http://" .. url )
-		LHpi.Log("fetched remote file." ,2)
-		if not sourcedata then
-			LHpi.Log( "!! GetUrl failed for " .. url ,0)
-			return nil
-		end
-	
-	end--if details
+		error("MKMDATASOURCE not set!")
+	end--if MKMDATASOURCE
+	local errorstring = nil
+	if code == 200 or code == 204 then
+		LHpi.Log("status=".. LHpi.Tostring(status) ,2)
+		return body, status
+	elseif code == 206 or code == 204 then -- Partial Content or No Content
+		errorstring = status .. " - not implemented yet!"
+		--TODO for 206 (Partial Content) modify Content-Range and recursively call LHpi.GetSourceData(url , details)
+	elseif code == 400 then -- Bad Request
+		errorstring = status .. " - " .. LHpi.Tostring(body)
+	elseif code == 401 then -- Unauthorized
+		errorstring = status .. " - check token file, url and OAuth!"
+	elseif code == 403 then -- Forbidden
+		errorstring = status .. " - resource valid, check dedicated vs. widget app!"
+	elseif code == 405 then -- Not Allowed
+		errorstring = status .. " - check HTTP method!"
+	elseif code == 412 then -- Precondition Failed
+		errorstring = status .. " - invalid state change on one of your orders!"
+	elseif code == 417 then -- Expectation Failed
+		errorstring = status .. " - check token file, url and OAuth!"
+	elseif code == 429 then -- Too Many Requests
+		errorstring = status .. " :limited to 5000 requests per day, resets at 0:00 CE(S)T. Pass \"resetcounter\" to mkm-helper to reset the persistant request counter." 
+	else
+		errorstring = status .. " - " .. LHpi.Tostring(headers)
+	end
+	LHpi.Log(errorstring ,1)
+	print(errorstring)
+	if DEBUG then
+		error(errorstring)
+	end
+	return nil, status
 end--function site.GetSourceData
 
 --[[- sets all oauth raleted options and prepares the oauth-client.
@@ -462,74 +512,6 @@ function site.PrepareOAuth()
 	return client, params
 end--function PrepareOAuth
 
---[[- construct, sign and send/receive OAuth requests
- Done in sitescript to keep library dependencies low, as this is currently the only sitescript that uses OAuth.
- Library should not need to know about OAuth, so only url is passed from LHpi.GetSourceData,
- which calls this function when url.oauth==true and not OFFLINE.
- An OAuth-client has to be present in site.oauth.client (and should have been prepard by site.PrepareOAuth).
-
- @function [parent=#site] GetSourceDataFromOAuth
- @param #string url
- @return #string body		source data in xml or json format
- @return #string status		http(s) status code and response
-]]
-function site.GetSourceDataFromOAuth( url )
-	if sandbox then
-		url = "sandbox." .. url
-	else
-		url = "www." .. url
-	end--if sandbox
-	url = "https://" .. url
-	LHpi.Log("site.GetSourceDataFromOAuth started for url " .. url ,2)
---	if DEBUG then
---		print("BuildRequest:")
---		local headers, arguments, post_body = site.oauth.client:BuildRequest( "GET", url )
---		print("headers=", LHpi.Tostring(headers))
---		print("arguments=", LHpi.Tostring(arguments))
---		print("post_body=", LHpi.Tostring(post_body))
---		--error("stopped before actually contacting the server")
---		print("PerformRequest:")
---	end
-	if COUNTREQUESTS then
-		local counter = ma.GetFile(LHpi.savepath.."LHpi.mkm.requestcounter")
-		counter = tonumber(counter)
-		counter = counter + 1
-		LHpi.Log(counter,0,LHpi.savepath.."LHpi.mkm.requestcounter",0)
-	end
-	
-	local code, headers, status, body = site.oauth.client:PerformRequest( "GET", url )
-	local errorstring = nil
-	if code == 200 or code == 204 then
-		LHpi.Log("status=".. LHpi.Tostring(status) ,2)
-		return body, status
-	elseif code == 206 or code == 204 then -- Partial Content or No Content
-		errorstring = status .. " - not implemented yet!"
-		--TODO for 206 (Partial Content) modify Content-Range and recursively call LHpi.GetSourceData(url , details)
-	elseif code == 400 then -- Bad Request
-		errorstring = status .. " - " .. LHpi.Tostring(body)
-	elseif code == 401 then -- Unauthorized
-		errorstring = status .. " - check token file, url and OAuth!"
-	elseif code == 403 then -- Forbidden
-		errorstring = status .. " - resource valid, check dedicated vs. widget app!"
-	elseif code == 405 then -- Not Allowed
-		errorstring = status .. " - check HTTP method!"
-	elseif code == 412 then -- Precondition Failed
-		errorstring = status .. " - invalid state change on one of your orders!"
-	elseif code == 417 then -- Expectation Failed
-		errorstring = status .. " - check token file, url and OAuth!"
-	elseif code == 429 then -- Too Many Requests
-		errorstring = status .. " :limited to 5000 requests per day, resets at 0:00 CE(S)T. Pass \"resetcounter\" to mkm-helper to reset the persistant request counter." 
-	else
-		errorstring = status .. " - " .. LHpi.Tostring(headers)
-	end
-	LHpi.Log(errorstring ,1)
-	print(errorstring)
-	if DEBUG then
-		error(errorstring)
-	end
-	return nil, status
-end--function site.GetSourceDataFromOAuth
-
 --[[-  build source url/filename.
  Has to be done in sitescript since url structure is site specific.
  To allow returning more than one url here, BuildUrl is required to wrap it/them into a container table.
@@ -544,7 +526,8 @@ This will be used by site.FetchExpansionList().
  !ONLY IN LHpi.magickartenmarkt :
  !Only build the mkm api request and set oauth flag. This way, we keep the urls human-readable and non-random
  !so we can store the files and retrieve them later in OFFLINE mode.
- !LHpi.GetSourceData calls site.GetSourceDataFromOAuth to construct, sign and send/receive OAuth requests, triggered by the flag.
+ !LHpi.GetSourceData calls site.GetSourceData to construct, sign and send/receive OAuth requests, triggered by MKMDATASOURCE setting.
+ !the oauth flag in urldetails is deprecated.
  !"www." or "sandbox." is prefixed in site.GetSourceDataFromOAuth.
  !Alternatively, it can be called as site.BuildUrl(#table setid), 
  !where setid is not a numerical set id, but a Json.decod'ed mkm Expansion or Product Entity.
@@ -563,10 +546,31 @@ function site.BuildUrl( setid,langid,frucid )
 	if MKMDATASOURCE.html then
 	--https://www.magickartenmarkt.de/Products/Singles/Duel+Decks%3A+Blessed+vs.+Cursed
 	--                                                 Duel%20Decks:%20Blessed%20vs.%20Cursed
-		error("BuildUrl html mode not implemented yet")	
+	url = "magickartenmarkt.de"
+		if type(setid)=="table" then
+			--TODO single card reference?
+			error("not implemented yet")
+			--use bogus frucid to trigger this instead?
+		elseif setid=="list" then --request Expansion list. Needs to be parsed to be of use.
+			container[url .. "/Expansions"] = { oauth=false }
+			return container
+		else -- usual LHpi behaviour
+			url = url .. "/Products/Singles"
+			if site.sets[setid]==nil then
+				return {}
+			elseif  type(site.sets[setid].url) == "table" then
+				urls = site.sets[setid].url
+			else
+				urls = { site.sets[setid].url }
+			end--if type(site.sets[setid].url)
+			for _i,seturl in pairs(urls) do
+				container[url .. "/" .. seturl] = { oauth=false, setid=setid }
+			end--for _i,seturl
+			return container
+		end--if type(setid)
 	elseif MKMDATASOURCE.api then
 		url = "mkmapi.eu/ws/v1.1/output." .. responseFormat
-		if type(setid)=="table" then-- mkm Expansion or Product Entity1
+		if type(setid)=="table" then-- mkm Expansion or Product Entity
 			if setid.idExpansion then
 				url = url .. "/expansion/1/"
 				local name = LHpi.OauthEncode(setid.name)
@@ -580,10 +584,9 @@ function site.BuildUrl( setid,langid,frucid )
 			else
 				error(LHpi.Tostring(setid))
 			end
-	--	elseif setid=="skip" then
-	--		return { }
 		elseif setid=="list" then --request Expansion entities for all expansions
-			return url .. "/expansion/1"
+			container[url .. "/expansion/1"] = { oauth=true }
+			return container
 		else -- usual LHpi behaviour
 			url = url .. "/expansion/1"
 			if site.sets[setid]==nil then
@@ -613,23 +616,28 @@ function site.FetchExpansionList()
 	if OFFLINE then
 		LHpi.Log("OFFLINE mode active. Expansion list may not be up-to-date." ,1)
 	end
-	local expansions
-	local url = site.BuildUrl( "list" )
-	if MKMDATASOURCE.api then
-		local urldetails={ oauth=true }
+	local urls = site.BuildUrl( "list" )
+	local url,details
+	for k,v in urls do
+		--unwrap from container table
+		url=k
+		details=v
 	end
-	expansions = LHpi.GetSourceData ( url , urldetails )
-	if not expansions then
+	local expansiondata = LHpi.GetSourceData ( url , details )
+	if not expansiondata then
 		error(string.format("Expansion list not found at %s (OFFLINE=%s)",LHpi.Tostring(url),tostring(OFFLINE)) )
 	end
+	local expansions
 	if MKMDATASOURCE.html then
-		error("FetchExpansionList html mode not implemented yet")	
+		--TODO need to parse html and build exansions table
+		expansions = {}
+		error("FetchExpansionList html parsing not implemented yet")
 	elseif MKMDATASOURCE.api then
 		expansions = Json.decode(expansions).expansion
+		for i,expansion in pairs(expansions) do
+			expansions[i].urlsuffix = LHpi.OAuthEncode(expansion.name)
+		end
 	else error() end
-	for i,expansion in pairs(expansions) do
-		expansions[i].urlsuffix = LHpi.OAuthEncode(expansion.name)
-	end
 	return expansions
 end--function site.FetchExpansionList
 
