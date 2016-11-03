@@ -752,6 +752,7 @@ end -- function LHpi.ListSources
  @param #string url		source location (url or filename)
  @param #table details	{ setid= #number, langid= #number, frucid= #number, isfile= #boolean, oauth= #boolean }
  @return #string sourcedata
+ @return #string status	if sourcedata is nil
 ]]
 function LHpi.GetSourceData( url , details ) -- 
 	local sourcedata = nil -- declare here for right scope
@@ -766,15 +767,15 @@ function LHpi.GetSourceData( url , details ) --
 		sourcedata = ma.GetFile( (LHpi.savepath or "") .. url )
 		if not sourcedata then
 			LHpi.Log( "!! GetFile failed for " .. (LHpi.savepath or "") .. url ,0)
-			return nil
+			return nil,"GetFile failed"
 		end
 	elseif site.GetSourceData then
 		-- defer fetching to sitescript if a funtion exists there
 		-- long-term this may make all urldetails obsolete
-		sourcedata = site.GetSourceData( url, details )
+		sourcedata,status = site.GetSourceData( url, details )
 		if not sourcedata then
 			LHpi.Log( "!! site.GetSourceData failed for " .. url .. " = " .. LHpi.Tostring(details) ,0)
-			return nil
+			return nil,status
 		end
 	elseif details.oauth then -- we need to build a OAuth request and probably send it via https
 		--deprecated
@@ -787,7 +788,7 @@ function LHpi.GetSourceData( url , details ) --
 		LHpi.Log("fetched remote file." ,2)
 		if not sourcedata then
 			LHpi.Log( "!! GetUrl failed for " .. url ,0)
-			return nil
+			return nil,"ma.GetUrl failed"
 		end
 	end -- if details.isfile
 

@@ -358,7 +358,7 @@ function site.Initialize( mode )
 		error("xml parsing not implemented yet")
 		--Xml = require "luaxml"
 	end
-	if OFFLINE then
+	if OFFLINE and not mode.helper then
 		--skip OAuth and https preparation
 		--when launched from ma, dll loading is not possible.
 	elseif MKMDATASOURCE.html then
@@ -548,8 +548,14 @@ function site.BuildUrl( setid,langid,frucid )
 	--                                                 Duel%20Decks:%20Blessed%20vs.%20Cursed
 	url = "magickartenmarkt.de"
 		if type(setid)=="table" then
-			--TODO single card reference?
-			error("not implemented yet")
+			if setid.idExpansion then
+			url = url .. "/Products/Singles"
+				container[url .. setid.urlsuffix] = { oauth=false, setid=setid }
+				return container
+			else
+				--TODO single card reference?
+				error("not implemented yet")
+			end
 			--use bogus frucid to trigger this instead?
 		elseif setid=="list" then --request Expansion list. Needs to be parsed to be of use.
 			container[url .. "/Expansions"] = { oauth=false }
@@ -633,7 +639,8 @@ function site.FetchExpansionList()
 		expansiondata= string.match(expansiondata,"<tbody>(.+)</tbody>")
 		for row in string.gmatch(expansiondata,"<tr(.-)</tr>") do
 			row = string.match(row,"([^<>]+)</a>")
-			table.insert(expansions,{ name=row, urlsuffix=LHpi.OAuthEncode(row) } )
+			-- fake idExpansion to emulate api expansion entity for BuildUrl( #table )
+			table.insert(expansions,{ name=row, urlsuffix=LHpi.OAuthEncode(row), idExpansion="null" } )
 		end
 	elseif MKMDATASOURCE.api then
 		expansions = Json.decode(expansiondata).expansion
@@ -683,6 +690,7 @@ function site.ParseHtmlData( foundstring , urldetails )
 	if MKMDATASOURCE.html then
 		error("html mode for ParseHtmlData not implemented yet")
 -- in any case, this is the last time we ca have the MKMDATASOURCE modes behave differently
+-- let's fix the helper, then check what we need to change here
 	end
 	if responseFormat == "json" then
 		product = Json.decode(foundstring)

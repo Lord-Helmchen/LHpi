@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --[[ CHANGES
 2.17.10.5:
 start work on html fetch mode
+renamed helper.GetSourceData to helper.FetchAllPrices
 ]]
 
 -- options unique to this script
@@ -58,11 +59,11 @@ start work on html fetch mode
 -- @field [parent=#global] #table MODE
 MODE = { download=true, sets="standard", html=true}
 --MODE={ test=true, checkstock=true }
---MODE = { download=true, sets={
+MODE = { download=true, sets={
 -- [831] = "Shadows over Innistrad";
 -- [829] = "Oath of the Gatewatch";
 -- [825] = "Battle for Zendikar";
--- [822] = "Magic Origins";
+ [822] = "Magic Origins";
 -- [818] = "Dragons of Tarkir";
 -- [830] = "Duel Decks: Blessed vs. Cursed";
 -- [828] = "Commander 2015 Edition";
@@ -73,11 +74,11 @@ MODE = { download=true, sets="standard", html=true}
 -- [26] = "Magic Game Day";
 -- [30] = "Friday Night Magic Promos";
 -- [34] = "World Magic Cup Qualifiers Promos";
---} }
+} }
 
 --- how long before stored price info is considered too old.
 -- To help with MKM's daily request limit, and because MKM and MA sets do not map one-to-one,
--- helper.GetSourceData keeps a persistent list of urls and when the url was last fetched from MKM.
+-- helper.FetchAllPrices keeps a persistent list of urls and when the url was last fetched from MKM.
 -- If the Data age is less than dataStaleAge[setid] seconds, the url will be skipped.
 -- See also #boolean COUNTREQUESTS and #boolean COUNTREQUESTS in LHpi.magickartenmarkt.lua
 -- @field #table dataStaleAge
@@ -123,14 +124,14 @@ local dataSource = { html=true, api=false }
 SAVELOG = true
 
 ---	read source data from #string savepath instead of site url; default false
---	helper.GetSourceData normally overrides OFFLINE switch from LHpi.magickartenmarkt.lua.
+--	helper.FetchAllPrices normally overrides OFFLINE switch from LHpi.magickartenmarkt.lua.
 --	This forces the script to stay in OFFLINE mode.
 --	Only really useful for testing with SAVECARDDATA.
 -- @field #boolean STAYOFFLINE
 --local STAYOFFLINE = true
 
 --- save a local copy of each individual card source json to #string savepath if not in OFFLINE mode; default false
---	helper.GetSourceData normally overrides SAVEHTML switch from LHpi.magickartenmarkt.lua to enforce SAVEDATA.
+--	helper.FetchAllPrices normally overrides SAVEHTML switch from LHpi.magickartenmarkt.lua to enforce SAVEDATA.
 --	SAVECARDDATA instructs the script to save not only the (reconstructed) set sources, but also the individual card sources
 --	where the priceGuide field is fetched from.
 --	Only really useful for testing with STAYOFFLINE.
@@ -319,6 +320,13 @@ function main( mode )
 	-- load LHpi.magickartenmarkt in helper mode
 	dofile(workdir.."LHpi.magickartenmarkt.lua")
 	site.scriptname = helper.scriptname
+	if mode.html then
+		dataSource = { html=true, api=false }
+	elseif mode.api then
+		dataSource = { api=true, html=false }
+	elseif not MKMDATASOURCE then
+		error("MKMDATASOURCE not defined!")
+	end--mode.html/mode.api
 	site.Initialize({helper=true})
 
 	if mode.test then
@@ -329,12 +337,6 @@ function main( mode )
 		print("OFFLINE="..tostring(OFFLINE))
 	end--mode.test
 
-	
-	if mode.html then
-		dataSource = { html=true, api=false }
-	elseif mode.api then
-		dataSource = { api=true, html=false }
-	end--mode.html/mode.api
 	if mode.resetcounter then
 		LHpi.Log("0",0,LHpi.savepath.."LHpi.mkm.requestcounter",0)
 	end--mode.resetcounter
@@ -345,6 +347,9 @@ function main( mode )
 		return ("mkm-helper running in helper mode (passive)")
 	end--mode.helper
 	if mode.testoauth then
+		if not MKMDATASOURCE.api then
+			error("MKMDATASOURCE is html!")
+		end
 		print('basic OAuth tests (check mkmtokenfile setting!)')
 		LHpi.Log('basic OAuth tests (remember to set local mkmtokenfile = "LHpi.mkm.tokens.example" in LHpi.magickartenmarkt.lua!)' ,0)
 		DEBUG=true
@@ -352,7 +357,7 @@ function main( mode )
 		return ("testoauth done")
 	end--mode.testoauth
 	if mode.download then
-		helper.GetSourceData(sets)
+		helper.FetchAllPrices(sets)
 		return ("download done")
 	end--mode.download
 	if mode.boostervalue then
@@ -378,7 +383,7 @@ end--function main
  @function [parent=#helper] GetSourceData
  @param #table setlist (optional) { #number sid= #string name } list of sets to download
 ]]
-function helper.GetSourceData(sets)
+function helper.FetchAllPrices(sets)
 	ma.PutFile(LHpi.savepath .. "testfolderwritable" , "true", 0 )
 	local folderwritable = ma.GetFile( LHpi.savepath .. "testfolderwritable" )
 	if not folderwritable then
@@ -411,14 +416,12 @@ function helper.GetSourceData(sets)
 		end--for sid,set
 	else -- fetch list of available expansions and select all for download
 		sets = site.FetchExpansionList()
-		sets = Json.decode(sets).expansion
+		--sets = Json.decode(sets).expansion
 		for _,exp in pairs(sets) do
-			--local request = site.BuildUrl( exp )
-			local urls = site.BuildUrl( exp )
+			local urls = site.BuildUrl( exp )--call by Expansion Entity
 			if string.find(exp.name,"Janosch") or string.find(exp.name,"Jakub") or string.find(exp.name,"Peer") then
 				LHpi.Log(exp.name .. " encoding Problem results in 401 Unauthorized. Set skipped." ,2)
 			else--this is what should happen
-				--seturls[request]={oauth=true}
 				for u,d in pairs(urls) do
 					table.insert(seturls,u,d)
 				end--for
@@ -443,62 +446,23 @@ function helper.GetSourceData(sets)
 			print(string.format(" predicted number of requests is %i",reqForSet))			
 			local reqPrediction = reqCountPre+reqForSet
 			if reqPrediction < dailyRequestLimit then
-				local setdata = LHpi.GetSourceData( url , details )
-				if setdata then
-					local count= { fetched=0, found=0 }
-					local fileurl = string.gsub(url, '[/\\:%*%?<>|"]', "_")
-					--LHpi.Log( "Backup source to file: \"" .. (LHpi.savepath or "") .. "BACKUP-" .. fileurl .. "\"" ,1)
-					--ma.PutFile( (LHpi.savepath or "") .. "BACKUP-" .. fileurl , setdata , 0 )
-					LHpi.Log("integrating priceGuide entries into " .. fileurl ,1)
-					print("integrating priceGuide entries into " .. fileurl)
-					setdata = Json.decode(setdata)
-					local httpStatus
-					for cid,card in pairs(setdata.card) do
-						--local cardurl = site.BuildUrl(card)
-						local cardurl
-						local urls = site.BuildUrl(card)
-						for u,d in pairs(urls) do
-							-- this is only safe because site.Buildurl( #mkm-Entity ) always returns a single url in the container
-							cardurl = u
-						end
-						print("fetching single card from " .. cardurl)
-						local s2=SAVEHTML
-						if SAVECARDDATA~=true then
-							SAVEHTML=false
-						end
-						--TODO try/catch block here?
-						local proddata,status = LHpi.GetSourceData( cardurl , { oauth=true } )
-						SAVEHTML=s2
-						if proddata then
-							count.fetched=count.fetched+1
-							proddata = Json.decode(proddata).product
-							if proddata.priceGuide~=nil then
-								count.found=count.found+1
-								setdata.card[cid].priceGuide=proddata.priceGuide
-							end--if proddata.priceGuide
-						else
-							httpStatus = status
-							break
-						end--if proddata
-					end--for cid,card
-					if not httpStatus then
-						setdata = Json.encode(setdata)
-						LHpi.Log( "Saving rebuilt source to file: \"" .. (LHpi.savepath or "") .. fileurl .. "\"" ,1)
-						LHpi.Log( string.format("%i cards have been fetched, and %i pricesGuides were found. LHpi.Data claims %i cards in set %q.",count.fetched,count.found,LHpi.Data.sets[details.setid].cardcount.all,LHpi.Data.sets[details.setid].name ) ,1)
-						print( "Saving rebuilt source to file: \"" .. (LHpi.savepath or "") .. fileurl .. "\"")
-						ma.PutFile( (LHpi.savepath or "") .. fileurl , setdata , 0 )
-						dataAge[url].timestamp=os.time()
-					else
-						local skippedString = string.format("%s encountered, abort and skip %q.",httpStatus,LHpi.Data.sets[details.setid].name)
-					end--if not httpStatus
-					totalcount.fetched=totalcount.fetched+count.fetched
-					totalcount.found=totalcount.found+count.found
-				else
-					LHpi.Log("no data from "..url ,1)
-					print("no data from "..url)
-				end--if setdata
+
+				--probably best to split this into a sub-function and 
+				--in html-mode loop if "Zeige Seite Nr. 1 (Treffer 1 bis 30)" is less than "303 Treffer"
+				local count,ok
+				if MKMDATASOURCE.html then
+					count,ok = helper.FetchPricesFromHtml( url,details )
+				elseif HTMLDATASOURCE.api then
+					count,ok = helper.FetchPriceGuidesFromAPI( url,details )
+				end
+				if ok then
+					dataAge[url].timestamp=os.time()
+				end
+				totalcount.fetched=totalcount.fetched+count.fetched
+				totalcount.found=totalcount.found+count.found
 				local reqCountPost=ma.GetFile(LHpi.savepath.."LHpi.mkm.requestcounter")
 				dataAge[url].requests=reqCountPost-reqCountPre
+
 			else-- reqPredition > 5000
 				print(string.format("Skipped %s with %s requests (today's total: %i) to prevent HTTP/429.",url,(dataAge[url].requests or "unknown"),reqPrediction))
 				LHpi.Log(string.format("Fetching data for %s would result in %s requests (%i total for today). Skipping url to prevent http 429 errors.",url,(dataAge[url].requests or "unknown"),reqPrediction) ,0)
@@ -518,6 +482,131 @@ function helper.GetSourceData(sets)
 	LHpi.Log("Persistent request counter now is at "..counter ,1)
 	print("Persistent request counter now is at "..counter)
 end--function GetSourceData
+
+--[[- implements price fetching for a set url via html scraping
+ 
+ @function [parent=#helper] FetchPricesFromHtml
+ @param #string url
+ @param #table	details
+ @return #table		fetchedCount	{ fetched = #number, found = #number }
+ @return #boolean	ok
+]]
+function helper.FetchPricesFromHtml( url, details )
+	local count= { fetched=0, found=0 }
+	local ok = true
+	local cards = helper.CardsInSetFromHtml(url)
+	for name,url in pairs(cards) do
+		print(string.format("name:%s : url:%s",name,url))
+	end--for
+error("break")
+
+	return count,ok
+end--function FetchPricesFromHtml
+
+--[[- first step for helper.FetchPricesFromUrl:
+ build table of all cards and their individual urls
+ 
+ @function [parent=#helper] CardsInSetFromHtml
+ @param #string url
+ @param #number resultsPage		mkm result page index
+ @param #table cards			previously found cards for recursive call
+ @return #table	cards			{ #string name = #string url }
+]]
+function helper.CardsInSetFromHtml(url,resultsPage,cards)
+	if cards == nil then cards = {} end
+	if resultsPage == nil then resultsPage = 0 end
+	local lurl = url
+	if resultsPage > 0 then
+		lurl = lurl .. "?resultsPage=" .. resultsPage
+	end
+	local trefferVon, trefferBis, trefferMax
+	local setdata = LHpi.GetSourceData( lurl , details )
+	if setdata then
+		trefferMax, trefferVon, trefferBis = string.match(setdata,">(%d+) Treffer %- Zeige Seite Nr%. %d+ %(Treffer (%d+) bis (%d+)%)<")
+		local i=0
+		for url,name in string.gmatch(setdata,'<td><a href="([^"]-)">([^<]-)</a></td><td><a href') do
+			i=i+1
+			cards[name]=url
+		end--for
+		if i ~= (trefferBis - trefferVon + 1) then
+			error("Anzahl gefundener Karten-Urls passt nicht zur Trefferzahl!")
+		end--if i
+	else
+		LHpi.Log("no data from "..lurl ,1)
+		print("no data from "..lurl)
+		ok=false
+	end--if setdata
+	if trefferBis ~= trefferMax then
+		cards = helper.CardsInSetFromHtml(url,resultsPage+1,cards)
+	end
+	return cards
+end--function CardsInSetFromHtml
+
+--[[- implements price fetching for a set url via MKM API
+ 
+ @function [parent=#helper] FetchPriceGuidesFromAPI
+ @param #string url
+ @param #table	details
+ @return #table		fetchedCount	{ fetched = #number, found = #number }
+ @return #boolean	ok
+]]
+function helper.FetchPriceGuidesFromAPI( url, details )
+	local count= { fetched=0, found=0 }
+	local ok = true
+	local setdata = LHpi.GetSourceData( url , details )
+	if setdata then
+		local fileurl = string.gsub(url, '[/\\:%*%?<>|"]', "_")
+		--LHpi.Log( "Backup source to file: \"" .. (LHpi.savepath or "") .. "BACKUP-" .. fileurl .. "\"" ,1)
+		--ma.PutFile( (LHpi.savepath or "") .. "BACKUP-" .. fileurl , setdata , 0 )
+		LHpi.Log("integrating priceGuide entries into " .. fileurl ,1)
+		print("integrating priceGuide entries into " .. fileurl)
+		setdata = Json.decode(setdata)
+		local httpStatus
+		for cid,card in pairs(setdata.card) do
+			--local cardurl = site.BuildUrl(card)
+			local cardurl
+			local urls = site.BuildUrl(card)
+			for u,d in pairs(urls) do
+				-- this is only safe because site.Buildurl( #mkm-Entity ) always returns a single url in the container
+				cardurl = u
+			end
+			print("fetching single card from " .. cardurl)
+			local s2=SAVEHTML
+			if SAVECARDDATA~=true then
+				SAVEHTML=false
+			end
+			--TODO try/catch block here?
+			local proddata,status = LHpi.GetSourceData( cardurl , { oauth=true } )
+			SAVEHTML=s2
+			if proddata then
+				count.fetched=count.fetched+1
+				proddata = Json.decode(proddata).product
+				if proddata.priceGuide~=nil then
+					count.found=count.found+1
+					setdata.card[cid].priceGuide=proddata.priceGuide
+				end--if proddata.priceGuide
+			else
+				httpStatus = status
+				break
+			end--if proddata
+		end--for cid,card
+		if not httpStatus then
+			setdata = Json.encode(setdata)
+			LHpi.Log( "Saving rebuilt source to file: \"" .. (LHpi.savepath or "") .. fileurl .. "\"" ,1)
+			LHpi.Log( string.format("%i cards have been fetched, and %i pricesGuides were found. LHpi.Data claims %i cards in set %q.",count.fetched,count.found,LHpi.Data.sets[details.setid].cardcount.all,LHpi.Data.sets[details.setid].name ) ,1)
+			print( "Saving rebuilt source to file: \"" .. (LHpi.savepath or "") .. fileurl .. "\"")
+			ma.PutFile( (LHpi.savepath or "") .. fileurl , setdata , 0 )
+		else
+			local skippedString = string.format("%s encountered, abort and skip %q.",httpStatus,LHpi.Data.sets[details.setid].name)
+			ok = false
+		end--if not httpStatus
+	else
+		LHpi.Log("no data from "..url ,1)
+		print("no data from "..url)
+		ok=false
+	end--if setdata
+	return count,ok
+end--function FetchPriceGuidesFromAPI
 
 --[[- determine the Expected Value of a booster from chosen sets.
  site.sets could be used as parameter, but any table with MA setids as index can be used.
