@@ -435,6 +435,7 @@ function helper.FetchAllPrices(sets)
 			dataAge[url]={timestamp=0}
 		end
 		local maxAge = dataStaleAge["default"]
+		--TODO dataStaleAge per set
 		if dataStaleAge[sid] then
 			maxAge = dataStaleAge[sid]
 		end
@@ -446,9 +447,6 @@ function helper.FetchAllPrices(sets)
 			print(string.format(" predicted number of requests is %i",reqForSet))			
 			local reqPrediction = reqCountPre+reqForSet
 			if reqPrediction < dailyRequestLimit then
-
-				--probably best to split this into a sub-function and 
-				--in html-mode loop if "Zeige Seite Nr. 1 (Treffer 1 bis 30)" is less than "303 Treffer"
 				local count,ok
 				if MKMDATASOURCE.html then
 					count,ok = helper.FetchPricesFromHtml( url,details )
@@ -483,7 +481,8 @@ function helper.FetchAllPrices(sets)
 	print("Persistent request counter now is at "..counter)
 end--function GetSourceData
 
---[[- implements price fetching for a set url via html scraping
+--[[- implements price fetching for a set url via html scraping.
+emulate mkm api response format for save file, so MKMDATASOURCE is transparent to further processings.
  
  @function [parent=#helper] FetchPricesFromHtml
  @param #string url
@@ -494,9 +493,38 @@ end--function GetSourceData
 function helper.FetchPricesFromHtml( url, details )
 	local count= { fetched=0, found=0 }
 	local ok = true
+	local expansiontable = { expansion= {name=string.match(url,"/([^/]+)$"), idExpansion=details.setid}, card = {} }
 	local cards = helper.CardsInSetFromHtml(url)
-	for name,url in pairs(cards) do
-		print(string.format("name:%s : url:%s",name,url))
+	for cardname,cardurlsuffix in pairs(cards) do
+		print(string.format("name:%s : urlsuffix:%s",cardname,cardurlsuffix))
+		LHpi.Log(string.format("name:%s : urlsuffix:%s",cardname,cardurlsuffix))
+		local cardurl=site.BuildUrl( { idProduct=cardname, urlsuffix=cardurlsuffix } )
+		for u,d in pairs(cardurl) do
+			-- this is only safe because site.Buildurl( #mkm-Entity ) always returns a single url in the container
+			cardurl = u
+		end
+		local cardRawData,status = LHpi.GetSourceData( cardurl , { oauth = false } )
+		if not cardRawData then
+			print(string.format("! %s",status))
+			LHpi.Log(string.format("! %s",status))
+			
+		end
+--		print(cardRawData)
+		local idProduct = "faked"
+		local rarity = nil
+		local expansion = expansiontable.expansion.name
+		local name = {{idLanguage=1, languageName="English",productName=cardname},nil}
+		local priceGuide= {LOWFOIL=nil, SELL=nil ,TREND=nil ,AVG=0 ,LOW=0 ,LOWEX=nil }
+		priceGuide.LOWEX = string.match(cardRawData,'Verfügbar ab %(EX%+%):</td><td.-><span itemprop="lowPrice">([%d.,]-)<')
+		priceGuide.TREND = string.match(cardRawData,'Preistendenz:</td><td.-">([%d.,]-) .-</td>')
+		priceGuide.LOWFOIL = string.match(cardRawData,'Foils verfügbar ab:</td><td.-">([%d.,]-) .-</td>')
+		priceGuide.SELL = string.match(cardRawData,'{"label":"Durchschnittlicher Verkaufspreis".-"data":%[[%d.,]-%]}') or ""
+		priceGuide.SELL = string.match(priceGuide.SELL,',([%d.]+)%]}$')
+		local newCard = { rarity= rarity, expansion = expansion, name = name, priceGuide=priceGuide }
+		table.insert(expansiontable.card,newCard)
+--print(LHpi.Tostring(newCard))
+--error("break")
+
 	end--for
 error("break")
 
@@ -512,32 +540,32 @@ end--function FetchPricesFromHtml
  @param #table cards			previously found cards for recursive call
  @return #table	cards			{ #string name = #string url }
 ]]
-function helper.CardsInSetFromHtml(url,resultsPage,cards)
+function helper.CardsInSetFromHtml(seturl,resultsPage,cards)
 	if cards == nil then cards = {} end
 	if resultsPage == nil then resultsPage = 0 end
-	local lurl = url
+	local url = seturl
 	if resultsPage > 0 then
-		lurl = lurl .. "?resultsPage=" .. resultsPage
+		url = url .. "?resultsPage=" .. resultsPage
 	end
 	local trefferVon, trefferBis, trefferMax
-	local setdata = LHpi.GetSourceData( lurl , details )
+	local setdata = LHpi.GetSourceData( url , nil )
 	if setdata then
 		trefferMax, trefferVon, trefferBis = string.match(setdata,">(%d+) Treffer %- Zeige Seite Nr%. %d+ %(Treffer (%d+) bis (%d+)%)<")
 		local i=0
-		for url,name in string.gmatch(setdata,'<td><a href="([^"]-)">([^<]-)</a></td><td><a href') do
+		for urlsuffix,name in string.gmatch(setdata,'<td><a href="([^"]-)">([^<]-)</a></td><td><a href') do
 			i=i+1
-			cards[name]=url
+			cards[name]=urlsuffix
 		end--for
 		if i ~= (trefferBis - trefferVon + 1) then
 			error("Anzahl gefundener Karten-Urls passt nicht zur Trefferzahl!")
 		end--if i
 	else
-		LHpi.Log("no data from "..lurl ,1)
-		print("no data from "..lurl)
+		LHpi.Log("no data from "..url ,1)
+		print("no data from "..url)
 		ok=false
 	end--if setdata
 	if trefferBis ~= trefferMax then
-		cards = helper.CardsInSetFromHtml(url,resultsPage+1,cards)
+		cards = helper.CardsInSetFromHtml(seturl,resultsPage+1,cards)
 	end
 	return cards
 end--function CardsInSetFromHtml

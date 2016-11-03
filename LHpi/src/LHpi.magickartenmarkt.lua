@@ -453,6 +453,12 @@ function site.GetSourceData(url,details)
 		errorstring = status .. " - check token file, url and OAuth!"
 	elseif code == 429 then -- Too Many Requests
 		errorstring = status .. " :limited to 5000 requests per day, resets at 0:00 CE(S)T. Pass \"resetcounter\" to mkm-helper to reset the persistant request counter." 
+	elseif code == 301 then -- Moved Permanently
+		-- TODO http 301, resolve later
+		errorstring = status .. " - headers=" .. LHpi.Tostring(headers)
+		LHpi.Log(errorstring ,1)
+		print(errorstring)
+		return errorstring, status
 	else
 		errorstring = status .. " - " .. LHpi.Tostring(headers)
 	end
@@ -552,11 +558,10 @@ function site.BuildUrl( setid,langid,frucid )
 			url = url .. "/Products/Singles"
 				container[url .. setid.urlsuffix] = { oauth=false, setid=setid }
 				return container
-			else
-				--TODO single card reference?
-				error("not implemented yet")
+			elseif setid.idProduct then
+				container[url .. setid.urlsuffix] = { oauth=false, setid=setid }
+				return container
 			end
-			--use bogus frucid to trigger this instead?
 		elseif setid=="list" then --request Expansion list. Needs to be parsed to be of use.
 			container[url .. "/Expansions"] = { oauth=false }
 			return container
