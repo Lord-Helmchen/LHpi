@@ -128,7 +128,7 @@ SAVELOG = true
 --	This forces the script to stay in OFFLINE mode.
 --	Only really useful for testing with SAVECARDDATA.
 -- @field #boolean STAYOFFLINE
---local STAYOFFLINE = true
+local STAYOFFLINE = true
 
 --- save a local copy of each individual card source json to #string savepath if not in OFFLINE mode; default false
 --	helper.FetchAllPrices normally overrides SAVEHTML switch from LHpi.magickartenmarkt.lua to enforce SAVEDATA.
@@ -500,34 +500,51 @@ function helper.FetchPricesFromHtml( url, details )
 		LHpi.Log(string.format("name:%s : urlsuffix:%s",cardname,cardurlsuffix))
 		local cardurl=site.BuildUrl( { idProduct=cardname, urlsuffix=cardurlsuffix } )
 		for u,d in pairs(cardurl) do
-			-- this is only safe because site.Buildurl( #mkm-Entity ) always returns a single url in the container
+			-- this is only safe because site.Buildurl( #table ) always returns a single url in the container
 			cardurl = u
 		end
 		local cardRawData,status = LHpi.GetSourceData( cardurl , { oauth = false } )
-		if not cardRawData then
-			print(string.format("! %s",status))
-			LHpi.Log(string.format("! %s",status))
-			
-		end
---		print(cardRawData)
-		local idProduct = "faked"
-		local rarity = nil
-		local expansion = expansiontable.expansion.name
-		local name = {{idLanguage=1, languageName="English",productName=cardname},nil}
-		local priceGuide= {LOWFOIL=nil, SELL=nil ,TREND=nil ,AVG=0 ,LOW=0 ,LOWEX=nil }
-		priceGuide.LOWEX = string.match(cardRawData,'Verfügbar ab %(EX%+%):</td><td.-><span itemprop="lowPrice">([%d.,]-)<')
-		priceGuide.TREND = string.match(cardRawData,'Preistendenz:</td><td.-">([%d.,]-) .-</td>')
-		priceGuide.LOWFOIL = string.match(cardRawData,'Foils verfügbar ab:</td><td.-">([%d.,]-) .-</td>')
-		priceGuide.SELL = string.match(cardRawData,'{"label":"Durchschnittlicher Verkaufspreis".-"data":%[[%d.,]-%]}') or ""
-		priceGuide.SELL = string.match(priceGuide.SELL,',([%d.]+)%]}$')
-		local newCard = { rarity= rarity, expansion = expansion, name = name, priceGuide=priceGuide }
-		table.insert(expansiontable.card,newCard)
---print(LHpi.Tostring(newCard))
---error("break")
+		count.fetched=count.fetched+1
+		local waitTimer=1
+		while cardRawData=="" and status == "HTTP/1.1 200 OK" do
+			print(string.format("! %s but no cardRawData. Wait %i seconds for (d)dos protection to calm down.",status,waitTimer))
+			helper.sleep(waitTimer)
+			cardRawData,status = LHpi.GetSourceData( cardurl , { oauth = false } )
+			count.fetched=count.fetched+1
+			waitTimer=waitTimer*2
+		end--if not cardRawData
 
-	end--for
-error("break")
+		if cardRawData then
+			if status == "HTTP/1.1 301 Moved Permanently" then
+				print(string.format("! %s",status))
+				LHpi.Log(string.format("! %s : %s",status,LHpi.Tostring(cardRawData)))
+				--TODO debug 301 urls
+			else
+				count.found=count.found+1
+				local idProduct = "faked"
+				local rarity = nil
+				local expansion = expansiontable.expansion.name
+				local name = {{idLanguage=1, languageName="English",productName=cardname},nil}
+				local priceGuide= {LOWFOIL=nil, SELL=nil ,TREND=nil ,AVG=0 ,LOW=0 ,LOWEX=nil }
+				priceGuide.LOWEX = string.match(cardRawData,'Verfügbar ab %(EX%+%):</td><td.-><span itemprop="lowPrice">([%d.,]-)<')
+				priceGuide.TREND = string.match(cardRawData,'Preistendenz:</td><td.-">([%d.,]-) .-</td>')
+				priceGuide.LOWFOIL = string.match(cardRawData,'Foils verfügbar ab:</td><td.-">([%d.,]-) .-</td>')
+				priceGuide.SELL = string.match(cardRawData,'{"label":"Durchschnittlicher Verkaufspreis".-"data":%[[%d.,]-%]}') or ""
+				priceGuide.SELL = string.match(priceGuide.SELL,',([%d.]+)%]}$')
+				local newCard = { rarity= rarity, expansion = expansion, name = name, priceGuide=priceGuide }
+				--print(LHpi.Tostring(newCard))
+				table.insert(expansiontable.card,newCard)
+				--error("break")
+			end--if status==301
+		else--not cardRawData
+			print("!! no cardRawData - " .. status)
+			ok = false
+			--TODO break loop now?
+		end--if cardRawData
+	end--for cardname,cardurlsuffix in pairs(cards)
+	LHpi.Log( string.format("%i cards have been requested, and %i cards were found. LHpi.Data claims %i cards in set %q.",count.fetched,count.found,LHpi.Data.sets[details.setid].cardcount.all,LHpi.Data.sets[details.setid].name ) ,1)
 
+	error("break")
 	return count,ok
 end--function FetchPricesFromHtml
 
@@ -543,31 +560,41 @@ end--function FetchPricesFromHtml
 function helper.CardsInSetFromHtml(seturl,resultsPage,cards)
 	if cards == nil then cards = {} end
 	if resultsPage == nil then resultsPage = 0 end
-	local url = seturl
+	local url = seturl .. "?sortBy=number&sortDir=asc&view=list"
 	if resultsPage > 0 then
-		url = url .. "?resultsPage=" .. resultsPage
+		url = url .. "&resultsPage=" .. resultsPage
 	end
 	local trefferVon, trefferBis, trefferMax
 	local setdata = LHpi.GetSourceData( url , nil )
 	if setdata then
 		trefferMax, trefferVon, trefferBis = string.match(setdata,">(%d+) Treffer %- Zeige Seite Nr%. %d+ %(Treffer (%d+) bis (%d+)%)<")
+		trefferMax=tonumber(trefferMax)
+		trefferVon=tonumber(trefferVon)
+		trefferBis=tonumber(trefferBis)
 		local i=0
 		for urlsuffix,name in string.gmatch(setdata,'<td><a href="([^"]-)">([^<]-)</a></td><td><a href') do
 			i=i+1
 			cards[name]=urlsuffix
 		end--for
+		print(string.format("von %i bis %i sind %i, gefunden %i",trefferVon,trefferBis,trefferBis-trefferVon+1,i))
 		if i ~= (trefferBis - trefferVon + 1) then
 			error("Anzahl gefundener Karten-Urls passt nicht zur Trefferzahl!")
 		end--if i
 	else
 		LHpi.Log("no data from "..url ,1)
 		print("no data from "..url)
-		ok=false
+		--TODO revocer from empty setdata
 	end--if setdata
+	local cardnum = LHpi.Length(cards)
+	if cardnum < trefferBis then
+		print(string.format("%i cards in table, but trefferBis is %i",cardnum,trefferBis))
+		error("Anzahl gefundener Karten-Urls passt nicht zur Trefferzahl!")
+	end
 	if trefferBis ~= trefferMax then
 		cards = helper.CardsInSetFromHtml(seturl,resultsPage+1,cards)
 	end
 	return cards
+	--TODO count these requests, too
 end--function CardsInSetFromHtml
 
 --[[- implements price fetching for a set url via MKM API
@@ -987,6 +1014,15 @@ function helper.OAuthTest( params )
 --	print("status_line=", LHpi.Tostring(response_status_line))
 --	print("body=", LHpi.Tostring(response_body))
 end--function OAuthTest
+
+--[[- sleep for n seconds using os.time()
+ @function [parent=#helper] sleep
+ @param #number s
+]]
+function helper.sleep(s)
+  local ntime = os.time() + s
+  repeat until os.time() > ntime
+end
 
 -- read cmdline parameters
 if MODE==nil then MODE={} end

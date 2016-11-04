@@ -769,6 +769,7 @@ function LHpi.GetSourceData( url , details ) --
 			LHpi.Log( "!! GetFile failed for " .. (LHpi.savepath or "") .. url ,0)
 			return nil,"GetFile failed"
 		end
+		status="GetFile ok"
 	elseif site.GetSourceData then
 		-- defer fetching to sitescript if a funtion exists there
 		-- long-term this may make all urldetails obsolete
@@ -790,6 +791,7 @@ function LHpi.GetSourceData( url , details ) --
 			LHpi.Log( "!! GetUrl failed for " .. url ,0)
 			return nil,"ma.GetUrl failed"
 		end
+		status="ma.GetUrl ok"
 	end -- if details.isfile
 
 	if SAVEHTML and (not OFFLINE) then
@@ -797,7 +799,7 @@ function LHpi.GetSourceData( url , details ) --
 		LHpi.Log( "Saving source html to file: \"" .. (LHpi.savepath or "") .. url .. "\"" ,0)
 		ma.PutFile( (LHpi.savepath or "") .. url , sourcedata , 0 )
 	end -- if SAVEHTML
-	return sourcedata
+	return sourcedata, status
 end -- function LHpi.GetSourceData
 
 --[[- build sourceTable from (html) sourcedata
