@@ -128,7 +128,7 @@ SAVELOG = true
 --	This forces the script to stay in OFFLINE mode.
 --	Only really useful for testing with SAVECARDDATA.
 -- @field #boolean STAYOFFLINE
-local STAYOFFLINE = true
+--local STAYOFFLINE = true
 
 --- save a local copy of each individual card source json to #string savepath if not in OFFLINE mode; default false
 --	helper.FetchAllPrices normally overrides SAVEHTML switch from LHpi.magickartenmarkt.lua to enforce SAVEDATA.
@@ -514,29 +514,28 @@ function helper.FetchPricesFromHtml( url, details )
 			waitTimer=waitTimer*2
 		end--if not cardRawData
 
-		if cardRawData then
-			if status == "HTTP/1.1 301 Moved Permanently" then
-				print(string.format("! %s",status))
-				LHpi.Log(string.format("! %s : %s",status,LHpi.Tostring(cardRawData)))
-				--TODO debug 301 urls
-			else
-				count.found=count.found+1
-				local idProduct = "faked"
-				local rarity = nil
-				local expansion = expansiontable.expansion.name
-				local name = {{idLanguage=1, languageName="English",productName=cardname},nil}
-				local priceGuide= {LOWFOIL=nil, SELL=nil ,TREND=nil ,AVG=0 ,LOW=0 ,LOWEX=nil }
-				priceGuide.LOWEX = string.match(cardRawData,'Verfügbar ab %(EX%+%):</td><td.-><span itemprop="lowPrice">([%d.,]-)<')
-				priceGuide.TREND = string.match(cardRawData,'Preistendenz:</td><td.-">([%d.,]-) .-</td>')
-				priceGuide.LOWFOIL = string.match(cardRawData,'Foils verfügbar ab:</td><td.-">([%d.,]-) .-</td>')
-				priceGuide.SELL = string.match(cardRawData,'{"label":"Durchschnittlicher Verkaufspreis".-"data":%[[%d.,]-%]}') or ""
-				priceGuide.SELL = string.match(priceGuide.SELL,',([%d.]+)%]}$')
-				local newCard = { rarity= rarity, expansion = expansion, name = name, priceGuide=priceGuide }
-				--print(LHpi.Tostring(newCard))
-				table.insert(expansiontable.card,newCard)
-				--error("break")
-			end--if status==301
+		if cardRawData and cardRawData ~= "" then
+			count.found=count.found+1
+			local idProduct = "faked"
+			local rarity = nil
+			local expansion = expansiontable.expansion.name
+			local name = {{idLanguage=1, languageName="English",productName=cardname},nil}
+			local priceGuide= {LOWFOIL=nil, SELL=nil ,TREND=nil ,AVG=0 ,LOW=0 ,LOWEX=nil }
+			priceGuide.LOWEX = string.match(cardRawData,'Verfügbar ab %(EX%+%):</td><td.-><span itemprop="lowPrice">([%d.,]-)<')
+			priceGuide.TREND = string.match(cardRawData,'Preistendenz:</td><td.-">([%d.,]-) .-</td>')
+			priceGuide.LOWFOIL = string.match(cardRawData,'Foils verfügbar ab:</td><td.-">([%d.,]-) .-</td>')
+			priceGuide.SELL = string.match(cardRawData,'{"label":"Durchschnittlicher Verkaufspreis".-"data":%[[%d.,]-%]}') or ""
+			priceGuide.SELL = string.match(priceGuide.SELL,',([%d.]+)%]}$')
+			local newCard = { rarity= rarity, expansion = expansion, name = name, priceGuide=priceGuide }
+			--print(LHpi.Tostring(newCard))
+			table.insert(expansiontable.card,newCard)
+			--error("break")
 		else--not cardRawData
+			if status == "HTTP/1.1 301 Moved Permanently" then
+				--print(string.format("! %s",status))
+				--LHpi.Log(string.format("! %s : %s",status,LHpi.Tostring(cardRawData)))
+				--TODO debug 301 urls
+			end
 			print("!! no cardRawData - " .. status)
 			ok = false
 			--TODO break loop now?
@@ -574,6 +573,7 @@ function helper.CardsInSetFromHtml(seturl,resultsPage,cards)
 		local i=0
 		for urlsuffix,name in string.gmatch(setdata,'<td><a href="([^"]-)">([^<]-)</a></td><td><a href') do
 			i=i+1
+			urlsuffix = LHpi.urldecode(urlsuffix)
 			cards[name]=urlsuffix
 		end--for
 		print(string.format("von %i bis %i sind %i, gefunden %i",trefferVon,trefferBis,trefferBis-trefferVon+1,i))

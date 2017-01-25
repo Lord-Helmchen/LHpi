@@ -887,7 +887,7 @@ function main(mode)
 		DEBUGFOUND = true,--default false
 --		DEBUGVARIANTS = true,--default false
 --		SAVETABLE=true,--default false
-		DEBUG = true,--default false
+--		DEBUG = true,--default false
 		OFFLINE = true,--default false
 --		OFFLINE = false,--scripts should be set to true unless preparing for release
 	}

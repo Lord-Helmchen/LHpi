@@ -796,7 +796,7 @@ function LHpi.GetSourceData( url , details ) --
 
 	if SAVEHTML and (not OFFLINE) then
 		url = string.gsub(url, '[/\\:%*%?<>|"]', "_")
-		LHpi.Log( "Saving source html to file: \"" .. (LHpi.savepath or "") .. url .. "\"" ,0)
+		LHpi.Log( "Saving source html to file: \"" .. (LHpi.savepath or "") .. url .. "\"" ,1)
 		ma.PutFile( (LHpi.savepath or "") .. url , sourcedata , 0 )
 	end -- if SAVEHTML
 	return sourcedata, status
@@ -1845,6 +1845,13 @@ function LHpi.OAuthEncode(s)
 		return string.format("%%%02x", letter:byte()):upper()
 	end)
 end--function LHpi.OAuthEncode
+
+
+function LHpi.urldecode(s)
+	return s:gsub("%%(%x%x)", function(hex)
+		return string.char(tonumber(hex, 16))
+	end)
+end
 
 LHpi.Initialize()
 --LHpi.Log( "\239\187\191LHpi library loaded and executed successfully" , 0 , nil , 0 ) -- add unicode BOM to beginning of logfile

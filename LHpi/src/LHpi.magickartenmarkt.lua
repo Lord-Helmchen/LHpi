@@ -455,10 +455,10 @@ function site.GetSourceData(url,details)
 		errorstring = status .. " :limited to 5000 requests per day, resets at 0:00 CE(S)T. Pass \"resetcounter\" to mkm-helper to reset the persistant request counter." 
 	elseif code == 301 then -- Moved Permanently
 		-- TODO http 301, resolve later
-		errorstring = status .. " - headers=" .. LHpi.Tostring(headers)
+		errorstring = status .. " - GET was for \"" .. url .. "\""
 		LHpi.Log(errorstring ,1)
-		print(errorstring)
-		return errorstring, status
+		LHpi.Log("headers are " .. LHpi.Tostring(headers))
+		return body, status
 	else
 		errorstring = status .. " - " .. LHpi.Tostring(headers)
 	end
