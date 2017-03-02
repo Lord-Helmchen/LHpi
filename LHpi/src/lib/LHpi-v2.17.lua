@@ -28,9 +28,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 2.17
 dataver default 6 -> 10
 SAVELOG defaults to false, as was documented
+
+2.18
+site.GetSourceData doesn't care for oauth anymore, instead defers to site.GetSourceData if it exists
+
 ]]
 
---FIXME change filename to 2.17 and update all sitescripts
+--FIXME change filename to 2.18 and update all sitescripts
 --FIXME update (c) to 2016 in all files
 
 --TODO count averaging events with counter attached to prices. better: just build a separate table to remember averaging happened.
@@ -161,6 +165,8 @@ function LHpi.Initialize()
 			LHpi.logfile = LHpi.workdir .. site.logfile
 		end
 	end
+	LHpi.Log("Logfile ".. LHpi.logfile .." initialized",0,nil,0)--create new empty logfile
+	ma.Log( "Check " .. LHpi.logfile  .. " for detailed information" )
 	--- savepath for OFFLINE (read) and SAVEHTML,SAVETABLE (write). must point to an existing directory relative to MA's root.
 	-- @field [parent=#LHpi] #string savepath
 	if site.savepath then
@@ -738,7 +744,7 @@ function LHpi.ListSources ( importfoil , importlangs , importsets )
 	return urls, urlcount
 end -- function LHpi.ListSources
 
---[[- construct url/filename fetch the contents
+--[[- fetch the contents from one url/filename
  fetch a page/file and return a string with the fetched content.
  Initial Parsing and calls to site.ParseHtmlData are then done by LHpi.ParseSourceData.
 
@@ -746,6 +752,7 @@ end -- function LHpi.ListSources
  @param #string url		source location (url or filename)
  @param #table details	{ setid= #number, langid= #number, frucid= #number, isfile= #boolean, oauth= #boolean }
  @return #string sourcedata
+ @return #string status	if sourcedata is nil
 ]]
 function LHpi.GetSourceData( url , details ) -- 
 	local sourcedata = nil -- declare here for right scope
@@ -760,37 +767,39 @@ function LHpi.GetSourceData( url , details ) --
 		sourcedata = ma.GetFile( (LHpi.savepath or "") .. url )
 		if not sourcedata then
 			LHpi.Log( "!! GetFile failed for " .. (LHpi.savepath or "") .. url ,0)
-			return nil
+			return nil,"GetFile failed"
 		end
-	elseif details.oauth then -- we need to build a AOuth request and probably send it via https
-		LHpi.Log("calling sitescript to fetch OAuth protected ressources from " .. url ,2)
-		local status
-		if site.FetchSourceDataFromOAuth then
-			sourcedata, status = site.FetchSourceDataFromOAuth( url )
-		else
-			error("site.FetchSourceDataFromOAuth not implemented !")
-		end
-		if not sourcedata or sourcedata == "" then
-			LHpi.Log( "!! site.FetchSourceDataFromOAuth failed for " .. url ,0)
-			LHpi.Log("server response " .. tostring(status) ,1)
+		status="GetFile ok"
+	elseif site.GetSourceData then
+		-- defer fetching to sitescript if a funtion exists there
+		-- long-term this may make all urldetails obsolete
+		sourcedata,status = site.GetSourceData( url, details )
+		if not sourcedata then
+			LHpi.Log( "!! site.GetSourceData failed for " .. url .. " = " .. LHpi.Tostring(details) ,0)
 			return nil,status
-		end		
+		end
+	elseif details.oauth then -- we need to build a OAuth request and probably send it via https
+		--deprecated
+		LHpi.Log("checking oauth flag and calling site.FetchSourceDataFromOauth is deprecated!" ,0)
+		LHpi.Log("Non-standard methods of fetching the source data shall be implemented in site.GetSourceData(url,details)" ,0)
+		error("checking oauth flag and calling site.FetchSourceDataFromOauth is deprecated!")
 	else -- get htmldata from online source
 		LHpi.Log( "Fetching http://" .. url ,0)
 		sourcedata = ma.GetUrl( "http://" .. url )
 		LHpi.Log("fetched remote file." ,2)
 		if not sourcedata then
 			LHpi.Log( "!! GetUrl failed for " .. url ,0)
-			return nil
+			return nil,"ma.GetUrl failed"
 		end
+		status="ma.GetUrl ok"
 	end -- if details.isfile
 
 	if SAVEHTML and (not OFFLINE) then
 		url = string.gsub(url, '[/\\:%*%?<>|"]', "_")
-		LHpi.Log( "Saving source html to file: \"" .. (LHpi.savepath or "") .. url .. "\"" ,0)
+		LHpi.Log( "Saving source html to file: \"" .. (LHpi.savepath or "") .. url .. "\"" ,1)
 		ma.PutFile( (LHpi.savepath or "") .. url , sourcedata , 0 )
 	end -- if SAVEHTML
-	return sourcedata
+	return sourcedata, status
 end -- function LHpi.GetSourceData
 
 --[[- build sourceTable from (html) sourcedata
@@ -1837,9 +1846,16 @@ function LHpi.OAuthEncode(s)
 	end)
 end--function LHpi.OAuthEncode
 
+
+function LHpi.urldecode(s)
+	return s:gsub("%%(%x%x)", function(hex)
+		return string.char(tonumber(hex, 16))
+	end)
+end
+
 LHpi.Initialize()
 --LHpi.Log( "\239\187\191LHpi library loaded and executed successfully" , 0 , nil , 0 ) -- add unicode BOM to beginning of logfile
-LHpi.Log( "LHpi library " .. LHpi.version .. " loaded and executed successfully." , 0 , nil ,0)
+LHpi.Log( "LHpi library " .. LHpi.version .. " loaded and executed successfully." , 0 , nil ,1)
 ma.Log("LHpi library " .. LHpi.version .. " loaded")
 return LHpi
 --EOF

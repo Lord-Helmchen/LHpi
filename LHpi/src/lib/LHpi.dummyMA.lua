@@ -70,9 +70,9 @@ function ma.GetUrl(url)
 	local http = require("socket.http")
 	local page,status = http.request(url)
 	if status~=200 then
-		print("http status " .. status)
+		print("dummy: http status " .. status)
 	end
-	return page
+	return page,status
 end
 
 --- GetFile.
@@ -884,21 +884,21 @@ function main(mode)
 --		STRICTOBJTYPE = false,--default true
 --		SAVELOG = true,--default false
 		SAVEHTML = true,--default false
---		DEBUGFOUND = true,--default false
+		DEBUGFOUND = true,--default false
 --		DEBUGVARIANTS = true,--default false
 --		SAVETABLE=true,--default false
 --		DEBUG = true,--default false
 		OFFLINE = true,--default false
-		OFFLINE = false,--scripts should be set to true unless preparing for release
+--		OFFLINE = false,--scripts should be set to true unless preparing for release
 	}
 	dummy.ForceEnv()
 
 	local importfoil = "y"
 	local importlangs = dummy.alllangs
---	local importlangs = { [1] = "eng" }
+	local importlangs = { [1] = "eng" }
 	local importsets = dummy.standardsets
 --	local importsets = { [0] = "fakeset"; }
---	local importsets = { [220]="some set" }
+	local importsets = { [822]="some set" }
 --	local importsets = { [220]="foo";[800]="bar";[0]="baz"; }
 --	local importsets = dummy.coresets
 --	local importsets = dummy.expansionsets
@@ -919,7 +919,7 @@ function main(mode)
 	
 	-- select a predefined script to be tested
 --	dummy.FakeSitescript()
-	local selection = 7
+	local selection = 9
 	local script=scripts[selection]
 	if script.oldloadert then
 		dummy.LoadScript(script.name,script.path,script.savepath)--deprecated
@@ -937,21 +937,24 @@ function main(mode)
 	dummy.ForceEnv(dummy.env)
 	print("dummy says: script loaded.")
 	
-	-- utility functions from dummy:
-	--only run sitescript update helpers
-	if selection ~= 9 then
-		if site.Initialize then
-			site.Initialize({update=true})
-		--else
-		--	dummy.CompareDummySets(mapath,libver)
-		--	dummy.CompareDataSets(libver,dataver)
-		--	dummy.CompareSiteSets()	
-		end
-	end
+--	-- utility functions from dummy:
+--	--only run sitescript update helpers
+--	if selection ~= 9 then
+--		if site.Initialize then
+--			site.Initialize({update=true})
+--		--else
+--		--	dummy.CompareDummySets(mapath,libver)
+--		--	dummy.CompareDataSets(libver,dataver)
+--		--	dummy.CompareSiteSets()	
+--		end
+--	end
 	
 	-- now try to break the script :-)
 	if selection ~= 9 then
---		ImportPrice( importfoil, importlangs, importsets )
+		site.Initialize({update=true})
+	--	ImportPrice( importfoil, importlangs, importsets )
+	else
+		print("FOO")
 	end
 
 	-- demo LHpi helper functions:
