@@ -1854,8 +1854,8 @@ function LHpi.urldecode(s)
 end
 
 LHpi.Initialize()
---LHpi.Log( "\239\187\191LHpi library loaded and executed successfully" , 0 , nil , 0 ) -- add unicode BOM to beginning of logfile
-LHpi.Log( "LHpi library " .. LHpi.version .. " loaded and executed successfully." , 0 , nil ,1)
+LHpi.Log( "\239\187\191LHpi library loaded and executed successfully" , 0 , nil , 0 ) -- add unicode BOM to beginning of logfile
+--LHpi.Log( "LHpi library " .. LHpi.version .. " loaded and executed successfully." , 0 , nil ,1)
 ma.Log("LHpi library " .. LHpi.version .. " loaded")
 return LHpi
 --EOF
