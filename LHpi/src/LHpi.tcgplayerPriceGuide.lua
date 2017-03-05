@@ -29,7 +29,11 @@ start SOI branch
 set options to dev prefs again
 
 FetchExpansionList changed to new url scheme
+site.regex and ParseHtmlData changed to new source data format
 
+--TODO get "Market Price" or "Median" from http://shop.tcgplayer.com/price-guide/magic/magic-origins
+ and deprecate MiMeLo from magic.tcgplayer.com/db/search_result.asp?Set_Name=magic%20origins
+ to LHpi.tcgplayerPriceGuideLegacy
 ]]
 
 -- options that control the amount of feedback/logging done by the script
@@ -51,7 +55,7 @@ LOGFOILTWEAK = true
 
 --- choose column (HIgh/MEdium/LOw) to import from
 --@field [parent=#global] #number himelo
-himelo = 3
+himelo = 2
 --- for each lang, if true, have BCDpluginPost copy prices from ENG
 -- This is similar to MA's "Apply Cost to All Languages" checkbox, only selectively;
 -- no additional sanity checks will be performed for non-Englisch cards
@@ -155,8 +159,8 @@ site={ scriptname=scriptname, dataver=dataver, logfile=logfile or nil, savepath=
  i.e. "*CARDNAME*FOILSTATUS*PRICE*".
  it will be chopped into its parts by site.ParseHtmlData later. 
  @field [parent=#site] #string regex ]]
-site.regex = '<TR height=20>(.-)</TR>'
-
+--site.regex = '<TR height=20>(.-)</TR>'
+site.regex = '<tr>%s*(<td width=160 align=left valign=center.-)%s*</tr>'
 
 --- support for global workdir, if used outside of Magic Album/Prices folder. do not change here.
 -- Can be set externally via global variable.
@@ -352,6 +356,7 @@ function site.FetchExpansionList()
 	end
 	return expansions
 end--function site.FetchExpansionList
+
 --[[- format string to use in dummy.ListUnknownUrls update helper function.
  @field [parent=#site] #string updateFormatString ]]
 site.updateFormatString = "[%i]={id = %3i, lang = { true }, fruc = { true }, url = %q},--%s"
@@ -386,14 +391,19 @@ site.updateFormatString = "[%i]={id = %3i, lang = { true }, fruc = { true }, url
 ]]
 function site.ParseHtmlData( foundstring , urldetails )
 	local tablerow = {}
-	for column in string.gmatch(foundstring , "<td[^>]->+%b<>([^<]+)%b<></td>") do
+	foundstring = string.gsub(foundstring,"&nbsp;"," ")
+
+--	for column in string.gmatch(foundstring , "<td[^>]->+%b<>([^<]+)%b<></td>") do
+	for column in string.gmatch(foundstring , "<td[^>]->%s*%b<>%s*([^<]+)%s*%b<>%s*</td>") do
 		table.insert(tablerow , column)
 	end -- for column
 	LHpi.Log("(parsed):" .. LHpi.Tostring(tablerow) ,2)
-	local name = string.gsub( tablerow[1], "&nbsp;" , "" )
-	name = string.gsub( name , "^ " , "" )--should not be necessary, done by LHpi.GetSourceData as well...
-	local price = ( tablerow[ ( himelo+5 ) ] ) or 0 -- rows 6 to 8
-	price = string.gsub( price , "&nbsp;" , "" )
+--	local name = string.gsub( tablerow[1], "&nbsp;" , "" )
+	local name = tablerow[1]
+	--name = string.gsub( name , "^ " , "" )--should not be necessary, done by LHpi.GetSourceData as well...
+--	local price = ( tablerow[ ( himelo+5 ) ] ) or 0 -- rows 6 to 8
+	local price = ( tablerow[ ( himelo+2 ) ] ) or 0 -- rows 3 to 5
+	--price = string.gsub( price , "&nbsp;" , "" )
 	price = string.gsub( price , "%$" , "" )
 	price = string.gsub( price , "[,.]" , "" )
 	price = tonumber(price)
@@ -577,6 +587,8 @@ site.sets = {
 [100]={id = 100, lang = { true }, fruc = { true }, url = "beta%20edition"},--Beta Edition
 [90] ={id =  90, lang = { true }, fruc = { true }, url = "alpha%20edition"},--Alpha Edition
 -- Expansions
+[831]={id = 831, lang = { true }, fruc = { true }, url = "shadows%20over%20innistrad"},--Shadows over Innistrad
+[829]={id = 829, lang = { true }, fruc = { true }, url = "oath%20of%20the%20gatewatch"},--Oath of the Gatewatch
 [825]={id = 825, lang = { true }, fruc = { true }, url = "battle%20for%20zendikar"},--Battle for Zendikar
 [818]={id = 818, lang = { true }, fruc = { true }, url = "dragons%20of%20tarkir"},--Dragons of Tarkir
 [816]={id = 816, lang = { true }, fruc = { true }, url = "fate%20reforged"},--Fate Reforged
@@ -647,6 +659,8 @@ site.sets = {
 [130]={id = 130, lang = { true }, fruc = { true }, url = "antiquities"},--Antiquities
 [120]={id = 120, lang = { true }, fruc = { true }, url = "arabian%20nights"},--Arabian Nights
 -- special sets
+[830]={id = 830, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Blessed%20vs.%20Cursed"},--Duel Decks: Blessed vs. Cursed
+[828]={id = 828, lang = { true }, fruc = { true }, url = "Commander%202015"},--Commander 2015
 [826]={id = 826, lang = { true }, fruc = { true }, url = "Zendikar%20Expeditions"},--Zendikar Expeditions
 [824]={id = 824, lang = { true }, fruc = { true }, url = "Duel%20Decks:%20Zendikar%20vs.%20Eldrazi"},--Duel Decks: Zendikar vs. Eldrazi
 [823]={id = 823, lang = { true }, fruc = { true }, url = "From%20the%20Vault:%20Angels"},--From the Vault: Angels

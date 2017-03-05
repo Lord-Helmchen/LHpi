@@ -884,12 +884,12 @@ function main(mode)
 --		STRICTOBJTYPE = false,--default true
 --		SAVELOG = true,--default false
 		SAVEHTML = true,--default false
-		DEBUGFOUND = true,--default false
+--		DEBUGFOUND = true,--default false
 --		DEBUGVARIANTS = true,--default false
 --		SAVETABLE=true,--default false
 --		DEBUG = true,--default false
 		OFFLINE = true,--default false
---		OFFLINE = false,--scripts should be set to true unless preparing for release
+		OFFLINE = false,--scripts should be set to true unless preparing for release
 	}
 	dummy.ForceEnv()
 
@@ -902,7 +902,7 @@ function main(mode)
 --	local importsets = { [220]="foo";[800]="bar";[0]="baz"; }
 --	local importsets = dummy.coresets
 --	local importsets = dummy.expansionsets
---	local importsets = dummy.MergeTables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
+	local importsets = dummy.MergeTables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 	
 	local scripts={
 		[0]={name="lib\\LHpi.sitescriptTemplate-v2.17.10.15.lua",savepath="."},
@@ -919,9 +919,9 @@ function main(mode)
 	
 	-- select a predefined script to be tested
 --	dummy.FakeSitescript()
-	local selection = 9
+	local selection = 6
 	local script=scripts[selection]
-	if script.oldloadert then
+	if script.oldloader then
 		dummy.LoadScript(script.name,script.path,script.savepath)--deprecated
 	else
 		--new loader
@@ -951,10 +951,10 @@ function main(mode)
 	
 	-- now try to break the script :-)
 	if selection ~= 9 then
-		site.Initialize({update=true})
-	--	ImportPrice( importfoil, importlangs, importsets )
+	--	site.Initialize({update=true})
+		ImportPrice( importfoil, importlangs, importsets )
 	else
-		print("FOO")
+		print("No Initialize for mkm-helper")
 	end
 
 	-- demo LHpi helper functions:
