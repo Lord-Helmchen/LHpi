@@ -222,6 +222,20 @@ function ImportPrice( importfoil , importlangs , importsets )
 	error( scriptname .. " does not work from within MA. Please run it with LHpi.mkm-helper.bat and use LHpi.magickartenmarkt.lua in OFFLINE mode!" )
 end -- function ImportPrice
 
+--[[- prepare script
+ Do stuff here that needs to be done between loading the Library and calling LHpi.DoImport.
+ At this point, LHpi's functions are available and OPTIONS are set,
+ but default values for functions and other missing fields have not yet been set.
+ 
+@param #table mode { #boolean flags for nonstandard modes of operation }
+	-- nil if called by Magic Album
+	-- mode.update	true to run update helper functions
+ @function [parent=#site] Initialize
+]]
+function site.Initialize( mode )
+	LHpi.Log( "mkm-helper is not a sitescript. Initialize not implemented.", 0)
+end --function Initialize
+
 function main( mode )
 	if mode==nil or next(mode)==nil then
 		error("set global MODE or supply cmdline arguments to select what the helper should do.")
