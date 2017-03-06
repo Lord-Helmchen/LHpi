@@ -57,24 +57,9 @@ renamed helper.GetSourceData to helper.FetchAllPrices
 -- Both may interfere with the MODE you set here.
 -- 
 -- @field [parent=#global] #table MODE
-MODE = { download=true, sets="standard", html=true}
+--MODE = { download=true, sets="standard", html=true}
 --MODE={ test=true, checkstock=true }
-MODE = { download=true, sets={
--- [831] = "Shadows over Innistrad";
--- [829] = "Oath of the Gatewatch";
--- [825] = "Battle for Zendikar";
- [822] = "Magic Origins";
--- [818] = "Dragons of Tarkir";
--- [830] = "Duel Decks: Blessed vs. Cursed";
--- [828] = "Commander 2015 Edition";
--- [827] = "Magic Origins Clash Pack";
--- [826] = "Zendikar Expeditions";
--- [22] = "Prerelease Promos";
--- [21] = "Release & Launch Parties Promos";
--- [26] = "Magic Game Day";
--- [30] = "Friday Night Magic Promos";
--- [34] = "World Magic Cup Qualifiers Promos";
-} }
+--TODO make sure hardcoded MODE is not needed for release
 
 --- how long before stored price info is considered too old.
 -- To help with MKM's daily request limit, and because MKM and MA sets do not map one-to-one,
@@ -222,24 +207,7 @@ function ImportPrice( importfoil , importlangs , importsets )
 	error( scriptname .. " does not work from within MA. Please run it with LHpi.mkm-helper.bat and use LHpi.magickartenmarkt.lua in OFFLINE mode!" )
 end -- function ImportPrice
 
---[[- prepare script
- Do stuff here that needs to be done between loading the Library and calling LHpi.DoImport.
- At this point, LHpi's functions are available and OPTIONS are set,
- but default values for functions and other missing fields have not yet been set.
- 
-@param #table mode { #boolean flags for nonstandard modes of operation }
-	-- nil if called by Magic Album
-	-- mode.update	true to run update helper functions
- @function [parent=#site] Initialize
-]]
-function site.Initialize( mode )
-	LHpi.Log( "mkm-helper is not a sitescript. Initialize not implemented.", 0)
-end --function Initialize
-
 function main( mode )
-	if mode==nil or next(mode)==nil then
-		error("set global MODE or supply cmdline arguments to select what the helper should do.")
-	end
 	if "table" ~= type (mode) then
 		local m=mode
 		mode = { [m]=true }
@@ -266,6 +234,11 @@ function main( mode )
 	LHpi = dofile(workdir.."lib\\LHpi-v"..libver..".lua")
 	LHpi.Log( "LHpi lib is ready for use." ,1)
 
+	if mode==nil or next(mode)==nil then
+		--error("set global MODE or supply cmdline arguments to select what the helper should do.")
+		print("set global MODE or supply cmdline arguments to select what the helper should do." ,0)
+		return "No MODE set for mkm-helper: doing nothing!"
+	end
 	-- parse MODE and args for set definitions
 	local sets = {}
 	local function setStringToTable(setString)
@@ -394,7 +367,7 @@ end--function main
  site.sets can be used as parameter, but any table with MA setids as index can be used.
  If setlist is nil, a list of all available expansions is fetched from the server and all are downloaded.
  
- @function [parent=#helper] GetSourceData
+ @function [parent=#helper] FetchAllPrices
  @param #table setlist (optional) { #number sid= #string name } list of sets to download
 ]]
 function helper.FetchAllPrices(sets)
@@ -493,7 +466,7 @@ function helper.FetchAllPrices(sets)
 	local counter = ma.GetFile(LHpi.savepath.."LHpi.mkm.requestcounter") or "zero"
 	LHpi.Log("Persistent request counter now is at "..counter ,1)
 	print("Persistent request counter now is at "..counter)
-end--function GetSourceData
+end--function FetchAllPrices
 
 --[[- implements price fetching for a set url via html scraping.
 emulate mkm api response format for save file, so MKMDATASOURCE is transparent to further processings.
@@ -543,11 +516,13 @@ function helper.FetchPricesFromHtml( url, details )
 			local newCard = { rarity= rarity, expansion = expansion, name = name, priceGuide=priceGuide }
 			--print(LHpi.Tostring(newCard))
 			table.insert(expansiontable.card,newCard)
-			--error("break")
 		else--not cardRawData
 			if status == "HTTP/1.1 301 Moved Permanently" then
-				--print(string.format("! %s",status))
-				--LHpi.Log(string.format("! %s : %s",status,LHpi.Tostring(cardRawData)))
+				print(string.format("! %s",status))
+				LHpi.Log(string.format("! %s",status) ,0,"LHpi-Debug.log")
+				LHpi.Log(string.format("%s : %s",cardname,cardurlsuffix) ,0,"LHpi-Debug.log")
+				LHpi.Log(string.format("cardname \"%s\": %s",cardname,LHpi.ByteRep(cardname)) ,0,"LHpi-Debug.log")
+				LHpi.Log(string.format("cardurlsuffix \"%s\": %s",cardurlsuffix,LHpi.ByteRep(cardurlsuffix)) ,0,"LHpi-Debug.log")
 				--TODO debug 301 urls
 			end
 			print("!! no cardRawData - " .. status)
@@ -557,7 +532,7 @@ function helper.FetchPricesFromHtml( url, details )
 	end--for cardname,cardurlsuffix in pairs(cards)
 	LHpi.Log( string.format("%i cards have been requested, and %i cards were found. LHpi.Data claims %i cards in set %q.",count.fetched,count.found,LHpi.Data.sets[details.setid].cardcount.all,LHpi.Data.sets[details.setid].name ) ,1)
 
-	error("break")
+	--error("STOP and debug!")
 	return count,ok
 end--function FetchPricesFromHtml
 
@@ -587,7 +562,10 @@ function helper.CardsInSetFromHtml(seturl,resultsPage,cards)
 		local i=0
 		for urlsuffix,name in string.gmatch(setdata,'<td><a href="([^"]-)">([^<]-)</a></td><td><a href') do
 			i=i+1
+--			print(i .. ": " .. name .. " : " .. urlsuffix)
 			urlsuffix = LHpi.urldecode(urlsuffix)
+--			print("urldecoded to: " .. urlsuffix )
+--			print("OAuthencoded to: " .. LHpi.OAuthEncode(urlsuffix) )
 			cards[name]=urlsuffix
 		end--for
 		print(string.format("von %i bis %i sind %i, gefunden %i",trefferVon,trefferBis,trefferBis-trefferVon+1,i))
@@ -602,6 +580,9 @@ function helper.CardsInSetFromHtml(seturl,resultsPage,cards)
 	local cardnum = LHpi.Length(cards)
 	if cardnum < trefferBis then
 		print(string.format("%i cards in table, but trefferBis is %i",cardnum,trefferBis))
+--		for name,urlsuffix in pairs(cards) do
+--			print (name .. " : " .. urlsuffix)
+--		end
 		error("Anzahl gefundener Karten-Urls passt nicht zur Trefferzahl!")
 	end
 	if trefferBis ~= trefferMax then
@@ -1051,7 +1032,16 @@ for i,p in pairs(params) do
 	end--if known
 end--for
 -- cmdline args will be checked for known sets in main
+
+if not site then
+	site={}
+	function site.Initialize( mode )
+		error("mkm-helper is not a sitescript. Initialize not implemented.")
+		LHpi.Log( "mkm-helper is not a sitescript. Initialize not implemented.", 0)
+	end --function Initialize
+end
+
 --run main function
 local retval = main(MODE)
-print(LHpi.Tostring(retval))
+print(tostring(retval))
 --EOF

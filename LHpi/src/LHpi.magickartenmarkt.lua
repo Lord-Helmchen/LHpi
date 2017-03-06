@@ -312,7 +312,7 @@ function site.Initialize( mode )
 		print("LHpi lib not available, loading it now...")
 		LHpi = site.LoadLib()
 	end
-	LHpi.Log(site.scriptname.." started site.Initialize():" ,1)
+	LHpi.Log(scriptname.." started site.Initialize():" ,1)
 	if sandbox then
 		LHpi.Log("using mkm sandbox instead of live server!" ,1)
 		print("using mkm sandbox instead of live server!")
@@ -329,7 +329,7 @@ function site.Initialize( mode )
 		function ImportPrice()
 			error("ImportPrice disabled by helper mode!")
 		end
-		LHpi.Log(site.scriptname .. " running as helper. Function ImportPrice() removed." ,1)
+		LHpi.Log(scriptname .. " running as helper. Function ImportPrice() removed." ,1)
 	end
 	if RESETCOUNTER  or ( not ma.GetFile (LHpi.savepath.."LHpi.mkm.requestcounter") )then
 		LHpi.Log("0",0,LHpi.savepath.."LHpi.mkm.requestcounter",0)
@@ -556,10 +556,10 @@ function site.BuildUrl( setid,langid,frucid )
 		if type(setid)=="table" then
 			if setid.idExpansion then
 			url = url .. "/Products/Singles"
-				container[url .. setid.urlsuffix] = { oauth=false, setid=setid }
+				container[url .. "/" .. setid.urlsuffix] = { oauth=false, setid=setid }
 				return container
 			elseif setid.idProduct then
-				container[url .. setid.urlsuffix] = { oauth=false, setid=setid }
+				container[url .. "/" .. setid.urlsuffix] = { oauth=false, setid=setid }
 				return container
 			end
 		elseif setid=="list" then --request Expansion list. Needs to be parsed to be of use.
@@ -641,11 +641,12 @@ function site.FetchExpansionList()
 	local expansions
 	if MKMDATASOURCE.html then
 		expansions = {}
-		expansiondata= string.match(expansiondata,"<tbody>(.+)</tbody>")
-		for row in string.gmatch(expansiondata,"<tr(.-)</tr>") do
-			row = string.match(row,"([^<>]+)</a>")
+		expansiondata= string.match(expansiondata,"</header>(.+)</footer>")
+		for row in string.gmatch(expansiondata,'(<a href="/Expansions.-</a>)') do
+			local href=string.match(row,'<a href="/Expansions/(.-)"')
+			local ename=string.match(row,'%b<>([^<>]+)%b<>')
 			-- fake idExpansion to emulate api expansion entity for BuildUrl( #table )
-			table.insert(expansions,{ name=row, urlsuffix=LHpi.OAuthEncode(row), idExpansion="null" } )
+			table.insert(expansions,{ name=ename, urlsuffix=href, idExpansion="null" } )
 		end
 	elseif MKMDATASOURCE.api then
 		expansions = Json.decode(expansiondata).expansion
@@ -1487,71 +1488,74 @@ local all = { "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",
 ]]
 site.sets = {
 -- coresets
-[822]={id=822, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Magic%20Origins"},--Magic Origins
-[808]={id=808, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Magic%202015"},--Magic 2015
-[797]={id=797, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Magic%202014"},--Magic 2014
-[788]={id=788, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Magic%202013"},--Magic 2013
-[779]={id=779, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT" }, fruc={ true }, url="Magic%202012"},--Magic 2012
-[770]={id=770, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT" }, fruc={ true }, url="Magic%202011"},--Magic 2011
-[759]={id=759, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Magic%202010"},--Magic 2010
+[822]={id=822, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Magic+Origins"},--Magic Origins
+[808]={id=808, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Magic+2015"},--Magic 2015
+[797]={id=797, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Magic+2014"},--Magic 2014
+[788]={id=788, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Magic+2013"},--Magic 2013
+[779]={id=779, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT" }, fruc={ true }, url="Magic+2012"},--Magic 2012
+[770]={id=770, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT" }, fruc={ true }, url="Magic+2011"},--Magic 2011
+[759]={id=759, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Magic+2010"},--Magic 2010
 [720]={id=720, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url={ --Tenth Edition
-											"Tenth%20Edition",
-											"DCI%20Promos",-- "Kamahl, Pit Fighter (ST)"
+											"Tenth+Edition",
+											"DCI+Promos",-- "Kamahl, Pit Fighter (ST)"
 											} },
-[630]={id=630, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Ninth%20Edition"},--Ninth Edition
-[550]={id=550, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Eighth%20Edition"},--Eighth Edition
-[460]={id=460, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Seventh%20Edition"},--Seventh Edition
-[360]={id=360, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Sixth%20Edition"},--Sixth Edition
-[250]={id=250, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Fifth%20Edition"},--Fifth Edition
-[180]={id=180, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Fourth%20Edition"},--Fourth Edition
-[179]={id=179, lang={ [6] = "POR", [8]="JPN" }, fruc={ true }, url="Fourth%20Edition:%20Black%20Bordered"},--Fourth Edition: Black Bordered
-[141]={id=141, lang={ "ENG" }, fruc={ true }, url="Summer%20Magic"},--Summer Magic
-[140]={id=140, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA" }, fruc={ true }, url={ "Revised", "Foreign%20White%20Bordered"} },--Revised; Foreign White Bordered = Revised Unlimited
-[139]={id=139, lang={ [3]="GER",[4]="FRA",[5]="ITA" }, fruc={ true }, url="Foreign%20Black%20Bordered"},--Foreign Black Bordered = Revised Limited
+[630]={id=630, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Ninth+Edition"},--Ninth Edition
+[550]={id=550, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Eighth+Edition"},--Eighth Edition
+[460]={id=460, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Seventh+Edition"},--Seventh Edition
+[360]={id=360, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Sixth+Edition"},--Sixth Edition
+[250]={id=250, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Fifth+Edition"},--Fifth Edition
+[180]={id=180, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Fourth+Edition"},--Fourth Edition
+[179]={id=179, lang={ [6] = "POR", [8]="JPN" }, fruc={ true }, url="Fourth+Edition%3A+Black+Bordered"},--Fourth Edition: Black Bordered
+[141]={id=141, lang={ "ENG" }, fruc={ true }, url="Summer+Magic"},--Summer Magic
+[140]={id=140, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA" }, fruc={ true }, url={ "Revised", "Foreign+White+Bordered"} },--Revised; Foreign White Bordered = Revised Unlimited
+[139]={id=139, lang={ [3]="GER",[4]="FRA",[5]="ITA" }, fruc={ true }, url="Foreign+Black+Bordered"},--Foreign Black Bordered = Revised Limited
 [110]={id=110, lang={ "ENG" }, fruc={ true }, url="Unlimited"},--Unlimited
 [100]={id=100, lang={ "ENG" }, fruc={ true }, url="Beta"},--Beta
 [90] ={id= 90, lang={ "ENG" }, fruc={ true }, url="Alpha"},--Alpha
 -- expansionsets
-[831]={id=831, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Shadows%20over%20Innistrad"},--Shadows over Innistrad
-[829]={id=829, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Oath%20of%20the%20Gatewatch"},--Oath of the Gatewatch
-[825]={id=825, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Battle%20for%20Zendikar"},--Battle for Zendikar
-[818]={id=818, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Dragons%20of%20Tarkir"},--Dragons of Tarkir
-[816]={id=816, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Fate%20Reforged"},--Fate Reforged
-[813]={id=813, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Khans%20of%20Tarkir"},--Khans of Tarkir
-[806]={id=806, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Journey%20into%20Nyx"},--Journey into Nyx
-[802]={id=802, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Born%20of%20the%20Gods"},--Born of the Gods
+[841]={id=841, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Aether+Revolt"},--Aether Revolt
+[838]={id=838, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Kaladesh"},--Kaladesh
+[834]={id=834, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Eldritch+Moon"},--Eldritch Moon
+[831]={id=831, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Shadows+over+Innistrad"},--Shadows over Innistrad
+[829]={id=829, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Oath+of+the+Gatewatch"},--Oath of the Gatewatch
+[825]={id=825, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Battle+for+Zendikar"},--Battle for Zendikar
+[818]={id=818, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Dragons+of+Tarkir"},--Dragons of Tarkir
+[816]={id=816, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Fate+Reforged"},--Fate Reforged
+[813]={id=813, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Khans+of+Tarkir"},--Khans of Tarkir
+[806]={id=806, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Journey+into+Nyx"},--Journey into Nyx
+[802]={id=802, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Born+of+the+Gods"},--Born of the Gods
 [800]={id=800, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Theros"}, -- Theros
-[795]={id=795, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Dragon%27s%20Maze"},--Dragon's Maze
+[795]={id=795, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Dragon%27s+Maze"},--Dragon's Maze
 [793]={id=793, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Gatecrash"},--Gatecrash
-[791]={id=791, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Return%20to%20Ravnica"}, --Return to Ravnica
-[786]={id=786, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Avacyn%20Restored"},--Avacyn Restored
-[784]={id=784, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Dark%20Ascension"},--Dark Ascension
+[791]={id=791, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Return+to+Ravnica"}, --Return to Ravnica
+[786]={id=786, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Avacyn+Restored"},--Avacyn Restored
+[784]={id=784, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Dark+Ascension"},--Dark Ascension
 [782]={id=782, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT" }, fruc={ true }, url="Innistrad"},--Innistrad
-[776]={id=776, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT" }, fruc={ true }, url="New%20Phyrexia"},--New Phyrexia
-[775]={id=775, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT" }, fruc={ true }, url="Mirrodin%20Besieged"},--Mirrodin Besieged
-[773]={id=773, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT" }, fruc={ true }, url="Scars%20of%20Mirrodin"},--Scars of Mirrodin
-[767]={id=767, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Rise%20of%20the%20Eldrazi"},--Rise of the Eldrazi
+[776]={id=776, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT" }, fruc={ true }, url="New+Phyrexia"},--New Phyrexia
+[775]={id=775, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT" }, fruc={ true }, url="Mirrodin+Besieged"},--Mirrodin Besieged
+[773]={id=773, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT" }, fruc={ true }, url="Scars+of+Mirrodin"},--Scars of Mirrodin
+[767]={id=767, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Rise+of+the+Eldrazi"},--Rise of the Eldrazi
 [765]={id=765, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Worldwake"},--Worldwake
 [762]={id=762, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Zendikar"},--Zendikar
-[758]={id=758, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Alara%20Reborn"},--Alara Reborn
+[758]={id=758, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Alara+Reborn"},--Alara Reborn
 [756]={id=756, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Conflux"},--Conflux
-[754]={id=754, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Shards%20of%20Alara"},--Shards of Alara
+[754]={id=754, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Shards+of+Alara"},--Shards of Alara
 [752]={id=752, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Eventide"},--Eventide
 [751]={id=751, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Shadowmoor"},--Shadowmoor
 [750]={id=750, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Morningtide"},--Morningtide
 [730]={id=730, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Lorwyn"},--Lorwyn
-[710]={id=710, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Future%20Sight"},--Future Sight
-[700]={id=700, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Planar%20Chaos"},--Planar Chaos
-[690]={id=690, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Time%20Spiral"},--Time Spiral Timeshifted
-[680]={id=680, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Time%20Spiral"},--Time Spiral
+[710]={id=710, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Future+Sight"},--Future Sight
+[700]={id=700, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Planar+Chaos"},--Planar Chaos
+[690]={id=690, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Time+Spiral"},--Time Spiral Timeshifted
+[680]={id=680, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Time+Spiral"},--Time Spiral
 [670]={id=670, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Coldsnap"},--Coldsnap
 [660]={id=660, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Dissension"},--Dissension
 [650]={id=650, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Guildpact"},--Guildpact
-[640]={id=640, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Ravnica:%20City%20of%20Guilds"},--Ravnica: City of Guilds
-[620]={id=620, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Saviors%20of%20Kamigawa"},--Saviors of Kamigawa
-[610]={id=610, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Betrayers%20of%20Kamigawa"},--Betrayers of Kamigawa
-[590]={id=590, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Champions%20of%20Kamigawa"},--Champions of Kamigawa
-[580]={id=580, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Fifth%20Dawn"},--Fifth Dawn
+[640]={id=640, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Ravnica%3A+City+of+Guilds"},--Ravnica: City of Guilds
+[620]={id=620, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Saviors+of+Kamigawa"},--Saviors of Kamigawa
+[610]={id=610, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Betrayers+of+Kamigawa"},--Betrayers of Kamigawa
+[590]={id=590, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Champions+of+Kamigawa"},--Champions of Kamigawa
+[580]={id=580, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Fifth+Dawn"},--Fifth Dawn
 [570]={id=570, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Darksteel"},--Darksteel
 [560]={id=560, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Mirrodin"},--Mirrodin
 [540]={id=540, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Scourge"},--Scourge
@@ -1565,10 +1569,10 @@ site.sets = {
 [430]={id=430, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Invasion"},--Invasion
 [420]={id=420, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Prophecy"},--Prophecy
 [410]={id=410, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Nemesis"},--Nemesis
-[400]={id=400, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Mercadian%20Masques"},--Mercadian Masques
-[370]={id=370, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Urza%27s%20Destiny"},--Urza's Destiny
-[350]={id=350, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Urza%27s%20Legacy"},--Urza's Legacy
-[330]={id=330, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Urza%27s%20Saga"},--Urza's Saga
+[400]={id=400, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Mercadian+Masques"},--Mercadian Masques
+[370]={id=370, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Urza%27s+Destiny"},--Urza's Destiny
+[350]={id=350, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Urza%27s+Legacy"},--Urza's Legacy
+[330]={id=330, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Urza%27s+Saga"},--Urza's Saga
 [300]={id=300, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Exodus"},--Exodus
 [290]={id=290, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Stronghold"},--Stronghold
 [280]={id=280, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Tempest"},--Tempest
@@ -1577,332 +1581,345 @@ site.sets = {
 [230]={id=230, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Mirage"},--Mirage
 [220]={id=220, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR" }, fruc={ true }, url="Alliances"},--Alliances
 [210]={id=210, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR" }, fruc={ true }, url="Homelands"},--Homelands
-[190]={id=190, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR" }, fruc={ true }, url="Ice%20Age"},--Ice Age
-[170]={id=170, lang={ "ENG" }, fruc={ true }, url="Fallen%20Empires"},--Fallen Empires
-[160]={id=160, lang={ "ENG",[5]="ITA" }, fruc={ true }, url="The%20Dark"},--The Dark
+[190]={id=190, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR" }, fruc={ true }, url="Ice+Age"},--Ice Age
+[170]={id=170, lang={ "ENG" }, fruc={ true }, url="Fallen+Empires"},--Fallen Empires
+[160]={id=160, lang={ "ENG",[5]="ITA" }, fruc={ true }, url="The+Dark"},--The Dark
 [150]={id=150, lang={ "ENG",[5]="ITA" }, fruc={ true }, url="Legends"},--Legends
 [130]={id=130, lang={ "ENG" }, fruc={ true }, url="Antiquities"},--Antiquities
-[120]={id=120, lang={ "ENG" }, fruc={ true }, url="Arabian%20Nights"},--Arabian Nights
+[120]={id=120, lang={ "ENG" }, fruc={ true }, url="Arabian+Nights"},--Arabian Nights
 -- specialsets
-[830]={id=830, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel%20Decks:%20Blessed%20vs.%20Cursed"},--Duel Decks: Blessed vs. Cursed
-[828]={id=828, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Commander%202015"},--Commander 2015
+[900]={id=900, lang={ "ENG" }, fruc={ true }, url="Modern+Masters+2017+Edition"},--Modern Masters 2017 Edition
+[840]={id=840, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Commander+2016"},--Commander 2016
+[837]={id=837, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel+Decks%3A+Nissa+vs.+Ob+Nixilis"},--Duel Decks: Nissa vs. Ob Nixilis
+[836]={id=836, lang={ "ENG",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Conspiracy%3A+Take+the+Crown"},--Conspiracy: Take the Crown
+[835]={id=835, lang={ "ENG" }, fruc={ true }, url="From+the+Vault%3A+Lore"},--From the Vault: Lore
+[833]={id=833, lang={ "ENG",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Eternal+Masters"},--Eternal Masters
+[832]={id=832, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Welcome+Deck+2016"},--Welcome Deck 2016
+[830]={id=830, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel+Decks%3A+Blessed+vs.+Cursed"},--Duel Decks: Blessed vs. Cursed
+[839]={id=839, lang={ "ENG" }, fruc={ true }, url="Kaladesh+Inventions"},--Kaladesh Inventions
+[828]={id=828, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Commander+2015"},--Commander 2015
 [827]={id=827, lang={ "ENG" }, fruc={ true }, url={ -- Origins Clash Pack
-											"Clash%20Pack%20Promos",--Clash Pack Promos
+											"Clash+Pack+Promos",--Clash Pack Promos
 											} },
-[826]={id=826, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Zendikar%20Expeditions"},--Zendikar Expeditions
-[824]={id=824, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel%20Decks:%20Zendikar%20vs.%20Eldrazi"},--Duel Decks: Zendikar vs. Eldrazi
-[823]={id=823, lang={ "ENG" }, fruc={ true }, url="From%20the%20Vault:%20Angels"},--From the Vault: Angels
+[826]={id=826, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Zendikar+Expeditions"},--Zendikar Expeditions
+[824]={id=824, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel+Decks%3A+Zendikar+vs.+Eldrazi"},--Duel Decks: Zendikar vs. Eldrazi
+[823]={id=823, lang={ "ENG" }, fruc={ true }, url="From+the+Vault%3A+Angels"},--From the Vault: Angels
 [821]={id=821, lang={ "ENG" }, fruc={ true }, url={ -- Challenge Deck: Defeat a God
-											"Journey%20into%20Nyx"
+											"Journey+into+Nyx"
 											} },
-[820]={id=820, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel%20Decks:%20Elspeth%20vs.%20Kiora"},--Duel Decks: Elspeth vs. Kiora
-[819]={id=819, lang={ "ENG",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Modern%20Masters%202015"},--Modern Masters 2015
-[817]={id=817, lang={ "ENG" }, fruc={ true }, url="Duel%20Decks:%20Anthology"},--Duel Decks: Anthology
+[820]={id=820, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel+Decks%3A+Elspeth+vs.+Kiora"},--Duel Decks: Elspeth vs. Kiora
+[819]={id=819, lang={ "ENG",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Modern+Masters+2015"},--Modern Masters 2015
+[817]={id=817, lang={ "ENG" }, fruc={ true }, url="Duel+Decks%3A+Anthology"},--Duel Decks: Anthology
 [815]={id=815, lang={ "ENG" }, fruc={ true }, url={ -- Fate Reforged Clash Pack
-											"Clash%20Pack%20Promos",--Clash Pack Promos
+											"Clash+Pack+Promos",--Clash Pack Promos
 											} },
-[814]={id=814, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Commander%202014"},--Commander 2014
-[812]={id=812, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel%20Decks:%20Speed%20vs.%20Cunning"},--Duel Decks: Speed vs. Cunning
+[814]={id=814, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Commander+2014"},--Commander 2014
+[812]={id=812, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel+Decks%3A+Speed+vs.+Cunning"},--Duel Decks: Speed vs. Cunning
 [811]={id=811, lang={ "ENG" }, fruc={ true }, url={ -- Magic 2015 Clash Pack
-											"Clash%20Pack%20Promos",--Clash Pack Promos
+											"Clash+Pack+Promos",--Clash Pack Promos
 											} },
-[810]={id=810, lang={ "ENG" }, fruc={ true }, url="Modern%20Event%20Deck%202014"},--Modern Event Deck 2014
-[809]={id=809, lang={ "ENG" }, fruc={ true }, url="From%20the%20Vault:%20Annihilation"},--From the Vault: Annihilation
+[810]={id=810, lang={ "ENG" }, fruc={ true }, url="Modern+Event+Deck+2014"},--Modern Event Deck 2014
+[809]={id=809, lang={ "ENG" }, fruc={ true }, url="From+the+Vault%3A+Annihilation"},--From the Vault: Annihilation
 [807]={id=807, lang={ "ENG",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Conspiracy"},--Conspiracy
-[805]={id=805, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel%20Decks:%20Jace%20vs.%20Vraska"},--Duel Decks: Jace vs. Vraska
+[805]={id=805, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel+Decks%3A+Jace+vs.+Vraska"},--Duel Decks: Jace vs. Vraska
 [804]={id=804, lang={ "ENG",[3]="GER" }, fruc={ true }, url={ -- Challenge Deck: Battle the Horde
-											"Born%20of%20the%20Gods"
+											"Born+of+the+Gods"
 											} },
 [803]={id=803, lang={ "ENG",[3]="GER" }, fruc={ true }, url={ -- Challenge Deck: Face the Hydra
 											"Theros"
 											} },
-[801]={id=801, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Commander%202013"},--Commander 2013
-[799]={id=799, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel%20Decks:%20Heroes%20vs.%20Monsters"},--Duel Decks: Heroes vs. Monsters
-[798]={id=798, lang={ "ENG" }, fruc={ true }, url="From%20the%20Vault:%20Twenty"},--From the Vault: Twenty
-[796]={id=796, lang={ "ENG" }, fruc={ true }, url="Modern%20Masters"},--Modern Masters
-[794]={id=794, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel%20Decks:%20Sorin%20vs.%20Tibalt"},--Duel Decks: Sorin vs. Tibalt
-[792]={id=792, lang={ "ENG" }, fruc={ true }, url="Commander%27s%20Arsenal"},--Commander's Arsenal
-[790]={id=790, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel%20Decks:%20Izzet%20vs.%20Golgari"},--Duel Decks: Izzet vs. Golgari
-[789]={id=789, lang={ "ENG" }, fruc={ true }, url="From%20the%20Vault:%20Realms"},--From the Vault: Realms
-[787]={id=787, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Planechase%202012"},--Planechase 2012
-[785]={id=785, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel%20Decks:%20Venser%20vs.%20Koth"},--Duel Decks: Venser vs. Koth
-[783]={id=783, lang={ "ENG" }, fruc={ true }, url="Premium%20Deck%20Series:%20Graveborn"},--Premium Deck Series: Graveborn
-[781]={id=781, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA" }, fruc={ true }, url="Duel%20Decks:%20Ajani%20vs.%20Nicol%20Bolas"},--Duel Decks: Ajani vs. Nicol Bolas
-[780]={id=780, lang={ "ENG" }, fruc={ true }, url="From%20the%20Vault:%20Legends"},--From the Vault: Legends
+[801]={id=801, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Commander+2013"},--Commander 2013
+[799]={id=799, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel+Decks%3A+Heroes+vs.+Monsters"},--Duel Decks: Heroes vs. Monsters
+[798]={id=798, lang={ "ENG" }, fruc={ true }, url="From+the+Vault%3A+Twenty"},--From the Vault: Twenty
+[796]={id=796, lang={ "ENG" }, fruc={ true }, url="Modern+Masters"},--Modern Masters
+[794]={id=794, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel+Decks%3A+Sorin+vs.+Tibalt"},--Duel Decks: Sorin vs. Tibalt
+[792]={id=792, lang={ "ENG" }, fruc={ true }, url="Commander%27s+Arsenal"},--Commander's Arsenal
+[790]={id=790, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel+Decks%3A+Izzet+vs.+Golgari"},--Duel Decks: Izzet vs. Golgari
+[789]={id=789, lang={ "ENG" }, fruc={ true }, url="From+the+Vault%3A+Realms"},--From the Vault: Realms
+[787]={id=787, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Planechase+2012"},--Planechase 2012
+[785]={id=785, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel+Decks%3A+Venser+vs.+Koth"},--Duel Decks: Venser vs. Koth
+[783]={id=783, lang={ "ENG" }, fruc={ true }, url="Premium+Deck+Series%3A+Graveborn"},--Premium Deck Series: Graveborn
+[781]={id=781, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA" }, fruc={ true }, url="Duel+Decks%3A+Ajani+vs.+Nicol+Bolas"},--Duel Decks: Ajani vs. Nicol Bolas
+[780]={id=780, lang={ "ENG" }, fruc={ true }, url="From+the+Vault%3A+Legends"},--From the Vault: Legends
 [778]={id=778, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Commander"},--Commander
-[777]={id=777, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA" }, fruc={ true }, url="Duel%20Decks:%20Knights%20vs.%20Dragons"},--Duel Decks: Knights vs. Dragons
-[774]={id=774, lang={ "ENG" }, fruc={ true }, url="Premium%20Deck%20Series:%20Fire%20&%20Lightning"},--Premium Deck Series: Fire & Lightning
-[772]={id=772, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA" }, fruc={ true }, url="Duel%20Decks:%20Elspeth%20vs.%20Tezzeret"},--Duel Decks: Elspeth vs. Tezzeret
-[771]={id=771, lang={ "ENG" }, fruc={ true }, url="From%20the%20Vault:%20Relics"},--From the Vault: Relics
+[777]={id=777, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA" }, fruc={ true }, url="Duel+Decks%3A+Knights+vs.+Dragons"},--Duel Decks: Knights vs. Dragons
+[774]={id=774, lang={ "ENG" }, fruc={ true }, url="Premium+Deck+Series%3A+Fire+%26+Lightning"},--Premium Deck Series: Fire & Lightning
+[772]={id=772, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA" }, fruc={ true }, url="Duel+Decks%3A+Elspeth+vs.+Tezzeret"},--Duel Decks: Elspeth vs. Tezzeret
+[771]={id=771, lang={ "ENG" }, fruc={ true }, url="From+the+Vault%3A+Relics"},--From the Vault: Relics
 [769]={id=769, lang={ "ENG" }, fruc={ true }, url="Archenemy"},--Archenemy
-[768]={id=768, lang={ "ENG" }, fruc={ true }, url="Duels%20of%20the%20Planeswalkers%20Decks"},--Duels of the Planeswalkers Decks
-[766]={id=766, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel%20Decks:%20Phyrexia%20vs.%20The%20Coalition"},--Duel Decks: Phyrexia vs. The Coalition
-[764]={id=764, lang={ "ENG" }, fruc={ true }, url="Premium%20Deck%20Series:%20Slivers"},--Premium Deck Series: Slivers
-[763]={id=763, lang={ "ENG" }, fruc={ true }, url="Duel%20Decks:%20Garruk%20vs.%20Liliana"},--Duel Decks: Garruk vs. Liliana
+[768]={id=768, lang={ "ENG" }, fruc={ true }, url="Duels+of+the+Planeswalkers+Decks"},--Duels of the Planeswalkers Decks
+[766]={id=766, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel+Decks%3A+Phyrexia+vs.+The+Coalition"},--Duel Decks: Phyrexia vs. The Coalition
+[764]={id=764, lang={ "ENG" }, fruc={ true }, url="Premium+Deck+Series%3A+Slivers"},--Premium Deck Series: Slivers
+[763]={id=763, lang={ "ENG" }, fruc={ true }, url="Duel+Decks%3A+Garruk+vs.+Liliana"},--Duel Decks: Garruk vs. Liliana
 [761]={id=761, lang={ "ENG" }, fruc={ true }, url="Planechase"},--Planechase
-[760]={id=760, lang={ "ENG" }, fruc={ true }, url="From%20the%20Vault:%20Exiled"},--From the Vault: Exiled
-[757]={id=757, lang={ "ENG" }, fruc={ true }, url="Duel%20Decks:%20Divine%20vs.%20Demonic"},--Duel Decks: Divine vs. Demonic
-[755]={id=755, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel%20Decks:%20Jace%20vs.%20Chandra"},--Duel Decks: Jace vs. Chandra
-[753]={id=753, lang={ "ENG" }, fruc={ true }, url="From%20the%20Vault:%20Dragons"},--From the Vault: Dragons
-[740]={id=740, lang={ "ENG" }, fruc={ true }, url="Duel%20Decks:%20Elves%20vs.%20Goblins"},--Duel Decks: Elves vs. Goblins
-[675]={id=675, lang={ "ENG",[3]="GER",[5]="ITA" }, fruc={ true }, url="Coldsnap%20Theme%20Decks"},--Coldsnap Theme Decks
-[636]={id=636, lang={ [7]="SPA" }, fruc={ true }, url="Salvat-Hachette%202011"},--Salvat-Hachette 2011
+[760]={id=760, lang={ "ENG" }, fruc={ true }, url="From+the+Vault%3A+Exiled"},--From the Vault: Exiled
+[757]={id=757, lang={ "ENG" }, fruc={ true }, url="Duel+Decks%3A+Divine+vs.+Demonic"},--Duel Decks: Divine vs. Demonic
+[755]={id=755, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel+Decks%3A+Jace+vs.+Chandra"},--Duel Decks: Jace vs. Chandra
+[753]={id=753, lang={ "ENG" }, fruc={ true }, url="From+the+Vault%3A+Dragons"},--From the Vault: Dragons
+[740]={id=740, lang={ "ENG" }, fruc={ true }, url="Duel+Decks%3A+Elves+vs.+Goblins"},--Duel Decks: Elves vs. Goblins
+[675]={id=675, lang={ "ENG",[3]="GER",[5]="ITA" }, fruc={ true }, url="Coldsnap+Theme+Decks"},--Coldsnap Theme Decks
+[636]={id=636, lang={ [7]="SPA" }, fruc={ true }, url="Salvat-Hachette+2011"},--Salvat-Hachette 2011
 [635]={id=635, lang={ [4]="FRA",[5]="ITA",[7]="SPA" }, fruc={ true }, url="Salvat-Hachette"},--Salvat Magic Encyclopedia
 [600]={id=600, lang={ "ENG" }, fruc={ true }, url="Unhinged"},--Unhinged
 [490]={id=490, lang={ "ENG" }, fruc={ true }, url="Deckmasters"},--Deckmasters
 [440]={id=440, lang={ "ENG" }, fruc={ true }, url="Beatdown"},--Beatdown
-[415]={id=415, lang={ "ENG",[3]="GER",[7]="SPA" }, fruc={ true }, url="Starter%202000"},--Starter 2000
-[405]={id=405, lang={ "ENG" }, fruc={ true }, url="Battle%20Royale"},--Battle Royale
+[415]={id=415, lang={ "ENG",[3]="GER",[7]="SPA" }, fruc={ true }, url="Starter+2000"},--Starter 2000
+[405]={id=405, lang={ "ENG" }, fruc={ true }, url="Battle+Royale"},--Battle Royale
 [390]={id=390, lang={ "ENG" }, fruc={ true }, url={ --Starter 1999
-											"Starter%201999",
-											"Oversized%206x9%20Promos" -- "Thorn Elemental (oversized)"
+											"Starter+1999",
+											"Oversized+6x9+Promos" -- "Thorn Elemental (oversized)"
 											} },
-[380]={id=380, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Portal%20Three%20Kingdoms"},--Portal Three Kingdoms
+[380]={id=380, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Portal+Three+Kingdoms"},--Portal Three Kingdoms
 [340]={id=340, lang={ "ENG" }, fruc={ true }, url="Anthologies"},--Anthologies
-[235]={id=235, lang={ "ENG" }, fruc={ true }, url="Multiverse%20Gift%20Box"},--Multiverse Gift Box
+[235]={id=235, lang={ "ENG" }, fruc={ true }, url="Multiverse+Gift+Box"},--Multiverse Gift Box
 [320]={id=320, lang={ "ENG" }, fruc={ true }, url="Unglued"},--Unglued
-[310]={id=310, lang={ "ENG",[3]="GER",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Portal%20Second%20Age"},--Portal Second Age
+[310]={id=310, lang={ "ENG",[3]="GER",[5]="ITA",[6]="POR",[8]="JPN" }, fruc={ true }, url="Portal+Second+Age"},--Portal Second Age
 [260]={id=260, lang={ "ENG",[3]="GER",[8]="JPN" }, fruc={ true }, url="Portal"},--Portal
-[225]={id=225, lang={ "ENG",[3]="GER",[4]="FRA",[7]="SPA" }, fruc={ true }, url="Introductory%20Two-Player%20Set"},--Introductory Two-Player Set
+[225]={id=225, lang={ "ENG",[3]="GER",[4]="FRA",[7]="SPA" }, fruc={ true }, url="Introductory+Two-Player+Set"},--Introductory Two-Player Set
 [201]={id=201, lang={ [3]="GER", [4]="FRA", [5]="ITA" }, fruc={ true }, url={ "Renaissance", "Rinascimento" } },--Renaissance
 [200]={id=200, lang={ "ENG",[8]="JPN" }, fruc={ true }, url={
 											"Chronicles",--Chronicles
-											"Chronicles:%20Japanese",--Chronicles: Japanese
+											"Chronicles%3A+Japanese",--Chronicles: Japanese
 											} },
-[106]={id=106, lang={ "ENG" }, fruc={ true }, url="International%20Edition"},--Collectors' Edition International
-[105]={id=105, lang={ "ENG" }, fruc={ true }, url="Collectors%27%20Edition"},--Collectors' Edition
+[106]={id=106, lang={ "ENG" }, fruc={ true }, url="International+Edition"},--Collectors' Edition International
+[105]={id=105, lang={ "ENG" }, fruc={ true }, url="Collectors%27+Edition"},--Collectors' Edition
 [70] ={id= 70, lang={ "ENG" }, fruc={ true }, url="Vanguard"},--Vanguard
-[69] ={id= 69, lang={ "ENG" }, fruc={ true }, url="Oversized%20Box%20Toppers"},--Oversized Box Toppers
+[69] ={id= 69, lang={ "ENG" }, fruc={ true }, url="Oversized+Box+Toppers"},--Oversized Box Toppers
 -- promosets
-[55] ={id= 55, lang={ "ENG" }, fruc={ true }, url="Ugin%27s%20Fate%20Promos"},--Ugin's Fate Promos
+[55] ={id= 55, lang={ "ENG" }, fruc={ true }, url="Ugin%27s+Fate+Promos"},--Ugin's Fate Promos
 [53] ={id= 53, lang={ "ENG" }, fruc={ true }, url={ --Holiday Gift Box Promos
 											"Promos", -- "Dreg Mangler", "Karametra’s Acolyte"
-											"Khans%20of%20Tarkir:%20Promos",-- "Sultai Charm"
-											"Battle%20for%20Zendikar:%20Promos",-- "Scythe Leopard"
-											"Shadows%20over%20Innistrad:%20Promos",-- "Ravenous Bloodseeker"
+											"Khans+of+Tarkir%3A+Promos",-- "Sultai Charm"
+											"Battle+for+Zendikar%3A+Promos",-- "Scythe Leopard"
+											"Shadows+over+Innistrad%3A+Promos",-- "Ravenous Bloodseeker"
 											} },
 [52] ={id= 52, lang={ "ENG",[3]="GER" }, fruc={ true }, url={ --Intro Pack Promos
-											"Khans%20of%20Tarkir:%20Promos",--Khans of Tarkir: Promos
-											"Fate%20Reforged:%20Promos",--Fate Reforged: Promos
-											"Dragons%20Of%20Tarkir:%20Promos",--Dragons Of Tarkir: Promos
-											"Magic%20Origins:%20Promos",--Magic Origins: Promos
-											"Battle%20for%20Zendikar:%20Promos",-- Battle for Zendikar: Promos
-											"Oath%20of%20the%20Gatewatch:%20Promos",--Oath of the Gatewatch: Promos
-											"Shadows%20over%20Innistrad:%20Promos",--Shadows over Innistrad: Promos
+											"Khans+of+Tarkir%3A+Promos",--Khans of Tarkir: Promos
+											"Fate+Reforged%3A+Promos",--Fate Reforged: Promos
+											"Dragons+Of+Tarkir%3A+Promos",--Dragons Of Tarkir: Promos
+											"Magic+Origins%3A+Promos",--Magic Origins: Promos
+											"Battle+for+Zendikar%3A+Promos",-- Battle for Zendikar: Promos
+											"Oath+of+the+Gatewatch%3A+Promos",--Oath of the Gatewatch: Promos
+											"Shadows+over+Innistrad%3A+Promos",--Shadows over Innistrad: Promos
 											} },
 [50] ={id= 50, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[6]="POR",[7]="SPA",[8]="JPN" }, fruc={ true }, url={ --Full Box Promotion
-											"Buy%20a%20Box%20Promos", --Buy a Box Promos
+											"Buy+a+Box+Promos", --Buy a Box Promos
 											"Promos", -- "Ruthless Cullblade (JPN)","Pestilence Demon (JPN)"
 											} },
-[45] ={id= 45, lang={ [8]="JPN" }, fruc={ true }, url="Magic%20Premiere%20Shop%20Promos"},--Magic Premiere Shop Promos
-[43] ={id= 43, lang={ "ENG" }, fruc={ true }, url="DCI%20Promos"}, -- Two-Headed Giant Promos: in DCI Promos
-[42] ={id= 42, lang={ "ENG" }, fruc={ true }, url="Gateway%20Promos"}, -- Summer of Magic Promos: in Gateway Promos
-[41] ={id= 41, lang={ "ENG" }, fruc={ true }, url="Happy%20Holidays%20Promos"},--Happy Holidays Promos
+[45] ={id= 45, lang={ [8]="JPN" }, fruc={ true }, url="Magic+Premiere+Shop+Promos"},--Magic Premiere Shop Promos
+[43] ={id= 43, lang={ "ENG" }, fruc={ true }, url="DCI+Promos"}, -- Two-Headed Giant Promos: in DCI Promos
+[42] ={id= 42, lang={ "ENG" }, fruc={ true }, url="Gateway+Promos"}, -- Summer of Magic Promos: in Gateway Promos
+[41] ={id= 41, lang={ "ENG" }, fruc={ true }, url="Happy+Holidays+Promos"},--Happy Holidays Promos
 [40] ={id= 40, lang={ "ENG",[3]="GER",[8]="JPN" }, fruc={ true }, url={ --Arena/Colosseo Leagues Promos
-											"Arena%20League%20Promos",--Arena League Promos
-											"League%20Tokens",--League Tokens
-											"Oversized%206x9%20Promos",--Oversized 6x9 Promos
---											"Gateway%20Promos",--Gateway Promos
+											"Arena+League+Promos",--Arena League Promos
+											"League+Tokens",--League Tokens
+											"Oversized+6x9+Promos",--Oversized 6x9 Promos
+--											"Gateway+Promos",--Gateway Promos
 											} },
 [34] ={id= 34, lang={ "ENG" }, fruc={ true }, url={ -- World Magic Cup Qualifiers Promos
-											"DCI%20Promos",--DCI Promos
+											"DCI+Promos",--DCI Promos
 											"Promos", -- "Geist of Saint Traft"
 											} },
 [33] ={id= 33, lang={ "ENG" }, fruc={ true }, url={ -- Championships Prizes
-											"DCI%20Promos",--DCI Promos
+											"DCI+Promos",--DCI Promos
 --											"Promos", -- "Geist of Saint Traft"-- now in WMCQ
 											} },
 [32] ={id= 32, lang={ "ENG",[8]="JPN" }, fruc={ true } , url={ --Pro Tour Promos
-											"DCI%20Promos", -- Pro Tour Promos in DCI Promos
-											"Pro%20Tour%20Promos", --Pro Tour Promos
+											"DCI+Promos", -- Pro Tour Promos in DCI Promos
+											"Pro+Tour+Promos", --Pro Tour Promos
 											} },
 [31] ={id= 31, lang={ "ENG" }, fruc={ true }, url={ -- Grand Prix Promos
-											"Grand%20Prix%20Promos", --Grand Prix Promos
-											"DCI%20Promos",--DCI Promos
+											"Grand+Prix+Promos", --Grand Prix Promos
+											"DCI+Promos",--DCI Promos
 											} },
-[30] ={id= 30, lang={ "ENG",[2]="RUS",[3]="GER",[5]="ITA",[7]="SPA" }, fruc={ true }, url="Friday%20Night%20Magic%20Promos"},--Friday Night Magic Promos
+[30] ={id= 30, lang={ "ENG",[2]="RUS",[3]="GER",[5]="ITA",[7]="SPA" }, fruc={ true }, url="Friday+Night+Magic+Promos"},--Friday Night Magic Promos
 [27] ={id= 27, lang={ "ENG" }, fruc={ true }, url={ -- Alternate Art Lands
-											"APAC%20Lands",
-											"Euro%20Lands",
-											"Guru%20Lands",
+											"APAC+Lands",
+											"Euro+Lands",
+											"Guru+Lands",
 											--"Promos", -- "Magic Guru" (not in set, but if anywhere, this would where it belonged
 											} },
 [26] ={id= 26, lang={ "ENG",[2]="RUS",[3]="GER",[7]="SPA" }, fruc={ true }, url={ -- "Magic Game Day"
-											"Game%20Day%20Promos", -- Game Day Promos
-											"Gateway%20Promos", -- "Naya Sojourners"
-											"Release%20Promos", -- "Reya Dawnbringer"
+											"Game+Day+Promos", -- Game Day Promos
+											"Gateway+Promos", -- "Naya Sojourners"
+											"Release+Promos", -- "Reya Dawnbringer"
 											"Theros", -- "The Slayer"
-											"Born%20of%20the%20Gods", -- "The Vanquisher"
-											"Journey%20into%20Nyx", -- "The Champion"
+											"Born+of+the+Gods", -- "The Vanquisher"
+											"Journey+into+Nyx", -- "The Champion"
 											} },
 [25] ={id= 25, lang={ "ENG",[3]="GER",[17]="PHY" }, fruc={ true }, url={ --Judge Gift Cards
-											"Judge%20Rewards%20Promos",-- Judge Rewards Promos
-											"Judge%20Program%20Tokens",--Judge Program Tokens
+											"Judge+Rewards+Promos",-- Judge Rewards Promos
+											"Judge+Program+Tokens",--Judge Program Tokens
 											} },
-[24] ={id= 24, lang={ "ENG" }, fruc={ true }, url="Champs%20&%20States%20Promos"},--Champs & States Promos
-[23] ={id= 23, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Gateway%20Promos"},--Gateway Promos
+[24] ={id= 24, lang={ "ENG" }, fruc={ true }, url="Champs+&+States+Promos"},--Champs & States Promos
+[23] ={id= 23, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Gateway+Promos"},--Gateway Promos
 [22] ={id= 22, lang={ "ENG",[2]="RUS",[3]="GER",[7]="SPA",[12]="HEB",[13]="ARA",[14]="LAT",[15]="SAN",[16]="GRC" }, fruc={ true }, url={ --Prerelease Promos
-											"Prerelease%20Promos", -- Prerelease Promos
---	no griselbrand here						"DCI%20Promos", -- DCI Promos ("Griselbrand") - DCI Griselbrand is GP; Prerelease Griselbrand is oversized!
+											"Prerelease+Promos", -- Prerelease Promos
+--	no griselbrand here						"DCI+Promos", -- DCI Promos ("Griselbrand") - DCI Griselbrand is GP; Prerelease Griselbrand is oversized!
 											"Theros" , -- Theros (5 Hero Cards)
-											"Born%20of%20the%20Gods", -- Born of the Gods (5 Hero Cards)
-											"Journey%20into%20Nyx", -- Journey into Nyx (5 Hero Cards)
-											"Dragons%20Of%20Tarkir:%20Promos",--Dragons Of Tarkir: Promos
+											"Born+of+the+Gods", -- Born of the Gods (5 Hero Cards)
+											"Journey+into+Nyx", -- Journey into Nyx (5 Hero Cards)
+											"Dragons+Of+Tarkir%3A+Promos",--Dragons Of Tarkir: Promos
 											"Promos" , -- 4 Dragonfury variants
-											"Fate%20Reforged:%20Promos",--Fate Reforged: Promos
-											"Khans%20of%20Tarkir:%20Promos",--Khans of Tarkir: Promos
-											"Magic%20Origins:%20Promos",--Magic Origins: Promos
-											"Oversized%206x9%20Promos", -- Oversized 6x9 Promos ("Garruk the Slayer (oversized)")
---											"Battle%20for%20Zendikar:%20Promos",--Battle for Zendikar Promos
---											"Oath%20of%20the%20Gatewatch:%20Promos",--Oath of the Gatewatch: Promos
---											"Shadows%20over%20Innistrad:%20Promos",--Shadows over Innistrad: Promos
+											"Fate+Reforged%3A+Promos",--Fate Reforged: Promos
+											"Khans+of+Tarkir%3A+Promos",--Khans of Tarkir: Promos
+											"Magic+Origins%3A+Promos",--Magic Origins: Promos
+											"Oversized+6x9+Promos", -- Oversized 6x9 Promos ("Garruk the Slayer (oversized)")
+--											"Battle+for+Zendikar%3A+Promos",--Battle for Zendikar Promos
+--											"Oath+of+the+Gatewatch%3A+Promos",--Oath of the Gatewatch: Promos
+--											"Shadows+over+Innistrad%3A+Promos",--Shadows over Innistrad: Promos
 											} },
 [21] ={id= 21, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN" }, fruc={ true }, url={ --Release & Launch Party Promos
-											"Release%20Promos", -- Release Promos
-											"Oversized%206x9%20Promos", -- "Incoming! (oversized)"
-											"Prerelease%20Promos", -- "Lord of Shatterskull Pass"
+											"Release+Promos", -- Release Promos
+											"Oversized+6x9+Promos", -- "Incoming! (oversized)"
+											"Prerelease+Promos", -- "Lord of Shatterskull Pass"
 											"Theros" , -- "The Harvester"
-											"Born%20of%20the%20Gods", -- "The Explorer"
-											"Journey%20into%20Nyx", -- "The Destined"
-											"Magic%20Origins:%20Promos",--"Mizzium Meddler"
-											"Shadows%20over%20Innistrad:%20Promos",--"Angel of Deliverance"
+											"Born+of+the+Gods", -- "The Explorer"
+											"Journey+into+Nyx", -- "The Destined"
+											"Magic+Origins%3A+Promos",--"Mizzium Meddler"
+											"Shadows+over+Innistrad%3A+Promos",--"Angel of Deliverance"
 											} },
-[20] ={id= 20, lang={ "ENG" }, fruc={ true }, url="Player%20Rewards%20Promos"},--Player Rewards Promos
+[20] ={id= 20, lang={ "ENG" }, fruc={ true }, url="Player+Rewards+Promos"},--Player Rewards Promos
 [15]= {id= 15, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN" }, fruc={ true }, url={-- Convention Promos
-											"Convention%20Promos", --Convention Promos
-											"San%20Diego%20Comic-Con%202015%20Promos",--San Diego Comic-Con 2015 Promos
-											"San%20Diego%20Comic-Con%202013%20Promos", --San Diego Comic-Con 2013 Promos
-											"San%20Diego%20Comic-Con%202014%20Promos", --San Diego Comic-Con 2014 Promos
-											"Oversized%206x9%20Promos", -- "Serra Angel (oversized)","Hurloon Minotaur (oversized)"
-											"DCI%20Promos", -- 6 cards
+											"Convention+Promos", --Convention Promos
+											"San+Diego+Comic-Con+2015+Promos",--San Diego Comic-Con 2015 Promos
+											"San+Diego+Comic-Con+2013+Promos", --San Diego Comic-Con 2013 Promos
+											"San+Diego+Comic-Con+2014+Promos", --San Diego Comic-Con 2014 Promos
+											"Oversized+6x9+Promos", -- "Serra Angel (oversized)","Hurloon Minotaur (oversized)"
+											"DCI+Promos", -- 6 cards
 											"Promos", -- "Stealer of Secrets" (Gamescon 2014, not yet in MA)
-											"Dengeki%20Maoh%20Promos", -- "Shepherd of the Lost" (Dengeki Character Festival)
+											"Dengeki+Maoh+Promos", -- "Shepherd of the Lost" (Dengeki Character Festival)
 											} },
-[12] ={id= 12, lang={ [8]="JPN" }, fruc={ true }, url="Hobby%20Japan%20Commemorative%20Promos"},--Hobby Japan Commemorative Promos
+[12] ={id= 12, lang={ [8]="JPN" }, fruc={ true }, url="Hobby+Japan+Commemorative+Promos"},--Hobby Japan Commemorative Promos
 [11] = nil, -- Redemption Program Cards
 [10] ={id= 10, lang={ "ENG",[8]="JPN" }, fruc={ true }, url={ -- Junior Series Promos
-											"Junior%20APAC%20Series%20Promos",--Junior APAC Series Promos (6 cards) - 6 ENG, all (U)
-											"Junior%20Series%20Promos",--Junior Series Promos (8 cards) - 8 ENG, all (E)
-											"Junior%20Super%20Series%20Promos",--Junior Super Series Promos (14 cards)
-											"Japan%20Junior%20Tournament%20Promos",--Japan Junior Tournament Promos (11 cards) -- 11 JPN ""
-											"Magic%20Scholarship%20Series%20Promos",--Magic Scholarship Series Promos (5 cards) - 5 EN, 1 "", 4 (J)
+											"Junior+APAC+Series+Promos",--Junior APAC Series Promos (6 cards) - 6 ENG, all (U)
+											"Junior+Series+Promos",--Junior Series Promos (8 cards) - 8 ENG, all (E)
+											"Junior+Super+Series+Promos",--Junior Super Series Promos (14 cards)
+											"Japan+Junior+Tournament+Promos",--Japan Junior Tournament Promos (11 cards) -- 11 JPN ""
+											"Magic+Scholarship+Series+Promos",--Magic Scholarship Series Promos (5 cards) - 5 EN, 1 "", 4 (J)
 											} },
 [9]=  {id=  9, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[7]="SPA" }, fruc={ true }, url={ -- Video Game Promos
-											"Duels%20of%20the%20Planeswalkers%20Promos",--Duels of the Planeswalkers Promos
-											"Oversized%206x9%20Promos", -- "Aswan Jaguar (oversized)"
+											"Duels+of+the+Planeswalkers+Promos",--Duels of the Planeswalkers Promos
+											"Oversized+6x9+Promos", -- "Aswan Jaguar (oversized)"
 											} },
 [8]=  {id=  8, lang={ "ENG",[5]="ITA",[8]="JPN" }, fruc={ true }, url={ -- Stores Promos
-											"Resale%20Promos",--Resale Promos
---											"Walmart%20Promos", -- Walmart Promos
-											"DCI%20Promos", -- DCI Promos
+											"Resale+Promos",--Resale Promos
+--											"Walmart+Promos", -- Walmart Promos
+											"DCI+Promos", -- DCI Promos
 											"Promos", -- 3 jp
 											} },
 [7]=  {id=  7, lang={ "ENG",[3]="GER",[8]="JPN" }, fruc={ true },	url={ -- "Magazine Inserts"
-											"The%20Duelist%20Promos",--The Duelist Promos
-											"CardZ%20Promos",--CardZ Promos
-											"TopDeck%20Promos",--TopDeck Promos
-											"Oversized%206x9%20Promos", -- 5 oversized
+											"The+Duelist+Promos",--The Duelist Promos
+											"CardZ+Promos",--CardZ Promos
+											"TopDeck+Promos",--TopDeck Promos
+											"Oversized+6x9+Promos", -- 5 oversized
 											"Promos", -- 1 Kartefakt(de), 2 Gotta Magazine(jp)
 											} },
 [6]=  {id=  6, lang={ "ENG",[8]="JPN" }, fruc={ true }, url={ -- Comic Inserts
-											"Armada%20Comics",--Armada Comics
-											"Dengeki%20Maoh%20Promos",--Dengeki Maoh Promos
-											"IDW%20Promos",--IDW Promos
-											"Oversized%206x9%20Promos",--Oversized 6x9 Promos
+											"Armada+Comics",--Armada Comics
+											"Dengeki+Maoh+Promos",--Dengeki Maoh Promos
+											"IDW+Promos",--IDW Promos
+											"Oversized+6x9+Promos",--Oversized 6x9 Promos
 											"Promos", -- 4 jp
 											} },
 [5]=  {id=  5, lang={ "ENG",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, fruc={ true }, url={ -- Book Inserts
-											"Harper%20Prism%20Promos",--Harper Prism Promos
-											"DCI%20Promos",--DCI Promos "Jace Beleren"
+											"Harper+Prism+Promos",--Harper Prism Promos
+											"DCI+Promos",--DCI Promos "Jace Beleren"
 											} },
 [4]  =nil, -- Ultra Rare Cards
-[2]  ={id=  2, lang={ "ENG" }, fruc={ true }, url="DCI%20Promos"},-- DCI Legend Membership in DCI Promos
+[2]  ={id=  2, lang={ "ENG" }, fruc={ true }, url="DCI+Promos"},-- DCI Legend Membership in DCI Promos
 -- unknown to MA
 [9990]={id=  0, lang=all, fruc={ true }, url={
-										"MKM%20Products",--MKM Products
-										"MKM%20Series%20Promos",--MKM Series Promos
+										"MKM+Products",--MKM Products
+										"MKM+Series",--MKM Series
+										"MKM+Series+Promos",--MKM Series Promos
 										} },
-[9991]={id=  0, lang=all, fruc={ true }, url="Simplified%20Chinese%20Alternate%20Art%20Cards"},--Simplified Chinese Alternate Art Cards
+[9991]={id=  0, lang=all, fruc={ true }, url="Simplified+Chinese+Alternate+Art+Cards"},--Simplified Chinese Alternate Art Cards
 [9992]={id=  0, lang=all, fruc={ true }, url={
 										"Misprints",--Misprints
-										"Fallen%20Empires:%20Wyvern%20Misprints",--Fallen Empires: Wyvern Misprints
+										"Fallen+Empires%3A+Wyvern+Misprints",--Fallen Empires: Wyvern Misprints
 										} },
-[9993]={id=  0, lang=all, fruc={ true }, url="Oversized%209x12%20Promos"},--Oversized 9x12 Promos
-[9994]={id=  0, lang={ "ENG" }, fruc={ true }, url="Fourth%20Edition:%20Alternate"},--Fourth Edition: Alternate ("Summer 4th")
+[9993]={id=  0, lang=all, fruc={ true }, url="Oversized+9x12+Promos"},--Oversized 9x12 Promos
+[9994]={id=  0, lang={ "ENG" }, fruc={ true }, url="Fourth+Edition%3A+Alternate"},--Fourth Edition: Alternate ("Summer 4th")
 [9995]={id=  0, lang=all, fruc={ true }, url={
-										"Ultra-Pro%20Puzzle%20Cards",--Ultra-Pro Puzzle Cards
-										"Filler%20Cards",--Filler Cards
-										"Blank%20Cards",--Blank Cards
+										"Ultra-Pro+Puzzle+Cards",--Ultra-Pro Puzzle Cards
+										"Filler+Cards",--Filler Cards
+										"Blank+Cards",--Blank Cards
 										} },
 [9996]={id=  0, lang=all, fruc={ true }, url={-- these are preconstructed decks
-										"Pro%20Tour%201996:%20Mark%20Justice",--Pro Tour 1996: Mark Justice
-										"Pro%20Tour%201996:%20Michael%20Locanto",--Pro Tour 1996: Michael Locanto
-										"Pro%20Tour%201996:%20Bertrand%20Lestree",--Pro Tour 1996: Bertrand Lestree
-										"Pro%20Tour%201996:%20Preston%20Poulter",--Pro Tour 1996: Preston Poulter
-										"Pro%20Tour%201996:%20Eric%20Tam",--Pro Tour 1996: Eric Tam
-										"Pro%20Tour%201996:%20Shawn%20Regnier",--Pro Tour 1996: Shawn Regnier
-										"Pro%20Tour%201996:%20George%20Baxter",--Pro Tour 1996: George Baxter
-										"Pro%20Tour%201996:%20Leon%20Lindback",--Pro Tour 1996: Leon Lindback
+										"Pro+Tour+1996%3A+Mark+Justice",--Pro Tour 1996: Mark Justice
+										"Pro+Tour+1996%3A+Michael+Locanto",--Pro Tour 1996: Michael Locanto
+										"Pro+Tour+1996%3A+Bertrand+Lestree",--Pro Tour 1996: Bertrand Lestree
+										"Pro+Tour+1996%3A+Preston+Poulter",--Pro Tour 1996: Preston Poulter
+										"Pro+Tour+1996%3A+Eric+Tam",--Pro Tour 1996: Eric Tam
+										"Pro+Tour+1996%3A+Shawn+Regnier",--Pro Tour 1996: Shawn Regnier
+										"Pro+Tour+1996%3A+George+Baxter",--Pro Tour 1996: George Baxter
+										"Pro+Tour+1996%3A+Leon+Lindback",--Pro Tour 1996: Leon Lindback
 										} },
 [9997]={id=  0, lang=all, fruc={ true }, url={
-										"World%20Championship%20Decks",--World Championship Decks
-										"WCD%201997:%20Svend%20Geertsen",--WCD 1997: Svend Geertsen
-										"WCD%201997:%20Jakub%20Slemr",--WCD 1997: Jakub Slemr
-										"WCD%201997:%20Janosch%20Kuhn",--WCD 1997: Janosch Kuhn
-										"WCD%201997:%20Paul%20McCabe",--WCD 1997: Paul McCabe
-										"WCD%201998:%20Brian%20Selden",--WCD 1998: Brian Selden
-										"WCD%201998:%20Randy%20Buehler",--WCD 1998: Randy Buehler
-										"WCD%201998:%20Brian%20Hacker",--WCD 1998: Brian Hacker
-										"WCD%201998:%20Ben%20Rubin",--WCD 1998: Ben Rubin
-										"WCD%201999:%20Jakub%20%C5%A0lemr",--WCD 1999: Jakub Šlemr
-										"WCD%201999:%20Matt%20Linde",--WCD 1999: Matt Linde
-										"WCD%201999:%20Mark%20Le%20Pine",--WCD 1999: Mark Le Pine
-										"WCD%201999:%20Kai%20Budde",--WCD 1999: Kai Budde
-										"WCD%202000:%20Janosch%20K%C3%BChn",--WCD 2000: Janosch Kühn
-										"WCD%202000:%20Jon%20Finkel",--WCD 2000: Jon Finkel
-										"WCD%202000:%20Nicolas%20Labarre",--WCD 2000: Nicolas Labarre
-										"WCD%202000:%20Tom%20Van%20de%20Logt",--WCD 2000: Tom Van de Logt
-										"WCD%202001:%20Alex%20Borteh",--WCD 2001: Alex Borteh
-										"WCD%202001:%20Tom%20van%20de%20Logt",--WCD 2001: Tom van de Logt
-										"WCD%202001:%20Jan%20Tomcani",--WCD 2001: Jan Tomcani
-										"WCD%202001:%20Antoine%20Ruel",--WCD 2001: Antoine Ruel
-										"WCD%202002:%20Carlos%20Romao",--WCD 2002: Carlos Romao
-										"WCD%202002:%20Sim%20Han%20How",--WCD 2002: Sim Han How
-										"WCD%202002:%20Raphael%20Levy",--WCD 2002: Raphael Levy
-										"WCD%202002:%20Brian%20Kibler",--WCD 2002: Brian Kibler
-										"WCD%202003:%20Dave%20Humpherys",--WCD 2003: Dave Humpherys
-										"WCD%202003:%20Daniel%20Zink",--WCD 2003: Daniel Zink
-										"WCD%202003:%20Peer%20Kr%C3%B6ger",--WCD 2003: Peer Kröger
-										"WCD%202003:%20Wolfgang%20Eder",--WCD 2003: Wolfgang Eder
-										"WCD%202004:%20Gabriel%20Nassif",--WCD 2004: Gabriel Nassif
-										"WCD%202004:%20Manuel%20Bevand",--WCD 2004: Manuel Bevand
-										"WCD%202004:%20Aeo%20Paquette",--WCD 2004: Aeo Paquette
-										"WCD%202004:%20Julien%20Nuijten",--WCD 2004: Julien Nuijten
+										"World+Championship+Decks",--World Championship Decks
+										"WCD+1997%3A+Svend+Geertsen",--WCD 1997: Svend Geertsen
+										"WCD+1997%3A+Jakub+Slemr",--WCD 1997: Jakub Slemr
+										"WCD+1997%3A+Janosch+Kuhn",--WCD 1997: Janosch Kuhn
+										"WCD+1997%3A+Paul+McCabe",--WCD 1997: Paul McCabe
+										"WCD+1998%3A+Brian+Selden",--WCD 1998: Brian Selden
+										"WCD+1998%3A+Randy+Buehler",--WCD 1998: Randy Buehler
+										"WCD+1998%3A+Brian+Hacker",--WCD 1998: Brian Hacker
+										"WCD+1998%3A+Ben+Rubin",--WCD 1998: Ben Rubin
+										"WCD+1999%3A+Jakub+%C5%A0lemr",--WCD 1999: Jakub Šlemr
+										"WCD+1999%3A+Matt+Linde",--WCD 1999: Matt Linde
+										"WCD+1999%3A+Mark+Le+Pine",--WCD 1999: Mark Le Pine
+										"WCD+1999%3A+Kai+Budde",--WCD 1999: Kai Budde
+										"WCD+2000%3A+Janosch+K%C3%BChn",--WCD 2000: Janosch Kühn
+										"WCD+2000%3A+Jon+Finkel",--WCD 2000: Jon Finkel
+										"WCD+2000%3A+Nicolas+Labarre",--WCD 2000: Nicolas Labarre
+										"WCD+2000%3A+Tom+Van+de+Logt",--WCD 2000: Tom Van de Logt
+										"WCD+2001%3A+Alex+Borteh",--WCD 2001: Alex Borteh
+										"WCD+2001%3A+Tom+van+de+Logt",--WCD 2001: Tom van de Logt
+										"WCD+2001%3A+Jan+Tomcani",--WCD 2001: Jan Tomcani
+										"WCD+2001%3A+Antoine+Ruel",--WCD 2001: Antoine Ruel
+										"WCD+2002%3A+Carlos+Romao",--WCD 2002: Carlos Romao
+										"WCD+2002%3A+Sim+Han+How",--WCD 2002: Sim Han How
+										"WCD+2002%3A+Raphael+Levy",--WCD 2002: Raphael Levy
+										"WCD+2002%3A+Brian+Kibler",--WCD 2002: Brian Kibler
+										"WCD+2003%3A+Dave+Humpherys",--WCD 2003: Dave Humpherys
+										"WCD+2003%3A+Daniel+Zink",--WCD 2003: Daniel Zink
+										"WCD+2003%3A+Peer+Kr%C3%B6ger",--WCD 2003: Peer Kröger
+										"WCD+2003%3A+Wolfgang+Eder",--WCD 2003: Wolfgang Eder
+										"WCD+2004%3A+Gabriel+Nassif",--WCD 2004: Gabriel Nassif
+										"WCD+2004%3A+Manuel+Bevand",--WCD 2004: Manuel Bevand
+										"WCD+2004%3A+Aeo+Paquette",--WCD 2004: Aeo Paquette
+										"WCD+2004%3A+Julien+Nuijten",--WCD 2004: Julien Nuijten
 										} },
-[9998]={id=  0, lang=all, fruc={ true }, url={ -- actual Pro-Players on baseballcard-like cards
-										"2005%20Player%20Cards",--2005 Player Cards
-										"2006%20Player%20Cards",--2006 Player Cards
-										"2007%20Player%20Cards",--2007 Player Cards
+[9998]={id=  0, lang=all, fruc={ true }, url={ -- other merchandise
+										"Artists+of+Magic",--Artists of Magic (Playmats)
+										"BoM+Products",--BoM Products (Sleeves,Boxes,Playmats)
+										-- actual Pro-Players on baseballcard-like cards
+										"2005+Player+Cards",--2005 Player Cards
+										"2006+Player+Cards",--2006 Player Cards
+										"2007+Player+Cards",--2007 Player Cards
 										} },
 [9999]={id=  0, lang=all, fruc={ true }, url={ -- custom tokens
-										"Custom%20Tokens",--Custom Tokens
-										"GamingEtc%20Tokens",--GamingEtc Tokens
-										"Yummy%20Tokens",--Yummy Tokens
-										"Revista%20Serra%20Promos",--Revista Serra Promos
-										"Your%20Move%20Games%20Tokens",--Your Move Games Tokens
-										"Tierra%20Media%20Tokens",--Tierra Media Tokens
-										"TokyoMTG%20Products",--TokyoMTG Products
-										"Mystic%20Shop%20Products",--Mystic Shop Products
-										"Tokens%20for%20MTG",--Tokens for MTG
-										"JingHe%20Age:%202002%20Tokens",--JingHe Age: 2002 Tokens
-										"JingHe%20Age:%20MtG%2010th%20Anniversary%20Tokens",--JingHe Age: MtG 10th Anniversary Tokens
-										"Starcity%20Games:%20Commemorative%20Tokens",--Starcity Games: Commemorative Tokens
-										"Starcity%20Games:%20Creature%20Collection",--Starcity Games: Creature Collection
-										"Starcity%20Games:%20Justin%20Treadway%20Tokens",--Starcity Games: Justin Treadway Tokens
-										"Starcity%20Games:%20Kristen%20Plescow%20Tokens",--Starcity Games: Kristen Plescow Tokens
-										"Starcity%20Games:%20Token%20Series%20One",--Starcity Games: Token Series One
-										"Javi%20Alterations%20Tokens",--Javi Alterations Tokens
-										"GnD%20Cards",--GnD Cards
+										"Custom+Tokens",--Custom Tokens
+										"GamingEtc+Tokens",--GamingEtc Tokens
+										"Yummy+Tokens",--Yummy Tokens
+										"Revista+Serra+Promos",--Revista Serra Promos
+										"Your+Move+Games+Tokens",--Your Move Games Tokens
+										"Tierra+Media+Tokens",--Tierra Media Tokens
+										"TokyoMTG+Products",--TokyoMTG Products
+										"Mystic+Shop+Products",--Mystic Shop Products
+										"Tokens+for+MTG",--Tokens for MTG
+										"JingHe+Age%3A+2002+Tokens",--JingHe Age: 2002 Tokens
+										"JingHe+Age%3A+MtG+10th+Anniversary+Tokens",--JingHe Age: MtG 10th Anniversary Tokens
+										"Starcity+Games%3A+Commemorative+Tokens",--Starcity Games: Commemorative Tokens
+										"Starcity+Games%3A+Creature+Collection",--Starcity Games: Creature Collection
+										"Starcity+Games%3A+Justin+Treadway+Tokens",--Starcity Games: Justin Treadway Tokens
+										"Starcity+Games%3A+Kristen+Plescow+Tokens",--Starcity Games: Kristen Plescow Tokens
+										"Starcity+Games%3A+Token+Series+One",--Starcity Games: Token Series One
+										"Javi+Alterations+Tokens",--Javi Alterations Tokens
+										"GnD+Cards",--GnD Cards
+										"Mezzocielo+%26+Friends+Tokens",--Mezzocielo & Friends Tokens
 										} },
 	}
 --end table site.sets
