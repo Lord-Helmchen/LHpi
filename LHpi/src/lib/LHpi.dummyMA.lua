@@ -673,6 +673,7 @@ dummy.promosets = {
 
 --- @field [parent=#dummy] #table specialsets
 dummy.specialsets = {
+ [900] = "Modern Masters 2017 Edition";
  [840] = "Commander 2016 Edition";
  [839] = "Kaladesh Inventions";
  [837] = "Duel Decks: Nissa vs. Ob Nixilis";
@@ -900,7 +901,7 @@ function main(mode)
 --		SAVETABLE=true,--default false
 --		DEBUG = true,--default false
 		OFFLINE = true,--default false
---		OFFLINE = false,--scripts should be set to true unless preparing for release
+		OFFLINE = false,--scripts should be set to true unless preparing for release
 	}
 	dummy.ForceEnv()
 
@@ -911,6 +912,7 @@ function main(mode)
 --	local importsets = { [0] = "fakeset"; }
 	local importsets = { [822]="some set" }
 --	local importsets = { [220]="foo";[800]="bar";[0]="baz"; }
+	local importsets = { [808]="Magic 2015";[822]="Magic Origins";[900]="Modern Masters 2017 Edition"; }
 --	local importsets = dummy.coresets
 --	local importsets = dummy.expansionsets
 --	local importsets = dummy.MergeTables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
@@ -929,55 +931,47 @@ function main(mode)
 	}
 	
 	-- select a predefined script to be tested
---	dummy.FakeSitescript()
-	local selection = 9
+	local selection = 9 -- nil for lib (and Data) only
 	local script=scripts[selection]
-	if script.oldloader then
-		dummy.LoadScript(script.name,script.path,script.savepath)--deprecated
-	else
-		--new loader
-		savepath=script.savepath
-		dofile(workdir..script.name)
+	if script then
+		if script.oldloader then
+			dummy.LoadScript(script.name,script.path,script.savepath)--deprecated
+		else
+			--new loader
+			savepath=script.savepath
+			dofile(workdir..script.name)
+		end
+	else-- only load library (and Data)
+		--LHpi = dummy.LoadLib(libver,workdir,script.savepath)--deprecated
+		LHpi = dofile(workdir.."lib\\LHpi-v"..libver..".lua")
+		dummy.FakeSitescript()
 	end
-		
-	-- only load library (and Data)
-	--LHpi = dummy.LoadLib(libver,workdir,script.savepath)--deprecated
---	LHpi = dofile(workdir.."lib\\LHpi-v"..libver..".lua")
-
 	-- force debug enviroment options
 	dummy.ForceEnv(dummy.env)
 	print("dummy says: script loaded.")
 	
 	-- now try to break the script :-)
-	if selection ~= 9 then
+	if selection ~=9 then
 		site.Initialize({update=true})
 	--	ImportPrice( importfoil, importlangs, importsets )
-	else
-		print("No Initialize for mkm-helper")
-	end
+	else -- mkm-helper
+		MODE = { download=true, sets={
+			[822] = "Magic Origins";
+			--[808]="Magic 2015";
+			--[900]="Modern Masters 2017 Edition";
+			}
+		}
+		print("foo")
+		LHpi.Log("URLSUFFIXes urldecoded" ,0,"LHpi-Debug.log",0)
+		local retval = main(MODE)
+		print(LHpi.Tostring(retval))
+	end	
 
 	-- demo LHpi helper functions:
 --	print(LHpi.Tostring( { ["this"]=1, is=2, [3]="a", ["table"]="string" } ))
 --	print(LHpi.ByteRep("Zwölffüßler"))
+--	TestPerformance(10,script,importfoil,importlangs,importsets,"time.log")
 --TODO add demo for other helper functions
-
-	--TestPerformance(10,script,importfoil,importlangs,importsets,"time.log")
-
-	-- use ProFi to profile the script
---	ProFi = require 'ProFi'
---	ProFi:start()
---	--
---	ImportPrice( importfoil, importlangs, importsets )
-	--profile single function only
---	package.path = 'src\\lib\\ext\\?.lua;' .. package.path
---	Json = require ("dkjson")
---	site.sets={ [808]={id=808, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Magic%202015"} }
---	local urldetails = { setid=808, langid=1, frucid=1 }
---	local foundstring = '{"idProduct":7923,"idMetaproduct":2248,"idGame":1,"countReprints":2,"name":{"1":{"idLanguage":1,"languageName":"English","productName":"Fyndhorn Druid (Version 2)"},"2":{"idLanguage":2,"languageName":"French","productName":"Druide cordellien (Version 2)"},"3":{"idLanguage":3,"languageName":"German","productName":"Fyndhorndruide (Version 2)"},"4":{"idLanguage":4,"languageName":"Spanish","productName":"Druida de Fyndhorn (Version 2)"},"5":{"idLanguage":5,"languageName":"Italian","productName":"Druido di Fyndhorn (Version 2)"}},"website":"\\/Products\\/Singles\\/Alliances\\/Fyndhorn+Druid+%28Version+2%29","image":".\\/img\\/cards\\/Alliances\\/fyndhorn_druid2.jpg","category":{"idCategory":1,"categoryName":"Magic Single"},"priceGuide":{"SELL":0.05,"LOW":0.02,"LOWEX":0.02,"LOWFOIL":0,"AVG":0.1,"TREND":0.05},"expansion":"Alliances","expIcon":13,"number":null,"rarity":"Common","countArticles":466,"countFoils":0}'
---	site.ParseHtmlData( foundstring , urldetails )
---	--	
---	ProFi:stop()
---	ProFi:writeReport( 'MyProfilingReport.txt' )
 	
 	local dt = os.clock() - t1 
 	print(string.format("All this took %g seconds",dt))
