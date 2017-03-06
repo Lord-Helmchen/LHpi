@@ -673,6 +673,13 @@ dummy.promosets = {
 
 --- @field [parent=#dummy] #table specialsets
 dummy.specialsets = {
+ [840] = "Commander 2016 Edition";
+ [839] = "Kaladesh Inventions";
+ [837] = "Duel Decks: Nissa vs. Ob Nixilis";
+ [836] = "Conspiracy: Take the Crown";
+ [835] = "From the Vault: Lore";
+ [833] = "Eternal Masters";
+ [832] = "Welcome Deck 2016";
  [830] = "Duel Decks: Blessed vs. Cursed";
  [828] = "Commander 2015 Edition";
  [827] = "Magic Origins Clash Pack";
@@ -742,11 +749,15 @@ dummy.specialsets = {
  [200] = "Chronicles";
  [106] = "Collectors’ Edition (International)";
  [105] = "Collectors’ Edition (Domestic)";
+ [88]  = "2003 World Championship Decks";
  [70]  = "Vanguard";
  [69]  = "Box Topper Cards";
 }
 --- @field [parent=#dummy] #table expansionsets
 dummy.expansionsets = {
+ [841] = "Aether Revolt";
+ [838] = "Kaladesh";
+ [834] = "Eldritch Moon";
  [831] = "Shadows over Innistrad";
  [829] = "Oath of the Gatewatch";
  [825] = "Battle for Zendikar";
@@ -919,7 +930,7 @@ function main(mode)
 	
 	-- select a predefined script to be tested
 --	dummy.FakeSitescript()
-	local selection = 6
+	local selection = 7
 	local script=scripts[selection]
 	if script.oldloader then
 		dummy.LoadScript(script.name,script.path,script.savepath)--deprecated
@@ -937,22 +948,10 @@ function main(mode)
 	dummy.ForceEnv(dummy.env)
 	print("dummy says: script loaded.")
 	
---	-- utility functions from dummy:
---	--only run sitescript update helpers
---	if selection ~= 9 then
---		if site.Initialize then
---			site.Initialize({update=true})
---		--else
---		--	dummy.CompareDummySets(mapath,libver)
---		--	dummy.CompareDataSets(libver,dataver)
---		--	dummy.CompareSiteSets()	
---		end
---	end
-	
 	-- now try to break the script :-)
 	if selection ~= 9 then
-	--	site.Initialize({update=true})
-		ImportPrice( importfoil, importlangs, importsets )
+		site.Initialize({update=true})
+	--	ImportPrice( importfoil, importlangs, importsets )
 	else
 		print("No Initialize for mkm-helper")
 	end
