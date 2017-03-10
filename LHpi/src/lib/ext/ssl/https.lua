@@ -34,15 +34,10 @@ local cfg = {
 -- Auxiliar Functions
 --------------------------------------------------------------------
 
--- Insert default HTTPS port.
-local function default_https_port(u)
-   return url.build(url.parse(u, {port = _M.PORT}))
-end
-
 -- Convert an URL to a table according to Luasocket needs.
 local function urlstring_totable(url, body, result_table)
    url = {
-      url = default_https_port(url),
+      url = (url),
       method = body and "POST" or "GET",
       sink = ltn12.sink.table(result_table)
    }
@@ -77,25 +72,43 @@ local function tcp(params)
    end
    -- Force client mode
    params.mode = "client"
+   -- upvalue to track https -> http redirection
+   local washttps = false
    -- 'create' function for LuaSocket
-   return function ()
-      local conn = {}
-      conn.sock = try(socket.tcp())
-      local st = getmetatable(conn.sock).__index.settimeout
-      function conn:settimeout(...)
-         return st(self.sock, ...)
-      end
-      -- Replace TCP's connection function
-      function conn:connect(host, port)
-         try(self.sock:connect(host, port))
-         self.sock = try(ssl.wrap(self.sock, params))
-         self.sock:sni(host)
-         try(self.sock:dohandshake())
-         reg(self, getmetatable(self.sock))
-         return 1
-      end
-      return conn
-  end
+   return function (reqt)
+      local u = url.parse(reqt.url)
+      if (reqt.scheme or u.scheme) == "https" then
+        -- https, provide an ssl wrapped socket
+        local conn = {}
+        conn.sock = try(socket.tcp())
+        local st = getmetatable(conn.sock).__index.settimeout
+        function conn:settimeout(...)
+           return st(self.sock, ...)
+        end
+        -- Replace TCP's connection function
+        function conn:connect(host, port)
+           try(self.sock:connect(host, port))
+           self.sock = try(ssl.wrap(self.sock, params))
+           try(self.sock:dohandshake())
+           reg(self, getmetatable(self.sock))
+           return 1
+        end
+        -- insert https default port, overriding http port inserted by LuaSocket
+        if not u.port then
+           u.port = PORT
+           reqt.url = url.build(u)
+           reqt.port = PORT 
+        end
+        washttps = true
+        return conn
+      else
+        -- regular http, needs just a socket...
+        if washttps and params.redirect ~= "all" then
+          try(nil, "Unallowed insecure redirect https to http")
+        end
+        return socket.tcp()
+      end  
+   end
 end
 
 --------------------------------------------------------------------
@@ -115,18 +128,12 @@ local function request(url, body)
   local stringrequest = type(url) == "string"
   if stringrequest then
     url = urlstring_totable(url, body, result_table)
-  else
-    url.url = default_https_port(url.url)
   end
   if http.PROXY or url.proxy then
     return nil, "proxy not supported"
-  elseif url.redirect then
-    return nil, "redirect not supported"
-  elseif url.create then
-    return nil, "create function not permitted"
   end
-  -- New 'create' function to establish a secure connection
-  url.create = tcp(url)
+  -- New 'create' function to establish the proper connection
+  url.create = url.create or tcp(url)
   local res, code, headers, status = http.request(url)
   if res and stringrequest then
     return table.concat(result_table), code, headers, status
