@@ -943,8 +943,10 @@ function helper.OAuthTest( params )
 	print("params: " .. LHpi.Tostring(params))
 
 	-- "manual" Authorization header construction
-	local Crypto = require "crypto"
-	local Base64 = require "base64"
+	--local Crypto = require "crypto"
+	local sha1 = require "sha1"
+	--local Base64 = require "base64"
+	local mime = require "mime"
 
 	params.oauth_timestamp = params.oauth_timestamp or tostring(os.time())
 	params.oauth_nonce = params.oauth_nonce or Crypto.hmac.digest("sha1", tostring(math.random()) .. "random" .. tostring(os.time()), "keyyyy")
@@ -964,9 +966,11 @@ function helper.OAuthTest( params )
 	print(baseString)
 	local signingKey = LHpi.OAuthEncode(params.appSecret) .. "&" .. LHpi.OAuthEncode(params.accessTokenSecret)
 	print(signingKey)--ok until here
-	local rawSignature = Crypto.hmac.digest("sha1", baseString, signingKey, true)
+	--local rawSignature = Crypto.hmac.digest("sha1", baseString, signingKey, true)
+	local rawSignature = sha1.hmac(signingKey, baseString)
 	print(rawSignature)
-	local signature = Base64.encode( rawSignature )
+	--local signature = Base64.encode( rawSignature )
+	local signature = (mime.b64( rawSignature ))
 	print(signature)
 	local authString = "Authorization: Oauth "
 		..	"realm=\"" .. LHpi.OAuthEncode(params.url) .. "\", "
