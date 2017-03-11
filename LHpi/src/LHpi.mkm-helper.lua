@@ -478,7 +478,7 @@ emulate mkm api response format for save file, so MKMDATASOURCE is transparent t
  @return #boolean	ok
 ]]
 function helper.FetchPricesFromHtml( url, details )
-	local count= { fetched=0, found=0 }
+	local count= { fetched=0, found=0, fail301=0 }
 	local ok = true
 	local expansiontable = { expansion= {name=string.match(url,"/([^/]+)$"), idExpansion=details.setid}, card = {} }
 	local cards = helper.CardsInSetFromHtml(url)
@@ -518,6 +518,7 @@ function helper.FetchPricesFromHtml( url, details )
 			table.insert(expansiontable.card,newCard)
 		else--not cardRawData
 			if status == "HTTP/1.1 301 Moved Permanently" then
+				count.fail301=count.fail301+1
 				print(string.format("! %s",status))
 				LHpi.Log(string.format("! %s",status) ,0,"LHpi-Debug.log")
 				LHpi.Log(string.format("%s : %s",cardname,cardurlsuffix) ,0,"LHpi-Debug.log")
@@ -531,6 +532,8 @@ function helper.FetchPricesFromHtml( url, details )
 		end--if cardRawData
 	end--for cardname,cardurlsuffix in pairs(cards)
 	LHpi.Log( string.format("%i cards have been requested, and %i cards were found. LHpi.Data claims %i cards in set %q.",count.fetched,count.found,LHpi.Data.sets[details.setid].cardcount.all,LHpi.Data.sets[details.setid].name ) ,1)
+	LHpi.Log(string.format("%i cards failed with http 301.",count.fail301) ,0,"LHpi-Debug.log")
+	--error("STOP and debug!")
 
 	--error("STOP and debug!")
 	return count,ok
