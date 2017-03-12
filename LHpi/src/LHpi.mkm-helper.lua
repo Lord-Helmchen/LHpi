@@ -943,7 +943,8 @@ function helper.OAuthTest( params )
 	local mime = require "mime"
 
 	params.oauth_timestamp = params.oauth_timestamp or tostring(os.time())
-	params.oauth_nonce = params.oauth_nonce or Crypto.hmac.digest("sha1", tostring(math.random()) .. "random" .. tostring(os.time()), "keyyyy")
+	--params.oauth_nonce = params.oauth_nonce or Crypto.hmac.digest("sha1", tostring(math.random()) .. "random" .. tostring(os.time()), "keyyyy")
+	params.oauth_nonce = params.oauth_nonce or sha1.hmac("keyyyy", tostring(math.random()) .. "random" .. tostring(os.time()) )
 
 	print(params.url)
 	local baseString = "GET&" .. LHpi.OAuthEncode( params.url ) .. "&"
