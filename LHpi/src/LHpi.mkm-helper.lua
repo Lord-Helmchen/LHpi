@@ -66,25 +66,14 @@ renamed helper.GetSourceData to helper.FetchAllPrices
 -- helper.FetchAllPrices keeps a persistent list of urls and when the url was last fetched from MKM.
 -- If the Data age is less than dataStaleAge[setid] seconds, the url will be skipped.
 -- See also #boolean COUNTREQUESTS and #boolean COUNTREQUESTS in LHpi.magickartenmarkt.lua
+-- 
+-- TODO: only the "default" entry is currently functional, per-set dataStaleAge is not implemented yet. 
+-- 
 -- @field #table dataStaleAge
 --- @field #table dataStaleAge
 local dataStaleAge = {
 	--["default"]	= 60*60*24, -- one day
 	["default"]	= 60*60*24*7, -- one week
---	[825] = 3600*24,--"Battle for Zendikar";
---	[822] = 3600*24,--"Magic Origins",
---	[818] = 3600*24,--"Dragons of Tarkir",
---	[816] =	3600*24,--"Fate Reforged",
---	[813] = 3600*24,--"Khans of Tarkir",
---	[826] = 3600*24,--"Zendikar Expeditions";
---	[819] = 3600*24*3,--"Modern Masters 2015 Edition";
---	 [22] = 3600*24*3,--"Prerelease Promos";
---	 [21] = 3600*24*3,--"Release & Launch Parties Promos";
---	 [26] = 3600*24*3,--"Magic Game Day";
---	 [30] = 3600*24*3,--"Friday Night Magic Promos";
---	 [53] = 3600*24*3,--"Holiday Gift Box Promos";
---	 [52] = 3600*24*3,--"Intro Pack Promos";
---	 [50] = 3600*24*3,--"Full Box Promotion";
 }
 
 --- stay below mkms daily request limit
@@ -93,14 +82,6 @@ local dataStaleAge = {
 -- or much higher if we have to scrape html data intead of using the api. 
 --local dailyRequestLimit = 5000
 local dailyRequestLimit = 100000
-
---- set data source
--- select either 
--- mkm-api and oauth (requires mkm api tokens and their cooperation)
--- or
--- html page scraping, because mkm is kinda dickish about it :-P
---local dataSource = { api=true, html=false }
-local dataSource = { html=true, api=false }
 
 --  Don't change anything below this line unless you know what you're doing :-) --
 
@@ -125,7 +106,7 @@ SAVELOG = true
 
 --- when running helper.ExpectedBoosterValue, also give the EV of a full Booster Box.
 -- @field #boolean BOXEV
---local BOXEV = true
+local BOXEV = true
 
 --- global working directory to allow operation outside of MA\Prices hierarchy
 -- @field [parent=#global] workdir
@@ -218,15 +199,15 @@ function main( mode )
 	--print(package.path.."\n"..package.cpath)	
 	if not ma then
 	-- load dummyMA to define ma namespace and helper functions
-		if tonumber(libver)>2.14 and not (_VERSION == "Lua 5.1") then
+		if tonumber(libver)>2.16 and _VERSION == "Lua 5.3" then
 			print("Loading LHpi.dummyMA.lua for ma namespace and functions...")
 			dummymode = "helper"
 			dofile(workdir.."lib\\LHpi.dummyMA.lua")
-			if tonumber(dummy.version)<0.8 then
-				error("need dummyMA version > 0.7")
+			if tonumber(dummy.version)<0.9 then
+				error("need dummyMA version > 0.8")
 			end
 		else
-			error("need LHpi version >2.14 and Lua version 5.2.")
+			error("need LHpi version >2.16 and Lua version 5.3.")
 		end -- if libver
 	end -- if not ma
 	--load library now, instead of letting the sitescript configure it.
@@ -308,9 +289,9 @@ function main( mode )
 	dofile(workdir.."LHpi.magickartenmarkt.lua")
 	site.scriptname = helper.scriptname
 	if mode.html then
-		dataSource = { html=true, api=false }
+		MKMDATASOURCE = { html=true, api=false }
 	elseif mode.api then
-		dataSource = { api=true, html=false }
+		MKMDATASOURCE = { api=true, html=false }
 	elseif not MKMDATASOURCE then
 		error("MKMDATASOURCE not defined!")
 	end--mode.html/mode.api
@@ -328,7 +309,7 @@ function main( mode )
 		LHpi.Log("0",0,LHpi.savepath.."LHpi.mkm.requestcounter",0)
 	end--mode.resetcounter
 	if mode.forcerefresh then
-		dataStaleAge = { ["default"] = 3600, } -- one hour 
+		dataStaleAge = { ["default"] = 60, } -- one minutes
 	end--mode.forcerefresh
 	if mode.helper then
 		return ("mkm-helper running in helper mode (passive)")
@@ -423,9 +404,10 @@ function helper.FetchAllPrices(sets)
 		end
 		local maxAge = dataStaleAge["default"]
 		--TODO dataStaleAge per set
-		if dataStaleAge[sid] then
-			maxAge = dataStaleAge[sid]
-		end
+		--this does not work, as we are operating on url now, not on sets
+		--if dataStaleAge[sid] then
+		--	maxAge = dataStaleAge[sid]
+		--end
 		if os.time()-dataAge[url].timestamp>maxAge then
 			print(string.format("stale data for %s was fetched on %s, refreshing...",url,os.date("%c",dataAge[url].timestamp)))
 			LHpi.Log(string.format("refreshing stale data for %s, last fetched on %s",url,os.date("%c",dataAge[url].timestamp)) ,0)
@@ -503,18 +485,30 @@ function helper.FetchPricesFromHtml( url, details )
 
 		if cardRawData and cardRawData ~= "" then
 			count.found=count.found+1
-			local idProduct = "faked"
-			local rarity = nil
+			local idProduct = nil
+			local countReprints = nil
+			local idMetaproduct = nil
+			local expIcon = nil
+			local idGame = 1
+			local website = cardurlsuffix
+			local image = "null.jpg"
+			local category = { idCategory=1, categoryName="Magic Single" }
+			local rarity = string.match(cardRawData,"Seltenheit:</td>%b<><span style=\"[^\"]-\" class=\"icon\" onmouseover=\"showMsgBox%(this,'([^']-)'%)\"")
 			local expansion = expansiontable.expansion.name
-			local name = {{idLanguage=1, languageName="English",productName=cardname},nil}
+			local name = { ["1"]={idLanguage=1, languageName="English",productName=cardname},nil }
 			local priceGuide= {LOWFOIL=nil, SELL=nil ,TREND=nil ,AVG=0 ,LOW=0 ,LOWEX=nil }
-			priceGuide.LOWEX = string.match(cardRawData,'Verfügbar ab %(EX%+%):</td><td.-><span itemprop="lowPrice">([%d.,]-)<')
-			priceGuide.TREND = string.match(cardRawData,'Preistendenz:</td><td.-">([%d.,]-) .-</td>')
-			priceGuide.LOWFOIL = string.match(cardRawData,'Foils verfügbar ab:</td><td.-">([%d.,]-) .-</td>')
+			priceGuide.LOWEX = string.match(cardRawData,'Verfügbar ab %(EX%+%):</td><td.-><span itemprop="lowPrice">([%d.,]-)<') or ""
+			priceGuide.LOWEX = tonumber((string.gsub( priceGuide.LOWEX, ",", ".")) )
+			priceGuide.TREND = string.match(cardRawData,'Preistendenz:</td><td.-">([%d.,]-) .-</td>') or ""
+			priceGuide.TREND = tonumber((string.gsub( priceGuide.TREND, ",", ".")) )
+			priceGuide.LOWFOIL = string.match(cardRawData,'Foils verfügbar ab:</td><td.-">([%d.,]-) .-</td>') or ""
+			priceGuide.LOWFOIL = tonumber((string.gsub( priceGuide.LOWFOIL, ",", ".")) )
 			priceGuide.SELL = string.match(cardRawData,'{"label":"Durchschnittlicher Verkaufspreis".-"data":%[[%d.,]-%]}') or ""
-			priceGuide.SELL = string.match(priceGuide.SELL,',([%d.]+)%]}$')
-			local newCard = { rarity= rarity, expansion = expansion, name = name, priceGuide=priceGuide }
-			--print(LHpi.Tostring(newCard))
+			priceGuide.SELL = string.match(priceGuide.SELL,',([%d.]+)%]}$') or ""
+			priceGuide.SELL = tonumber((string.gsub( priceGuide.SELL, ",", ".")) )
+			local newCard = { name=name, rarity=rarity, expansion=expansion, priceGuide=priceGuide, website=website, idGame=idGame, category=category }
+--print(LHpi.Tostring(Json.encode(priceGuide)))
+--error("STOP and debug!")
 			table.insert(expansiontable.card,newCard)
 		else--not cardRawData
 			if status == "HTTP/1.1 301 Moved Permanently" then
@@ -527,15 +521,17 @@ function helper.FetchPricesFromHtml( url, details )
 				--TODO debug 301 urls
 			end
 			print("!! no cardRawData - " .. status)
+			local skippedString = string.format("%s encountered, abort and skip %q.",httpStatus,LHpi.Data.sets[details.setid].name)
 			ok = false
-			--TODO break loop now?
 		end--if cardRawData
 	end--for cardname,cardurlsuffix in pairs(cards)
+	local setdata = Json.encode(expansiontable)
+	local fileurl = string.gsub(url, '[/\\:%*%?<>|"]', "_")
+	LHpi.Log( "Saving constructed source to file: \"" .. (LHpi.savepath or "") .. fileurl .. "\"" ,1)
 	LHpi.Log( string.format("%i cards have been requested, and %i cards were found. LHpi.Data claims %i cards in set %q.",count.fetched,count.found,LHpi.Data.sets[details.setid].cardcount.all,LHpi.Data.sets[details.setid].name ) ,1)
 	LHpi.Log(string.format("%i cards failed with http 301.",count.fail301) ,0,"LHpi-Debug.log")
-	--error("STOP and debug!")
-
-	--error("STOP and debug!")
+	print( "Saving constructed source to file: \"" .. (LHpi.savepath or "") .. fileurl .. "\"")
+	ma.PutFile( (LHpi.savepath or "") .. fileurl , setdata , 0 )
 	return count,ok
 end--function FetchPricesFromHtml
 
@@ -556,19 +552,15 @@ function helper.CardsInSetFromHtml(seturl,resultsPage,cards)
 		url = url .. "&resultsPage=" .. resultsPage
 	end
 	local trefferVon, trefferBis, trefferMax
-	local setdata = LHpi.GetSourceData( url , nil )
-	if setdata then
-		trefferMax, trefferVon, trefferBis = string.match(setdata,">(%d+) Treffer %- Zeige Seite Nr%. %d+ %(Treffer (%d+) bis (%d+)%)<")
+	local setdatahtml = LHpi.GetSourceData( url , nil )
+	if setdatahtml then
+		trefferMax, trefferVon, trefferBis = string.match(setdatahtml,">(%d+) Treffer %- Zeige Seite Nr%. %d+ %(Treffer (%d+) bis (%d+)%)<")
 		trefferMax=tonumber(trefferMax)
 		trefferVon=tonumber(trefferVon)
 		trefferBis=tonumber(trefferBis)
 		local i=0
-		for urlsuffix,name in string.gmatch(setdata,'<td><a href="([^"]-)">([^<]-)</a></td><td><a href') do
+		for urlsuffix,name in string.gmatch(setdatahtml,'<td><a href="([^"]-)">([^<]-)</a></td><td><a href') do
 			i=i+1
---			print(i .. ": " .. name .. " : " .. urlsuffix)
-			urlsuffix = LHpi.urldecode(urlsuffix)
---			print("urldecoded to: " .. urlsuffix )
---			print("OAuthencoded to: " .. LHpi.OAuthEncode(urlsuffix) )
 			cards[name]=urlsuffix
 		end--for
 		print(string.format("von %i bis %i sind %i, gefunden %i",trefferVon,trefferBis,trefferBis-trefferVon+1,i))
@@ -579,13 +571,10 @@ function helper.CardsInSetFromHtml(seturl,resultsPage,cards)
 		LHpi.Log("no data from "..url ,1)
 		print("no data from "..url)
 		--TODO revocer from empty setdata
-	end--if setdata
+	end--if setdatahtml
 	local cardnum = LHpi.Length(cards)
 	if cardnum < trefferBis then
 		print(string.format("%i cards in table, but trefferBis is %i",cardnum,trefferBis))
---		for name,urlsuffix in pairs(cards) do
---			print (name .. " : " .. urlsuffix)
---		end
 		error("Anzahl gefundener Karten-Urls passt nicht zur Trefferzahl!")
 	end
 	if trefferBis ~= trefferMax then
@@ -697,6 +686,8 @@ function helper.ExpectedBoosterValue(sets)
 									if not values[card.rarity].sum[ptype] then
 										values[card.rarity].sum[ptype]=0
 									end--if not values[card.rarity].sum[ptype]
+									--if (value < 5) then value = 0 end -- assume we'll only sell cards worth more than 5 EUR
+									--if (value < 5) then value = 0 else value=value*0.9 end -- assume we'll only sell cards worth more than 5 EUR @90%
 									values[card.rarity].sum[ptype]=values[card.rarity].sum[ptype]+value
 								end--for ptype,value
 							else

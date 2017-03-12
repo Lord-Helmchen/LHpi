@@ -59,6 +59,9 @@ LOGFOILTWEAK = true
 
 -- options that control the script's behaviour.
 
+--local mkmtokenfile = "LHpi.mkm.tokens.example"
+local mkmtokenfile = "LHpi.mkm.tokens.DarkHelmet"
+
 --- compare prices set and failed with expected numbers; default true
 -- set to false if you prefer speed over sanity checks.
 -- @field [parent=#global] #boolean CHECKEXPECTED
@@ -75,15 +78,17 @@ LOGFOILTWEAK = true
  @field #number useAsRegprice
  @field #number useAsFoilprice
 ]]
-local useAsRegprice=5
-local useAsFoilprice=6
+local useAsRegprice=6
+local useAsFoilprice=4
 
---TODO determine how to set MKM data source and document
---MKMDATASOURCE = { api=true, html=false}
-MKMDATASOURCE = { html=true, api=false}
-
---local mkmtokenfile = "LHpi.mkm.tokens.example"
-local mkmtokenfile = "LHpi.mkm.tokens.DarkHelmet"
+--- set data source
+-- select either 
+-- mkm-api and oauth (requires mkm api tokens and their cooperation)
+-- or
+-- html page scraping, because mkm is kinda dickish about it :-P
+-- @field #table MKMDATASOURCE	{ #boolean html, #boolean api }
+--local MKMDATASOURCE = { api=true, html=false }
+MKMDATASOURCE = { html=true, api=false }
 
 --- use a persistent counter of all OAuth requests sent to the server.
 -- this could be helpful, as MKM's server will respond with http 429 errors
@@ -109,7 +114,8 @@ local RESETCOUNTER = false
 -- and we need json anyways to read the mkm token file :)
 -- @field #string responseFormat	"json" or "xml" or "html"
 local responseFormat = "json"
-if MKMDATASOURCE.html then responseFormat="html" end
+--not useful as of yet. might be needed again if functions turn out to be similar enough
+--if MKMDATASOURCE.html then responseFormat="html" end
 
 --- Probably only need appToken,appSecret and can do without accessToken,accessTokenSecret.
 -- Would need a token set of an MKM-approved widget app.
@@ -352,18 +358,19 @@ function site.Initialize( mode )
 		package.cpath= workdir..'lib\\bin\\?.dll;' .. package.cpath
 		--print(package.path.."\n"..package.cpath)
 	end
-	if responseFormat == "json" then
-		Json = require ("dkjson")
-	elseif responseFormat == "xml" then
+
+	Json = require ("dkjson")
+	if responseFormat == "xml" then
 		error("xml parsing not implemented yet")
 		--Xml = require "luaxml"
 	end
 	if OFFLINE and not mode.helper then
+	--if OFFLINE then
 		--skip OAuth and https preparation
 		--when launched from ma, dll loading is not possible.
 	elseif MKMDATASOURCE.html then
-		https = require "ssl.https" 
-	elseif MKMDATASOURCE.api then 
+		https = require "ssl.https"
+	elseif MKMDATASOURCE.api then
 		OAuth = require "OAuth"
 		---@field [parent=#site] #table oauth
 		site.oauth = {}
@@ -410,7 +417,8 @@ function site.GetSourceData(url,details)
 	end
 	if MKMDATASOURCE.html then
 		url = "https://www." .. url
-		--TODO https instead of http probably means this will not work from within ma either...
+		--https instead of http means this will not work from within ma either...
+print(url)
 		body,code,headers,status = https.request( url )
 	elseif MKMDATASOURCE.api then
 		if sandbox then
@@ -457,8 +465,12 @@ function site.GetSourceData(url,details)
 		-- TODO http 301, resolve later
 		errorstring = status .. " - GET was for \"" .. url .. "\""
 		LHpi.Log(errorstring ,1)
-		LHpi.Log("headers are " .. LHpi.Tostring(headers))
-		return body, status
+		LHpi.Log(errorstring ,0,"LHpi-Debug.log")
+		LHpi.Log("headers are " .. LHpi.Tostring(headers) ,0,"LHpi-Debug.log")
+		if body~=nil then
+			LHpi.Log("body is " .. LHpi.Tostring(body) ,0,"LHpi-Debug.log")
+		end
+		return nil, status
 	else
 		errorstring = status .. " - " .. LHpi.Tostring(headers)
 	end
@@ -555,18 +567,18 @@ function site.BuildUrl( setid,langid,frucid )
 	url = "magickartenmarkt.de"
 		if type(setid)=="table" then
 			if setid.idExpansion then
-			url = url .. "/Products/Singles"
-				container[url .. "/" .. setid.urlsuffix] = { oauth=false, setid=setid }
+			url = url .. "/Products/Singles/"
+				container[url .. setid.urlsuffix] = { oauth=false, setid=setid }
 				return container
 			elseif setid.idProduct then
-				container[url .. "/" .. setid.urlsuffix] = { oauth=false, setid=setid }
+				container[url .. setid.urlsuffix] = { oauth=false, setid=setid }
 				return container
 			end
 		elseif setid=="list" then --request Expansion list. Needs to be parsed to be of use.
 			container[url .. "/Expansions"] = { oauth=false }
 			return container
 		else -- usual LHpi behaviour
-			url = url .. "/Products/Singles"
+			url = url .. "/Products/Singles/"
 			if site.sets[setid]==nil then
 				return {}
 			elseif  type(site.sets[setid].url) == "table" then
@@ -575,7 +587,7 @@ function site.BuildUrl( setid,langid,frucid )
 				urls = { site.sets[setid].url }
 			end--if type(site.sets[setid].url)
 			for _i,seturl in pairs(urls) do
-				container[url .. "/" .. seturl] = { oauth=false, setid=setid }
+				container[url .. seturl] = { oauth=false, setid=setid }
 			end--for _i,seturl
 			return container
 		end--if type(setid)
@@ -695,7 +707,7 @@ function site.ParseHtmlData( foundstring , urldetails )
 	local product
 	if MKMDATASOURCE.html then
 		error("html mode for ParseHtmlData not implemented yet")
--- in any case, this is the last time we ca have the MKMDATASOURCE modes behave differently
+-- in any case, this is the last time we can have the MKMDATASOURCE modes behave differently
 -- let's fix the helper, then check what we need to change here
 	end
 	if responseFormat == "json" then

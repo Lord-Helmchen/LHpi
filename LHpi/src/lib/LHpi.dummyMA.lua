@@ -209,7 +209,7 @@ end
 dummy={}
 ---	dummy version
 -- @field [parent=#dummy] #string version
-dummy.version = "0.8"
+dummy.version = "0.9"
 
 --[[- loads LHpi library for testing.
 @function [parent=#dummy] LoadLib
@@ -895,13 +895,13 @@ function main(mode)
 		STRICTEXPECTED = true,--default false
 --		STRICTOBJTYPE = false,--default true
 --		SAVELOG = true,--default false
-		SAVEHTML = true,--default false
+--		SAVEHTML = true,--default false
 		DEBUGFOUND = true,--default false
 --		DEBUGVARIANTS = true,--default false
 --		SAVETABLE=true,--default false
 --		DEBUG = true,--default false
 		OFFLINE = true,--default false
-		OFFLINE = false,--scripts should be set to true unless preparing for release
+--		OFFLINE = false,--scripts should be set to true unless preparing for release
 	}
 	dummy.ForceEnv()
 
@@ -955,14 +955,20 @@ function main(mode)
 		site.Initialize({update=true})
 	--	ImportPrice( importfoil, importlangs, importsets )
 	else -- mkm-helper
-		MODE = { download=true, sets={
-			[822] = "Magic Origins";
-			--[808]="Magic 2015";
-			--[900]="Modern Masters 2017 Edition";
-			}
+		MODE = {
+			sets={
+			--[822] = "Magic Origins";
+			[900] = "Modern Masters 2017 Edition";
+			},
+			forcerefresh=true,
+			--test=true,
+			--download=true,
+			boostervalue=true,
 		}
+--		STAYOFFLINE=true
 		print("foo")
-		LHpi.Log("URLSUFFIXes urldecoded" ,0,"LHpi-Debug.log",0)
+		print(LHpi.Tostring(MODE))
+		LHpi.Log("Debug" ,0,"LHpi-Debug.log",0)
 		local retval = main(MODE)
 		print(LHpi.Tostring(retval))
 	end	
