@@ -1,3 +1,5 @@
 /LHpi.mkm.requestcounter
 /bin.old
 /ext.old
+/LHpi.mkm.tokens*
+!/LHpi.mkm.tokens.example
