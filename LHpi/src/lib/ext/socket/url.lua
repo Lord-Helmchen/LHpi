@@ -59,7 +59,7 @@ local segment_set = make_set {
 local function protect_segment(s)
     return string.gsub(s, "([^A-Za-z0-9_])", function (c)
         if segment_set[c] then return c
-        else return string.format("%%%02x", string.byte(c)) end
+        else return string.format("%%%02X", string.byte(c)) end -- percent-encode uppercase, see https://tools.ietf.org/html/rfc3986#section-6.2.2
     end)
 end
 
