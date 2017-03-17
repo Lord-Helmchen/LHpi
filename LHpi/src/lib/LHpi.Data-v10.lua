@@ -2756,10 +2756,10 @@ Expansions = nil,
 --- not really a seperate subtable, just a bookmark for quick navigation in eclipse.
 -- @field [parent=#Data.sets] #table SpecialSets
 SpecialSets = nil,
-[900] = { name="Modern Masters 2015 Edition",
+[900] = { name="Modern Masters 2017 Edition",
 	tla="MM3",
 	foil="y",
-	cardcount={ reg=249, tok=1, nontrad=0, repl=0 },
+	cardcount={ reg=249, tok=21, nontrad=0, repl=0 },
 	variants={
 	},
 },

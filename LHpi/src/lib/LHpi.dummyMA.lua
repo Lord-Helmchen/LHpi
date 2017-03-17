@@ -858,12 +858,13 @@ dummy.coresets = {
 
 --- @field [parent=#dummy] #table standardsets
 dummy.standardsets = {
--- standard as of April 2016
+-- standard as of March 2017
+		[841] = "Aether Revolt";
+		[838] = "Kaladesh";
+		[834] = "Eldritch Moon";
 		[831] = "Shadows over Innistrad";
 		[829] = "Oath of the Gatewatch";
 		[825] = "Battle for Zendikar";
-		[818] = "Dragons of Tarkir";
-		[822] = "Magic Origins"; 
 }
 
 --[[- run as lua application  from your ide.
@@ -901,7 +902,7 @@ function main(mode)
 --		SAVETABLE=true,--default false
 --		DEBUG = true,--default false
 		OFFLINE = true,--default false
---		OFFLINE = false,--scripts should be set to true unless preparing for release
+		OFFLINE = false,--scripts should be set to true unless preparing for release
 	}
 	dummy.ForceEnv()
 
@@ -956,19 +957,24 @@ function main(mode)
 	--	ImportPrice( importfoil, importlangs, importsets )
 	else -- mkm-helper
 		MODE = {
-			sets={
-			--[822] = "Magic Origins";
-			[900] = "Modern Masters 2017 Edition";
-			},
-			forcerefresh=true,
+			sets="all",
+--			sets={
+--			[841] = "Aether Revolt";
+--			[838] = "Kaladesh";
+--			[834] = "Eldritch Moon";
+--			[831] = "Shadows over Innistrad";
+--			[829] = "Oath of the Gatewatch";
+--			[825] = "Battle for Zendikar";
+--			[900] = "Modern Masters 2017 Edition";
+--			},
+
+--			forcerefresh=true,
 			--test=true,
-			--download=true,
-			boostervalue=true,
+			download=true,
+			--boostervalue=true,
 		}
 --		STAYOFFLINE=true
-		print("foo")
-		print(LHpi.Tostring(MODE))
-		LHpi.Log("Debug" ,0,"LHpi-Debug.log",0)
+		print("now running mkm-helper for real, with MODE="..LHpi.Tostring(MODE))
 		local retval = main(MODE)
 		print(LHpi.Tostring(retval))
 	end	

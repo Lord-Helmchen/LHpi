@@ -388,6 +388,7 @@ function helper.FetchAllPrices(sets)
 		for _,exp in pairs(sets) do
 			local urls = site.BuildUrl( exp )--call by Expansion Entity
 			if string.find(exp.name,"Janosch") or string.find(exp.name,"Jakub") or string.find(exp.name,"Peer") then
+--TODO check if this still applies
 				LHpi.Log(exp.name .. " encoding Problem results in 401 Unauthorized. Set skipped." ,2)
 			else--this is what should happen
 				for u,d in pairs(urls) do
@@ -396,9 +397,10 @@ function helper.FetchAllPrices(sets)
 			end--401 exceptions
 		end--for _,exp
 	end--if sets
-
-	local totalcount={ fetched=0, found=0 }
+	
+	local totalcount={ fetched=0, found=0, sets=0, numsets=LHpi.Length(seturls) }
 	for url,details in pairs(seturls) do
+		totalcount.sets=totalcount.sets+1
 		if not dataAge[url] then
 			dataAge[url]={timestamp=0}
 		end
@@ -409,8 +411,8 @@ function helper.FetchAllPrices(sets)
 		--	maxAge = dataStaleAge[sid]
 		--end
 		if os.time()-dataAge[url].timestamp>maxAge then
-			print(string.format("stale data for %s was fetched on %s, refreshing...",url,os.date("%c",dataAge[url].timestamp)))
-			LHpi.Log(string.format("refreshing stale data for %s, last fetched on %s",url,os.date("%c",dataAge[url].timestamp)) ,0)
+			print(string.format("stale data for %s was fetched on %s, refreshing... (%i of %i)",url,os.date("%c",dataAge[url].timestamp),totalcount.sets,totalcount.numsets))
+			LHpi.Log(string.format("refreshing stale data for %s, last fetched on %s (%i of %i)",url,os.date("%c",dataAge[url].timestamp),totalcount.sets,totalcount.numsets) ,0)
 			local reqCountPre=ma.GetFile(LHpi.savepath.."LHpi.mkm.requestcounter") or 0
 			local reqForSet = dataAge[url].requests or LHpi.Data.sets[details.setid].cardcount.all or 1
 			print(string.format(" predicted number of requests is %i",reqForSet))			
@@ -430,13 +432,13 @@ function helper.FetchAllPrices(sets)
 				local reqCountPost=ma.GetFile(LHpi.savepath.."LHpi.mkm.requestcounter")
 				dataAge[url].requests=reqCountPost-reqCountPre
 
-			else-- reqPredition > 5000
+			else-- reqPrediction > 5000
 				print(string.format("Skipped %s with %s requests (today's total: %i) to prevent HTTP/429.",url,(dataAge[url].requests or "unknown"),reqPrediction))
 				LHpi.Log(string.format("Fetching data for %s would result in %s requests (%i total for today). Skipping url to prevent http 429 errors.",url,(dataAge[url].requests or "unknown"),reqPrediction) ,0)
 			end--if requests < 5000
 		else
-			print(string.format("%s fetched on %s is still fresh.",url,os.date("%c",dataAge[url].timestamp)))
-			LHpi.Log(string.format("data for %s was fetched on %s and is still fresh.",url,os.date("%c",dataAge[url].timestamp)) ,0)
+			print(string.format("%s fetched on %s is still fresh. (%i of %i)",url,os.date("%c",dataAge[url].timestamp),totalcount.sets,totalcount.numsets))
+			LHpi.Log(string.format("data for %s was fetched on %s and is still fresh. (%i of %i)",url,os.date("%c",dataAge[url].timestamp),totalcount.sets,totalcount.numsets) ,0)
 		end
 		ma.PutFile(savepath.."LHpi.mkm.offlinedataage", Json.encode( dataAge,{ indent = true } ) ,0)
 	end--for url,details
@@ -464,8 +466,12 @@ function helper.FetchPricesFromHtml( url, details )
 	local ok = true
 	local expansiontable = { expansion= {name=string.match(url,"/([^/]+)$"), idExpansion=details.setid}, card = {} }
 	local cards = helper.CardsInSetFromHtml(url)
+	if not cards then
+		return count,false
+	end
+	count.expected = LHpi.Length(cards)
 	for cardname,cardurlsuffix in pairs(cards) do
-		print(string.format("name:%s : urlsuffix:%s",cardname,cardurlsuffix))
+		print(string.format("%i of %i : name:%s : urlsuffix:%s",count.fetched+1,count.expected,cardname,cardurlsuffix))
 		LHpi.Log(string.format("name:%s : urlsuffix:%s",cardname,cardurlsuffix))
 		local cardurl=site.BuildUrl( { idProduct=cardname, urlsuffix=cardurlsuffix } )
 		for u,d in pairs(cardurl) do
@@ -507,18 +513,15 @@ function helper.FetchPricesFromHtml( url, details )
 			priceGuide.SELL = string.match(priceGuide.SELL,',([%d.]+)%]}$') or ""
 			priceGuide.SELL = tonumber((string.gsub( priceGuide.SELL, ",", ".")) )
 			local newCard = { name=name, rarity=rarity, expansion=expansion, priceGuide=priceGuide, website=website, idGame=idGame, category=category }
---print(LHpi.Tostring(Json.encode(priceGuide)))
---error("STOP and debug!")
 			table.insert(expansiontable.card,newCard)
 		else--not cardRawData
 			if status == "HTTP/1.1 301 Moved Permanently" then
 				count.fail301=count.fail301+1
-				print(string.format("! %s",status))
-				LHpi.Log(string.format("! %s",status) ,0,"LHpi-Debug.log")
-				LHpi.Log(string.format("%s : %s",cardname,cardurlsuffix) ,0,"LHpi-Debug.log")
-				LHpi.Log(string.format("cardname \"%s\": %s",cardname,LHpi.ByteRep(cardname)) ,0,"LHpi-Debug.log")
-				LHpi.Log(string.format("cardurlsuffix \"%s\": %s",cardurlsuffix,LHpi.ByteRep(cardurlsuffix)) ,0,"LHpi-Debug.log")
-				--TODO debug 301 urls
+				--print(string.format("! %s",status))
+				--LHpi.Log(string.format("! %s",status) ,0,"LHpi-Debug.log")
+				--LHpi.Log(string.format("%s : %s",cardname,cardurlsuffix) ,0,"LHpi-Debug.log")
+				--LHpi.Log(string.format("cardname \"%s\": %s",cardname,LHpi.ByteRep(cardname)) ,0,"LHpi-Debug.log")
+				--LHpi.Log(string.format("cardurlsuffix \"%s\": %s",cardurlsuffix,LHpi.ByteRep(cardurlsuffix)) ,0,"LHpi-Debug.log")
 			end
 			print("!! no cardRawData - " .. status)
 			local skippedString = string.format("%s encountered, abort and skip %q.",httpStatus,LHpi.Data.sets[details.setid].name)
@@ -555,33 +558,42 @@ function helper.CardsInSetFromHtml(seturl,resultsPage,cards)
 	local setdatahtml = LHpi.GetSourceData( url , nil )
 	if setdatahtml then
 		trefferMax, trefferVon, trefferBis = string.match(setdatahtml,">(%d+) Treffer %- Zeige Seite Nr%. %d+ %(Treffer (%d+) bis (%d+)%)<")
+		if not trefferMax then
+			trefferMax = string.match(setdatahtml,">(%d+) Treffer<")
+		end
 		trefferMax=tonumber(trefferMax)
-		trefferVon=tonumber(trefferVon)
-		trefferBis=tonumber(trefferBis)
+		trefferVon=tonumber(trefferVon) or 1
+		trefferBis=tonumber(trefferBis) or trefferMax
 		local i=0
 		for urlsuffix,name in string.gmatch(setdatahtml,'<td><a href="([^"]-)">([^<]-)</a></td><td><a href') do
 			i=i+1
 			cards[name]=urlsuffix
 		end--for
-		print(string.format("von %i bis %i sind %i, gefunden %i",trefferVon,trefferBis,trefferBis-trefferVon+1,i))
+		print(string.format("von %i bis %i sind %i, gefunden %i, max %i",trefferVon,trefferBis,trefferBis-trefferVon+1,i,trefferMax))
 		if i ~= (trefferBis - trefferVon + 1) then
-			error("Anzahl gefundener Karten-Urls passt nicht zur Trefferzahl!")
+			--error("Anzahl gefundener Karten ist inkonsistent!")
+			print("Anzahl gefundener Karten ist inkonsistent!")
+			LHpi.Log(string.format("Anzahl gefundener Karten ist inkonsistent! %s will be skipped.",seturl), 1)
+			return false
 		end--if i
 	else
-		LHpi.Log("no data from "..url ,1)
+		--error("no data from "..url)
 		print("no data from "..url)
-		--TODO revocer from empty setdata
+		LHpi.Log(string.format("no data from %s; will be skipped.",url), 1)
+		return false
 	end--if setdatahtml
 	local cardnum = LHpi.Length(cards)
 	if cardnum < trefferBis then
 		print(string.format("%i cards in table, but trefferBis is %i",cardnum,trefferBis))
-		error("Anzahl gefundener Karten-Urls passt nicht zur Trefferzahl!")
+		--error("Anzahl gefundener Karten-Urls passt nicht zur Trefferzahl!")
+		print("Anzahl gefundener Karten-Urls passt nicht zur Trefferzahl!")
+		LHpi.Log(string.format("Anzahl gefundener Karten-Urls passt nicht zur Trefferzahl! %s will be skipped.",seturl), 1)
+		return false
 	end
 	if trefferBis ~= trefferMax then
 		cards = helper.CardsInSetFromHtml(seturl,resultsPage+1,cards)
 	end
 	return cards
-	--TODO count these requests, too
 end--function CardsInSetFromHtml
 
 --[[- implements price fetching for a set url via MKM API
@@ -686,7 +698,7 @@ function helper.ExpectedBoosterValue(sets)
 									if not values[card.rarity].sum[ptype] then
 										values[card.rarity].sum[ptype]=0
 									end--if not values[card.rarity].sum[ptype]
-									--if (value < 5) then value = 0 end -- assume we'll only sell cards worth more than 5 EUR
+									--if (value < 3) then value = 0 end -- assume we'll only sell cards worth more than 5 EUR
 									--if (value < 5) then value = 0 else value=value*0.9 end -- assume we'll only sell cards worth more than 5 EUR @90%
 									values[card.rarity].sum[ptype]=values[card.rarity].sum[ptype]+value
 								end--for ptype,value

@@ -60,7 +60,7 @@ LOGFOILTWEAK = true
 -- options that control the script's behaviour.
 
 --local mkmtokenfile = "LHpi.mkm.tokens.example"
-local mkmtokenfile = "LHpi.mkm.tokens.DarkHelmet"
+local mkmtokenfile = "LHpi.mkm.tokens.Lunarfur"
 
 --- compare prices set and failed with expected numbers; default true
 -- set to false if you prefer speed over sanity checks.
@@ -104,7 +104,7 @@ local COUNTREQUESTS = true
 -- 
 -- Having this here is mostly in preparation for when/if we can do without mkm-helper
 -- running outside of MA.
--- For now, the prefered method to reset the counter is from LHpi.mkm-helper.lua.
+-- For now, the preferred method to reset the counter is from LHpi.mkm-helper.lua.
 -- 
 -- @field #boolean RESETCOUNTER
 local RESETCOUNTER = false
@@ -138,11 +138,11 @@ SAVELOG = true
 
 ---	read source data from #string savepath instead of site url; default false
 -- @field [parent=#global] #boolean OFFLINE
-OFFLINE = true--download from dummy, only change to false for release
+OFFLINE = true-- download via mkm-helper, which will set OFFLINE to false by itself
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
 -- @field [parent=#global] #boolean SAVEHTML
-SAVEHTML = true
+SAVEHTML = true-- keep this true to allow mkm-helper to work as intended
 
 --- save price table to file before importing to MA; default false
 -- @field [parent=#global] #boolean SAVETABLE
@@ -397,7 +397,7 @@ end--function site.Initialize
  Done in sitescript to keep library dependencies low, as this is currently the only sitescript that uses https and/or OAuth.
  Library should not need to know about OAuth, so only url is passed from LHpi.GetSourceData,
  which calls this function when not OFFLINE.
- An OAuth-client or a https socket has to be present in site.oauth.client
+ A https socket (in https) or an OAuth-client (in site.oauth.client) has to be present
  (and should have been prepard by site.Initialize (and site.PrepareOAuth).
 
  @function [parent=#site] GetSourceData
@@ -418,7 +418,6 @@ function site.GetSourceData(url,details)
 	if MKMDATASOURCE.html then
 		url = "https://www." .. url
 		--https instead of http means this will not work from within ma either...
-print(url)
 		body,code,headers,status = https.request( url )
 	elseif MKMDATASOURCE.api then
 		if sandbox then
@@ -436,6 +435,7 @@ print(url)
 --			--error("stopped before actually contacting the server")
 --			print("PerformRequest:")
 --		end
+		helper.sleep(3)--try to hide our activity by delaying each request by 3 seconds
 		code, headers, status, body = site.oauth.client:PerformRequest( "GET", url )
 	else
 		error("MKMDATASOURCE not set!")
@@ -462,14 +462,13 @@ print(url)
 	elseif code == 429 then -- Too Many Requests
 		errorstring = status .. " :limited to 5000 requests per day, resets at 0:00 CE(S)T. Pass \"resetcounter\" to mkm-helper to reset the persistant request counter." 
 	elseif code == 301 then -- Moved Permanently
-		-- TODO http 301, resolve later
 		errorstring = status .. " - GET was for \"" .. url .. "\""
 		LHpi.Log(errorstring ,1)
-		LHpi.Log(errorstring ,0,"LHpi-Debug.log")
-		LHpi.Log("headers are " .. LHpi.Tostring(headers) ,0,"LHpi-Debug.log")
-		if body~=nil then
-			LHpi.Log("body is " .. LHpi.Tostring(body) ,0,"LHpi-Debug.log")
-		end
+		--LHpi.Log(errorstring ,0,"LHpi-Debug.log")
+		--LHpi.Log("headers are " .. LHpi.Tostring(headers) ,0,"LHpi-Debug.log")
+		--if body~=nil then
+		--	LHpi.Log("body is " .. LHpi.Tostring(body) ,0,"LHpi-Debug.log")
+		--end
 		return nil, status
 	else
 		errorstring = status .. " - " .. LHpi.Tostring(headers)
@@ -483,7 +482,7 @@ print(url)
 end--function site.GetSourceData
 
 --[[- sets all oauth raleted options and prepares the oauth-client.
-ideally, tokens/secrets should be read from a file instead of being hardcoded.
+ Tokens/secrets are read from a file instead of being hardcoded.
 
  @function [parent=#site] PrepareOAuth
  @return client			OAuth instance
@@ -562,8 +561,6 @@ function site.BuildUrl( setid,langid,frucid )
 	local container = {}
 	local urls
 	if MKMDATASOURCE.html then
-	--https://www.magickartenmarkt.de/Products/Singles/Duel+Decks%3A+Blessed+vs.+Cursed
-	--                                                 Duel%20Decks:%20Blessed%20vs.%20Cursed
 	url = "magickartenmarkt.de"
 		if type(setid)=="table" then
 			if setid.idExpansion then
@@ -706,6 +703,7 @@ function site.ParseHtmlData( foundstring , urldetails )
 	local foilpriceType = site.priceTypes[useAsFoilprice].type
 	local product
 	if MKMDATASOURCE.html then
+		print(foundstring)
 		error("html mode for ParseHtmlData not implemented yet")
 -- in any case, this is the last time we can have the MKMDATASOURCE modes behave differently
 -- let's fix the helper, then check what we need to change here
