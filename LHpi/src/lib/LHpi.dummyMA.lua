@@ -209,7 +209,7 @@ end
 dummy={}
 ---	dummy version
 -- @field [parent=#dummy] #string version
-dummy.version = "0.8"
+dummy.version = "0.9"
 
 --[[- loads LHpi library for testing.
 @function [parent=#dummy] LoadLib
@@ -673,6 +673,7 @@ dummy.promosets = {
 
 --- @field [parent=#dummy] #table specialsets
 dummy.specialsets = {
+ [900] = "Modern Masters 2017 Edition";
  [840] = "Commander 2016 Edition";
  [839] = "Kaladesh Inventions";
  [837] = "Duel Decks: Nissa vs. Ob Nixilis";
@@ -857,12 +858,13 @@ dummy.coresets = {
 
 --- @field [parent=#dummy] #table standardsets
 dummy.standardsets = {
--- standard as of April 2016
+-- standard as of March 2017
+		[841] = "Aether Revolt";
+		[838] = "Kaladesh";
+		[834] = "Eldritch Moon";
 		[831] = "Shadows over Innistrad";
 		[829] = "Oath of the Gatewatch";
 		[825] = "Battle for Zendikar";
-		[818] = "Dragons of Tarkir";
-		[822] = "Magic Origins"; 
 }
 
 --[[- run as lua application  from your ide.
@@ -880,41 +882,11 @@ function main(mode)
 	workdir=".\\"
 	local libver=2.17
 	local dataver=10
-	
 	--don't keep a seperate dev savepath, though
 	mapath = "..\\..\\..\\Magic Album\\"
 	package.path = workdir..'lib\\ext\\?.lua;' .. package.path
 	package.cpath= workdir..'lib\\bin\\?.dll;' .. package.cpath
-	dummy.env={--define debug enviroment options
-		VERBOSE = true,--default false
-		LOGDROPS = true,--default false
-		LOGNAMEREPLACE = true,--default false
-		LOGFOILTWEAK = true,--default false
---		CHECKEXPECTED = false,--default true
-		STRICTEXPECTED = true,--default false
---		STRICTOBJTYPE = false,--default true
---		SAVELOG = true,--default false
-		SAVEHTML = true,--default false
---		DEBUGFOUND = true,--default false
---		DEBUGVARIANTS = true,--default false
---		SAVETABLE=true,--default false
---		DEBUG = true,--default false
-		OFFLINE = true,--default false
-		OFFLINE = false,--scripts should be set to true unless preparing for release
-	}
-	dummy.ForceEnv()
 
-	local importfoil = "y"
-	local importlangs = dummy.alllangs
-	local importlangs = { [1] = "eng" }
-	local importsets = dummy.standardsets
---	local importsets = { [0] = "fakeset"; }
-	local importsets = { [822]="some set" }
---	local importsets = { [220]="foo";[800]="bar";[0]="baz"; }
---	local importsets = dummy.coresets
---	local importsets = dummy.expansionsets
-	local importsets = dummy.MergeTables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
-	
 	local scripts={
 		[0]={name="lib\\LHpi.sitescriptTemplate-v2.17.10.15.lua",savepath="."},
 		[1]={name="\\MTG Mint Card.lua",path=savepath,savepath=mapath,oldloader=true},
@@ -928,56 +900,95 @@ function main(mode)
 		[9]={name="LHpi.mkm-helper.lua",savepath=mapath.."Prices\\LHpi.magickartenmarkt\\"},
 	}
 	
+	dummy.env={--define debug enviroment options
+		VERBOSE = true,--default false
+		LOGDROPS = true,--default false
+		LOGNAMEREPLACE = true,--default false
+		LOGFOILTWEAK = true,--default false
+--		CHECKEXPECTED = false,--default true
+		STRICTEXPECTED = true,--default false
+--		STRICTOBJTYPE = false,--default true
+--		SAVELOG = true,--default false
+--		SAVEHTML = true,--default false
+		DEBUGFOUND = true,--default false
+--		DEBUGVARIANTS = true,--default false
+--		SAVETABLE=true,--default false
+--		DEBUG = true,--default false
+		OFFLINE = true,--default false
+--		OFFLINE = false,--scripts should be set to true unless preparing for release
+	}
+	dummy.ForceEnv()
+	local importfoil = "y"
+	local importlangs = dummy.alllangs
+	local importlangs = { [1] = "eng" }
+	local importsets = dummy.standardsets
+--	local importsets = { [0] = "fakeset"; }
+--	local importsets = { [841]="some set" }
+--	local importsets = { [220]="foo";[800]="bar";[0]="baz"; }
+--	local importsets = { [808]="Magic 2015";[822]="Magic Origins";[900]="Modern Masters 2017 Edition"; }
+--	local importsets = dummy.coresets
+--	local importsets = dummy.expansionsets
+--	local importsets = dummy.MergeTables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
+	
 	-- select a predefined script to be tested
---	dummy.FakeSitescript()
-	local selection = 7
+	local selection = 8 -- nil for lib (and Data) only
 	local script=scripts[selection]
-	if script.oldloader then
-		dummy.LoadScript(script.name,script.path,script.savepath)--deprecated
-	else
-		--new loader
-		savepath=script.savepath
-		dofile(workdir..script.name)
+	if script then
+		if script.oldloader then
+			dummy.LoadScript(script.name,script.path,script.savepath)--deprecated
+		else
+			--new loader
+			savepath=script.savepath
+			dofile(workdir..script.name)
+		end
+	else-- only load library (and Data)
+		--LHpi = dummy.LoadLib(libver,workdir,script.savepath)--deprecated
+		LHpi = dofile(workdir.."lib\\LHpi-v"..libver..".lua")
+		dummy.FakeSitescript()
 	end
-		
-	-- only load library (and Data)
-	--LHpi = dummy.LoadLib(libver,workdir,script.savepath)--deprecated
---	LHpi = dofile(workdir.."lib\\LHpi-v"..libver..".lua")
-
 	-- force debug enviroment options
 	dummy.ForceEnv(dummy.env)
 	print("dummy says: script loaded.")
 	
 	-- now try to break the script :-)
-	if selection ~= 9 then
-		site.Initialize({update=true})
-	--	ImportPrice( importfoil, importlangs, importsets )
+	if script then
+		if selection ~=9 then
+			print("dummy prepared to run sitescript")
+		--	site.Initialize({update=true})
+			ImportPrice( importfoil, importlangs, importsets )
+		else -- mkm-helper
+			print("dummy prepared to run mkm-helper")
+			MODE = {
+				sets="all",
+--				sets={
+--				[841] = "Aether Revolt";
+--				[838] = "Kaladesh";
+--				[834] = "Eldritch Moon";
+--				[831] = "Shadows over Innistrad";
+--				[829] = "Oath of the Gatewatch";
+--				[825] = "Battle for Zendikar";
+--				[900] = "Modern Masters 2017 Edition";
+--,				},
+	
+--				forcerefresh=true,
+				--test=true,
+				download=true,
+				--boostervalue=true,
+			}
+
+--			STAYOFFLINE=true
+			print("now running mkm-helper for real, with MODE="..LHpi.Tostring(MODE))
+			local retval = helper.main(MODE)
+			print(LHpi.Tostring(retval))
+		end--mkm-helper
 	else
-		print("No Initialize for mkm-helper")
+		print("dummy prepared with lib only")
+		--test lib only here
+		--TODO add demo for other helper functions
+		--	print(LHpi.Tostring( { ["this"]=1, is=2, [3]="a", ["table"]="string" } ))
+		--	print(LHpi.ByteRep("Zwölffüßler"))
+		--	TestPerformance(10,script,importfoil,importlangs,importsets,"time.log")
 	end
-
-	-- demo LHpi helper functions:
---	print(LHpi.Tostring( { ["this"]=1, is=2, [3]="a", ["table"]="string" } ))
---	print(LHpi.ByteRep("Zwölffüßler"))
---TODO add demo for other helper functions
-
-	--TestPerformance(10,script,importfoil,importlangs,importsets,"time.log")
-
-	-- use ProFi to profile the script
---	ProFi = require 'ProFi'
---	ProFi:start()
---	--
---	ImportPrice( importfoil, importlangs, importsets )
-	--profile single function only
---	package.path = 'src\\lib\\ext\\?.lua;' .. package.path
---	Json = require ("dkjson")
---	site.sets={ [808]={id=808, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Magic%202015"} }
---	local urldetails = { setid=808, langid=1, frucid=1 }
---	local foundstring = '{"idProduct":7923,"idMetaproduct":2248,"idGame":1,"countReprints":2,"name":{"1":{"idLanguage":1,"languageName":"English","productName":"Fyndhorn Druid (Version 2)"},"2":{"idLanguage":2,"languageName":"French","productName":"Druide cordellien (Version 2)"},"3":{"idLanguage":3,"languageName":"German","productName":"Fyndhorndruide (Version 2)"},"4":{"idLanguage":4,"languageName":"Spanish","productName":"Druida de Fyndhorn (Version 2)"},"5":{"idLanguage":5,"languageName":"Italian","productName":"Druido di Fyndhorn (Version 2)"}},"website":"\\/Products\\/Singles\\/Alliances\\/Fyndhorn+Druid+%28Version+2%29","image":".\\/img\\/cards\\/Alliances\\/fyndhorn_druid2.jpg","category":{"idCategory":1,"categoryName":"Magic Single"},"priceGuide":{"SELL":0.05,"LOW":0.02,"LOWEX":0.02,"LOWFOIL":0,"AVG":0.1,"TREND":0.05},"expansion":"Alliances","expIcon":13,"number":null,"rarity":"Common","countArticles":466,"countFoils":0}'
---	site.ParseHtmlData( foundstring , urldetails )
---	--	
---	ProFi:stop()
---	ProFi:writeReport( 'MyProfilingReport.txt' )
 	
 	local dt = os.clock() - t1 
 	print(string.format("All this took %g seconds",dt))

@@ -1,5 +1,7 @@
-local Base64 = require "base64"
-local Crypto = require "crypto"
+--local Base64 = require "base64"
+local mime = require "mime"
+--local Crypto = require "crypto"
+local sha1 = require "sha1"
 local core = require "OAuth.coreLuaSocket"
 unescape = require "socket.url".unescape
 isLuaNode = false
@@ -59,7 +61,8 @@ local function generate_nonce()
 	if isLuaNode then
 		return Crypto.createHmac("sha1", "keyyyy"):update(nonce):final('hex')
 	else
-		return Crypto.hmac.digest("sha1", nonce, "keyyyy")
+		--return Crypto.hmac.digest("sha1", nonce, "keyyyy")
+		return sha1.hmac("keyyyy", nonce)
 	end
 end
 
@@ -134,11 +137,13 @@ function Sign(self, httpMethod, baseUri, arguments, oauth_token_secret, authReal
 	if isLuaNode then
 		hmac_binary = Crypto.createHmac("sha1", signature_key):update(signature_base_string):final("binary")
 	else
-		hmac_binary = Crypto.hmac.digest("sha1", signature_base_string, signature_key, true)
+		--hmac_binary = Crypto.hmac.digest("sha1", signature_base_string, signature_key, true)
+		hmac_binary = sha1.hmac( signature_key, signature_base_string )
 	end
 	
 	-- Base64 encode it
-	local hmac_b64 = Base64.encode(hmac_binary)
+	--local hmac_b64 = Base64.encode(hmac_binary)
+	local hmac_b64 = (mime.b64( hmac_binary ))
 	
 	--local oauth_signature = oauth_encode(hmac_b64)
 	-- for MKM, DON'T urlencode the signature
