@@ -882,11 +882,24 @@ function main(mode)
 	workdir=".\\"
 	local libver=2.17
 	local dataver=10
-	
 	--don't keep a seperate dev savepath, though
 	mapath = "..\\..\\..\\Magic Album\\"
 	package.path = workdir..'lib\\ext\\?.lua;' .. package.path
 	package.cpath= workdir..'lib\\bin\\?.dll;' .. package.cpath
+
+	local scripts={
+		[0]={name="lib\\LHpi.sitescriptTemplate-v2.17.10.15.lua",savepath="."},
+		[1]={name="\\MTG Mint Card.lua",path=savepath,savepath=mapath,oldloader=true},
+		[2]={name="\\Import Prices.lua",path=mapath,savepath=mapath,oldloader=true},
+		[3]={name="LHpi.mtgmintcard.lua",savepath=mapath.."Prices\\LHpi.mtgmintcard\\"},
+		--[4]={name="LHpi.magicuniverseDE.lua",savepath=mapath.."Prices\\LHpi.magicuniverseDE\\"},
+		[5]={name="LHpi.trader-onlineDE.lua",savepath=mapath.."Prices\\LHpi.trader-onlineDE\\"},
+		[6]={name="LHpi.tcgplayerPriceGuide.lua",savepath=mapath.."Prices\\LHpi.tcgplayerPriceGuide\\"},
+		[7]={name="LHpi.mtgprice.com.lua",savepath=mapath.."Prices\\LHpi.mtgprice.com\\"},
+		[8]={name="LHpi.magickartenmarkt.lua",savepath=mapath.."Prices\\LHpi.magickartenmarkt\\"},
+		[9]={name="LHpi.mkm-helper.lua",savepath=mapath.."Prices\\LHpi.magickartenmarkt\\"},
+	}
+	
 	dummy.env={--define debug enviroment options
 		VERBOSE = true,--default false
 		LOGDROPS = true,--default false
@@ -902,37 +915,23 @@ function main(mode)
 --		SAVETABLE=true,--default false
 --		DEBUG = true,--default false
 		OFFLINE = true,--default false
-		OFFLINE = false,--scripts should be set to true unless preparing for release
+--		OFFLINE = false,--scripts should be set to true unless preparing for release
 	}
 	dummy.ForceEnv()
-
 	local importfoil = "y"
 	local importlangs = dummy.alllangs
 	local importlangs = { [1] = "eng" }
 	local importsets = dummy.standardsets
 --	local importsets = { [0] = "fakeset"; }
-	local importsets = { [822]="some set" }
+--	local importsets = { [841]="some set" }
 --	local importsets = { [220]="foo";[800]="bar";[0]="baz"; }
-	local importsets = { [808]="Magic 2015";[822]="Magic Origins";[900]="Modern Masters 2017 Edition"; }
+--	local importsets = { [808]="Magic 2015";[822]="Magic Origins";[900]="Modern Masters 2017 Edition"; }
 --	local importsets = dummy.coresets
 --	local importsets = dummy.expansionsets
 --	local importsets = dummy.MergeTables ( dummy.coresets, dummy.expansionsets, dummy.specialsets, dummy.promosets )
 	
-	local scripts={
-		[0]={name="lib\\LHpi.sitescriptTemplate-v2.17.10.15.lua",savepath="."},
-		[1]={name="\\MTG Mint Card.lua",path=savepath,savepath=mapath,oldloader=true},
-		[2]={name="\\Import Prices.lua",path=mapath,savepath=mapath,oldloader=true},
-		[3]={name="LHpi.mtgmintcard.lua",savepath=mapath.."Prices\\LHpi.mtgmintcard\\"},
-		--[4]={name="LHpi.magicuniverseDE.lua",savepath=mapath.."Prices\\LHpi.magicuniverseDE\\"},
-		[5]={name="LHpi.trader-onlineDE.lua",savepath=mapath.."Prices\\LHpi.trader-onlineDE\\"},
-		[6]={name="LHpi.tcgplayerPriceGuide.lua",savepath=mapath.."Prices\\LHpi.tcgplayerPriceGuide\\"},
-		[7]={name="LHpi.mtgprice.com.lua",savepath=mapath.."Prices\\LHpi.mtgprice.com\\"},
-		[8]={name="LHpi.magickartenmarkt.lua",savepath=mapath.."Prices\\LHpi.magickartenmarkt\\"},
-		[9]={name="LHpi.mkm-helper.lua",savepath=mapath.."Prices\\LHpi.magickartenmarkt\\"},
-	}
-	
 	-- select a predefined script to be tested
-	local selection = 9 -- nil for lib (and Data) only
+	local selection = 8 -- nil for lib (and Data) only
 	local script=scripts[selection]
 	if script then
 		if script.oldloader then
@@ -952,38 +951,44 @@ function main(mode)
 	print("dummy says: script loaded.")
 	
 	-- now try to break the script :-)
-	if selection ~=9 then
-		site.Initialize({update=true})
-	--	ImportPrice( importfoil, importlangs, importsets )
-	else -- mkm-helper
-		MODE = {
-			sets="all",
---			sets={
---			[841] = "Aether Revolt";
---			[838] = "Kaladesh";
---			[834] = "Eldritch Moon";
---			[831] = "Shadows over Innistrad";
---			[829] = "Oath of the Gatewatch";
---			[825] = "Battle for Zendikar";
---			[900] = "Modern Masters 2017 Edition";
---			},
+	if script then
+		if selection ~=9 then
+			print("dummy prepared to run sitescript")
+		--	site.Initialize({update=true})
+			ImportPrice( importfoil, importlangs, importsets )
+		else -- mkm-helper
+			print("dummy prepared to run mkm-helper")
+			MODE = {
+				sets="all",
+--				sets={
+--				[841] = "Aether Revolt";
+--				[838] = "Kaladesh";
+--				[834] = "Eldritch Moon";
+--				[831] = "Shadows over Innistrad";
+--				[829] = "Oath of the Gatewatch";
+--				[825] = "Battle for Zendikar";
+--				[900] = "Modern Masters 2017 Edition";
+--,				},
+	
+--				forcerefresh=true,
+				--test=true,
+				download=true,
+				--boostervalue=true,
+			}
 
---			forcerefresh=true,
-			--test=true,
-			download=true,
-			--boostervalue=true,
-		}
---		STAYOFFLINE=true
-		print("now running mkm-helper for real, with MODE="..LHpi.Tostring(MODE))
-		local retval = main(MODE)
-		print(LHpi.Tostring(retval))
-	end	
-
-	-- demo LHpi helper functions:
---	print(LHpi.Tostring( { ["this"]=1, is=2, [3]="a", ["table"]="string" } ))
---	print(LHpi.ByteRep("Zwölffüßler"))
---	TestPerformance(10,script,importfoil,importlangs,importsets,"time.log")
---TODO add demo for other helper functions
+--			STAYOFFLINE=true
+			print("now running mkm-helper for real, with MODE="..LHpi.Tostring(MODE))
+			local retval = helper.main(MODE)
+			print(LHpi.Tostring(retval))
+		end--mkm-helper
+	else
+		print("dummy prepared with lib only")
+		--test lib only here
+		--TODO add demo for other helper functions
+		--	print(LHpi.Tostring( { ["this"]=1, is=2, [3]="a", ["table"]="string" } ))
+		--	print(LHpi.ByteRep("Zwölffüßler"))
+		--	TestPerformance(10,script,importfoil,importlangs,importsets,"time.log")
+	end
 	
 	local dt = os.clock() - t1 
 	print(string.format("All this took %g seconds",dt))

@@ -400,7 +400,7 @@ function LHpi.MainImportCycle( sourcelist , totalhtmlnum , importfoil , importla
 				local _s,_e,pagenr = nil, nil, nil
 				if VERBOSE then
 					pmesg = pmesg .. " (id " .. sid .. ")"
-					LHpi.Log( string.format( "%d%%: %q", progress, pmesg) , 1)
+					LHpi.Log( string.format( "%f%%: %q", progress, pmesg) , 1)
 				end
 				ma.SetProgress( pmesg , progress )
 				if site.pagenumberregex then
@@ -472,7 +472,7 @@ function LHpi.MainImportCycle( sourcelist , totalhtmlnum , importfoil , importla
 			end
 			-- Set the price
 			local pmesg = "Importing " .. importsets[cSet.id] .. " from table"
-			LHpi.Log( string.format( "%3i%%: %s", progress, pmesg ) , 1)
+			LHpi.Log( string.format( "%3f%%: %s", progress, pmesg ) , 1)
 			ma.SetProgress( pmesg, progress )
 			for cName,cCard in pairs(cardsetTable) do
 				LHpi.Log( string.format("ImportPrice\t cName is %s and table cCard is %s", cName, LHpi.Tostring(cCard) ) , 2)
@@ -847,7 +847,7 @@ function LHpi.ParseSourceData( sourcedata,sourceurl,urldetails )
 	sourcedata = nil 	-- potentially large htmldata now ready for garbage collector
 	collectgarbage()
 	LHpi.Logtable( sourceTable , "sourceTable" ,2)
-	if table.maxn( sourceTable ) == 0 then
+	if sourceTable == {} then
 		return nil
 	end
 	return sourceTable

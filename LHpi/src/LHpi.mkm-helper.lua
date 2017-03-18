@@ -59,7 +59,7 @@ renamed helper.GetSourceData to helper.FetchAllPrices
 -- @field [parent=#global] #table MODE
 --MODE = { download=true, sets="standard", html=true}
 --MODE={ test=true, checkstock=true }
---TODO make sure hardcoded MODE is not needed for release
+--FIXME make sure hardcoded MODE is not needed for release
 
 --- how long before stored price info is considered too old.
 -- To help with MKM's daily request limit, and because MKM and MA sets do not map one-to-one,
@@ -102,7 +102,9 @@ SAVELOG = true
 --	where the priceGuide field is fetched from.
 --	Only really useful for testing with STAYOFFLINE.
 -- @field #boolean SAVECARDDATA
---local SAVECARDDATA = true
+local SAVECARDDATA = true
+
+--TODO check SAVECARDDATA and behaviour
 
 --- when running helper.ExpectedBoosterValue, also give the EV of a full Booster Box.
 -- @field #boolean BOXEV
@@ -129,8 +131,6 @@ local scriptname = "LHpi.mkm-helper-v".. libver .. "." .. dataver .. "." .. scri
 -- set by LHpi lib unless specified here.
 -- @field  #string savepath
 local savepath = savepath or "LHpi.magickartenmarkt\\"
---local savepath = "..\\..\\..\\Magic Album\\Prices\\LHpi.magickartenmarkt\\"
---FIXME remove savepath prefix for release
 --- log file name. can be set explicitely via site.logfile or automatically.
 -- defaults to LHpi.log unless SAVELOG is true.
 -- @field #string logfile
@@ -138,7 +138,7 @@ local savepath = savepath or "LHpi.magickartenmarkt\\"
 local logfile = logfile or nil
 
 ---	LHpi library
--- will be loaded in main()
+-- will be loaded in helper.main()
 -- @field [parent=#global] #table LHpi
 LHpi = {}
 
@@ -188,7 +188,7 @@ function ImportPrice( importfoil , importlangs , importsets )
 	error( scriptname .. " does not work from within MA. Please run it with LHpi.mkm-helper.bat and use LHpi.magickartenmarkt.lua in OFFLINE mode!" )
 end -- function ImportPrice
 
-function main( mode )
+function helper.main( mode )
 	if "table" ~= type (mode) then
 		local m=mode
 		mode = { [m]=true }
@@ -342,7 +342,7 @@ function main( mode )
 	end--mode.checkstock
 	
 	return("mkm-helper.main() finished")
-end--function main
+end--function helper.main
 
 --[[- download and save source data.
  site.sets can be used as parameter, but any table with MA setids as index can be used.
@@ -405,7 +405,6 @@ function helper.FetchAllPrices(sets)
 			dataAge[url]={timestamp=0}
 		end
 		local maxAge = dataStaleAge["default"]
-		--TODO dataStaleAge per set
 		--this does not work, as we are operating on url now, not on sets
 		--if dataStaleAge[sid] then
 		--	maxAge = dataStaleAge[sid]
@@ -461,6 +460,7 @@ emulate mkm api response format for save file, so MKMDATASOURCE is transparent t
  @return #table		fetchedCount	{ fetched = #number, found = #number }
  @return #boolean	ok
 ]]
+-- FIXME confirm this works with SAVEHTML=false and change default and comment in LHpi.magickartenmarkt. useless raw html data is already in the Gigabytes...
 function helper.FetchPricesFromHtml( url, details )
 	local count= { fetched=0, found=0, fail301=0 }
 	local ok = true
@@ -478,6 +478,10 @@ function helper.FetchPricesFromHtml( url, details )
 			-- this is only safe because site.Buildurl( #table ) always returns a single url in the container
 			cardurl = u
 		end
+		local s2=SAVEHTML
+		if SAVECARDDATA~=true then
+			SAVEHTML=false
+		end
 		local cardRawData,status = LHpi.GetSourceData( cardurl , { oauth = false } )
 		count.fetched=count.fetched+1
 		local waitTimer=1
@@ -488,31 +492,38 @@ function helper.FetchPricesFromHtml( url, details )
 			count.fetched=count.fetched+1
 			waitTimer=waitTimer*2
 		end--if not cardRawData
+		SAVEHTML=s2
 
 		if cardRawData and cardRawData ~= "" then
 			count.found=count.found+1
-			local idProduct = nil
+			local idProduct = "none"
 			local countReprints = nil
 			local idMetaproduct = nil
 			local expIcon = nil
 			local idGame = 1
 			local website = cardurlsuffix
-			local image = "null.jpg"
+			local image = "none.jpg"
 			local category = { idCategory=1, categoryName="Magic Single" }
 			local rarity = string.match(cardRawData,"Seltenheit:</td>%b<><span style=\"[^\"]-\" class=\"icon\" onmouseover=\"showMsgBox%(this,'([^']-)'%)\"")
+			if not rarity then
+				LHpi.Log("!! rarity not found for " .. cardname)
+				if DEBUG then 
+					error("rarity not parsed!")
+				end
+			end
 			local expansion = expansiontable.expansion.name
 			local name = { ["1"]={idLanguage=1, languageName="English",productName=cardname},nil }
 			local priceGuide= {LOWFOIL=nil, SELL=nil ,TREND=nil ,AVG=0 ,LOW=0 ,LOWEX=nil }
-			priceGuide.LOWEX = string.match(cardRawData,'Verfügbar ab %(EX%+%):</td><td.-><span itemprop="lowPrice">([%d.,]-)<') or ""
+			priceGuide.LOWEX = string.match(cardRawData,'Verfügbar ab %(EX%+%):</td><td.-><span itemprop="lowPrice">([%d.,]-)<') or "0"
 			priceGuide.LOWEX = tonumber((string.gsub( priceGuide.LOWEX, ",", ".")) )
-			priceGuide.TREND = string.match(cardRawData,'Preistendenz:</td><td.-">([%d.,]-) .-</td>') or ""
+			priceGuide.TREND = string.match(cardRawData,'Preistendenz:</td><td.-">([%d.,]-) .-</td>') or "0"
 			priceGuide.TREND = tonumber((string.gsub( priceGuide.TREND, ",", ".")) )
-			priceGuide.LOWFOIL = string.match(cardRawData,'Foils verfügbar ab:</td><td.-">([%d.,]-) .-</td>') or ""
+			priceGuide.LOWFOIL = string.match(cardRawData,'Foils verfügbar ab:</td><td.-">([%d.,]-) .-</td>') or "0"
 			priceGuide.LOWFOIL = tonumber((string.gsub( priceGuide.LOWFOIL, ",", ".")) )
 			priceGuide.SELL = string.match(cardRawData,'{"label":"Durchschnittlicher Verkaufspreis".-"data":%[[%d.,]-%]}') or ""
-			priceGuide.SELL = string.match(priceGuide.SELL,',([%d.]+)%]}$') or ""
+			priceGuide.SELL = string.match(priceGuide.SELL,',([%d.]+)%]}$') or "0"
 			priceGuide.SELL = tonumber((string.gsub( priceGuide.SELL, ",", ".")) )
-			local newCard = { name=name, rarity=rarity, expansion=expansion, priceGuide=priceGuide, website=website, idGame=idGame, category=category }
+			local newCard = { name=name, rarity=rarity, expansion=expansion, priceGuide=priceGuide, website=website, idGame=idGame, category=category, idProduct=idProduct }
 			table.insert(expansiontable.card,newCard)
 		else--not cardRawData
 			if status == "HTTP/1.1 301 Moved Permanently" then
@@ -524,7 +535,7 @@ function helper.FetchPricesFromHtml( url, details )
 				--LHpi.Log(string.format("cardurlsuffix \"%s\": %s",cardurlsuffix,LHpi.ByteRep(cardurlsuffix)) ,0,"LHpi-Debug.log")
 			end
 			print("!! no cardRawData - " .. status)
-			local skippedString = string.format("%s encountered, abort and skip %q.",httpStatus,LHpi.Data.sets[details.setid].name)
+			local skippedString = string.format("%s encountered, abort and skip %q.",status,LHpi.Data.sets[details.setid].name)
 			ok = false
 		end--if cardRawData
 	end--for cardname,cardurlsuffix in pairs(cards)
@@ -555,7 +566,12 @@ function helper.CardsInSetFromHtml(seturl,resultsPage,cards)
 		url = url .. "&resultsPage=" .. resultsPage
 	end
 	local trefferVon, trefferBis, trefferMax
+	local s2=SAVEHTML
+	if SAVECARDDATA~=true then
+		SAVEHTML=false
+	end
 	local setdatahtml = LHpi.GetSourceData( url , nil )
+	SAVEHTML=s2
 	if setdatahtml then
 		trefferMax, trefferVon, trefferBis = string.match(setdatahtml,">(%d+) Treffer %- Zeige Seite Nr%. %d+ %(Treffer (%d+) bis (%d+)%)<")
 		if not trefferMax then
@@ -629,7 +645,6 @@ function helper.FetchPriceGuidesFromAPI( url, details )
 			if SAVECARDDATA~=true then
 				SAVEHTML=false
 			end
-			--TODO try/catch block here?
 			local proddata,status = LHpi.GetSourceData( cardurl , { oauth=true } )
 			SAVEHTML=s2
 			if proddata then
@@ -1042,7 +1057,7 @@ for i,p in pairs(params) do
 		MODE[p] = true
 	end--if known
 end--for
--- cmdline args will be checked for known sets in main
+-- cmdline args will be checked for known sets in helper.main
 
 if not site then
 	site={}
@@ -1052,7 +1067,7 @@ if not site then
 	end --function Initialize
 end
 
---run main function
-local retval = main(MODE)
+--run helper.main function
+local retval = helper.main(MODE)
 print(tostring(retval))
 --EOF

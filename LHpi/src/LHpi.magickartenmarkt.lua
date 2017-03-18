@@ -137,12 +137,16 @@ STRICTEXPECTED = true
 SAVELOG = true
 
 ---	read source data from #string savepath instead of site url; default false
+-- MKM: download is done through mkm-helper, which will set OFFLINE to false by itself.
+--		_Must_ be kept true for Magic Album price import to work.	
 -- @field [parent=#global] #boolean OFFLINE
-OFFLINE = true-- download via mkm-helper, which will set OFFLINE to false by itself
+OFFLINE = true
 
 --- save a local copy of each source html to #string savepath if not in OFFLINE mode; default false
+-- MKM: most downloading is done through mkm-helper, which will override SAVEHTML according to
+-- 		necessity and #boolean SAVECARDDATA.
 -- @field [parent=#global] #boolean SAVEHTML
-SAVEHTML = true-- keep this true to allow mkm-helper to work as intended
+--SAVEHTML = true
 
 --- save price table to file before importing to MA; default false
 -- @field [parent=#global] #boolean SAVETABLE
@@ -213,9 +217,7 @@ site.useAsFoilprice=useAsFoilprice
  it will be chopped into its parts by site.ParseHtmlData later. 
  @field [parent=#site] #string regex
 ]]
---site.regex = '{"idProduct".-"countFoils":%d+}'
 site.regex = '.(%b{})'
---FIXME site.regex for html mode
 
 --- resultregex can be used to display in the Log how many card the source file claims to contain
 -- @field #string resultregex
@@ -703,15 +705,13 @@ function site.ParseHtmlData( foundstring , urldetails )
 	local foilpriceType = site.priceTypes[useAsFoilprice].type
 	local product
 	if MKMDATASOURCE.html then
-		print(foundstring)
-		error("html mode for ParseHtmlData not implemented yet")
--- in any case, this is the last time we can have the MKMDATASOURCE modes behave differently
--- let's fix the helper, then check what we need to change here
+	-- in any case, this is the last time we can have the MKMDATASOURCE modes behave differently
+	-- but as we have helper.FetchPricesFromHtml fake the api response, only the filename differs here.
 	end
-	if responseFormat == "json" then
-		product = Json.decode(foundstring)
-	else
+	if responseFormat == "xml" then
 		error("nothing here for xml yet")
+	else
+		product = Json.decode(foundstring)
 	end
 	if not product.idProduct then
 		return { }
