@@ -1099,7 +1099,7 @@ function LHpi.BuildCardData( sourcerow , setid , importfoil, importlangs )
 		card.variant = sourcerow.variant
 	else
 	-- check site.variants[setid] table for variant
-		card.variant = nil
+		--card.variant = nil -- keep variant that has been set by site.BCDPluginPre
 		if site.variants[setid] and site.variants[setid][card.name] then  -- Check for and set variant (and new card.name)
 			if DEBUGVARIANTS then DEBUG = true end
 			card.variant = site.variants[setid][card.name][2]
