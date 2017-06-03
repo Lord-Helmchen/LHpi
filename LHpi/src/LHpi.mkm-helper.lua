@@ -31,6 +31,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 2.17.10.5:
 start work on html fetch mode
 renamed helper.GetSourceData to helper.FetchAllPrices
+
+TODO: log and print lines from ger to en
 ]]
 
 -- options unique to this script
@@ -74,6 +76,7 @@ renamed helper.GetSourceData to helper.FetchAllPrices
 local dataStaleAge = {
 	--["default"]	= 60*60*24, -- one day
 	["default"]	= 60*60*24*7, -- one week
+	["default"]	= 60*60*24*30, -- one month
 }
 
 --- stay below mkms daily request limit
@@ -504,14 +507,15 @@ function helper.FetchPricesFromHtml( url, details )
 			local website = cardurlsuffix
 			local image = "none.jpg"
 			local category = { idCategory=1, categoryName="Magic Single" }
-			local rarity = string.match(cardRawData,"Seltenheit:</td>%b<><span style=\"[^\"]-\" class=\"icon\" onmouseover=\"showMsgBox%(this,'([^']-)'%)\"")
+			local rarity = string.match(cardRawData,"Seltenheit:</td>%b<><span .- onmouseover=%s*\"showMsgBox%s*%(this,'([^']-)'%)\"")
 			if not rarity then
 				LHpi.Log("!! rarity not found for " .. cardname)
-				if DEBUG then 
-					error("rarity not parsed!")
-				end
 			end
-			local expansion = expansiontable.expansion.name
+			local number = string.match(cardRawData,"Nummer:</td>%b<>([^<]-)<")
+			if not number then
+				LHpi.Log("!! number not found for " .. cardname)
+			end
+			local expansion = socketurl.unescape(string.gsub(expansiontable.expansion.name,"%+"," "))
 			local name = { ["1"]={idLanguage=1, languageName="English",productName=cardname},nil }
 			local priceGuide= {LOWFOIL=nil, SELL=nil ,TREND=nil ,AVG=0 ,LOW=0 ,LOWEX=nil }
 			priceGuide.LOWEX = string.match(cardRawData,'Verfügbar ab %(EX%+%):</td><td.-><span itemprop="lowPrice">([%d.,]-)<') or "0"
@@ -523,7 +527,7 @@ function helper.FetchPricesFromHtml( url, details )
 			priceGuide.SELL = string.match(cardRawData,'{"label":"Durchschnittlicher Verkaufspreis".-"data":%[[%d.,]-%]}') or ""
 			priceGuide.SELL = string.match(priceGuide.SELL,',([%d.]+)%]}$') or "0"
 			priceGuide.SELL = tonumber((string.gsub( priceGuide.SELL, ",", ".")) )
-			local newCard = { name=name, rarity=rarity, expansion=expansion, priceGuide=priceGuide, website=website, idGame=idGame, category=category, idProduct=idProduct }
+			local newCard = { name=name, rarity=rarity, expansion=expansion, priceGuide=priceGuide, website=website, idGame=idGame, category=category, idProduct=idProduct, number=number }
 			table.insert(expansiontable.card,newCard)
 		else--not cardRawData
 			if status == "HTTP/1.1 301 Moved Permanently" then
@@ -573,13 +577,12 @@ function helper.CardsInSetFromHtml(seturl,resultsPage,cards)
 	local setdatahtml = LHpi.GetSourceData( url , nil )
 	SAVEHTML=s2
 	if setdatahtml then
-		trefferMax, trefferVon, trefferBis = string.match(setdatahtml,">(%d+) Treffer %- Zeige Seite Nr%. %d+ %(Treffer (%d+) bis (%d+)%)<")
-		if not trefferMax then
-			trefferMax = string.match(setdatahtml,">(%d+) Treffer<")
-		end
+		trefferMax=string.match(setdatahtml,'<span id="hitCountTop">(%d+)</span>')
+		trefferVon=string.match(setdatahtml,'<span id="fromResultTop">(%d+)</span>')
+		trefferBis=string.match(setdatahtml,'<span id="toResultTop">(%d+)</span>')
 		trefferMax=tonumber(trefferMax)
 		trefferVon=tonumber(trefferVon) or 1
-		trefferBis=tonumber(trefferBis) or trefferMax
+		trefferBis=tonumber(trefferBis) or trefferMax or 0
 		local i=0
 		for urlsuffix,name in string.gmatch(setdatahtml,'<td><a href="([^"]-)">([^<]-)</a></td><td><a href') do
 			i=i+1
