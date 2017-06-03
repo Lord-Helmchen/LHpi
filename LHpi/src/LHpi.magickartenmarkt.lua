@@ -372,6 +372,7 @@ function site.Initialize( mode )
 		--when launched from ma, dll loading is not possible.
 	elseif MKMDATASOURCE.html then
 		https = require "ssl.https"
+		socketurl = require "socket.url"
 	elseif MKMDATASOURCE.api then
 		OAuth = require "OAuth"
 		---@field [parent=#site] #table oauth
@@ -421,6 +422,8 @@ function site.GetSourceData(url,details)
 		url = "https://www." .. url
 		--https instead of http means this will not work from within ma either...
 		body,code,headers,status = https.request( url )
+			print(url)
+		
 	elseif MKMDATASOURCE.api then
 		if sandbox then
 			url = "sandbox." .. url
@@ -802,21 +805,15 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 				card.name = card.name .. " (DROP not Tenth Edition)"
 			end
 		end
-	elseif setid == 680 then --Time Spiral
-		if card.pluginData.rarity == "Time Shifted" then
-			card.name = card.name .. " (DROP Timeshfted)"
+	elseif setid == 831 then -- Shadows over Innistrad
+		if card.name == "Tamiyo's Journal" then
+			
 		end
-	elseif setid == 690 then --Time Spiral Timeshifted
-		if card.pluginData.rarity ~= "Time Shifted" then
-			card.name = card.name .. " (DROP not Timeshfted)"
-		end
-	elseif setid == 240 then --Visions
-		--TODO 240: Jamuuran Lion versioning
 	elseif setid == 821 then -- Challenge Deck: Defeat a God
 		if card.pluginData.set == "Journey into Nyx" then
 			if card.name == "Dance of Flame"
 			or card.name == "Dance of Panic"
---			or card.name == "Ecstatic Piper"
+			or card.name == "Ecstatic Piper"
 			or card.name == "Estatic Piper"
 			or card.name == "Impulsive Charge"
 			or card.name == "Impulsive Destruction"
@@ -890,6 +887,10 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 				card.name = card.name .. " (DROP not Face the Hydra)"
 			end
 		end
+	elseif setid == 791 then -- Return to Ravnica
+		if card.pluginData.rarity == "Special" then
+			card.name = card.name .. "(DROP)"
+		end
 	elseif setid == 755 then -- DD: Jace vs Chandra
 		if card.name == "Chandra Nalaar (Version 1)"
 		or card.name == "Jace Beleren (Version 1)"
@@ -901,6 +902,14 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 		then
 			card.lang = { [8]="JPN" }
 			card.name = string.gsub(card.name," %(Version 2%)","")
+		end
+	elseif setid == 690 then --Time Spiral Timeshifted
+		if card.pluginData.rarity ~= "Time Shifted" then
+			card.name = card.name .. " (DROP not Timeshfted)"
+		end
+	elseif setid == 680 then --Time Spiral
+		if card.pluginData.rarity == "Time Shifted" then
+			card.name = card.name .. " (DROP Timeshfted)"
 		end
 	elseif setid == 635 then -- Salvat Magic Encyclopedia
 		if card.pluginData.rarity~="Land" then
@@ -919,6 +928,8 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 				card.name = card.name .. " (DROP not Starter 1999)"
 			end
 		end
+	elseif setid == 240 then --Visions
+		--TODO 240: Jamuuran Lion versioning
 	elseif setid == 200 then -- Chronicles
 		if card.pluginData.set == "Chronicles" then
 			card.lang = { [1]="ENG" }
@@ -1140,7 +1151,7 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 			if card.name == "Garruk the Slayer" then
 				card.name = card.name .. " (oversized)"
 			else
-				card.name = card.name .. " (DROP not Prerelease Promos)"
+				card.name = card.name .. " (DROP not Prerelease Promo)"
 			end
 --		elseif card.pluginData.set == "DCI Promos" then
 --			-- DCI Griselbrand is GP; Prerelease Griselbrand is oversized!
@@ -1155,7 +1166,7 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 			or card.name == "The Hunter"
 			then
 			else
-				card.name = card.name .. " (DROP not Prerelease Promos)"
+				card.name = card.name .. " (DROP not Prerelease Promo)"
 			end
 		elseif card.pluginData.set == "Born of the Gods" then
 			if card.name == "The General"
@@ -1165,7 +1176,7 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 			or card.name == "The Provider"
 			then
 			else
-				card.name = card.name .. " (DROP not Prerelease Promos)"
+				card.name = card.name .. " (DROP not Prerelease Promo)"
 			end
 		elseif card.pluginData.set == "Journey into Nyx" then
 			if card.name == "Spear of the General"
@@ -1175,7 +1186,7 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 			or card.name == "Bow of the Hunter"
 			then
 			else
-				card.name = card.name .. " (DROP not Prerelease Promos)"
+				card.name = card.name .. " (DROP not Prerelease Promo)"
 			end
 		elseif card.pluginData.set == "Promos" then
 			if card.name == "Dragonlord's Servant"
@@ -1185,8 +1196,65 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 			then
 				card.name = card.name .. " (Dragonfury)"
 			else
-				card.name = card.name .. " (DROP not Prerelease Promos)"
+				card.name = card.name .. " (DROP not Prerelease Promo)"
 			end
+		elseif card.pluginData.set == "Battle for Zendikar: Promos" then
+			if card.name == "Barrage Tyrant (Version 1)"
+			or card.name == "Defiant Bloodlord (Version 1)"
+			or card.name == "Drowner of Hope (Version 1)"
+			or card.name == "Hero of Goma Fada (Version 1)"
+			or card.name == "Oran-Rief Hydra (Version 1)"
+			or card.name == "Scythe Leopard"--Holiday Gift Box
+			then
+				card.name = card.name .. " (DROP not Prerelease Promo)"
+			end
+			--card.name = card.name .. " (BFZ)"
+			card.variant = { "BFZ" }
+		elseif card.pluginData.set == "Oath of the Gatewatch: Promos" then
+			if card.name == "Deepfathom Skulker (Version 2)"
+			or card.name == "Dread Defiler (Version 2)"
+			or card.name == "Gladehart Cavalry (Version 2)"
+			or card.name == "Munda's Vanguard (Version 2)"
+			or card.name == "Tyrant of Valakut (Version 2)"
+			then
+				card.name = card.name .. " (DROP not Prerelease Promo)"
+			end
+			--card.name = card.name .. " (OGW)"
+			card.variant = { "OGW" }
+		elseif card.pluginData.set == "Shadows over Innistrad: Promos" then
+			if card.name == "Drogskol Cavalry (Version 2)"
+			or card.name == "Flameblade Angel (Version 2)"
+			or card.name == "Markov Dreadknight (Version 2)"
+			or card.name == "Nephalia Moondrakes (Version 2)"
+			or card.name == "Soul Swallower (Version 2)"
+			or card.name == "Ravenous Bloodseeker"--Holiday Gift Box
+			then
+				card.name = card.name .. " (DROP not Prerelease Promo)"
+			end
+			--card.name = card.name .. " (SOI)"
+			card.variant = { "SOI" }
+		elseif card.pluginData.set == "Eldritch Moon: Promos" then
+			if card.name == "Assembled Alphas (Version 2)"
+			or card.name == "Niblis of Frost (Version 2)"
+			or card.name == "Noosegraf Mob (Version 2)"
+			or card.name == "Sanctifier of Souls (Version 2)"
+			or card.name == "Ulvenwald Observer (Version 2)"
+			then
+				card.name = card.name .. " (DROP not Prerelease Promo)"
+			elseif card.name == "Zombie Token (1)" then
+			else
+				--card.name = card.name .. " (EMN)"
+				card.variant = { "EMN" }
+			end
+		elseif card.pluginData.set == "Kaladesh: Promos" then
+			if card.name == "Chief of the Foundry" then--Holiday Gift Box
+				card.name = card.name .. "(DROP not Prerelease Promo)"
+			end
+			--card.name = card.name .. " (KLD)"
+			card.variant = { "KLD" }
+		elseif card.pluginData.set == "Aether Revolt: Promos" then
+			--card.name = card.name .. " (AER)"
+			card.variant = { "AER" }
 		end
 	elseif setid == 21  then -- Release Promos
 		if card.pluginData.set == "Oversized 6x9 Promos" then
@@ -1226,9 +1294,13 @@ function site.BCDpluginPre ( card, setid, importfoil, importlangs )
 		end
 	elseif setid == 15 then -- Convention Promos
 		if card.pluginData.set == "San Diego Comic-Con 2013 Promos" then
-			card.name = card.name .. " (CC13)"
+			card.name = card.name .. " (SDCC 13)"
 		elseif card.pluginData.set == "San Diego Comic-Con 2014 Promos" then
-			card.name = card.name .. " (CC14)"
+			card.name = card.name .. " (SDCC 14)"
+		elseif card.pluginData.set == "San Diego Comic-Con 2015 Promos" then
+			card.name = card.name .. " (SDCC 15)"
+		elseif card.pluginData.set == "San Diego Comic-Con 2016 Promos" then
+			card.name = card.name .. " (SDCC 16)"
 		elseif card.pluginData.set == "Oversized 6x9 Promos" then
 			if card.name == "Hurloon Minotaur"
 			or card.name == "Serra Angel (Version 1)" then
@@ -1598,8 +1670,8 @@ site.sets = {
 [130]={id=130, lang={ "ENG" }, fruc={ true }, url="Antiquities"},--Antiquities
 [120]={id=120, lang={ "ENG" }, fruc={ true }, url="Arabian+Nights"},--Arabian Nights
 -- specialsets
-[900]={id=900, lang={ "ENG" }, fruc={ true }, url="Modern+Masters+2017+Edition"},--Modern Masters 2017 Edition
-[840]={id=840, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Commander+2016"},--Commander 2016
+[843]={id=900, lang={ "ENG" }, fruc={ true }, url="Modern+Masters+2017+Edition"},--Modern Masters 2017 Edition
+[840]={id=840, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, fruc={ true }, url="Commander+2016"},--Commander 2016
 [837]={id=837, lang={ "ENG",[8]="JPN" }, fruc={ true }, url="Duel+Decks%3A+Nissa+vs.+Ob+Nixilis"},--Duel Decks: Nissa vs. Ob Nixilis
 [836]={id=836, lang={ "ENG",[8]="JPN",[9]="SZH" }, fruc={ true }, url="Conspiracy%3A+Take+the+Crown"},--Conspiracy: Take the Crown
 [835]={id=835, lang={ "ENG" }, fruc={ true }, url="From+the+Vault%3A+Lore"},--From the Vault: Lore
@@ -1761,7 +1833,7 @@ site.sets = {
 											"Judge+Rewards+Promos",-- Judge Rewards Promos
 											"Judge+Program+Tokens",--Judge Program Tokens
 											} },
-[24] ={id= 24, lang={ "ENG" }, fruc={ true }, url="Champs+&+States+Promos"},--Champs & States Promos
+[24] ={id= 24, lang={ "ENG" }, fruc={ true }, url="Champs+%26+States+Promos"},--Champs & States Promos
 [23] ={id= 23, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN" }, fruc={ true }, url="Gateway+Promos"},--Gateway Promos
 [22] ={id= 22, lang={ "ENG",[2]="RUS",[3]="GER",[7]="SPA",[12]="HEB",[13]="ARA",[14]="LAT",[15]="SAN",[16]="GRC" }, fruc={ true }, url={ --Prerelease Promos
 											"Prerelease+Promos", -- Prerelease Promos
@@ -1775,9 +1847,12 @@ site.sets = {
 											"Khans+of+Tarkir%3A+Promos",--Khans of Tarkir: Promos
 											"Magic+Origins%3A+Promos",--Magic Origins: Promos
 											"Oversized+6x9+Promos", -- Oversized 6x9 Promos ("Garruk the Slayer (oversized)")
---											"Battle+for+Zendikar%3A+Promos",--Battle for Zendikar Promos
---											"Oath+of+the+Gatewatch%3A+Promos",--Oath of the Gatewatch: Promos
---											"Shadows+over+Innistrad%3A+Promos",--Shadows over Innistrad: Promos
+											"Battle+for+Zendikar%3A+Promos",--Battle for Zendikar Promos
+											"Oath+of+the+Gatewatch%3A+Promos",--Oath of the Gatewatch: Promos
+											"Shadows+over+Innistrad%3A+Promos",--Shadows over Innistrad: Promos
+											"Eldritch+Moon%3A+Promos",--Eldritch Moon: Promos
+											"Kaladesh%3A+Promos",--Kaladesh: Promos
+											--"Aether+Revolt%3A+Promos",--Aether Revolt: Promos
 											} },
 [21] ={id= 21, lang={ "ENG",[2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN" }, fruc={ true }, url={ --Release & Launch Party Promos
 											"Release+Promos", -- Release Promos
@@ -1792,9 +1867,10 @@ site.sets = {
 [20] ={id= 20, lang={ "ENG" }, fruc={ true }, url="Player+Rewards+Promos"},--Player Rewards Promos
 [15]= {id= 15, lang={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN" }, fruc={ true }, url={-- Convention Promos
 											"Convention+Promos", --Convention Promos
-											"San+Diego+Comic-Con+2015+Promos",--San Diego Comic-Con 2015 Promos
 											"San+Diego+Comic-Con+2013+Promos", --San Diego Comic-Con 2013 Promos
 											"San+Diego+Comic-Con+2014+Promos", --San Diego Comic-Con 2014 Promos
+											"San+Diego+Comic-Con+2015+Promos",--San Diego Comic-Con 2015 Promos
+											"San+Diego+Comic-Con+2016+Promos",--San Diego Comic-Con 2016 Promos
 											"Oversized+6x9+Promos", -- "Serra Angel (oversized)","Hurloon Minotaur (oversized)"
 											"DCI+Promos", -- 6 cards
 											"Promos", -- "Stealer of Secrets" (Gamescon 2014, not yet in MA)
@@ -1963,6 +2039,13 @@ site.namereplace = {
 ["Forest (285)"]		= "Forest (2)",
 ["Forest (286)"]		= "Forest (3)",
 },
+[841] = { -- Aether Revolt
+["Tezzeret Emblem"]		= "Tezzeret the Schemer Emblem",
+["Energy Reserve"]		= "Energy Reserve (DROP)",
+},
+[831] = { -- Shadows over Innistrad
+["Tamiyo's Journal"]	= "Tamiyo’s Journal",
+},
 [829] = { -- Oath of the Gatewatch
 ["Wastes (1)"]			= "Wastes (183F)",
 ["Wastes (2)"]			= "Wastes (183)",
@@ -2024,105 +2107,48 @@ site.namereplace = {
 [818] = { -- Dragons  of Tarkir
 --["Narset Transcendent Emblem"]				= "Narset Emblem",
 },
-[817] = { --Duel Decks: Anthology
-["Plains (5026)"]		= "Plains (DVD 26)",
-["Plains (5027)"]		= "Plains (DVD 27)",
-["Plains (5028)"]		= "Plains (DVD 28)",
-["Plains (5029)"]		= "Plains (DVD 29)",
-["Island (3030)"]		= "Island (JVC 30)",
-["Island (3031)"]		= "Island (JVC 31)",
-["Island (3032)"]		= "Island (JVC 32)",
-["Island (3033)"]		= "Island (JVC 33)",
-["Swamp (6059)"]			= "Swamp (DVD 59)",
-["Swamp (6060)"]			= "Swamp (DVD 60)",
-["Swamp (6061)"]			= "Swamp (DVD 61)",
-["Swamp (6062)"]			= "Swamp (DVD 62)",
-["Swamp (8060)"]			= "Swamp (GVL 60)",
-["Swamp (8061)"]			= "Swamp (GVL 61)",
-["Swamp (8062)"]			= "Swamp (GVL 62)",
-["Swamp (8063)"]			= "Swamp (GVL 63)",
-["Mountain (2059)"]		= "Mountain (EVG 59)",
-["Mountain (2060)"]		= "Mountain (EVG 60)",
-["Mountain (2061)"]		= "Mountain (EVG 61)",
-["Mountain (2062)"]		= "Mountain (EVG 62)",
-["Mountain (4059)"]		= "Mountain (JVC 59)",
-["Mountain (4060)"]		= "Mountain (JVC 60)",
-["Mountain (4061)"]		= "Mountain (JVC 61)",
-["Mountain (4062)"]		= "Mountain (JVC 62)",
-["Forest (1028)"]		= "Forest (EVG 28)",
-["Forest (1029)"]		= "Forest (EVG 29)",
-["Forest (1030)"]		= "Forest (EVG 30)",
-["Forest (1031)"]		= "Forest (EVG 31)",
-["Forest (7028)"]		= "Forest (GVL 28)",
-["Forest (7029)"]		= "Forest (GVL 29)",
-["Forest (7030)"]		= "Forest (GVL 30)",
-["Forest (7031)"]		= "Forest (GVL 31)",
-["Angel's Feather"]			= "Angel’s Feather",
-["Demon's Horn"]			= "Demon’s Horn",
-["Demon's Jester"]			= "Demon’s Jester",
-["Faith's Fetters"]			= "Faith’s Fetters",
-["Man-o'-War"]				= "Man-o’-War",
-["Nature's Lore"]			= "Nature’s Lore",
-["Serra's Boon"]			= "Serra’s Boon",
-["Serra's Embrace"]			= "Serra’s Embrace",
-["Wren's Run Vanquisher"]	= "Wren’s Run Vanquisher",
-["Corrupt (1)"]				= "Corrupt (55)",
-["Corrupt (2)"]				= "Corrupt (57)",
-["Flamewave Invoker (1)"]	= "Flamewave Invoker (40)",
-["Flamewave Invoker (2)"]	= "Flamewave Invoker (36)",
-["Giant Growth (1)"]		= "Giant Growth (14)",
-["Giant Growth (2)"]		= "Giant Growth (21)",
-["Harmonize (1)"]			= "Harmonize (22)",
-["Harmonize (2)"]			= "Harmonize (21)",
-["Bat Token (11)"]				= "Bat Token",
-["Demon Token (6)"]				= "Demon Token",
-["Elf Warrior Token (2)"]		= "Elf Warrior Token",
-["Elemental Token (1)"]			= "Elemental Token",
-["Elemental Shaman Token (4)"]	= "Elemental Shaman Token",
-["Elephant Token (10)"]			= "Elephant Token",
-["Goblin Token (3)"]			= "Goblin Token",
-["Spirit Token (5)"]			= "Spirit Token",
-["Thrull Token (7)"]			= "Thrull Token",
-},
 [802] = { -- Born of the Gods
 ["Unravel the Æther"]				= "Unravel the AEther",
 },
 [784] = { -- Dark Ascension
-["Hinterland Hermit"] 				= "Hinterland Hermit|Hinterland Scourge",
-["Mondronen Shaman"] 				= "Mondronen Shaman|Tovolar’s Magehunter",
-["Soul Seizer"] 					= "Soul Seizer|Ghastly Haunting",
-["Lambholt Elder"] 					= "Lambholt Elder|Silverpelt Werewolf",
-["Ravenous Demon"] 					= "Ravenous Demon|Archdemon of Greed",
-["Elbrus, the Binding Blade"] 		= "Elbrus, the Binding Blade|Withengar Unbound",
-["Loyal Cathar"] 					= "Loyal Cathar|Unhallowed Cathar",
-["Chosen of Markov"] 				= "Chosen of Markov|Markov’s Servant",
-["Huntmaster of the Fells"] 		= "Huntmaster of the Fells|Ravager of the Fells",
-["Afflicted Deserter"] 				= "Afflicted Deserter|Werewolf Ransacker",
-["Chalice of Life"] 				= "Chalice of Life|Chalice of Death",
-["Wolfbitten Captive"] 				= "Wolfbitten Captive|Krallenhorde Killer",
-["Scorned Villager"]				= "Scorned Villager|Moonscarred Werewolf",
+--["Hinterland Hermit"] 				= "Hinterland Hermit|Hinterland Scourge",
+--["Mondronen Shaman"] 				= "Mondronen Shaman|Tovolar’s Magehunter",
+--["Soul Seizer"] 					= "Soul Seizer|Ghastly Haunting",
+--["Lambholt Elder"] 					= "Lambholt Elder|Silverpelt Werewolf",
+--["Ravenous Demon"] 					= "Ravenous Demon|Archdemon of Greed",
+--["Elbrus, the Binding Blade"] 		= "Elbrus, the Binding Blade|Withengar Unbound",
+--["Loyal Cathar"] 					= "Loyal Cathar|Unhallowed Cathar",
+--["Chosen of Markov"] 				= "Chosen of Markov|Markov’s Servant",
+--["Huntmaster of the Fells"] 		= "Huntmaster of the Fells|Ravager of the Fells",
+--["Afflicted Deserter"] 				= "Afflicted Deserter|Werewolf Ransacker",
+--["Chalice of Life"] 				= "Chalice of Life|Chalice of Death",
+--["Wolfbitten Captive"] 				= "Wolfbitten Captive|Krallenhorde Killer",
+--["Scorned Villager"]				= "Scorned Villager|Moonscarred Werewolf",
 },
 [782] = { -- Innistrad
-["Bloodline Keeper"] 				= "Bloodline Keeper|Lord of Lineage",
-["Ludevic's Test Subject"] 			= "Ludevic's Test Subject|Ludevic's Abomination",
-["Instigator Gang"] 				= "Instigator Gang|Wildblood Pack",
-["Kruin Outlaw"] 					= "Kruin Outlaw|Terror of Kruin Pass",
-["Daybreak Ranger"] 				= "Daybreak Ranger|Nightfall Predator",
-["Garruk Relentless"] 				= "Garruk Relentless|Garruk, the Veil-Cursed",
-["Mayor of Avabruck"] 				= "Mayor of Avabruck|Howlpack Alpha",
-["Cloistered Youth"] 				= "Cloistered Youth|Unholy Fiend",
-["Civilized Scholar"] 				= "Civilized Scholar|Homicidal Brute",
-["Screeching Bat"] 					= "Screeching Bat|Stalking Vampire",
-["Hanweir Watchkeep"] 				= "Hanweir Watchkeep|Bane of Hanweir",
-["Reckless Waif"] 					= "Reckless Waif|Merciless Predator",
-["Gatstaf Shepherd"] 				= "Gatstaf Shepherd|Gatstaf Howler",
-["Ulvenwald Mystics"] 				= "Ulvenwald Mystics|Ulvenwald Primordials",
-["Thraben Sentry"] 					= "Thraben Sentry|Thraben Militia",
-["Delver of Secrets"] 				= "Delver of Secrets|Insectile Aberration",
-["Tormented Pariah"] 				= "Tormented Pariah|Rampaging Werewolf",
-["Village Ironsmith"] 				= "Village Ironsmith|Ironfang",
-["Grizzled Outcasts"] 				= "Grizzled Outcasts|Krallenhorde Wantons",
-["Villagers of Estwald"] 			= "Villagers of Estwald|Howlpack of Estwald",
+--["Bloodline Keeper"] 				= "Bloodline Keeper|Lord of Lineage",
+--["Ludevic's Test Subject"] 			= "Ludevic's Test Subject|Ludevic's Abomination",
+--["Instigator Gang"] 				= "Instigator Gang|Wildblood Pack",
+--["Kruin Outlaw"] 					= "Kruin Outlaw|Terror of Kruin Pass",
+--["Daybreak Ranger"] 				= "Daybreak Ranger|Nightfall Predator",
+--["Garruk Relentless"] 				= "Garruk Relentless|Garruk, the Veil-Cursed",
+--["Mayor of Avabruck"] 				= "Mayor of Avabruck|Howlpack Alpha",
+--["Cloistered Youth"] 				= "Cloistered Youth|Unholy Fiend",
+--["Civilized Scholar"] 				= "Civilized Scholar|Homicidal Brute",
+--["Screeching Bat"] 					= "Screeching Bat|Stalking Vampire",
+--["Hanweir Watchkeep"] 				= "Hanweir Watchkeep|Bane of Hanweir",
+--["Reckless Waif"] 					= "Reckless Waif|Merciless Predator",
+--["Gatstaf Shepherd"] 				= "Gatstaf Shepherd|Gatstaf Howler",
+--["Ulvenwald Mystics"] 				= "Ulvenwald Mystics|Ulvenwald Primordials",
+--["Thraben Sentry"] 					= "Thraben Sentry|Thraben Militia",
+--["Delver of Secrets"] 				= "Delver of Secrets|Insectile Aberration",
+--["Tormented Pariah"] 				= "Tormented Pariah|Rampaging Werewolf",
+--["Village Ironsmith"] 				= "Village Ironsmith|Ironfang",
+--["Grizzled Outcasts"] 				= "Grizzled Outcasts|Krallenhorde Wantons",
+--["Villagers of Estwald"] 			= "Villagers of Estwald|Howlpack of Estwald",
+},
+[765] = { --Worldwake
+["Aether Tradewinds"] 			= "Æther Tradewinds",
 },
 [762] = { --Zendikar
 ["Plains (1)"]			= "Plains (230a)",
@@ -2187,7 +2213,7 @@ site.namereplace = {
 ["Bushi Tenderfoot"]				= "Bushi Tenderfoot|Kenzo the Hardhearted",
 ["Budoka Gardener"]					= "Budoka Gardener|Dokai, Weaver of Life",
 ["Nezumi Shortfang"]				= "Nezumi Shortfang|Stabwhisker the Odious",
-["Jushi Apprentice"]				= "Jushi Apprentice|Tomoya the Revealer",
+--["Jushi Apprentice"]				= "Jushi Apprentice|Tomoya the Revealer",
 ["Orochi Eggwatcher"]				= "Orochi Eggwatcher|Shidako, Broodmistress",
 ["Nezumi Graverobber"]				= "Nezumi Graverobber|Nighteyes the Desecrator",
 ["Akki Lavarunner"]					= "Akki Lavarunner|Tok-Tok, Volcano Born",
@@ -2207,6 +2233,31 @@ site.namereplace = {
 ["Jamuraan Lion (2)"]				= "Jamuraan Lion",
 },
 -- special sets and promos
+[840] = { --Commander 2016
+["Atraxa, Praetors' Voice (1)"]		= "Atraxa, Praetors’ Voice",
+["Atraxa, Praetors' Voice (2)"]		= "Atraxa, Praetors’ Voice (oversized)",
+["Breya, Etherium Shaper (1)"]		= "Breya, Etherium Shaper",
+["Breya, Etherium Shaper (2)"]		= "Breya, Etherium Shaper (oversized)",
+["Kynaios and Tiro of Meletis (1)"]	= "Kynaios and Tiro of Meletis",
+["Kynaios and Tiro of Meletis (2)"]	= "Kynaios and Tiro of Meletis (oversized)",
+["Saskia the Unyielding (1)"]		= "Saskia the Unyielding",
+["Saskia the Unyielding (2)"]		= "Saskia the Unyielding (oversized)",
+["Yidris, Maelstrom Wielder (1)"]	= "Yidris, Maelstrom Wielder",
+["Yidris, Maelstrom Wielder (2)"]	= "Yidris, Maelstrom Wielder (oversized)",
+},
+[836] = { -- Conspiracy: Take the Crown
+["Adriana's Valor"]					= "Adriana’s Valor",
+["Emissary's Ploy"]					= "Emissary’s Ploy",
+["Sovereign's Realm"]				= "Sovereign’s Realm",
+["Summoner's Bond"]					= "Summoner’s Bond",
+["Kaya, Ghost Assassin (1)"]		= "Kaya, Ghost Assassin",
+["Kaya, Ghost Assassin (2)"]		= "Kaya, Ghost Assassin (Alt)",
+["Summoner's Bond"]					= "Summoner’s Bond",
+["The Monarch"]						= "The Monarch Token",
+},
+[835] = { -- From the Vault: Lore
+["Marit Lage Token (Black 20/20)"]	= "Marit Lage Token",
+},
 [828] = { --Commander 2015
 ["Daxos the Returned (1)"]			= "Daxos the Returned",
 ["Daxos the Returned (2)"]			= "Daxos the Returned (oversized)",
@@ -2220,9 +2271,68 @@ site.namereplace = {
 ["Mizzix of the Izmagnus (2)"]		= "Mizzix of the Izmagnus (oversized)",
 },
 [821] = { --Challenge Deck: Defeat a God
-["Estatic Piper (nontrad)"]				= "Ecstatic Piper (nontrad)",
 ["Xenagos's Scorn (nontrad)"]			= "Xenagos’s Scorn (nontrad)",
 ["Xenagos's Strike (nontrad)"]			= "Xenagos’s Strike (nontrad)",
+},
+[817] = { --Duel Decks: Anthology
+["Plains (5026)"]		= "Plains (DVD 26)",
+["Plains (5027)"]		= "Plains (DVD 27)",
+["Plains (5028)"]		= "Plains (DVD 28)",
+["Plains (5029)"]		= "Plains (DVD 29)",
+["Island (3030)"]		= "Island (JVC 30)",
+["Island (3031)"]		= "Island (JVC 31)",
+["Island (3032)"]		= "Island (JVC 32)",
+["Island (3033)"]		= "Island (JVC 33)",
+["Swamp (6059)"]			= "Swamp (DVD 59)",
+["Swamp (6060)"]			= "Swamp (DVD 60)",
+["Swamp (6061)"]			= "Swamp (DVD 61)",
+["Swamp (6062)"]			= "Swamp (DVD 62)",
+["Swamp (8060)"]			= "Swamp (GVL 60)",
+["Swamp (8061)"]			= "Swamp (GVL 61)",
+["Swamp (8062)"]			= "Swamp (GVL 62)",
+["Swamp (8063)"]			= "Swamp (GVL 63)",
+["Mountain (2059)"]		= "Mountain (EVG 59)",
+["Mountain (2060)"]		= "Mountain (EVG 60)",
+["Mountain (2061)"]		= "Mountain (EVG 61)",
+["Mountain (2062)"]		= "Mountain (EVG 62)",
+["Mountain (4059)"]		= "Mountain (JVC 59)",
+["Mountain (4060)"]		= "Mountain (JVC 60)",
+["Mountain (4061)"]		= "Mountain (JVC 61)",
+["Mountain (4062)"]		= "Mountain (JVC 62)",
+["Forest (1028)"]		= "Forest (EVG 28)",
+["Forest (1029)"]		= "Forest (EVG 29)",
+["Forest (1030)"]		= "Forest (EVG 30)",
+["Forest (1031)"]		= "Forest (EVG 31)",
+["Forest (7028)"]		= "Forest (GVL 28)",
+["Forest (7029)"]		= "Forest (GVL 29)",
+["Forest (7030)"]		= "Forest (GVL 30)",
+["Forest (7031)"]		= "Forest (GVL 31)",
+["Angel's Feather"]			= "Angel’s Feather",
+["Demon's Horn"]			= "Demon’s Horn",
+["Demon's Jester"]			= "Demon’s Jester",
+["Faith's Fetters"]			= "Faith’s Fetters",
+["Man-o'-War"]				= "Man-o’-War",
+["Nature's Lore"]			= "Nature’s Lore",
+["Serra's Boon"]			= "Serra’s Boon",
+["Serra's Embrace"]			= "Serra’s Embrace",
+["Wren's Run Vanquisher"]	= "Wren’s Run Vanquisher",
+["Corrupt (1)"]				= "Corrupt (55)",
+["Corrupt (2)"]				= "Corrupt (57)",
+["Flamewave Invoker (1)"]	= "Flamewave Invoker (40)",
+["Flamewave Invoker (2)"]	= "Flamewave Invoker (36)",
+["Giant Growth (1)"]		= "Giant Growth (14)",
+["Giant Growth (2)"]		= "Giant Growth (21)",
+["Harmonize (1)"]			= "Harmonize (22)",
+["Harmonize (2)"]			= "Harmonize (21)",
+["Bat Token (11)"]				= "Bat Token",
+["Demon Token (6)"]				= "Demon Token",
+["Elf Warrior Token (2)"]		= "Elf Warrior Token",
+["Elemental Token (1)"]			= "Elemental Token",
+["Elemental Shaman Token (4)"]	= "Elemental Shaman Token",
+["Elephant Token (10)"]			= "Elephant Token",
+["Goblin Token (3)"]			= "Goblin Token",
+["Spirit Token (5)"]			= "Spirit Token",
+["Thrull Token (7)"]			= "Thrull Token",
 },
 [814] = { --Commander 2014
 ["Daretti, Scrap Savant (1)"]			= "Daretti, Scrap Savant",
@@ -2243,27 +2353,30 @@ site.namereplace = {
 ["Myr|Spirit Token"]				= "Spirit Token|Myr Token",
 ["Elspeth Emblem|Soldier Token"]	= "Soldier Token|Elspeth, Knight-Errant Emblem",
 },
+[807] = { -- Conspiracy
+["Aether Tradewinds"]				= "Æther Tradewinds",
+},
 [801] = { -- Commander 2013
-["Plains (325)"]	= "Plains (337)",
-["Plains (326)"]	= "Plains (338)",
-["Plains (327)"]	= "Plains (339)",
-["Plains (328)"]	= "Plains (340)",
-["Island (300)"]	= "Island (341)",
-["Island (301)"]	= "Island (342)",
-["Island (302)"]	= "Island (343)",
-["Island (303)"]	= "Island (344)",
-["Swamp (343)"]		= "Swamp (345)",
-["Swamp (344)"]		= "Swamp (346)",
-["Swamp (345)"]		= "Swamp (347)",
-["Swamp (346)"]		= "Swamp (348)",
-["Mountain (316)"]	= "Mountain (349)",
-["Mountain (317)"]	= "Mountain (350)",
-["Mountain (318)"]	= "Mountain (351)",
-["Mountain (319)"]	= "Mountain (352)",
-["Forest (289)"]	= "Forest (353)",
-["Forest (290)"]	= "Forest (354)",
-["Forest (291)"]	= "Forest (355)",
-["Forest (292)"]	= "Forest (356)",
+--["Plains (325)"]	= "Plains (337)",
+--["Plains (326)"]	= "Plains (338)",
+--["Plains (327)"]	= "Plains (339)",
+--["Plains (328)"]	= "Plains (340)",
+--["Island (300)"]	= "Island (341)",
+--["Island (301)"]	= "Island (342)",
+--["Island (302)"]	= "Island (343)",
+--["Island (303)"]	= "Island (344)",
+--["Swamp (343)"]		= "Swamp (345)",
+--["Swamp (344)"]		= "Swamp (346)",
+--["Swamp (345)"]		= "Swamp (347)",
+--["Swamp (346)"]		= "Swamp (348)",
+--["Mountain (316)"]	= "Mountain (349)",
+--["Mountain (317)"]	= "Mountain (350)",
+--["Mountain (318)"]	= "Mountain (351)",
+--["Mountain (319)"]	= "Mountain (352)",
+--["Forest (289)"]	= "Forest (353)",
+--["Forest (290)"]	= "Forest (354)",
+--["Forest (291)"]	= "Forest (355)",
+--["Forest (292)"]	= "Forest (356)",
 ['Kongming, "Sleeping Dragon"']		= "Kongming, “Sleeping Dragon”",
 ["Derevi, Empyrial Tactician (1)"]	= "Derevi, Empyrial Tactician",
 ["Derevi, Empyrial Tactician (2)"]	= "Derevi, Empyrial Tactician (oversized)",
@@ -2324,26 +2437,26 @@ site.namereplace = {
 ["Mountain (4)"]		= "Mountain (77)",
 },
 [778] = { -- Magic: The Gathering Commander
-["Plains (1)"]			= "Plains (299)",
-["Plains (2)"]			= "Plains (300)",
-["Plains (3)"]			= "Plains (301)",
-["Plains (4)"]			= "Plains (302)",
-["Island (1)"]			= "Island (303)",
-["Island (2)"]			= "Island (304)",
-["Island (3)"]			= "Island (305)",
-["Island (4)"]			= "Island (306)",
-["Swamp (1)"]			= "Swamp (307)",
-["Swamp (2)"]			= "Swamp (308)",
-["Swamp (3)"]			= "Swamp (309)",
-["Swamp (4)"]			= "Swamp (310)",
-["Mountain (1)"]		= "Mountain (311)",
-["Mountain (2)"]		= "Mountain (312)",
-["Mountain (3)"]		= "Mountain (313)",
-["Mountain (4)"]		= "Mountain (314)",
-["Forest (1)"]			= "Forest (315)",
-["Forest (2)"]			= "Forest (316)",
-["Forest (3)"]			= "Forest (317)",
-["Forest (4)"]			= "Forest (318)",
+--["Plains (1)"]			= "Plains (299)",
+--["Plains (2)"]			= "Plains (300)",
+--["Plains (3)"]			= "Plains (301)",
+--["Plains (4)"]			= "Plains (302)",
+--["Island (1)"]			= "Island (303)",
+--["Island (2)"]			= "Island (304)",
+--["Island (3)"]			= "Island (305)",
+--["Island (4)"]			= "Island (306)",
+--["Swamp (1)"]			= "Swamp (307)",
+--["Swamp (2)"]			= "Swamp (308)",
+--["Swamp (3)"]			= "Swamp (309)",
+--["Swamp (4)"]			= "Swamp (310)",
+--["Mountain (1)"]		= "Mountain (311)",
+--["Mountain (2)"]		= "Mountain (312)",
+--["Mountain (3)"]		= "Mountain (313)",
+--["Mountain (4)"]		= "Mountain (314)",
+--["Forest (1)"]			= "Forest (315)",
+--["Forest (2)"]			= "Forest (316)",
+--["Forest (3)"]			= "Forest (317)",
+--["Forest (4)"]			= "Forest (318)",
 ["Nezumi Graverobber"]	= "Nezumi Graverobber|Nighteyes the Desecrator",
 ["Animar, Soul of Elements (1)"]	= "Animar, Soul of Elements",
 ["Animar, Soul of Elements (2)"]	= "Animar, Soul of Elements (oversized)",
@@ -3023,7 +3136,8 @@ site.namereplace = {
 ["Woebearer (51)"]							= "Woebearer (Zombies 51)",
 },
 [600] = { -- Unhinged
-['"Ach! Hans, Run!"']				= '“Ach! Hans, Run!”',
+--['"Ach! Hans, Run!"']				= '“Ach! Hans, Run!”',
+['"Ach! Hans, Run!"']					= "“Ach! Hans, Run!”",
 },
 [490] = { -- Deckmasters
 ["Swamp (48)"]			= "Swamp (42)",
@@ -3067,8 +3181,10 @@ site.namereplace = {
 ["Forest (84)"]			= "Forest (2)",
 },
 [320] = { -- Unglued
-["B.F.M. (Big Furry Monster) (1)"]	= "B.F.M. (Left)",
-["B.F.M. (Big Furry Monster) (2)"]	= "B.F.M. (Right)",
+["B.F.M. (Big Furry Monster) (1)"]	= "B.F.M. (Big Furry Monster) (Left)",
+["B.F.M. (Big Furry Monster) (2)"]	= "B.F.M. (Big Furry Monster) (Right)",
+--["B.F.M. (Big Furry Monster) (1)"]	= "B.F.M. (Left)",
+--["B.F.M. (Big Furry Monster) (2)"]	= "B.F.M. (Right)",
 },
 [260] = { -- Portal
 ["Anaconda (2)"]			= "Anaconda",
@@ -3305,7 +3421,7 @@ site.namereplace = {
 ["Soldier Token (1)"]						= "Soldier Token (GTC)",-- RW 1/1
 },
 [30] = { -- Friday Night Magic Promos
-["Goblin Warchief (1)"]				= "Goblin Warchief",
+["Goblin Warchief (1)"]				= "Goblin Warchief (2006)",
 ["Goblin Warchief (2)"]				= "Goblin Warchief (2016)",--2016
 },
 [27] = { -- Alternate Art Lands
@@ -3362,8 +3478,8 @@ site.namereplace = {
 ["Lu Bu, Master-at-Arms (2)"]		= "Lu Bu, Master-at-Arms (July)",
 ["Dirtcowl Wurm (1)"]				= "Dirtcowl Wurm",
 ["Dirtcowl Wurm (2)"]				= "Dirtcowl Wurm (DROP unique?)",
-["Ravenous Demon"]					= "Ravenous Demon|Archdemon of Greed",
-["Mayor of Avabruck"]				= "Mayor of Avabruck|Howlpack Alpha",
+--["Ravenous Demon"]					= "Ravenous Demon|Archdemon of Greed",
+--["Mayor of Avabruck"]				= "Mayor of Avabruck|Howlpack Alpha",
 ["Laquatus's Champion"]				= "Laquatus’s Champion",
 ["Garruk the Slayer (oversized)"]	= "Garruk the Slayer",
 ["Ankle Shanker (1)"]				= "Ankle Shanker",-- KTK
@@ -3387,11 +3503,31 @@ site.namereplace = {
 ["Kothophed, Soul Hoarder (1)"]		= "Kothophed, Soul Hoarder",--ORI
 ["Pia and Kiran Nalaar (1)"]		= "Pia and Kiran Nalaar ",--ORI
 ["Mizzium Meddler (2)"]				= "Mizzium Meddler",--ORI
+["Barrage Tyrant (2)"]				= "Barrage Tyrant",--BFZ
+["Defiant Bloodlord (2)"]			= "Defiant Bloodlord",--BFZ
+["Drowner of Hope (2)"]				= "Drowner of Hope",--BFZ
+["Hero of Goma Fada (2)"]			= "Hero of Goma Fada",--BFZ
+["Oran-Rief Hydra (2)"]				= "Oran-Rief Hydra",--BFZ
+["Deepfathom Skulker (1)"]			= "Deepfathom Skulker",--OGW
+["Dread Defiler (1)"]				= "Dread Defiler",--OGW
+["Gladehart Cavalry (1)"]			= "Gladehart Cavalry",--OGW
+["Munda's Vanguard (1)"]			= "Munda's Vanguard",--OGW
+["Tyrant of Valakut (1)"]			= "Tyrant of Valakut",--OGW
+["Drogskol Cavalry (1)"]			= "Drogskol Cavalry",--SOI
+["Flameblade Angel (1)"]			= "Flameblade Angel",--SOI
+["Markov Dreadknight (1)"]			= "Markov Dreadknight",--SOI
+["Nephalia Moondrakes (1)"]			= "Nephalia Moondrakes",--SOI
+["Soul Swallower (1)"]				= "Soul Swallower",--SOI
+["Assembled Alphas (1)"]			= "Assembled Alphas",--EMN
+["Niblis of Frost (1)"]				= "Niblis of Frost",--EMN
+["Noosegraf Mob (1)"]				= "Noosegraf Mob",--EMN
+["Sanctifier of Souls (1)"]			= "Sanctifier of Souls",--EMN
+["Ulvenwald Observer (1)"]			= "Ulvenwald Observer",--EMN
 },
 [21] = { -- Release Promos
 ["Plots That Span Centuries"]		= "Plots that Span Centuries (Scheme)",
-["Mondronen Shaman"]				= "Mondronen Shaman|Tovolar’s Magehunter",
-["Ludevic's Test Subject"]			= "Ludevic’s Test Subject|Ludevic’s Abomination",
+--["Mondronen Shaman"]				= "Mondronen Shaman|Tovolar’s Magehunter",
+--["Ludevic's Test Subject"]			= "Ludevic’s Test Subject|Ludevic’s Abomination",
 ["Budoka Pupil"]					= "Budoka Pupil|Ichiga, Who Topples Oaks",
 ["Marit Lage Token (Black 20/20)"]	= "Marit Lage Token",
 ["Incoming! (oversized)"]			= "Incoming!",
@@ -3409,13 +3545,29 @@ site.namereplace = {
 ["Lightning Bolt (2)"]		= "Lightning Bolt (1)",
 },
 [15] = { -- Convention Promos
-["Ajani, Caller of the Pride (CC13)"]	= "Ajani, Caller of the Pride",
-["Chandra, Pyromaster (CC13)"]			= "Chandra, Pyromaster",
-["Garruk, Caller of Beasts (CC13)"]		= "Garruk, Caller of Beasts",
-["Jace, Memory Adept (CC13)"]			= "Jace, Memory Adept",
-["Liliana of the Dark Realms (CC13)"]	= "Liliana of the Dark Realms",
 ["Hurloon Minotaur (oversized)"]		= "Hurloon Minotaur",
 ["Serra Angel (1) (oversized)"]			= "Serra Angel",
+["Chandra, Pyromaster (SDCC 13)"]		= "Chandra, Pyromaster (134)",
+["Chandra, Pyromaster (SDCC 14)"]		= "Chandra, Pyromaster (132)",
+["Ajani Steadfast (SDCC 14)"]			= "Ajani Steadfast",
+["Ajani, Caller of the Pride (SDCC 13)"]= "Ajani, Caller of the Pride",
+["Chandra, Fire of Kaladesh|Chandra, Roaring Flame (SDCC 15)"]		= "Chandra, Fire of Kaladesh|Chandra, Roaring Flame",
+["Chandra, Flamecaller (SDCC 16)"]		= "Chandra, Flamecaller",
+["Garruk, Apex Predator (SDCC 14)"]		= "Garruk, Apex Predator",
+["Garruk, Caller of Beasts (SDCC 13)"]	= "Garruk, Caller of Beasts",
+["Gideon, Ally of Zendikar (SDCC 16)"]	= "Gideon, Ally of Zendikar",
+["Jace, Memory Adept (SDCC 13)"]		= "Jace, Memory Adept",
+["Jace, the Living Guildpact (SDCC 14)"]= "Jace, the Living Guildpact",
+["Jace, Unraveler of Secrets (SDCC 16)"]= "Jace, Unraveler of Secrets",
+["Jace, Vryn's Prodigy|Jace, Telepath Unbound (SDCC 15)"]			= "Jace, Vryn’s Prodigy|Jace, Telepath Unbound",
+["Kytheon, Hero of Akros|Gideon, Battle-Forged (SDCC 15)"]			= "Kytheon, Hero of Akros|Gideon, Battle-Forged",
+["Liliana of the Dark Realms (SDCC 13)"]= "Liliana of the Dark Realms",
+["Liliana Vess (SDCC 14)"]				= "Liliana Vess",
+["Liliana, Heretical Healer|Liliana, Defiant Necromancer (SDCC 15)"]= "Liliana, Heretical Healer|Liliana, Defiant Necromancer",
+["Liliana, the Last Hope (SDCC 16)"]	= "Liliana, the Last Hope",
+["Nissa, Vastwood Seer|Nissa, Sage Animist (SDCC 15)"]				= "Nissa, Vastwood Seer|Nissa, Sage Animist",
+["Nissa, Voice of Zendikar (SDCC 16)"]	= "Nissa, Voice of Zendikar",
+["Nissa, Worldwaker (SDCC 14)"]			= "Nissa, Worldwaker",
 },
 [10] = { --Junior Series Promos
 ["City of Brass (J)"]			= "City of Brass",
@@ -3472,7 +3624,7 @@ site.settweak = {
 ["Serpent Dancers"]			= "Challenge Deck: Deicide",
 ["Xenagos's Scorn"]			= "Challenge Deck: Deicide",
 ["Pheres-Band Revelers"]	= "Challenge Deck: Deicide",
-["Estatic Piper"]			= "Challenge Deck: Deicide",
+["Ecstatic Piper"]			= "Challenge Deck: Deicide",
 ["Rollicking Throng"]		= "Challenge Deck: Deicide",
 ["Impulsive Return"]		= "Challenge Deck: Deicide",
 ["Impulsive Destruction"]	= "Challenge Deck: Deicide",
@@ -3594,6 +3746,7 @@ site.settweak = {
 ["Thalia, Guardian of Thraben"]	= "WMCQ",
 ["Abrupt Decay"]			= "WMCQ",
 ["Liliana of the Veil"]		= "Regional PTQ",
+["Emrakul, the Aeons Torn"]	= "Regional PTQ",
 },
 [23] = { -- Gateway
 ["Naya Sojourners"]				= "Magic Game Day",
@@ -3719,12 +3872,15 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [779] = { failed={ dup=LHpi.Data.sets[779].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH",[10]="ZHT" } },
 [770] = { failed={ dup=LHpi.Data.sets[770].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH",[10]="ZHT" }, dropped=2*9 },--9 inserts
 [759] = { failed={ dup=LHpi.Data.sets[759].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" }, dropped=30 },
-[720] = { pset={ dup=LHpi.Data.sets[720].cardcount.both-1, [3]=LHpi.Data.sets[720].cardcount.both-2,[8]=LHpi.Data.sets[720].cardcount.reg-1,[9]=LHpi.Data.sets[720].cardcount.reg-1 }, duppset={ [2]="RUS",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, failed={ dup=1, [3]=2,[8]=LHpi.Data.sets[720].cardcount.tok+1,[9]=LHpi.Data.sets[720].cardcount.tok+1 }, dupfail={ [2]="RUS",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, dropped=28 },--"Kamahl, Pit Fighter (ST)" only ENG; no GER March of the Machines exists
+[720] = { pset={ dup=LHpi.Data.sets[720].cardcount.both-1, [3]=LHpi.Data.sets[720].cardcount.both-2,[8]=LHpi.Data.sets[720].cardcount.reg-1,[9]=LHpi.Data.sets[720].cardcount.reg-1 }, duppset={ [2]="RUS",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, failed={ dup=1, [3]=2,[8]=LHpi.Data.sets[720].cardcount.tok+1,[9]=LHpi.Data.sets[720].cardcount.tok+1 }, dupfail={ [2]="RUS",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA" }, dropped=30 },--"Kamahl, Pit Fighter (ST)" only ENG; no GER March of the Machines exists
 [630] = { pset={ dup=LHpi.Data.sets[630].cardcount.reg-7 }, failed={ dup=7 }, duppset={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[9]="SZH" }, dupfail={ [2]="RUS",[3]="GER",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[9]="SZH" } },--7 cards exist only in ENG
 [550] = { pset={ dup=LHpi.Data.sets[550].cardcount.reg-2,[9]=LHpi.Data.sets[550].cardcount.reg-7 }, failed={ dup=2, [9]=7 }, duppset={ [3]="GER",[4]="FRA",[6]="POR",[7]="SPA" }, dupfail={ [3]="GER",[4]="FRA",[6]="POR",[7]="SPA" } },--2 cards do not exist in GER,FRA,POR,SPA; 7 in SZH
 [180] = { pset={ dup=LHpi.Data.sets[180].cardcount.reg,[6]=375 }, duppset={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[8]="JPN" }, failed={ [6]=3 } },
 [179] = { pset={ [6]=LHpi.Data.sets[179].cardcount.reg-3, [8]=LHpi.Data.sets[179].cardcount.reg}, failed={ [6]=3 } },--3 cards not in POR
 -- Expansions
+[841] = { pset={ dup=LHpi.Data.sets[841].cardcount.reg }, failed={ dup=LHpi.Data.sets[841].cardcount.tok }, duppset={ [2]="RUS",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=2 }, -- "Energy Reserve"
+[838] = { pset={ dup=LHpi.Data.sets[838].cardcount.reg }, failed={ dup=LHpi.Data.sets[838].cardcount.tok }, duppset={ [2]="RUS",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=2 }, -- 1 insert
+[834] = { pset={ dup=LHpi.Data.sets[834].cardcount.reg }, failed={ dup=LHpi.Data.sets[834].cardcount.tok }, duppset={ [2]="RUS",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=2 }, -- 1 insert
 [831] = { pset={ dup=LHpi.Data.sets[831].cardcount.reg }, failed={ dup=LHpi.Data.sets[831].cardcount.tok }, duppset={ [2]="RUS",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=4 },-- checklists dropped
 [829] = { pset={ dup=LHpi.Data.sets[829].cardcount.reg }, failed={ dup=LHpi.Data.sets[829].cardcount.tok }, duppset={ [2]="RUS",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [2]="RUS",[4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
 [825] = { pset={ dup=LHpi.Data.sets[825].cardcount.reg }, failed={ dup=LHpi.Data.sets[825].cardcount.tok }, duppset={ [4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
@@ -3734,9 +3890,9 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [806] = { pset={ dup=LHpi.Data.sets[806].cardcount.reg }, failed={ dup=LHpi.Data.sets[806].cardcount.tok }, duppset={ [4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=44 },
 [802] = { pset={ dup=LHpi.Data.sets[802].cardcount.reg }, failed={ dup=LHpi.Data.sets[802].cardcount.tok }, duppset={ [4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=2*22 },
 [800] = { pset={ dup=LHpi.Data.sets[800].cardcount.reg }, failed={ dup=LHpi.Data.sets[800].cardcount.tok }, duppset={ [7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dupfail={ [7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=30+14 },--15 Challenge, 7 Hero
-[795] = { pset={ dup=LHpi.Data.sets[795].cardcount.reg }, failed={ dup=LHpi.Data.sets[795].cardcount.tok }, duppset={ [3]="GER",[7]="SPA" }, dupfail={ [3]="GER",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
+[795] = { pset={ dup=LHpi.Data.sets[795].cardcount.reg }, failed={ dup=LHpi.Data.sets[795].cardcount.tok }, duppset={ [7]="SPA" }, dupfail={ [7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
 [793] = { pset={ dup=LHpi.Data.sets[793].cardcount.reg }, failed={ dup=LHpi.Data.sets[793].cardcount.tok }, duppset={ [7]="SPA" }, dupfail={ [7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
-[791] = { pset={ [7]=LHpi.Data.sets[791].cardcount.reg }, failed={ dup=LHpi.Data.sets[791].cardcount.tok }, dupfail={ [7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },
+[791] = { pset={ [7]=LHpi.Data.sets[791].cardcount.reg }, failed={ dup=LHpi.Data.sets[791].cardcount.tok }, dupfail={ [7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=20 },--10 Guild Symbols
 [786] = { pset={ [7]=LHpi.Data.sets[786].cardcount.reg }, failed={ dup=LHpi.Data.sets[786].cardcount.tok }, dupfail= { [7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=22 },--11 inserts
 [784] = { failed={ dup=LHpi.Data.sets[784].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" }, dropped=2 },--Double-Faced Card insert
 [782] = { failed={ dup=LHpi.Data.sets[782].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH",[10]="ZHT" }, dropped=2 },--Double-Faced Card insert
@@ -3759,6 +3915,8 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [210] = { pset={ [6]=LHpi.Data.sets[210].cardcount.reg-1 }, failed= { [6]=1 } },-- no POR Timmerian Fiends
 [190] = { pset={ [6]=LHpi.Data.sets[190].cardcount.reg-1 }, failed= { [6]=1 } },-- no POR Amulet of Quoz
 -- special sets
+[840] = { failed={ dup=18 }, dupfail={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN",[9]="SZH",[10]="ZHT",[11]="KOR" } },-- all 18 (doublesided) tokens missing in MA
+[836] = { pset={ dup=LHpi.Data.sets[836].cardcount.reg+LHpi.Data.sets[836].cardcount.repl }, failed={ dup=LHpi.Data.sets[836].cardcount.tok }, duppset={ [8]="JPN",[9]="SZH" }, dupfail={ [8]="JPN",[9]="SZH" } },
 [830] = { pset={ dup=LHpi.Data.sets[830].cardcount.all }, duppset={ [8]="JPN" } },
 [828] = { pset={ LHpi.Data.sets[828].cardcount.reg+LHpi.Data.sets[828].cardcount.repl+3,dup=LHpi.Data.sets[828].cardcount.reg+LHpi.Data.sets[828].cardcount.repl }, failed={ 23,dup=26 }, duppset={ [3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN",[9]="SZH" }, dupfail={ [3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN",[9]="SZH" } },-- tokens are (23 of 26) doublesided in MKM, (24) single sided in MA
 [827] = { failed={ 12 } },-- url contains CP1,CP2,CP3
@@ -3767,6 +3925,7 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [821] = { dropped=356 },
 [820] = { pset={ [8]=LHpi.Data.sets[820].cardcount.both } },
 [819] = { failed={ dup=LHpi.Data.sets[819].cardcount.tok }, dupfail={ [8]="JPN",[9]="SZH" } },
+[816] = { failed={ dup=LHpi.Data.sets[816].cardcount.tok }, dupfail={ [4]="FRA",[5]="ITA",[6]="POR",[7]="SPA",[8]="JPN",[9]="SZH" } },
 [815] = { failed={ 12 } },-- url contains CP1,CP2,CP3
 [814] = { pset={ dup=LHpi.Data.sets[814].cardcount.reg+LHpi.Data.sets[814].cardcount.repl }, failed={ dup=24 }, duppset={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN",[9]="SZH" }, dupfail={ "ENG",[3]="GER",[4]="FRA",[5]="ITA",[7]="SPA",[8]="JPN",[9]="SZH" } },-- tokens are (24) doublesided in MKM, (36) single sided in MA
 [812] = { pset={ [8]=LHpi.Data.sets[812].cardcount.both } },
@@ -3793,33 +3952,33 @@ function site.SetExpected( importfoil , importlangs , importsets )
 [225] = { dropped=4 },-- 2 inserts
 [201] = { pset={ [5]=69 } },
 -- Promos
-[53]  = { dropped=444 },
-[52]  = { pset={ [3]=30 }, namereplaced=21-2, dropped=708 },-- GER SOI not yet in Ma
-[50]  = { pset={ [2]=5,[3]=27,[4]=1,[6]=1,[7]=5;[8]=4 }, failed={ [2]=23,[3]=1,[4]=27,[6]=27,[7]=23;[8]=26 }, dropped=42 },
+[53]  = { dropped=454 },
+[52]  = { namereplaced=21-2, dropped=706 },
+[50]  = { pset={ [2]=5,[3]=27,[4]=1,[6]=1,[7]=5;[8]=4 }, failed={ [2]=23,[3]=1,[4]=27,[6]=27,[7]=23;[8]=26 }, dropped=54 },
 [45]  = { pset={ 0,[8]=LHpi.Data.sets[45].cardcount.reg-1 } },-- "Jaya Ballard, Task Mage" missing
-[43]  = { dropped=26 },
+[43]  = { dropped=28 },
 [42]  = { dropped=130 },
 --[41]  = { failed={ 1 } },-- "Mishra's Toy Workshop" not in MA
-[40]  = { pset={ LHpi.Data.sets[40].cardcount.all,[3]=5,[8]=24-18 }, failed={ 1,[3]=173,[8]=172 }, dropped=24 },--Mad Auntie only JPN; JPN: "Faerie Conclave" ENG is SUM, 17 others ENG are GTW 
-[34]  = { dropped=66 },
-[33]  = { pset={ 1 }, dropped=26 },-- all but "Balduvian Horde" are one-of-a-kind
-[32]  = { pset={ LHpi.Data.sets[32].cardcount.reg,[8]=1 }, failed={ [8]=LHpi.Data.sets[32].cardcount.reg-1 }, dropped=28 },
-[31]  = { dropped=28 },
-[30]  = { pset={ [2]=23,[3]=55,[5]=1,[7]=6 }, failed={ 3,[2]=171,[3]=139,[5]=193,[7]=188 } },-- "Blighted Fen","Sylvan Scrying","Goblin Warchief (2016)" not yet in MA
+[40]  = { pset={ LHpi.Data.sets[40].cardcount.all,[3]=5,[8]=24-18 }, failed={ 2,[3]=174,[8]=173 }, dropped=24 },--"Servo/Thopter Token " not in MA,"Mad Auntie" only JPN; JPN: "Faerie Conclave" ENG is SUM, 17 others ENG are GTW 
+[34]  = { dropped=80 },
+[33]  = { pset={ 1 }, dropped=28 },-- all but "Balduvian Horde" are one-of-a-kind
+[32]  = { pset={ LHpi.Data.sets[32].cardcount.reg,[8]=1 }, failed={ [8]=LHpi.Data.sets[32].cardcount.reg-1 }, dropped=30 },
+[31]  = { failed={ 1 }, dropped=30 },-- "Progenitus" not in MA
+[30]  = { pset={ [2]=23,[3]=55,[5]=1,[7]=6 }, failed={ 6,[2]=171,[3]=139,[5]=193,[7]=188 } },-- "Unlicensed Disintegration","Fortune's Favor"," Servo Exhibition","Aether Hub","Incendiary Flow","Noose Constrictor" not yet in MA
 --[27]  = { failed={ dup=1 }, dupfail= { "ENG" }, dropped=48 },-- "Magic Guru" not in MA
-[26]  = { pset={ [2]=17,[3]=24,[7]=4 }, failed={ [2]=LHpi.Data.sets[26].cardcount.all-17,[3]=LHpi.Data.sets[26].cardcount.all-24,[7]=LHpi.Data.sets[26].cardcount.all-4 }, dropped=1580 },
-[25]  = { pset={ LHpi.Data.sets[25].cardcount.all,[3]=2,[17]=1 }, failed={ 3+1,[3]=LHpi.Data.sets[25].cardcount.both } },-- cant distinguish "Wolf│Open New Worlds"/"Wolf│Make a Positive Mark"; "Shardless Agent","Temporal Manipulation","Rishadan Port" not yet in MA
+[26]  = { pset={ [2]=17,[3]=44,[7]=4 }, failed={ [2]=LHpi.Data.sets[26].cardcount.all-17,[3]=LHpi.Data.sets[26].cardcount.all-44,[7]=LHpi.Data.sets[26].cardcount.all-4 }, dropped=1588 },
+[25]  = { pset={ LHpi.Data.sets[25].cardcount.all,[3]=2,[17]=1 }, failed={ 2+1,[3]=LHpi.Data.sets[25].cardcount.both } },-- cant distinguish "Wolf│Open New Worlds"/"Wolf│Make a Positive Mark"; "Avacyn, Angel of Hope","Homeward Path" not yet in MA
 [23]  = { pset={ [3]=39-2,[4]=12,[5]=11,[7]=11,[8]=4 }, failed={ [3]=27,[4]=52,[5]=53,[7]=53,[8]=60 }, dropped=6 },-- "Fling (50 DCI)","Sylvan Ranger (51 DCI)" are version "1" in ENG, but "" in GER
-[22]  = { pset={ [2]=77,[3]=50,[7]=14,[12]=1,[13]=1,[14]=1,[15]=1,[16]=1 }, failed={ 1,[2]=183,[3]=210,[7]=246 }, dropped=1588 },-- BFZ(69),OGW,ISD not yet in MA, Laquatus's Champion only RUS
+[22]  = { pset={ LHpi.Data.sets[22].cardcount.all-4,[2]=77,[3]=50,[7]=14,[12]=1,[13]=1,[14]=1,[15]=1,[16]=1 }, failed={ 1,[2]=183,[3]=210,[7]=246 }, dropped=1646 },-- BFZ(69),OGW,ISD not yet in MA, Laquatus's Champion only RUS
 [21]  = { pset={ [2]=14,[3]=29,[4]=1,[5]=1,[7]=7,[8]=3-2 }, failed={ 1,[2]=46,[3]=31,[4]=59,[5]=59,[7]=53,[8]=59 }, dropped=1978 },-- "Shivan Dragon"  (Release Promos) only RUS; JPN Treetop Village and Zoetic Cavern missing (ENG:Treetop is in SUM, Cavern is GTW)
-[15]  = { pset={ [3]=1,[4]=2,[5]=3,[7]=2,[8]=2 }, failed={ 11,[3]=25,[4]=24,[5]=23,[7]=24,[8]=25 }, dropped=264 },--not in MA: 5 SanDiego'15,6 SanDiego'14 ; 5 SanDiego'13,2 oversized Caravan Tours
+[15]  = { pset={ [3]=1,[4]=2,[5]=3,[7]=2,[8]=2 }, failed={ [3]=25,[4]=24,[5]=23,[7]=24,[8]=25 }, dropped=278 },--not in MA: 2 oversized Caravan Tours
 [10]  = { pset= { [8]=11 }, failed={ 8,[8]=22 }, dropped=2 },
 [9]   = { pset={ [2]=7,[3]=12,[4]=3,[7]=3 }, failed={ [2]=8,[3]=3,[4]=12,[7]=12 }, dropped=188 },-- not all nonENG in MA
-[8]	  = { pset={ [5]=1,[8]=3 }, failed={ [5]=12,[8]=12 }, dropped=64 },
-[7]   = { pset={ [3]=1,[8]=4-2 }, failed={ 4 }, dropped=220 },-- fail 4 Lifecounter cards; MA has JPN 4 Gotta Magazine, GER 1 Kartefakt
-[6]   = { pset={ [8]=7 }, dropped=228 },
-[5]   = { pset={ [4]=5,[5]=3,[6]=2,[7]=5 }, failed={ [4]=1,[5]=3,[6]=4,[7]=1 }, dropped=26 },
-[2]   = { dropped=24 },
+[8]	  = { pset={ [5]=1,[8]=3 }, failed={ [5]=15,[8]=12 }, dropped=78 },
+[7]   = { pset={ [3]=1,[8]=4-2 }, failed={ 4 }, dropped=232 },-- fail 4 Lifecounter cards; MA has JPN 4 Gotta Magazine, GER 1 Kartefakt
+[6]   = { pset={ [8]=7 }, dropped=240 },
+[5]   = { pset={ [4]=5,[5]=3,[6]=2,[7]=5 }, failed={ [4]=1,[5]=3,[6]=4,[7]=1 }, dropped=28 },
+[2]   = { dropped=26 },
 
 	}--end table site.expected
 	-- I'm too lazy to fill in site.expected myself, let the script do it ;-)
